@@ -1,10 +1,21 @@
-/* WHO KNOWS? uses the existing trusted-host, private bearer-node architecture
- * (the same one as Bomb Relay and CUT!): the canonical state — including the
- * secret word and every hidden role — lives in a host-only control node with a
- * renewable lease. Only the leased host runs the clock and the RNG. Each player
- * card receives its own filtered view at its original rooms/{code}/players/{token}
- * link and writes one wkAction back. JSON keeps exact arrays through Firebase's
- * empty-tree cleanup.
+/* WHO KNOWS? runs on the players' own cards. No page has to stay open.
+ *
+ * The canonical state (the secret word and every hidden role included) lives
+ * in one table node, rooms/{code}/players/{tableToken}/stateJson. The host page
+ * starts a game by pointing each original player link at that table:
+ *   rooms/{code}/players/{playerToken} = { game:'whoknows', playerNum, name, wk:{ version:2, table } }
+ * From then on every card subscribes to the table, renders WHO_KNOWS_ENGINE.view()
+ * for its own seat, and applies its own commands with one compare-and-set
+ * transaction — so two taps can never both win, and nobody needs to relay them.
+ *
+ * Deadlines are absolute server-corrected times. Whoever is connected ticks an
+ * expired clock: the host page first if it is open, then the lowest-numbered
+ * visible card, then the rest a little later. A tick is just another fenced
+ * command, so extra ticks are harmless no-ops.
+ *
+ * Trade-off (no server): every card can reach the table node. Screens never
+ * show another player's secret, but someone using developer tools could read
+ * it. Player tokens are never shared, so other games keep their privacy.
  */
 (function (root, factory) {
   const api = factory(root);
@@ -12,70 +23,259 @@
   else root.WHO_KNOWS_SYNC = api;
 })(typeof globalThis === 'object' ? globalThis : this, function (root) {
   'use strict';
-  const CONFIG = Object.freeze({ leaseMs: 14000, renewMs: 4000, tickMs: 200 });
+  const CONFIG = Object.freeze({ tickMs: 250, tickBaseMs: 150, tickGapMs: 900, retryMs: 1500 });
   const uid = () => Array.from(root.crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+  const shortId = () => uid().slice(0, 16);
   const seed = () => root.crypto.getRandomValues(new Uint32Array(1))[0];
-  const stateOf = doc => typeof doc?.stateJson === 'string' ? JSON.parse(doc.stateJson) : doc?.state || null;
-  const seen = value => Array.isArray(value) ? value : Object.values(value || {});
+  const seen = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const ENGINE = () => root.WHO_KNOWS_ENGINE;
-  // Only these fields of a card's request ever reach the rules.
-  const FIELDS = ['wordId', 'askId', 'answer', 'text', 'playerNum', 'target', 'choice'];
-  // Opaque opening fingerprints only: never a copy of another game's card.
-  function stamp(value) {
-    const stable = v => v === null || typeof v !== 'object' ? JSON.stringify(v) : Array.isArray(v)
-      ? '[' + v.map(stable).join(',') + ']' : '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
-    const text = stable(value ?? null); let a = 2166136261, b = 2246822519;
-    for (let i = 0; i < text.length; i++) { a = Math.imul(a ^ text.charCodeAt(i), 16777619); b = Math.imul(b ^ text.charCodeAt(i), 3266489917); }
-    return (a >>> 0).toString(16).padStart(8, '0') + (b >>> 0).toString(16).padStart(8, '0');
-  }
-  const ours = (value, sessionId) => value?.game === 'whoknows' && value.wk?.sessionId === sessionId;
+  // Only these fields of a command ever reach the rules. (`names` is the host
+  // page's Hub rename; the rules refuse it from any card.)
+  const FIELDS = ['wordId', 'askId', 'answer', 'text', 'playerNum', 'target', 'choice', 'active', 'settings', 'names'];
+  const parse = raw => { if (typeof raw !== 'string') return null; try { return JSON.parse(raw); } catch (_) { return null; } };
+  const isTable = token => /^[a-f0-9]{32}$/.test(token || '');
+  const pointsAt = (value, token) => value?.game === 'whoknows' && value.wk?.version === 2 && value.wk.table === token;
 
-  class Host {
-    constructor({ room, db, onChange = () => {}, onStatus = () => {} }) {
-      this.room = room; this.db = db; this.onChange = onChange; this.onStatus = onStatus;
-      this.code = room.code; this.count = room.count; this.client = uid();
-      this.offset = 0; this.connected = false; this.own = false; this.stopped = false; this.suspended = false;
-      this.doc = null; this.serial = Promise.resolve(); this.outgoing = Promise.resolve();
-      this.incoming = new Set(); this.seenCards = new Set(); this.cardValues = new Map(); this.listeners = [];
-      let token = room.getExtra('whoKnowsControlToken');
-      if (!/^[a-f0-9]{32}$/.test(token || '')) { token = uid(); room.setExtra('whoKnowsControlToken', token); }
-      this.ref = db.ref(`rooms/${this.code}/players/${token}`);
+  class Table {
+    constructor({ db, code, token, actor = 0, onChange = () => {}, onStatus = () => {}, onPresence = () => {} }) {
+      this.db = db; this.code = code; this.actor = Number(actor) || 0;
+      this.onChange = onChange; this.onStatus = onStatus; this.onPresence = onPresence;
+      this.client = shortId(); this.offset = 0; this.connected = false; this.stopped = false; this.started = false;
+      this.visible = true; this.loaded = false; this.raw = null; this.state = null; this.presence = {};
+      this.ticking = false; this.failedStage = null; this.retryAt = 0;
       this.offsetRef = db.ref('.info/serverTimeOffset'); this.connectedRef = db.ref('.info/connected');
-      this.playerRefs = Array.from({ length: this.count }, (_, i) => room.playerRef(i));
       this.offsetHandler = snapshot => { if (!this.stopped) this.offset = Number(snapshot.val()) || 0; };
       this.connectedHandler = snapshot => {
         if (this.stopped) return;
         this.connected = snapshot.val() === true;
-        if (this.connected) this.renew();
-        else { this.own = false; this.status('offline'); }
+        if (this.connected) this.announce();
+        this.updateStatus();
       };
-      this.valueHandler = snapshot => {
+      this.stateHandler = snapshot => this.receive(snapshot.val());
+      this.presenceHandler = snapshot => {
         if (this.stopped) return;
-        try {
-          const raw = snapshot.val(); this.doc = raw ? Object.assign({}, raw, { state: stateOf(raw) }) : null;
-          this.own = this.connected && this.doc?.owner === this.client && this.doc.leaseUntil > this.now() && this.sameRoom();
-          this.status(this.suspended ? 'switched' : !this.connected ? 'offline' : !this.own ? 'other_host' : this.rosterChanged ? 'rosterChanged' : 'ready');
-          if (this.doc?.state) this.onChange(this.doc.state);
-          if (this.own && !this.suspended && !this.rosterChanged && this.doc?.state) {
-            this.project();
-            for (const [number, value] of this.cardValues) this.receive(number, value);
-            this.syncNames();
-          }
-        } catch (_) { this.own = false; this.status('error'); }
+        const value = snapshot.val();
+        this.presence = value && typeof value === 'object' ? value : {};
+        this.onPresence(this.presence);
       };
+      this.target(token);
+    }
+    target(token) {
+      this.token = token;
+      const base = `rooms/${this.code}/players/${token}`;
+      this.stateRef = this.db.ref(base + '/stateJson');
+      this.presenceRef = this.db.ref(base + '/presence');
+      this.mineRef = this.db.ref(`${base}/presence/${this.client}`);
     }
     now() { return Math.round(Date.now() + this.offset); }
-    // A saved game for a different number of seats is never projected onto
-    // this room's links; the host starts a fresh game instead.
+    status(value) { if (this.lastStatus !== value) { this.lastStatus = value; this.onStatus(value); } }
+    computeStatus() { return !this.connected ? 'offline' : !this.loaded ? 'connecting' : 'ready'; }
+    updateStatus() { if (!this.stopped) this.status(this.computeStatus()); }
+    connect() {
+      if (this.started || this.stopped) return; this.started = true;
+      this.offsetRef.on('value', this.offsetHandler);
+      this.listen();
+      this.connectedRef.on('value', this.connectedHandler);
+      this.tickTimer = root.setInterval(() => this.pulse(), CONFIG.tickMs);
+    }
+    listen() {
+      this.stateRef.on('value', this.stateHandler, () => this.status('error'));
+      this.presenceRef.on('value', this.presenceHandler, () => {});
+    }
+    // Switch to another table node (the host page adopting the table its
+    // player links already point at).
+    retarget(token) {
+      if (this.stopped || token === this.token) return;
+      this.stateRef.off('value', this.stateHandler); this.presenceRef.off('value', this.presenceHandler);
+      this.release(); this.target(token);
+      this.loaded = false; this.raw = null; this.state = null; this.presence = {};
+      this.listen(); this.announce(); this.updateStatus();
+    }
+    receive(raw) {
+      if (this.stopped) return;
+      const first = !this.loaded; this.loaded = true;
+      if (!first && (raw ?? null) === this.raw) return;
+      this.raw = raw ?? null; this.state = parse(raw);
+      this.updateStatus();
+      this.onChange(this.state);
+    }
+    // A phone coming back from the background reads the table once instead of
+    // trusting a socket that may have been suspended.
+    refresh() {
+      if (this.stopped) return Promise.resolve();
+      return Promise.resolve(this.stateRef.once('value')).then(snapshot => this.receive(snapshot.val())).catch(() => {});
+    }
+    // Presence only ranks who ticks first and shows who is online; it is never
+    // needed for correctness.
+    announce() {
+      if (this.stopped || !this.connected) return;
+      try { this.mineRef.onDisconnect?.().remove(); } catch (_) {}
+      Promise.resolve(this.mineRef.set({ actor: this.actor, visible: this.visible, at: this.now() })).catch(() => {});
+    }
+    release() {
+      try { this.mineRef.onDisconnect?.().cancel?.(); } catch (_) {}
+      try { Promise.resolve(this.mineRef.remove?.()).catch(() => {}); } catch (_) {}
+    }
+    setVisible(visible) {
+      visible = visible !== false;
+      if (this.visible === visible) return;
+      this.visible = visible; this.announce();
+      if (visible) this.refresh();
+    }
+    online() {
+      return [...new Set(Object.values(this.presence || {}).map(entry => Number(entry?.actor)).filter(n => Number.isInteger(n) && n > 0))].sort((a, b) => a - b);
+    }
+    rank() {
+      const peers = Object.entries(this.presence || {}).filter(([, entry]) => entry && entry.visible !== false)
+        .map(([id, entry]) => ({ id, actor: Number(entry.actor) || 0 }))
+        .sort((a, b) => a.actor - b.actor || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      const index = peers.findIndex(peer => peer.id === this.client);
+      return index < 0 ? peers.length : index;
+    }
+    // The seat's own projection plus who is online right now.
+    view() {
+      if (!this.state) return null;
+      const view = ENGINE().view(this.state, this.actor);
+      view.wk.online = this.online();
+      return view;
+    }
+    command(type, extra = {}) {
+      const state = this.state;
+      if (this.stopped || !state) return Promise.reject(new Error('not_available'));
+      if (!this.connected) return Promise.reject(new Error('offline'));
+      const input = {};
+      for (const field of FIELDS) if (extra[field] !== undefined) input[field] = extra[field];
+      Object.assign(input, {
+        id: typeof extra.id === 'string' && extra.id.length >= 8 && extra.id.length <= 100 ? extra.id.slice(0, 32) : shortId(),
+        type: String(type), actor: this.actor,
+        sessionId: typeof extra.sessionId === 'string' ? extra.sessionId : state.sessionId,
+        stage: Number.isInteger(extra.stage) ? extra.stage : state.stage, now: this.now(), seed: seed(),
+      });
+      let failure = null;
+      return Promise.resolve(this.stateRef.transaction(raw => {
+        failure = null;
+        if (this.stopped) { failure = 'not_available'; return; }
+        // An empty first guess from the cache: return it unchanged so the
+        // server compares against the real value and retries with it.
+        if (raw == null) return null;
+        const current = parse(raw);
+        if (!current) { failure = 'error'; return; }
+        const next = ENGINE().apply(current, input);
+        if (next === current) { failure = type === 'tick' ? 'idle' : 'not_available'; return; }
+        const reply = next.replies?.[this.actor];
+        if (reply?.id === input.id && reply.error) { failure = reply.error; return; }
+        return JSON.stringify(next);
+      }, undefined, false)).then(result => {
+        const value = result?.snapshot?.val?.();
+        if (!result?.committed || typeof value !== 'string') throw new Error(failure || 'not_available');
+        this.receive(value);
+        return parse(value);
+      });
+    }
+    // Watch every deadline; nobody writes until one has passed.
+    pulse() {
+      if (this.stopped || !this.connected || this.ticking) return;
+      const state = this.state;
+      if (!(state?.deadline > 0) || ['paused', 'result', 'finished', 'choose'].includes(state.phase)) return;
+      const now = this.now();
+      if (now - state.deadline < CONFIG.tickBaseMs + this.rank() * CONFIG.tickGapMs) return;
+      if (this.failedStage === state.stage && now < this.retryAt) return;
+      this.ticking = true;
+      this.command('tick', { stage: state.stage }).catch(error => {
+        if (error.message !== 'idle') { this.failedStage = state.stage; this.retryAt = this.now() + CONFIG.retryMs; }
+      }).finally(() => { this.ticking = false; });
+    }
+    close() {
+      if (this.stopped) return;
+      this.release();
+      this.stopped = true;
+      root.clearInterval(this.tickTimer);
+      this.offsetRef.off('value', this.offsetHandler); this.connectedRef.off('value', this.connectedHandler);
+      this.stateRef.off('value', this.stateHandler); this.presenceRef.off('value', this.presenceHandler);
+    }
+  }
+
+  // The host page: a table client (actor 0) that also knows the room's player
+  // links, so it can start a game, point every link at the table, follow Hub
+  // renames and notice when the room moved on. It is optional once started.
+  class HostTable extends Table {
+    constructor({ room, db, onChange = () => {}, onStatus = () => {}, onPresence = () => {} }) {
+      let token = room.getExtra('whoKnowsControlToken');
+      if (!isTable(token)) { token = uid(); room.setExtra('whoKnowsControlToken', token); }
+      super({ db, code: room.code, token, actor: 0, onChange, onStatus, onPresence });
+      this.room = room; this.count = room.count; this.cardValues = new Map(); this.cardsLoaded = false; this.adopted = false;
+      this.playerRefs = Array.from({ length: this.count }, (_, i) => room.playerRef(i));
+      this.cardListeners = [];
+      const shown = this.onChange;
+      this.onChange = state => { shown(state); this.afterChange(); };
+    }
+    connect() {
+      if (this.started || this.stopped) return;
+      super.connect();
+      this.cardsReady = Promise.all(this.playerRefs.map((ref, i) => new Promise(resolve => {
+        if (!ref) { resolve(); return; }
+        const handler = snapshot => {
+          if (this.stopped) return;
+          this.cardValues.set(i + 1, snapshot.val()); resolve();
+          if (this.cardsLoaded) { this.updateStatus(); this.afterChange(); }
+        };
+        ref.on('value', handler, () => { resolve(); this.status('error'); });
+        this.cardListeners.push({ ref, handler });
+      }))).then(() => { this.cardsLoaded = true; this.adopt(); this.updateStatus(); this.afterChange(); });
+    }
+    pointer(i) { return { game: 'whoknows', playerNum: i + 1, name: String(this.room.name(i) || ''), wk: { version: 2, table: this.token } }; }
+    // A saved game for a different number of seats is never shown on this
+    // room's links; the host starts a fresh game instead.
     get rosterChanged() {
-      const roster = this.doc?.state?.roster; if (!roster) return false;
+      const roster = this.state?.roster; if (!roster) return false;
       const seats = seen(roster);
       return seats.length !== this.count || seats.some((player, i) => player?.playerNum !== i + 1);
+    }
+    // Some original link now shows another game (or nothing).
+    get switched() {
+      if (!this.state || !this.cardsLoaded) return false;
+      return this.playerRefs.some((ref, i) => ref && !pointsAt(this.cardValues.get(i + 1), this.token));
+    }
+    get sameRoom() { return this.room.code === this.code && this.room.count === this.count; }
+    computeStatus() {
+      const base = super.computeStatus();
+      if (base !== 'ready') return base;
+      if (!this.sameRoom) return 'switched';
+      if (this.rosterChanged) return 'rosterChanged';
+      if (!this.cardsLoaded) return 'connecting';
+      return this.switched ? 'switched' : 'ready';
+    }
+    // Opened on another computer (or after the room session lost its saved
+    // token): follow the table the player links already point at.
+    adopt() {
+      if (this.adopted || this.stopped) return; this.adopted = true;
+      const counts = new Map();
+      for (const value of this.cardValues.values()) if (value?.game === 'whoknows' && value.wk?.version === 2 && isTable(value.wk.table)) counts.set(value.wk.table, (counts.get(value.wk.table) || 0) + 1);
+      if (!counts.size || counts.has(this.token)) return;
+      const token = [...counts].sort((a, b) => b[1] - a[1])[0][0];
+      this.room.setExtra('whoKnowsControlToken', token);
+      this.retarget(token);
+    }
+    afterChange() {
+      if (this.stopped || !this.state || !this.cardsLoaded || !this.connected || this.rosterChanged || !this.sameRoom) return;
+      this.migrate();
+      if (this.lastStatus === 'ready') this.syncNames();
+    }
+    // Links still showing this very session from an earlier (lease-based) host
+    // page get their pointer, so an in-progress game simply carries on.
+    migrate() {
+      const session = this.state.sessionId;
+      this.playerRefs.forEach((ref, i) => {
+        const value = this.cardValues.get(i + 1);
+        if (!ref || value?.game !== 'whoknows' || value.wk?.version !== 1 || value.wk.sessionId !== session) return;
+        const pointer = this.pointer(i);
+        Promise.resolve(ref.transaction(current => current?.game === 'whoknows' && current.wk?.version === 1 && current.wk.sessionId === session ? pointer : undefined, undefined, false)).catch(() => {});
+      });
     }
     // Names edited in the Hub follow into the running game (same seats, scores
     // and secrets). Blank Hub names keep whatever the game already shows.
     syncNames() {
-      const state = this.doc?.state; if (!state || this.renaming) return;
+      const state = this.state; if (!state || this.renaming) return;
       const raw = i => String((Array.isArray(this.room.names) ? this.room.names[i] : this.room.name(i)) ?? '').trim().slice(0, 80);
       const names = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: raw(i) })).filter(entry => entry.name);
       const seats = seen(state.roster);
@@ -83,152 +283,44 @@
       this.renaming = true;
       this.command('rename', { names }).catch(() => {}).finally(() => { this.renaming = false; });
     }
-    status(value) { if (this.lastStatus !== value) { this.lastStatus = value; this.onStatus(value); } }
-    sameRoom() {
-      if (this.room.code === this.code && this.room.count === this.count) return true;
-      this.suspended = true; this.own = false; this.status('switched'); return false;
-    }
-    connect() {
-      if (this.started || this.stopped) return; this.started = true;
-      this.offsetRef.on('value', this.offsetHandler);
-      this.ref.on('value', this.valueHandler, () => this.status('error'));
-      this.cardsReady = Promise.all(this.playerRefs.map((ref, i) => new Promise(resolve => {
-        if (!ref) { resolve(); return; }
-        const handler = snapshot => { if (this.stopped) return; const value = snapshot.val(); this.cardValues.set(i + 1, value); resolve(); this.receive(i + 1, value); };
-        ref.on('value', handler, () => { resolve(); this.status('error'); }); this.listeners.push({ ref, handler });
-      })));
-      this.connectedRef.on('value', this.connectedHandler);
-      this.renewTimer = root.setInterval(() => this.renew(), CONFIG.renewMs);
-      this.tickTimer = root.setInterval(() => this.pulse(), CONFIG.tickMs);
-    }
-    async renew() {
-      if (!this.connected || this.stopped || this.renewing || !this.sameRoom()) return;
-      this.renewing = true; const now = this.now();
-      try {
-        const result = await this.ref.transaction(raw => {
-          if (this.stopped || !this.connected || !this.sameRoom()) return;
-          raw ||= {};
-          if (raw.owner && raw.owner !== this.client && raw.leaseUntil > now) return;
-          return Object.assign({}, raw, { owner: this.client, leaseUntil: now + CONFIG.leaseMs });
-        }, undefined, false);
-        if (!result.committed && !this.stopped) { this.own = false; this.status('other_host'); }
-      } catch (_) { if (!this.stopped) { this.own = false; this.status('error'); } }
-      finally { this.renewing = false; }
-    }
-    enqueue(fn) { const task = this.serial.then(fn); this.serial = task.catch(() => {}); return task; }
-    async change(fn, { opening = null, allowSwitched = false } = {}) {
-      if (!this.connected || this.stopped || !this.sameRoom()) throw new Error('offline');
-      if (this.suspended && !allowSwitched) throw new Error('not_available');
-      const now = this.now(); let noChange = false;
-      const result = await this.ref.transaction(raw => {
-        noChange = false;
-        if (this.stopped || !this.connected || !this.sameRoom() || (this.suspended && !allowSwitched) || raw?.owner !== this.client || raw.leaseUntil <= now) return;
-        const current = stateOf(raw), next = fn(current);
-        if (!next || next === current || JSON.stringify(next) === raw.stateJson) { noChange = true; return; }
-        const doc = Object.assign({}, raw, { stateJson: JSON.stringify(next), revision: (raw.revision || 0) + 1, leaseUntil: now + CONFIG.leaseMs });
-        delete doc.state;
-        if (opening) doc.opening = opening;
-        return doc;
-      }, undefined, false);
-      if (!result.committed && !noChange) throw new Error('not_available');
-      return stateOf(result.snapshot.val());
-    }
-    // Start = a new game for this Hub room. Scores reset; the room's
-    // used-word history continues, so a reopened game does not repeat words.
-    start({ settings } = {}) {
-      return this.enqueue(async () => {
-        await this.cardsReady; await this.outgoing;
-        if (!this.sameRoom() || this.stopped) throw new Error('not_available');
-        const id = uid(), now = this.now(), randomSeed = seed();
-        const opening = { sessionId: id, baselines: Object.fromEntries(this.playerRefs.map((_, i) => [i + 1, stamp(this.cardValues.get(i + 1))])) };
-        const roster = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
-        const priorSuspended = this.suspended; this.suspended = false; this.seenCards.clear();
-        try {
-          return await this.change(current => ENGINE().create({ id, roster, now, seed: randomSeed,
-            settings: settings ?? current?.settings, wordHistory: current?.wordHistory }), { opening, allowSwitched: true });
-        } catch (error) { this.suspended = priorSuspended; throw error; }
-      });
-    }
     command(type, extra = {}) {
-      const state = this.doc?.state;
-      if (!state || this.suspended || this.stopped || this.rosterChanged || !this.sameRoom()) return Promise.reject(new Error('not_available'));
-      // Host buttons are fenced to the stage they were drawn for, like cards.
-      const input = Object.assign({}, extra, { id: uid(), type, actor: 0, sessionId: state.sessionId,
-        stage: Number.isInteger(extra.stage) ? extra.stage : state.stage, now: this.now(), seed: seed() });
-      return this.enqueue(async () => {
-        const next = await this.change(current => ENGINE().apply(current, input));
-        const error = next?.replies?.[0]?.id === input.id && next.replies[0].error;
-        if (error) throw new Error(error);
-        return next;
-      });
+      if (this.rosterChanged || !this.sameRoom) return Promise.reject(new Error('not_available'));
+      return super.command(type, extra);
     }
-    // One authority pulse watches every deadline. Idle ticks never write;
-    // a throttled host catches up once when it wakes.
-    pulse() {
-      if (this.stopped || this.suspended || !this.own || !this.connected || this.ticking || this.rosterChanged || !this.sameRoom()) return;
-      const state = this.doc?.state;
-      if (!(state?.deadline > 0) || this.now() < state.deadline) return;
-      this.ticking = true;
-      this.command('tick', { stage: state.stage }).catch(error => { if (!['not_available', 'stale_turn'].includes(error.message) && !this.stopped) this.status('error'); })
-        .finally(() => { this.ticking = false; });
+    // While the room shows another game, this page leaves the clock alone.
+    pulse() { if (this.lastStatus === 'ready') super.pulse(); }
+    // Start = a new game for this Hub room on every original link. Scores
+    // reset; the used-word history continues, so words are not repeated.
+    async start({ settings } = {}) {
+      if (this.stopped || !this.connected || !this.sameRoom) throw new Error('offline');
+      await this.cardsReady;
+      const id = uid(), now = this.now(), randomSeed = seed();
+      const roster = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
+      let failure = null;
+      const result = await this.stateRef.transaction(raw => {
+        failure = null;
+        const current = parse(raw);
+        try { return JSON.stringify(ENGINE().create({ id, roster, now, seed: randomSeed, settings: settings ?? current?.settings, wordHistory: current?.wordHistory })); }
+        catch (error) { failure = error.message; return; }
+      }, undefined, false);
+      if (!result?.committed || typeof result.snapshot.val() !== 'string') throw new Error(failure || 'not_available');
+      this.receive(result.snapshot.val());
+      await this.point();
+      return this.state;
     }
-    receive(playerNum, data) {
-      if (this.stopped || !this.own || this.suspended || this.rosterChanged || !this.sameRoom()) return;
-      const state = this.doc?.state; if (!state) return;
-      if (!ours(data, state.sessionId)) { if (this.seenCards.has(playerNum)) { this.suspended = true; this.status('switched'); } return; }
-      this.seenCards.add(playerNum);
-      const action = data.wkAction;
-      if (!action || typeof action.id !== 'string' || action.id.length < 8 || action.id.length > 100 || action.sessionId !== state.sessionId || JSON.stringify(action).length > 1500) return;
-      if (seen(state.seen?.[playerNum]).includes(action.id) || state.replies?.[playerNum]?.id === action.id) return;
-      const key = playerNum + ':' + action.id; if (this.incoming.has(key)) return;
-      this.incoming.add(key);
-      const input = { id: action.id, type: String(action.type || ''), stage: action.stage, sessionId: action.sessionId, actor: playerNum, now: this.now(), seed: seed() };
-      for (const field of FIELDS) if (action[field] !== undefined) input[field] = action[field];
-      this.enqueue(() => this.change(current => ENGINE().apply(current, input)))
-        .catch(error => { if (error.message !== 'not_available' && !this.stopped) this.status('error'); })
-        .finally(() => this.incoming.delete(key));
-    }
-    // Every card is written in parallel so the person at the front of the
-    // line sees "your turn" within one round trip.
-    project() {
-      const doc = this.doc; if (!doc?.state) return;
-      this.outgoing = this.outgoing.then(async () => {
-        const valid = () => !this.stopped && !this.suspended && this.own && this.connected && !this.rosterChanged && this.sameRoom() && this.doc?.state?.sessionId === doc.state.sessionId;
-        if (!valid()) return;
-        const initial = doc.opening?.sessionId === doc.state.sessionId;
-        const results = await Promise.all(this.playerRefs.map(async (ref, i) => {
-          if (!ref) return false;
-          const payload = ENGINE().view(doc.state, i + 1);
-          payload.wk.revision = doc.revision || 0; payload.wk.hostLiveUntil = doc.leaseUntil;
-          const result = await ref.transaction(old => {
-            if (!valid()) return;
-            const mine = ours(old, doc.state.sessionId);
-            if (!mine && (!initial || stamp(old) !== doc.opening.baselines?.[i + 1])) return;
-            if (mine && (old.wk.revision > payload.wk.revision || (old.wk.revision === payload.wk.revision && old.wk.hostLiveUntil >= payload.wk.hostLiveUntil))) return;
-            // A full replacement of `wk` (not a merge) so private fields from
-            // an earlier phase can never linger on this card.
-            return mine ? Object.assign({}, old, payload) : payload;
-          }, undefined, false);
-          if (result.committed) return true;
-          const other = result.snapshot.val();
-          if (ours(other, doc.state.sessionId)) return true;
-          if (valid()) { this.suspended = true; this.status('switched'); }
-          return false;
-        }));
-        if (initial && results.every(Boolean) && valid()) await this.ref.transaction(raw => {
-          if (!valid() || raw?.owner !== this.client || raw.opening?.sessionId !== doc.state.sessionId) return;
-          const next = Object.assign({}, raw); delete next.opening; return next;
-        }, undefined, false);
-      }).catch(() => { if (!this.stopped) this.status('error'); });
+    // Point every original link at this table (Start, or bringing the cards
+    // back to the running game after another game borrowed them).
+    async point() {
+      if (this.stopped || !this.connected || !this.sameRoom) throw new Error('offline');
+      await Promise.all(this.playerRefs.map((ref, i) => ref ? Promise.resolve(ref.set(this.pointer(i))) : null));
+      this.playerRefs.forEach((ref, i) => { if (ref) this.cardValues.set(i + 1, this.pointer(i)); });
+      this.updateStatus();
     }
     close() {
       if (this.stopped) return;
-      this.stopped = true; this.own = false;
-      root.clearInterval(this.renewTimer); root.clearInterval(this.tickTimer);
-      this.offsetRef.off('value', this.offsetHandler); this.connectedRef.off('value', this.connectedHandler); this.ref.off('value', this.valueHandler);
-      this.listeners.forEach(({ ref, handler }) => ref.off('value', handler)); this.listeners = [];
-      if (this.connected) this.ref.transaction(raw => raw?.owner === this.client ? Object.assign({}, raw, { leaseUntil: 0 }) : undefined, undefined, false).catch(() => {});
+      super.close();
+      this.cardListeners.forEach(({ ref, handler }) => ref.off('value', handler)); this.cardListeners = [];
     }
   }
-  return { Host, CONFIG, uid, stamp };
+  return { Table, HostTable, CONFIG, uid, pointsAt };
 });

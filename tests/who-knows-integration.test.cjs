@@ -12,29 +12,36 @@ const UI = require('../who-knows-ui.js');
 
 test('the host page loads its modules in dependency order and every file parses', () => {
   const html = read('who-knows.html');
-  const files = [...html.matchAll(/<script src="(who-knows-[^"?]+\.js)(?:\?v=wk-1)?"/g)].map(match => match[1]);
+  const files = [...html.matchAll(/<script src="(who-knows-[^"?]+\.js)(?:\?v=wk-2)?"/g)].map(match => match[1]);
   assert.deepEqual(files, ['who-knows-words.js', 'who-knows-engine.js', 'who-knows-sync.js', 'who-knows-ui.js', 'who-knows-host.js']);
-  for (const file of files) { new vm.Script(read(file)); assert.match(html, new RegExp(file.replace('.', '\\.') + '\\?v=wk-1')); }
+  for (const file of files) { new vm.Script(read(file)); assert.match(html, new RegExp(file.replace('.', '\\.') + '\\?v=wk-2')); }
   assert.match(html, /<h1>WHO KNOWS\?<\/h1>/);
-  assert.match(html, /href="who-knows\.css\?v=wk-1"/);
+  assert.match(html, /href="who-knows\.css\?v=wk-2"/);
   assert.match(html, /href="index\.html\?step=2"/);
   assert.ok(html.indexOf('room.js') < html.indexOf('who-knows-words.js'));
-  for (const id of ['wk-setup', 'wk-game', 'wk-scene', 'wk-manage', 'wk-start', 'wk-close', 'wk-next', 'wk-pause', 'wk-extend', 'wk-again', 'wk-void', 'wk-restart', 'wk-stop', 'room-mount'])
+  for (const id of ['wk-setup', 'wk-game', 'wk-scene', 'wk-manage', 'wk-start', 'wk-close', 'wk-next', 'wk-pause', 'wk-extend', 'wk-again', 'wk-void', 'wk-restart', 'wk-stop', 'wk-switched', 'wk-continue', 'room-mount'])
     assert.match(html, new RegExp(`id="${id}"`), id);
   assert.ok(fs.existsSync(path.join(root, 'assets/who-knows/mark.svg')));
 });
 
-test('original player links render the WHO KNOWS card and fence actions to the shown stage', () => {
+test('original player links run the table themselves; an older host page view still works', () => {
   // Source-layout checks are independent of Git's Windows CRLF checkout mode.
   // Only test input is normalized; the shipped page and game behavior are unchanged.
   const play = read('play.html').replace(/\r\n/g, '\n');
-  assert.match(play, /<script src="who-knows-ui\.js\?v=wk-1"><\/script>/);
-  assert.match(play, /<link rel="stylesheet" href="who-knows\.css\?v=wk-1">/);
-  assert.doesNotMatch(play, /<script src="who-knows-(?:words|engine|sync|host)\.js/, 'cards only render the host projection');
+  const files = [...play.matchAll(/<script src="(who-knows-[^"?]+\.js)\?v=wk-2"><\/script>/g)].map(match => match[1]);
+  assert.deepEqual(files, ['who-knows-words.js', 'who-knows-engine.js', 'who-knows-sync.js', 'who-knows-ui.js'], 'cards load the rules and the table client, never the host page');
+  assert.match(play, /<link rel="stylesheet" href="who-knows\.css\?v=wk-2">/);
+  assert.match(play, /data\.wk\?\.version === 2 && \/\^\[a-f0-9\]\{32\}\$\/\.test\(data\.wk\.table \|\| ''\)/, 'only a well-formed table token is followed');
+  assert.match(play, /new WHO_KNOWS_SYNC\.Table\(\{ db, code: session, token: pointer\.wk\.table, actor: playerNum,/);
+  assert.match(play, /nameBanner, table: true,/);
+  assert.match(play, /send: command => wkTable \? wkTable\.command\(command\.type, command\)/);
+  assert.match(play, /wkTable\?\.setVisible\(!document\.hidden\)/, 'a card in the background lets visible cards tick first');
+  assert.match(play, /wkTable\?\.close\(\); wkTable = null;/, 'pagehide releases the table');
+  assert.match(play, /if \(wkTable\) \{ wkTable\.close\(\); wkTable = null; \}/, 'leaving to a waiting/error card releases the table');
   assert.match(play, /new WHO_KNOWS_UI\.Card/);
   assert.match(play, /current\?\.game !== 'whoknows' \|\| current\.wk\?\.sessionId !== command\.sessionId \|\| current\.wk\?\.stage !== command\.stage/);
   assert.match(play, /\{ wkAction: command \}/);
-  assert.match(play, /if \(wkCard\) \{ wkCard\.destroy\(\); wkCard = null; \}\n\s+document\.body\.classList\.remove\('wk-card-page'\);/, 'leaving to a waiting/error card removes it');
+  assert.match(play, /if \(wkCard\) \{ wkCard\.destroy\(\); wkCard = null; \}\n\s+if \(wkTable\) \{ wkTable\.close\(\); wkTable = null; \}\n\s+document\.body\.classList\.remove\('wk-card-page'\);/, 'leaving to a waiting/error card removes it');
   assert.match(play, /wkCard\?\.destroy\(\); wkCard = null;/, 'pagehide disposes the card');
   assert.match(play, /'sketchrelay', 'whoknows'\]\.includes\(latestData\?\.game\)/);
   assert.match(play, /if \(wkCard\) wkCard\.paint\(\);/);
@@ -75,7 +82,7 @@ test('every interface string exists in English and Traditional Chinese', () => {
     ...Object.keys(E.CONFIG.points).map(key => 'out_' + key),
     ...Object.keys(E.CONFIG.points).filter(key => key !== 'void').map(key => 'sub_' + key), 'sub_void_host', 'sub_void_answerer_left',
     ...['village', 'wolves', 'commons', 'insider', 'none', 'void'].map(team => 'win_' + team),
-    'offline', 'connecting', 'other_host', 'switched', 'rosterChanged', 'noFirebase', 'roomChanged', 'setupNeeded', 'error',
+    'offline', 'connecting', 'switched', 'rosterChanged', 'noFirebase', 'roomChanged', 'setupNeeded', 'error', 'tableEmpty',
     'stale_turn', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster', 'already_in_line',
   ];
   for (const key of [...used, ...dynamic]) assert.ok(Object.hasOwn(dict, key), 'missing string: ' + key);

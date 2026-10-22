@@ -322,6 +322,42 @@ body.wk-card-page { padding: 56px 12px 24px; justify-content: flex-start; }
 .wk-scores ol { list-style: none; display: grid; gap: 4px; margin: 6px 0 0; padding: 0; }
 .wk-scores li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 8px; border-radius: 8px; color: var(--text-2); font-size: .86rem; }
 .wk-scores li.is-me { background: #232c40; color: var(--text-hi); }
+.wk-controls { border-top: 1px solid #2c3650; padding-top: 4px; }
+.wk-controls-summary { display: flex; align-items: center; gap: 11px; min-height: 52px; cursor: pointer; list-style: none; padding: 6px 2px; }
+.wk-controls-summary::-webkit-details-marker { display: none; }
+.wk-controls-summary::after { content: '▾'; margin-left: auto; color: var(--text-muted); font-size: .9rem; transition: transform .15s; }
+.wk-controls[open] > .wk-controls-summary::after { transform: rotate(180deg); }
+.wk-controls-summary:focus-visible { outline: 2px solid #f3d999; outline-offset: 3px; border-radius: 10px; }
+.wk-controls-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 auto; border-radius: 10px; background: #232c40; border: 1px solid #3b4760; color: var(--wk-gold); }
+.wk-controls-icon svg { width: 20px; height: 20px; }
+.wk-controls-text { display: grid; gap: 2px; min-width: 0; }
+.wk-controls-text strong { color: var(--text); font-size: .95rem; font-weight: 650; }
+.wk-controls-text small { color: var(--text-muted); font-size: .78rem; line-height: 1.45; }
+.wk-controls-body, .wk-controls [data-wk-controls-live] { display: grid; gap: 18px; }
+.wk-controls-body { padding: 6px 0 4px; }
+.wk-controls-body .wk-tools + .wk-tools, .wk-controls-settings { border-top: 1px dashed #2f3a52; padding-top: 14px; }
+.wk-tools { display: grid; gap: 9px; min-width: 0; }
+.wk-tools > .wk-soft { margin: 0; font-size: .8rem; line-height: 1.5; }
+.wk-tool-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.wk-tool-row .wk-button { flex: 1 1 auto; }
+.wk-tool-players { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.wk-tool-player { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 11px; background: #1c2436; border: 1px solid #2c3650; }
+.wk-tool-player.is-me { border-color: #4a5674; }
+.wk-tool-name { display: grid; gap: 2px; min-width: 0; flex: 1 1 120px; }
+.wk-tool-name > span { color: var(--text); font-weight: 600; font-size: .9rem; overflow-wrap: anywhere; }
+.wk-tool-player.is-out .wk-tool-name > span { color: var(--text-dim); }
+.wk-tool-name em { font-style: normal; font-size: .64rem; margin-left: 5px; color: var(--text-muted); font-weight: 500; letter-spacing: .08em; }
+.wk-tool-name small { color: var(--text-muted); font-size: .76rem; }
+.wk-tool-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.wk-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: #5a6480; vertical-align: 1px; }
+.wk-dot.is-on { background: var(--wk-yes); box-shadow: 0 0 0 3px #7cc79a26; }
+.wk-card-settings { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.wk-button.is-armed { border-color: #c98a7b; background: #3a2a2c; color: #f6cfc5; }
+.wk-button.is-armed:hover:not(:disabled) { background: #46313a; border-color: #d99a8b; }
+.wk-back { width: 100%; }
+.wk-host-optional { margin: 4px auto 0; max-width: 62ch; text-align: center; }
+#wk-switched { display: grid; gap: 14px; justify-items: center; }
+#wk-switched p { margin: 0; }
 .wk-card.is-asking { border-color: var(--wk-gold); box-shadow: 0 0 0 1px #e7c47c66, 0 14px 40px #e7c47c1f; }
 .wk-card.is-answering { border-color: #8f7b4f; }
 .wk-card.is-won { border-color: #6f9e72; }

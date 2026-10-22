@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0f1421">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="who-knows.css?v=wk-1">
+  <link rel="stylesheet" href="who-knows.css?v=wk-2">
 </head>
 <body class="wk-page">
   <div class="topbar">
@@ -33,6 +33,10 @@
       <p><a class="wk-button wk-primary" href="index.html?step=1" data-i18n="whoknows.setUpRoom">Set up room &amp; players</a></p>
     </div>
 
+    <div class="wk-panel wk-center" id="wk-switched" hidden>
+      <p class="wk-soft" data-i18n="whoknows.switchedHint">Some player cards now show another game. Bring them back to continue, or start a new game below.</p>
+      <p><button type="button" class="wk-button wk-primary" id="wk-continue" data-i18n="whoknows.continueCards">Bring every card back to this game</button></p>
+    </div>
     <form class="wk-panel wk-setup" id="wk-setup" novalidate>
       <p class="wk-kicker" data-i18n="whoknows.setupTitle">Choose a mode</p>
       <div class="wk-modes" role="radiogroup" aria-labelledby="wk-mode-legend">
@@ -68,7 +72,7 @@
       <div class="wk-mode-only" data-wk-only="insider">
         <label class="wk-check"><input type="checkbox" id="wk-master-guess" checked><span><span data-i18n="whoknows.masterGuess">If time runs out, the Master gets one guess at the Insider</span><small data-i18n="whoknows.masterGuessOptHint">Off is the classic rule: if time runs out, everyone loses.</small></span></label>
       </div>
-      <p class="wk-note"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 14s4.2-7 11-7 11 7 11 7-4.2 7-11 7S3 14 3 14z" fill="none" stroke="#e7c47c" stroke-width="2"/><circle cx="14" cy="14" r="3.6" fill="#e7c47c"/><path d="M5 23L23 5" stroke="#e7c47c" stroke-width="2.2" stroke-linecap="round"/></svg><span data-i18n="whoknows.hostNote">Everyone plays on their own player card. This shared screen never shows the word or anyone’s role.</span></p>
+      <p class="wk-note"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 14s4.2-7 11-7 11 7 11 7-4.2 7-11 7S3 14 3 14z" fill="none" stroke="#e7c47c" stroke-width="2"/><circle cx="14" cy="14" r="3.6" fill="#e7c47c"/><path d="M5 23L23 5" stroke="#e7c47c" stroke-width="2.2" stroke-linecap="round"/></svg><span><span data-i18n="whoknows.hostNote">Everyone plays on their own player card. This shared screen never shows the word or anyone’s role.</span> <span data-i18n="whoknows.hostOptional">Once it starts, you may close this page: the game carries on on everyone’s cards, timer and Table controls included.</span></span></p>
       <div class="wk-start-row">
         <button type="submit" class="wk-button wk-primary" id="wk-start" data-i18n="whoknows.start">Start the first round</button>
         <button type="button" class="wk-button" id="wk-setup-cancel" hidden data-i18n="whoknows.close">Close</button>
@@ -87,6 +91,7 @@
         <button type="button" class="wk-button" id="wk-pause" hidden></button>
         <button type="button" class="wk-button" id="wk-manage-open" data-i18n="whoknows.manage">Host controls</button>
       </div>
+      <p class="wk-soft wk-host-optional" data-i18n="whoknows.hostOptional">Once it starts, you may close this page: the game carries on on everyone’s cards, timer and Table controls included.</p>
     </section>
     <p class="wk-feedback wk-center" id="wk-error" role="status"></p>
 
@@ -163,10 +168,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="who-knows-words.js?v=wk-1"></script>
-  <script src="who-knows-engine.js?v=wk-1"></script>
-  <script src="who-knows-sync.js?v=wk-1"></script>
-  <script src="who-knows-ui.js?v=wk-1"></script>
-  <script src="who-knows-host.js?v=wk-1"></script>
+  <script src="who-knows-words.js?v=wk-2"></script>
+  <script src="who-knows-engine.js?v=wk-2"></script>
+  <script src="who-knows-sync.js?v=wk-2"></script>
+  <script src="who-knows-ui.js?v=wk-2"></script>
+  <script src="who-knows-host.js?v=wk-2"></script>
 </body>
 </html>

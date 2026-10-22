@@ -19,10 +19,12 @@
  * front. Every answer is logged against its asker, like the physical tokens
  * that pile up in front of each player.
  *
- * The secret word and every hidden role exist only in the leased host's
- * canonical state. view() gives the shared screen (actor 0) nothing private and
+ * The canonical state (secret word and hidden roles included) lives in one
+ * table node. view() gives the shared screen (actor 0) nothing private and
  * gives each card only its own role — plus the word when that role knows it.
- * All commands use the host-captured time and seed, so a replayed Firebase
+ * Any active player may also run the table (pause, add time, sit someone out,
+ * change settings, start over), so no host page has to stay open. Every
+ * command carries its own captured time and seed, so a retried Firebase
  * transaction always produces the same result.
  */
 var WHO_KNOWS_ENGINE = (() => {
@@ -47,7 +49,7 @@ var WHO_KNOWS_ENGINE = (() => {
     discussMinMs: 30000, judgeMs: 30000, voteMs: 45000, masterGuessMs: 30000,
     extendQuestionsMs: 60000, extendOtherMs: 30000,
     resumeFloorMs: 3000,
-    optionCount: 3, maxRerolls: 10, textMax: 80, logMax: 150, historyMax: 30, seenMax: 40,
+    optionCount: 3, maxRerolls: 10, textMax: 80, logMax: 150, historyMax: 30, seenMax: 16,
     points: Object.freeze({
       village_word: Object.freeze({ team: 'village', points: 2, seerBonus: 1 }),
       village_vote: Object.freeze({ team: 'village', points: 1 }),
@@ -360,6 +362,18 @@ var WHO_KNOWS_ENGINE = (() => {
   }
   const PLAYER_COMMANDS = new Set(['choose', 'reroll', 'raise', 'lower', 'text', 'pickAsker', 'skip', 'answer', 'vote', 'judge', 'pick', 'masterPick', 'next']);
   const HOST_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'setNext', 'exclude', 'restart', 'settings', 'stop', 'next', 'rename']);
+  // The table runs without a host page: any active player may use these from
+  // their own card, and anyone still seated may tick an expired clock. Only the
+  // Hub's rename stays with the host page.
+  const TABLE_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'setNext', 'exclude', 'restart', 'settings', 'stop']);
+  function allowed(state, actor, type, input) {
+    if (actor === 0) return HOST_COMMANDS.has(type);
+    if (PLAYER_COMMANDS.has(type)) return true;
+    if (!TABLE_COMMANDS.has(type)) return false;
+    if (type === 'tick' || isActive(state, actor)) return true;
+    // Someone sitting out can always bring themselves back.
+    return type === 'exclude' && Number(input.playerNum) === actor && input.active === true;
+  }
 
   function apply(current, input) {
     if (!current || !input || input.sessionId !== current.sessionId || typeof input.id !== 'string' || !input.id || input.id.length > 100) return current;
@@ -371,7 +385,7 @@ var WHO_KNOWS_ENGINE = (() => {
     const type = String(input.type || '');
     if (type === 'tick') {
       // Idle ticks never write.
-      if (!host || input.stage !== current.stage || !TIMED.includes(current.phase) || !(current.deadline > 0) || now < current.deadline) return current;
+      if (input.stage !== current.stage || !TIMED.includes(current.phase) || !(current.deadline > 0) || now < current.deadline) return current;
     }
     const state = copy(current);
     normalize(state);
@@ -380,7 +394,7 @@ var WHO_KNOWS_ENGINE = (() => {
     const fresh = input.stage === state.stage;
     let error = '';
     const fail = code => { error = code; };
-    if (!(host ? HOST_COMMANDS : PLAYER_COMMANDS).has(type)) fail('not_available');
+    if (!allowed(current, actor, type, input)) fail('not_available');
     // Cards are fenced to the stage they showed; host buttons that advance
     // the table (close / extend / next) are fenced too, so a double click
     // cannot skip a whole phase.
@@ -614,6 +628,8 @@ var WHO_KNOWS_ENGINE = (() => {
       canRaise: false, canAnswer: false, answers: round ? CONFIG.answers[round.mode] : [],
       vote: null, judge: null, pick: null, canVote: false, voteTargets: [], canJudge: false,
       canNext: phase === 'result' && !!mine?.active,
+      // Table controls on the card: pause, add time, players, settings.
+      canControl: mine?.active === true,
     };
     if (!round) return me;
     if (phase === 'questions') {
@@ -668,6 +684,7 @@ var WHO_KNOWS_ENGINE = (() => {
       standings: standings(state),
       history: list(state.history).slice(-12).map(copy),
       roster: seats, stopped: phase === 'finished' && state.stopped === true,
+      nextAnswerer: state.rotation?.next ?? null,
       reply: (state.replies || {})[n] || null,
     };
     if (n > 0) wk.me = privateView(state, n);

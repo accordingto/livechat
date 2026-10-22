@@ -444,3 +444,33 @@ test('names edited in the Hub follow into the game without touching seats, score
   assert.equal(g.cmd(0, 'rename', { names: [{ playerNum: 2, name: 'Kev' }] }), 'not_available', 'nothing to change');
   assert.equal(g.cmd(2, 'rename', { names: [{ playerNum: 2, name: 'Me' }] }), 'not_available', 'only the host renames');
 });
+
+test('no host needed: any active player runs the table, someone sitting out can only bring themselves back', () => {
+  const g = game(6, { mode: 'insider' });
+  const [a, b] = g.others();
+  assert.equal(E.view(g.state, a).wk.me.canControl, true);
+  assert.equal(g.cmd(a, 'tick'), 'ignored', 'a tick before the deadline changes nothing');
+  assert.equal(g.cmd(g.round.mayor, 'choose', { wordId: g.round.options[0] }), '');
+  g.advance(E.CONFIG.countdownMs);
+  assert.equal(g.cmd(b, 'tick'), '', 'any seated player may tick an expired clock');
+  assert.equal(g.state.phase, 'questions');
+  for (const [type, extra] of [['pause', {}], ['resume', {}], ['extend', {}]]) assert.equal(g.cmd(a, type, extra), '', type);
+  assert.equal(g.cmd(a, 'setNext', { playerNum: b }), '');
+  assert.equal(E.view(g.state, b).wk.nextAnswerer, b);
+  assert.equal(g.cmd(a, 'settings', { settings: { mode: 'werewolf' } }), '');
+  assert.equal(g.cmd(a, 'rename', { names: [{ playerNum: a, name: 'X' }] }), 'not_available', 'the Hub rename stays with the host page');
+  assert.equal(g.cmd(a, 'exclude', { playerNum: b, active: false }), '');
+  assert.equal(E.view(g.state, b).wk.me.canControl, false);
+  for (const type of ['pause', 'void', 'restart', 'stop', 'settings']) assert.equal(g.cmd(b, type, { settings: {} }), 'not_available', type);
+  assert.equal(g.cmd(b, 'exclude', { playerNum: a, active: false }), 'not_available');
+  assert.equal(g.cmd(b, 'exclude', { playerNum: b, active: true }), '', 'they bring themselves back');
+  assert.equal(E.view(g.state, b).wk.nextAnswerer, null, 'sitting out cleared their turn to answer next');
+  assert.equal(g.cmd(a, 'setNext', { playerNum: b }), '');
+  assert.equal(g.cmd(a, 'close', { stage: g.state.stage - 1 }), 'stale_turn', 'card controls are fenced to the stage they showed');
+  assert.equal(g.cmd(a, 'void'), '');
+  assert.equal(g.cmd(b, 'next'), '');
+  assert.equal(g.round.mode, 'werewolf'); assert.equal(g.round.mayor, b);
+  assert.equal(g.cmd(a, 'stop'), ''); assert.equal(g.state.phase, 'finished');
+  assert.equal(g.cmd(b, 'restart', { settings: g.state.settings }), '');
+  assert.equal(g.state.phase, 'choose'); assert.deepEqual(g.state.scores, {});
+});

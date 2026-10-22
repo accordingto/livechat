@@ -1,7 +1,9 @@
-/* WHO KNOWS? shared host screen. It keeps the clock and the room in order but
- * only ever renders the public projection (actor 0): never the word, never a
- * role. Players act on their own play.html cards. `?demo=1` runs the whole
- * game on one device with a switchable card view and no Firebase. */
+/* WHO KNOWS? shared host screen. It starts a game on the room's original
+ * player links and then is optional: the cards run the table themselves (clock
+ * and Table controls included), so this page can be closed or reopened at any
+ * time. It only ever renders the public projection (actor 0): never the word,
+ * never a role. `?demo=1` runs the whole game on one device with a switchable
+ * card view and no Firebase. */
 (() => {
   'use strict';
   const UI = WHO_KNOWS_UI, E = WHO_KNOWS_ENGINE;
@@ -19,11 +21,11 @@
   const uid = () => WHO_KNOWS_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
   const stale = () => status === 'switched' || status === 'rosterChanged';
-  const canStart = () => !closed && (demo || !!(sync?.connected && sync?.own));
-  const canControl = () => canStart() && !stale() && !sync?.suspended;
+  const canStart = () => !closed && (demo || (!!sync?.connected && !['connecting', 'offline', 'error'].includes(status)));
+  const canControl = () => canStart() && !stale();
   const view = (actor = 0) => state ? E.view(state, actor).wk : null;
   const seatCount = () => demo ? demoRoster.length : sync ? sync.count : (typeof ROOM !== 'undefined' && ROOM.enabled ? ROOM.count : 0);
-  const knownError = message => ['offline', 'other_host', 'not_enough_players', 'invalid_roster', 'invalid_options', 'not_available', 'stale_turn', 'already_in_line'].includes(message) ? message : 'error';
+  const knownError = message => ['offline', 'not_enough_players', 'invalid_roster', 'invalid_options', 'not_available', 'stale_turn', 'already_in_line'].includes(message) ? message : 'error';
 
   // ── settings forms (setup and "next round" in Host controls) ──────────
   const FORMS = {
@@ -84,7 +86,11 @@
   // ── rendering ─────────────────────────────────────────────────────────
   function render() {
     const wk = stale() ? null : view();
-    byId('status').textContent = ['setupNeeded', 'ready'].includes(status) ? '' : t(status);
+    // Another game borrowed some cards: carry on with this game, or start anew.
+    const resumable = status === 'switched' && !!state && !closed && !!sync?.connected && sync.sameRoom && !sync.rosterChanged;
+    byId('status').textContent = ['setupNeeded', 'ready'].includes(status) || resumable ? '' : t(status);
+    byId('switched').hidden = !resumable;
+    byId('continue').disabled = busy || !resumable;
     byId('setup-needed').hidden = status !== 'setupNeeded';
     const playing = !!wk && !editing;
     byId('setup').hidden = status === 'setupNeeded' || playing;
@@ -132,12 +138,20 @@
       byId('scene').innerHTML = '<div class="wk-demo-phone"></div>';
       demoCardActor = actor;
       demoCard = new UI.Card(byId('scene').firstElementChild, {
-        now,
+        now, table: true,
         nameBanner: data => `<span class="name-banner">${esc(data.name || t('player', { n: data.playerNum }))}</span>`,
-        send: command => { state = E.apply(state, Object.assign({}, command, { actor, now: now(), seed: seed() })); setTimeout(render, 0); },
+        send: command => {
+          const next = E.apply(state, Object.assign({}, command, { actor, now: now(), seed: seed() }));
+          const reply = next.replies?.[actor];
+          if (next === state) return Promise.reject(new Error('not_available'));
+          if (reply?.id === command.id && reply.error) return Promise.reject(new Error(reply.error));
+          state = next; setTimeout(render, 0); return Promise.resolve();
+        },
       });
     }
-    demoCard.update(E.view(state, actor));
+    const shown = E.view(state, actor);
+    shown.wk.online = demoRoster.map(p => p.playerNum); // one device: everyone is "here"
+    demoCard.update(shown);
   }
   function renderManage(wk) {
     const next = state?.rotation?.next;
@@ -148,7 +162,7 @@
       rosterKey = key;
       byId('roster').innerHTML = list(wk.roster).map(p => {
         const n = p.playerNum, isNext = next === n;
-        return `<div class="wk-roster-row"><div><strong>${esc(p.name || t('player', { n }))}</strong><span class="wk-soft">${esc(t(p.active ? 'playing' : 'sittingOut'))} · ${esc(UI.pts(p.score))}</span></div><div class="wk-actions">${p.active && wk.phase !== 'finished' ? `<button type="button" class="wk-button wk-small" data-wk-next="${isNext ? '' : n}"${disabled ? ' disabled' : ''}>${esc(t(isNext ? 'nextChosen' : 'makeNext'))}</button>` : ''}<button type="button" class="wk-button wk-small" data-wk-seat="${n}" data-wk-active="${!p.active}"${disabled ? ' disabled' : ''}>${esc(t(p.active ? 'sitOut' : 'rejoin'))}</button></div></div>`;
+        return `<div class="wk-roster-row"><div><strong>${esc(p.name || t('player', { n }))}</strong><span class="wk-soft">${esc(t(p.active ? 'playing' : 'sittingOut'))} · ${esc(UI.pts(p.score))}${!demo && sync ? ' · ' + esc(t(sync.online().includes(n) ? 'onlineSeat' : 'offlineSeat')) : ''}</span></div><div class="wk-actions">${p.active && wk.phase !== 'finished' ? `<button type="button" class="wk-button wk-small" data-wk-next="${isNext ? '' : n}"${disabled ? ' disabled' : ''}>${esc(t(isNext ? 'nextChosen' : 'makeNext'))}</button>` : ''}<button type="button" class="wk-button wk-small" data-wk-seat="${n}" data-wk-active="${!p.active}"${disabled ? ' disabled' : ''}>${esc(t(p.active ? 'sitOut' : 'rejoin'))}</button></div></div>`;
       }).join('');
     }
     const roundLive = !!state?.round && !['result', 'finished'].includes(wk.phase);
@@ -194,7 +208,7 @@
     busy = true; error = ''; disarm(); render();
     try {
       if (demo) state = E.create({ id: uid(), roster: demoRoster, settings: parsed, now: now(), seed: seed(), wordHistory: state?.wordHistory });
-      else if (state && !stale() && !sync.suspended) await sync.command('restart', { settings: parsed });
+      else if (state && !stale()) await sync.command('restart', { settings: parsed });
       else await sync.start({ settings: parsed });
       editing = false; saved = '';
       if (byId('manage').open) byId('manage').close();
@@ -208,6 +222,12 @@
     if (event.target.name === 'wk-mode') selectMode(event.target.value);
   });
   byId('setup-cancel').addEventListener('click', () => { editing = false; render(); });
+  byId('continue').addEventListener('click', async () => {
+    if (busy || !sync) return;
+    busy = true; error = ''; render();
+    try { await sync.point(); } catch (e) { error = knownError(e.message); }
+    finally { busy = false; sceneKey = ''; render(); }
+  });
   byId('close').addEventListener('click', () => {
     const wk = view(); if (!wk) return;
     if (CONFIRM_CLOSE.includes(wk.phase) && armed !== 'close:' + wk.stage) { arm('close:' + wk.stage); return; }
@@ -257,7 +277,7 @@
     else if (!ROOM.enabled) status = 'noFirebase';
     else {
       ROOM.init({ mount: 'room-mount', hideSetup: true, accent: '#e7c47c', counts: [2, 3, 4, 5, 6, 7, 8, 9], defaultCount: 5 });
-      sync = new WHO_KNOWS_SYNC.Host({ room: ROOM, db: firebase.database(),
+      sync = new WHO_KNOWS_SYNC.HostTable({ room: ROOM, db: firebase.database(),
         onChange: next => {
           if (state?.stage !== next?.stage) error = '';
           if (!state || state.sessionId !== next?.sessionId) writeSettings('setup', next?.settings);
@@ -268,15 +288,18 @@
           if (stale()) { editing = false; sceneKey = ''; disarm(); if (byId('manage').open) byId('manage').close(); }
           render();
         },
+        onPresence: () => { rosterKey = ''; render(); },
       });
       sync.connect();
+      document.addEventListener('visibilitychange', () => sync?.setVisible(!document.hidden));
     }
   }
   labels(); render();
   I18N.onChange(() => { labels(); render(); });
   const timers = [
     setInterval(paint, 250),
-    // Only the simulation keeps its own clock; live rooms tick inside the sync host.
+    // Only the simulation keeps its own clock; live rooms tick inside the table
+    // client (here and on every card).
     setInterval(() => {
       if (closed || !demo || !state || busy || !TIMED.includes(state.phase) || !(state.deadline > 0) || now() < state.deadline) return;
       state = E.apply(state, { id: uid(), type: 'tick', actor: 0, sessionId: state.sessionId, stage: state.stage, now: now(), seed: seed() });

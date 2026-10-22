@@ -29,7 +29,8 @@ var WHO_KNOWS_UI = (() => {
     youAre: ['你是', 'YOU ARE'], alsoSecret: ['秘密身分：{role}', 'Secretly: {role}'],
     secretWord: ['秘密單字', 'THE SECRET WORD'], yourPack: ['狼人同伴：{names}', 'Your pack: {names}'], packAlone: ['你是唯一的狼人。', 'You are the only Werewolf.'],
     watching: ['這輪你是觀眾', 'You’re watching this round'], watchingHint: ['下一輪會發給你身分。', 'You’ll get a role next round.'],
-    sittingOutCard: ['你目前休息中', 'You’re sitting out'], sittingOutHint: ['主持人讓你回來後，下一輪就能加入。', 'Once the host brings you back, you’ll join the next round.'],
+    sittingOutCard: ['你目前休息中', 'You’re sitting out'], sittingOutHint: ['回來玩之後，下一輪就會發身分給你。', 'Once you’re back, you get a role from the next round.'],
+    imBack: ['我回來了', 'I’m back'],
     chooseTitle: ['選擇秘密單字', 'Choose the secret word'],
     chooseHint: ['只有你看得到。選一個大家能用是非題猜到的字。', 'Only you can see these. Pick one everyone can reach with yes-or-no questions.'],
     level_easy: ['簡單', 'Easy'], level_medium: ['中等', 'Medium'], level_hard: ['困難', 'Hard'],
@@ -67,7 +68,7 @@ var WHO_KNOWS_UI = (() => {
     huntHint: ['大家都可以說話、宣稱身分、虛張聲勢。狼人在卡片上選人。', 'Everyone may talk, claim roles and bluff. The Werewolves choose on their cards.'],
     huntPick: ['誰是先知？', 'Who is the Seer?'], huntOthers: ['狼人正在選人。快說話，保護先知！', 'The Werewolves are choosing. Talk — protect the Seer!'],
     wordSecret: ['時間到，沒有猜中。', 'Time’s up — the word stays secret.'], tokensOut: ['是／否標記用完了，沒有猜中。', 'Out of Yes/No tokens — the word stays secret.'],
-    endedByHost: ['主持人結束了發問。', 'The host ended the questions.'],
+    endedByHost: ['發問提前結束了。', 'The questions were ended early.'],
     accuseTitle: ['找出狼人', 'Find a Werewolf'],
     accuseHint: ['討論後在卡片上投票。至少要有人得到兩票，才會揭曉最高票的人。', 'Discuss, then vote on your card. The most-voted player is revealed if they have at least two votes.'],
     yourVote: ['你的票：{name}', 'Your vote: {name}'], changeVote: ['可以點別人改票，全員投完就揭曉。', 'Tap someone else to change it. It reveals when everyone has voted.'],
@@ -95,14 +96,15 @@ var WHO_KNOWS_UI = (() => {
     out_master_found: ['平民勝利！', 'The Commons win!'], sub_master_found: ['出題人成功指認內鬼。', 'The Master named the Insider in time.'],
     out_insider_wins: ['內鬼勝利！', 'The Insider wins!'], sub_insider_wins: ['內鬼成功躲過了。', 'The Insider stayed hidden.'],
     out_nobody: ['這輪沒有人獲勝', 'Nobody wins this round'], sub_nobody: ['時間到了，沒有猜出單字。', 'Time ran out before the word was found.'],
-    out_void: ['這輪取消', 'Round cancelled'], sub_void_host: ['主持人取消了這輪，不計分。', 'The host cancelled this round. No points.'],
+    out_void: ['這輪取消', 'Round cancelled'], sub_void_host: ['這輪被取消了，不計分。', 'This round was cancelled. No points.'],
     sub_void_answerer_left: ['出題的人離開了，這輪不計分。', 'The answerer left, so this round doesn’t count.'],
     theWordWas: ['答案是', 'THE WORD WAS'], youWin: ['你這輪贏了', 'You win this round'], youLose: ['這輪沒贏', 'Not this time'],
     revealTitle: ['全員身分', 'EVERYONE’S ROLES'], votesTitle: ['大家怎麼投', 'HOW PEOPLE VOTED'], picksTitle: ['狼人的選擇', 'THE WEREWOLVES’ PICK'],
     judgeResult: ['判斷：是 {yes}・不是 {no}', 'Judgement: Yes {yes} · No {no}'], tieBreak: ['平手，以猜中者的票為準', 'Tie broken by the guesser’s vote'],
     nextRound: ['下一輪', 'Next round'], nextRoundHint: ['任何人都可以按下一輪。', 'Anyone can start the next round.'],
     scores: ['分數', 'SCORES'], pts: ['{n} 分', '{n} pts'], pt: ['{n} 分', '{n} pt'], you: ['你', 'YOU'], sittingOut: ['休息中', 'Sitting out'],
-    finished: ['遊戲結束', 'Game over'], hostCanRestart: ['主持人可以再開新的一局。', 'The host can start a new game.'], winner: ['優勝', 'Winner'], winners: ['並列優勝', 'Joint winners'], stoppedEarly: ['主持人結束了遊戲。', 'The host ended the game.'],
+    finished: ['遊戲結束', 'Game over'], hostCanRestart: ['主持人可以再開新的一局。', 'The host can start a new game.'], winner: ['優勝', 'Winner'], winners: ['並列優勝', 'Joint winners'], stoppedEarly: ['遊戲提前結束了。', 'The game was ended early.'],
+    newGame: ['開新的一局', 'Start a new game'], anyoneCanRestart: ['任何玩家都可以開新的一局（分數歸零）。', 'Anyone can start a new game (scores back to 0).'],
     hidden: ['隱藏身分', 'HIDDEN ROLES'], composition: ['{list}', '{list}'], mayorInDeal: ['村長也拿秘密身分', 'The Mayor holds one too'],
     pointsTitle: ['計分', 'SCORING'],
     setupTitle: ['選擇模式', 'Choose a mode'], start: ['開始第一輪', 'Start the first round'],
@@ -117,14 +119,18 @@ var WHO_KNOWS_UI = (() => {
     masterGuessOptHint: ['關掉就是原版規則：時間到，大家一起輸。', 'Off is the classic rule: if time runs out, everyone loses.'],
     playersNeeded: ['需要 4–9 位玩家，目前房間有 {n} 位。請回主選單調整人數。', 'Needs 4–9 players. This room has {n}. Change it in the Hub.'],
     hostNote: ['每個人用自己的玩家卡玩。這個分享畫面不會顯示答案或任何人的身分。', 'Everyone plays on their own player card. This shared screen never shows the word or anyone’s role.'],
-    pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], paused: ['已暫停', 'PAUSED'], pausedHint: ['主持人準備好就會繼續。', 'The host will resume when everyone is ready.'],
+    hostOptional: ['開始之後可以關掉這頁：遊戲會在大家的卡片上繼續，計時和「牌桌控制」也都在卡片上。', 'Once it starts, you may close this page: the game carries on on everyone’s cards, timer and Table controls included.'],
+    pause: ['暫停', 'Pause'], resume: ['繼續', 'Resume'], paused: ['已暫停', 'PAUSED'], pausedHint: ['大家準備好就可以繼續。', 'Resume when everyone is ready.'],
     extendQuestions: ['+1 分鐘', '+1 min'], extendOther: ['+30 秒', '+30 s'],
     close_countdown: ['立刻開始', 'Start now'], close_questions: ['結束發問', 'End the questions'], close_discuss: ['開始投票', 'Start the vote'],
     close_hunt: ['結束選人', 'Close the hunt'], close_accuse: ['結束投票', 'Close the vote'], close_judge: ['結束投票', 'Close the vote'],
     close_vote: ['結束投票', 'Close the vote'], close_masterGuess: ['結束指認', 'Close the guess'],
     manage: ['主持管理', 'Host controls'], close: ['關閉', 'Close'],
+    controls: ['牌桌控制', 'Table controls'], controlsSummary: ['暫停・加時・人員・設定，任何玩家都能用', 'Pause · time · players · settings — anyone can use'],
+    clockTools: ['計時', 'TIMER'], playerTools: ['玩家', 'PLAYERS'], gameTools: ['這一局', 'THIS GAME'],
+    onlineSeat: ['在線', 'online'], offlineSeat: ['不在線', 'offline'],
     rosterHint: ['有人離開語音就讓他先休息，下一輪不會發身分給他。出題的人離開時，這輪會取消。', 'Sit someone out if they leave the call; they skip the next rounds. If the answerer leaves, the round is cancelled.'],
-    sitOut: ['先休息', 'Sit out'], rejoin: ['回來玩', 'Join again'], playing: ['遊戲中', 'Playing'],
+    sitOut: ['先休息', 'Sit out'], sitOutConfirm: ['再按一次：讓 {name} 休息', 'Tap again to sit {name} out'], rejoin: ['回來玩', 'Join again'], playing: ['遊戲中', 'Playing'],
     makeNext: ['下一輪出題', 'Answers next'], nextAnswerer: ['下一輪出題：{name}', 'Next answerer: {name}'], nextAuto: ['下一輪出題：公平輪流', 'Next answerer: fair rotation'],
     nextSettings: ['下一輪的設定', 'Settings for the next round'], saveSettings: ['儲存（下一輪生效）', 'Save for the next round'],
     saved: ['已儲存，下一輪開始生效。', 'Saved. It applies from the next round.'],
@@ -138,8 +144,7 @@ var WHO_KNOWS_UI = (() => {
     room: ['房間 {code}', 'Room {code}'], player: ['玩家 {n}', 'Player {n}'],
     offline: ['連線暫時中斷，正在重新連線…', 'Connection lost. Reconnecting…'], connecting: ['正在連線…', 'Connecting…'], ready: ['', ''],
     hostAway: ['等待主持頁重新連線…', 'Waiting for the host screen to reconnect…'],
-    other_host: ['另一個主持頁正在控制房間。關閉那頁後，這裡會接續。', 'Another host tab is controlling this room. Close it to continue here.'],
-    switched: ['房間已切換到其他遊戲。按「開始」可以再玩。', 'The room switched to another game. Start again to play.'],
+    switched: ['房間已切換到其他遊戲。', 'The room switched to another game.'],
     noFirebase: ['目前無法連線到玩家卡片，請檢查網路後重新整理。', 'Player cards are unavailable. Check your connection and reload.'],
     roomChanged: ['房間已變更。重新載入此頁以使用新房間。', 'The room changed. Reload this page to use the new room.'],
     not_enough_players: ['至少要 4 位玩家在遊戲中。', 'At least 4 players must be playing.'],
@@ -150,6 +155,9 @@ var WHO_KNOWS_UI = (() => {
     not_available: ['這個動作目前無法使用，請依最新畫面操作。', 'That isn’t available right now. Follow the current screen.'],
     error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check your connection and try again.'],
     rosterChanged: ['玩家人數已變更，請為這組玩家開始新的一局。', 'The number of players changed. Start a new game for this group.'],
+    tableEmpty: ['這局遊戲已經不在了，請主持人重新開始 WHO KNOWS?。', 'This game is no longer available. Ask the host to start WHO KNOWS? again.'],
+    continueCards: ['讓大家的卡片回到這局', 'Bring every card back to this game'],
+    switchedHint: ['有玩家卡片正在顯示別的遊戲。可以讓卡片回到這局繼續，或在下面開新的一局。', 'Some player cards now show another game. Bring them back to continue, or start a new game below.'],
     tapAgain: ['再按一次確認', 'Tap again to confirm'],
     modeLabel: ['模式', 'Mode'], nextChosen: ['下一輪出題 ✓', 'Answers next ✓'],
     tokensLegend: ['回答標記', 'ANSWER TOKENS'], scoringLabel: ['計分', 'Scoring'],
@@ -178,13 +186,19 @@ var WHO_KNOWS_UI = (() => {
   const seatsOf = wk => list(wk?.roster).slice().sort((a, b) => a.playerNum - b.playerNum);
   const nameOf = (wk, n) => seatsOf(wk).find(p => p.playerNum === n)?.name || t('player', { n });
   const names = (wk, nums) => list(nums).map(n => nameOf(wk, n)).join(lang() === 'zh' ? '、' : ', ');
-  const errorKey = code => ['stale_turn', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster', 'already_in_line'].includes(code) ? code : 'error';
+  const errorKey = code => ['stale_turn', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster', 'already_in_line', 'offline'].includes(code) ? code : 'error';
   const pts = n => t(Number(n) === 1 ? 'pt' : 'pts', { n: Number(n) || 0 });
   const clock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const TOKEN_GLYPH = { yes: '✓', no: '✕', maybe: '?', close: '≈', far: '⇢', unknown: '…', correct: '★' };
   const answererKey = mode => 'answerer_' + (mode === 'werewolf' ? 'werewolf' : 'insider');
   // The answer tokens of each mode (mirrors the rules; cards also get them in `me`).
   const ANSWERS = { insider: ['yes', 'no', 'unknown', 'correct'], werewolf: ['yes', 'no', 'maybe', 'close', 'far', 'correct'] };
+  const RULES = () => typeof WHO_KNOWS_ENGINE !== 'undefined' ? WHO_KNOWS_ENGINE.CONFIG : {
+    modes: ['insider', 'werewolf'], questionMinutes: [3, 4, 5, 6, 8], defaultQuestionMinutes: { insider: 5, werewolf: 4 },
+    difficulties: ['mixed', 'easy', 'medium', 'hard'], tokenOptions: [0, 20, 30, 36], wolfOptions: ['auto', 1, 2] };
+  const TIMED = ['countdown', 'questions', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess'];
+  // Closing these ends the guessing or settles a vote, so it takes two taps.
+  const CONFIRM_CLOSE = ['questions', 'hunt', 'accuse', 'judge', 'vote', 'masterGuess'];
   const WINNER = { village_word: 'village', village_vote: 'village', wolves_seer: 'wolves', wolves_hidden: 'wolves', commons_found: 'commons', master_found: 'commons', insider_wins: 'insider', nobody: 'none', void: 'void' };
 
   // ── original flat illustrations (no <defs>, so many copies can coexist) ──
@@ -367,25 +381,45 @@ var WHO_KNOWS_UI = (() => {
 
   // ── player card ─────────────────────────────────────────────────────────
   class Card {
-    constructor(element, { now = () => Date.now(), connected = () => true, nameBanner = () => '', send = null } = {}) {
-      this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner; this.send = send;
+    // `table: true` = the card runs the table itself (no host page needed):
+    // commands settle directly and the Table controls panel is available.
+    constructor(element, { now = () => Date.now(), connected = () => true, nameBanner = () => '', send = null, table = false } = {}) {
+      this.element = element; this.now = now; this.connected = connected; this.nameBanner = nameBanner; this.send = send; this.table = table === true;
       this.data = null; this.destroyed = false; this.keys = {}; this.pending = null; this.error = ''; this.armed = null;
       this.draft = ''; this.wasAsking = false; this.wasInLine = false; this.pressing = false; this.dirty = false; this.scrollToTurn = false; this.showOther = false;
-      element.innerHTML = `<div class="secret-card wk-card"><div data-wk-head></div><div data-wk-main></div><div class="wk-composer" data-wk-composer hidden><label class="wk-composer-label"><span data-wk-composer-label></span><input type="text" maxlength="80" autocomplete="off" enterkeyhint="send" lang="en" data-wk-input></label><p class="wk-soft" data-wk-composer-hint></p><button type="button" class="wk-button wk-small" data-wk-save hidden></button></div><div data-wk-tail></div><p class="wk-feedback" data-wk-error role="status"></p><p class="wk-feedback" data-wk-connection role="status"></p></div>`;
+      this.armedControl = ''; this.settingsDirty = false; this.settingsKey = ''; this.controlsNote = '';
+      element.innerHTML = `<div class="secret-card wk-card"><div data-wk-head></div><div data-wk-main></div><div class="wk-composer" data-wk-composer hidden><label class="wk-composer-label"><span data-wk-composer-label></span><input type="text" maxlength="80" autocomplete="off" enterkeyhint="send" lang="en" data-wk-input></label><p class="wk-soft" data-wk-composer-hint></p><button type="button" class="wk-button wk-small" data-wk-save hidden></button></div><div data-wk-tail></div><details class="wk-controls" data-wk-controls hidden><summary class="wk-controls-summary"><span class="wk-controls-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/></svg></span><span class="wk-controls-text"><strong data-wk-controls-title></strong><small data-wk-controls-sub></small></span></summary><div class="wk-controls-body"><div data-wk-controls-live></div><div class="wk-controls-settings" data-wk-controls-settings></div><p class="wk-feedback" data-wk-controls-note role="status"></p></div></details><p class="wk-feedback" data-wk-error role="status"></p><p class="wk-feedback" data-wk-connection role="status"></p></div>`;
       this.root = element.firstElementChild;
       this.regions = { head: this.root.querySelector('[data-wk-head]'), main: this.root.querySelector('[data-wk-main]'), tail: this.root.querySelector('[data-wk-tail]') };
       this.composer = this.root.querySelector('[data-wk-composer]'); this.input = this.root.querySelector('[data-wk-input]'); this.save = this.root.querySelector('[data-wk-save]');
+      this.controls = this.root.querySelector('[data-wk-controls]');
+      this.controlParts = { live: this.root.querySelector('[data-wk-controls-live]'), settings: this.root.querySelector('[data-wk-controls-settings]'), note: this.root.querySelector('[data-wk-controls-note]') };
       this.click = event => {
         if (event.target.closest('[data-wk-save]')) { this.sendText(); return; }
+        if (event.target.closest('[data-wk-save-settings]')) { this.saveSettings(); return; }
         if (event.target.closest('[data-wk-ui="other"]')) { this.showOther = !this.showOther; this.keys = {}; this.render(); return; }
         const button = event.target.closest('[data-wk-action]');
         if (!button || button.disabled || !this.root.contains(button)) return;
+        // Table controls that end a phase, cancel a round, sit someone out or
+        // restart take a second tap.
+        const confirm = button.dataset.wkConfirm;
+        if (confirm && this.armedControl !== confirm) { this.armControl(confirm); return; }
+        if (confirm) this.disarmControl();
         const payload = {};
         for (const [key, value] of Object.entries(button.dataset)) if (key.startsWith('wkArg')) {
           const field = key.slice(5, 6).toLowerCase() + key.slice(6);
-          payload[field] = /^-?\d+$/.test(value) ? Number(value) : value;
+          payload[field] = /^-?\d+$/.test(value) ? Number(value) : value === 'true' ? true : value === 'false' ? false : value === 'none' ? null : value;
         }
         this.action(button.dataset.wkAction, payload, button);
+      };
+      this.settingsChange = event => {
+        const field = event.target.closest('[data-wk-set]'); if (!field) return;
+        this.settingsDirty = true; this.controlsNote = ''; this.controlParts.note.textContent = '';
+        if (field.dataset.wkSet === 'mode') {
+          const minutes = this.controls.querySelector('[data-wk-set="questionMinutes"]');
+          if (minutes) minutes.value = String(RULES().defaultQuestionMinutes[field.value] || 5);
+          this.showModeOnly(field.value);
+        }
       };
       // Never rebuild buttons under a finger: a click that starts on one node
       // and ends on its replacement is silently lost on phones.
@@ -394,6 +428,7 @@ var WHO_KNOWS_UI = (() => {
       this.typing = () => { this.draft = this.input.value; this.syncComposer(); };
       this.key = event => { if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); this.composerEnter(); } };
       this.root.addEventListener('click', this.click);
+      this.controls.addEventListener('change', this.settingsChange);
       this.root.addEventListener('pointerdown', this.down);
       for (const type of ['pointerup', 'pointercancel']) window.addEventListener(type, this.up);
       this.input.addEventListener('input', this.typing);
@@ -414,14 +449,42 @@ var WHO_KNOWS_UI = (() => {
       if (type === 'answer') this.armed = null;
       if (type === 'raise') payload.text = this.draft;
       if (type === 'answer') payload.askId = wk.current?.id;
+      if (type === 'restart' && !payload.settings) payload.settings = wk.settings;
       const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
       this.pending = { id, type, sessionId: wk.sessionId, stage: wk.stage };
       this.error = ''; this.keys = {}; this.render();
-      Promise.resolve(this.send(Object.assign({ id, type, sessionId: wk.sessionId, stage: wk.stage }, payload))).catch(error => {
-        if (this.pending?.id !== id) return;
-        this.pending = null; this.error = t(errorKey(error?.message === 'stale_turn' ? 'stale_turn' : 'error'));
+      return Promise.resolve(this.send(Object.assign({ id, type, sessionId: wk.sessionId, stage: wk.stage }, payload))).then(() => {
+        // Run by the table: the command has already settled.
+        if (!this.table || this.pending?.id !== id) return true;
+        this.pending = null; this.keys = {}; this.render();
+        return true;
+      }, error => {
+        if (this.pending?.id !== id) return false;
+        const code = error?.message;
+        this.pending = null; this.error = t(errorKey(this.table ? (code === 'offline' ? 'offline' : code) : code === 'stale_turn' ? 'stale_turn' : 'error'));
         this.keys = {}; this.render();
+        return false;
       });
+    }
+    armControl(key) {
+      this.armedControl = key; this.keys = {}; this.render();
+      clearTimeout(this.controlTimer);
+      this.controlTimer = setTimeout(() => { if (this.armedControl) { this.armedControl = ''; this.keys = {}; this.render(); } }, 4000);
+    }
+    disarmControl() { this.armedControl = ''; clearTimeout(this.controlTimer); }
+    readSettings() {
+      const get = key => this.controls.querySelector(`[data-wk-set="${key}"]`);
+      const wolves = get('wolves')?.value;
+      return { mode: get('mode').value, questionMinutes: Number(get('questionMinutes').value), difficulty: get('difficulty').value,
+        tokens: Number(get('tokens').value), wolves: wolves === 'auto' ? 'auto' : Number(wolves),
+        mayorSecret: !!get('mayorSecret')?.checked, masterGuess: !!get('masterGuess')?.checked };
+    }
+    async saveSettings() {
+      if (!this.wk || this.pending) return;
+      const ok = await this.action('settings', { settings: this.readSettings() });
+      if (!ok) return;
+      this.settingsDirty = false; this.settingsKey = ''; this.controlsNote = t('saved');
+      this.render();
     }
     sendText() {
       const me = this.wk?.me;
@@ -458,6 +521,7 @@ var WHO_KNOWS_UI = (() => {
       if (finished && document.activeElement !== this.input) { this.draft = ''; this.input.value = ''; }
       if (this.armed && this.armed !== wk.current?.id) this.armed = null;
       if (previous?.current?.id !== wk.current?.id) this.showOther = false;
+      if (previous && (previous.stage !== wk.stage || previous.sessionId !== wk.sessionId)) { this.disarmControl(); this.controlsNote = ''; }
       this.wasAsking = asking; this.wasInLine = inLine;
       if (this.pressing) { this.dirty = true; this.syncComposer(); this.paint(); return; }
       this.render();
@@ -472,6 +536,7 @@ var WHO_KNOWS_UI = (() => {
       this.keys = keys;
       this.root.className = 'secret-card wk-card ' + this.theme(wk);
       this.root.querySelector('[data-wk-error]').textContent = this.error;
+      this.renderControls();
       this.syncComposer();
       this.paint();
       if (this.scrollToTurn) {
@@ -493,7 +558,7 @@ var WHO_KNOWS_UI = (() => {
     }
     ticket(wk) {
       const me = wk.me || {};
-      if (!me.active && !me.inRound) return `<div class="wk-ticket is-muted"><span class="wk-ticket-art">${art('mark')}</span><span class="wk-ticket-text"><strong class="wk-ticket-role">${esc(t('sittingOutCard'))}</strong><span class="wk-ticket-goal">${esc(t('sittingOutHint'))}</span></span></div>`;
+      if (!me.active && (!me.inRound || this.table)) return `<div class="wk-ticket is-muted"><span class="wk-ticket-art">${art('mark')}</span><span class="wk-ticket-text"><strong class="wk-ticket-role">${esc(t('sittingOutCard'))}</strong><span class="wk-ticket-goal">${esc(t('sittingOutHint'))}</span></span></div>${this.back(wk)}`;
       if (!me.inRound) return `<div class="wk-ticket is-muted"><span class="wk-ticket-art">${art('mark')}</span><span class="wk-ticket-text"><strong class="wk-ticket-role">${esc(t('watching'))}</strong><span class="wk-ticket-goal">${esc(t('watchingHint'))}</span></span></div>`;
       const role = me.role, werewolf = wk.mode === 'werewolf';
       let title = t('role_' + role), goal = t('goal_' + role), extra = '', artKey = role;
@@ -505,17 +570,25 @@ var WHO_KNOWS_UI = (() => {
       // Once the word is public the zone below shows it; one paper card is enough.
       return `<div class="wk-ticket" style="--role:${roleColor(me.isMayor ? 'mayor' : role)}"><span class="wk-ticket-art">${art(artKey)}</span><span class="wk-ticket-text"><span class="wk-kicker">${esc(t('youAre'))}</span><strong class="wk-ticket-role">${esc(title)}</strong><span class="wk-ticket-goal">${esc(goal)}</span>${extra}</span></div>${me.word && !wk.word ? paper(me.word) : ''}${pack}`;
     }
+    // A seat that is sitting out can always bring itself back from its card.
+    back(wk) {
+      const me = wk.me || {}, n = Number(this.data.playerNum);
+      if (!this.table || me.active || !list(wk.roster).some(p => p.playerNum === n)) return '';
+      return `<button type="button" class="wk-button wk-primary wk-back" data-wk-action="exclude" data-wk-arg-player-num="${n}" data-wk-arg-active="true"${this.pending ? ' disabled' : ''}>${esc(t('imBack'))}</button>`;
+    }
     main(data) {
       const wk = data.wk, me = wk.me || {};
-      if (wk.phase === 'finished') return `${standings(wk, data.playerNum)}<p class="wk-soft wk-center">${esc(t('hostCanRestart'))}</p>`;
-      if (wk.phase === 'result') return `${resultBlock(wk, data.playerNum)}${me.canNext ? `<button type="button" class="wk-button wk-primary wk-huge" data-wk-action="next"${this.pending ? ' disabled' : ''}>${esc(t('nextRound'))}</button><p class="wk-soft wk-center">${esc(t('nextRoundHint'))}</p>` : ''}`;
+      if (wk.phase === 'finished') return `${standings(wk, data.playerNum)}${this.table && me.canControl
+        ? `<button type="button" class="wk-button wk-primary wk-huge" data-wk-action="restart"${this.pending ? ' disabled' : ''}>${esc(t('newGame'))}</button><p class="wk-soft wk-center">${esc(t('anyoneCanRestart'))}</p>`
+        : `<p class="wk-soft wk-center">${esc(t(this.table ? 'anyoneCanRestart' : 'hostCanRestart'))}</p>`}${this.back(wk)}`;
+      if (wk.phase === 'result') return `${resultBlock(wk, data.playerNum)}${me.canNext ? `<button type="button" class="wk-button wk-primary wk-huge" data-wk-action="next"${this.pending ? ' disabled' : ''}>${esc(t('nextRound'))}</button><p class="wk-soft wk-center">${esc(t('nextRoundHint'))}</p>` : this.back(wk)}`;
       return this.ticket(wk) + this.zone(wk);
     }
     zone(wk) {
       const me = wk.me || {}, busy = !!this.pending, answerer = nameOf(wk, wk.mayor);
       const phase = wk.phase === 'paused' ? 'paused' : wk.phase;
       const box = (cls, inner) => `<div class="wk-zone ${cls}">${inner}</div>`;
-      if (phase === 'paused') return box('', `<h3>${esc(t('paused'))}</h3>${timer(wk)}<p>${esc(t('pausedHint'))}</p>`);
+      if (phase === 'paused') return box('', `<h3>${esc(t('paused'))}</h3>${timer(wk)}<p>${esc(t('pausedHint'))}</p>${this.table && me.canControl ? `<button type="button" class="wk-button wk-primary" data-wk-action="resume"${busy ? ' disabled' : ''}>${esc(t('resume'))}</button>` : ''}`);
       if (phase === 'choose') {
         if (me.isMayor && me.options) {
           const options = list(me.options).map(option => `<button type="button" class="wk-option" data-wk-action="choose" data-wk-arg-word-id="${esc(option.id)}"${busy ? ' disabled' : ''}><span class="wk-level wk-level-${esc(option.level)}">${esc(t('level_' + option.level))}</span><strong lang="en">${esc(option.en)}</strong>${lang() === 'zh' ? `<span lang="zh-Hant">${esc(option.zh)}</span>` : ''}</button>`).join('');
@@ -586,6 +659,74 @@ var WHO_KNOWS_UI = (() => {
       const rows = list(wk.standings);
       return `<details class="wk-scores"><summary><span class="wk-kicker">${esc(t('scores'))}</span><span>${esc(pts(rows.find(row => row.playerNum === me)?.score))}</span></summary><ol>${rows.map(row => `<li class="${row.playerNum === me ? 'is-me' : ''}"><span>${esc(row.name || t('player', { n: row.playerNum }))}</span><span>${esc(pts(row.score))}</span></li>`).join('')}</ol></details>`;
     }
+    // ── Table controls: everything the host page could do, on any active card ──
+    renderControls() {
+      const wk = this.wk, me = wk?.me || {};
+      const show = this.table && !!wk && me.canControl === true;
+      this.controls.hidden = !show;
+      if (!show) return;
+      const title = this.controls.querySelector('[data-wk-controls-title]'), sub = this.controls.querySelector('[data-wk-controls-sub]');
+      if (title.textContent !== t('controls')) title.textContent = t('controls');
+      if (sub.textContent !== t('controlsSummary')) sub.textContent = t('controlsSummary');
+      const liveKey = JSON.stringify([lang(), wk.sessionId, wk.stage, wk.phase, wk.roster, wk.online, wk.nextAnswerer, this.pending?.id, this.armedControl]);
+      if (liveKey !== this.controlsKey) { this.controlParts.live.innerHTML = this.controlsLive(wk); this.controlsKey = liveKey; }
+      const settingsKey = JSON.stringify([lang(), wk.sessionId, wk.settings]);
+      if (settingsKey !== this.settingsKey && !this.settingsDirty) {
+        this.controlParts.settings.innerHTML = this.settingsForm(wk.settings || {});
+        this.showModeOnly(wk.settings?.mode);
+        this.settingsKey = settingsKey;
+      }
+      const save = this.controls.querySelector('[data-wk-save-settings]');
+      if (save) save.disabled = !!this.pending;
+      for (const field of this.controls.querySelectorAll('[data-wk-set]')) field.disabled = !!this.pending;
+      if (this.controlParts.note.textContent !== this.controlsNote) this.controlParts.note.textContent = this.controlsNote;
+    }
+    controlsLive(wk) {
+      const me = this.data.playerNum, busy = this.pending ? ' disabled' : '', phase = wk.phase, timed = TIMED.includes(phase);
+      const online = new Set(list(wk.online));
+      const button = (type, label, { args = '', confirm = '', confirmLabel = '', primary = false } = {}) => {
+        const armed = confirm && this.armedControl === confirm;
+        return `<button type="button" class="wk-button wk-small${primary ? ' wk-primary' : ''}${armed ? ' wk-danger is-armed' : ''}" data-wk-action="${type}"${confirm ? ` data-wk-confirm="${esc(confirm)}"` : ''}${args}${busy}>${esc(armed ? confirmLabel : label)}</button>`;
+      };
+      const section = (kicker, inner, hint = '') => `<section class="wk-tools"><span class="wk-kicker">${esc(kicker)}</span>${hint ? `<p class="wk-soft">${esc(hint)}</p>` : ''}${inner}</section>`;
+      const parts = [];
+      if (timed || phase === 'paused') {
+        const row = [button(phase === 'paused' ? 'resume' : 'pause', t(phase === 'paused' ? 'resume' : 'pause'))];
+        if (timed && phase !== 'countdown') row.push(button('extend', t(phase === 'questions' ? 'extendQuestions' : 'extendOther')));
+        if (timed) row.push(CONFIRM_CLOSE.includes(phase) ? button('close', t('close_' + phase), { confirm: 'close:' + wk.stage, confirmLabel: t('tapAgain') }) : button('close', t('close_' + phase)));
+        parts.push(section(t('clockTools'), `<div class="wk-tool-row">${row.join('')}</div>`));
+      }
+      const next = wk.nextAnswerer;
+      const players = seatsOf(wk).map(p => {
+        const n = p.playerNum, name = p.name || t('player', { n }), isNext = next === n;
+        const status = `${t(p.active ? 'playing' : 'sittingOut')} · ${t(online.has(n) ? 'onlineSeat' : 'offlineSeat')}`;
+        const nextButton = p.active && phase !== 'finished' ? button('setNext', t(isNext ? 'nextChosen' : 'makeNext'), { args: ` data-wk-arg-player-num="${isNext ? 'none' : n}"` }) : '';
+        const seatButton = p.active
+          ? button('exclude', t('sitOut'), { args: ` data-wk-arg-player-num="${n}" data-wk-arg-active="false"`, confirm: 'out:' + n, confirmLabel: t('sitOutConfirm', { name }) })
+          : button('exclude', t('rejoin'), { args: ` data-wk-arg-player-num="${n}" data-wk-arg-active="true"` });
+        return `<li class="wk-tool-player${p.active ? '' : ' is-out'}${n === me ? ' is-me' : ''}"><span class="wk-tool-name"><span><i class="wk-dot${online.has(n) ? ' is-on' : ''}" aria-hidden="true"></i>${esc(name)}${n === me ? ` <em>${esc(t('you'))}</em>` : ''}</span><small>${esc(status)}</small></span><span class="wk-tool-buttons">${nextButton}${seatButton}</span></li>`;
+      }).join('');
+      parts.push(section(t('playerTools'), `<p class="wk-progress-line">${esc(next != null ? t('nextAnswerer', { name: nameOf(wk, next) }) : t('nextAuto'))}</p><ul class="wk-tool-players">${players}</ul>`, t('rosterHint')));
+      const roundLive = wk.roundNo > 0 && !['result', 'finished'].includes(phase);
+      // After the final standings the card itself offers the new game.
+      if (phase !== 'finished') {
+        const game = [];
+        if (roundLive) game.push(button('void', t('voidRound'), { confirm: 'void', confirmLabel: t('voidConfirm') }));
+        game.push(button('restart', t('restart'), { confirm: 'restart', confirmLabel: t('restartConfirm') }));
+        game.push(button('stop', t('stop'), { confirm: 'stop', confirmLabel: t('stopConfirm') }));
+        parts.push(section(t('gameTools'), `<div class="wk-tool-row">${game.join('')}</div>`));
+      }
+      return parts.join('');
+    }
+    settingsForm(settings) {
+      const rules = RULES(), mode = settings.mode || 'insider';
+      const select = (key, values, label, value) => `<label class="wk-field"><span>${esc(label)}</span><select data-wk-set="${key}">${values.map(v => `<option value="${esc(v)}"${String(v) === String(value) ? ' selected' : ''}>${esc(key === 'mode' ? t('mode_' + v) : key === 'questionMinutes' ? t('minutesN', { n: v }) : key === 'difficulty' ? t('diff_' + v) : key === 'tokens' ? (Number(v) === 0 ? t('tokensNone') : String(v)) : t('wolves_' + v))}</option>`).join('')}</select></label>`;
+      const check = (key, value, label, hint, only) => `<label class="wk-check" data-wk-set-only="${only}"><input type="checkbox" data-wk-set="${key}"${value ? ' checked' : ''}><span><span>${esc(label)}</span><small>${esc(hint)}</small></span></label>`;
+      return `<section class="wk-tools"><span class="wk-kicker">${esc(t('nextSettings'))}</span><div class="wk-settings wk-card-settings">${select('mode', rules.modes, t('modeLabel'), mode)}${select('questionMinutes', rules.questionMinutes, t('minutes'), settings.questionMinutes ?? rules.defaultQuestionMinutes[mode])}${select('difficulty', rules.difficulties, t('difficulty'), settings.difficulty || 'mixed')}<div class="wk-mode-only" data-wk-set-only="werewolf">${select('tokens', rules.tokenOptions, t('tokens'), settings.tokens ?? 36)}${select('wolves', rules.wolfOptions, t('wolves'), settings.wolves ?? 'auto')}</div></div>${check('mayorSecret', !!settings.mayorSecret, t('mayorSecret'), t('mayorSecretHint'), 'werewolf')}${check('masterGuess', settings.masterGuess !== false, t('masterGuess'), t('masterGuessOptHint'), 'insider')}<button type="button" class="wk-button wk-small wk-primary" data-wk-save-settings>${esc(t('saveSettings'))}</button></section>`;
+    }
+    showModeOnly(mode) {
+      for (const element of this.controls.querySelectorAll('[data-wk-set-only]')) element.hidden = element.dataset.wkSetOnly !== (mode || 'insider');
+    }
     syncComposer() {
       const wk = this.wk, me = wk?.me || {};
       const show = !!wk && wk.phase === 'questions' && me.inRound && me.active && !me.isMayor;
@@ -605,11 +746,12 @@ var WHO_KNOWS_UI = (() => {
       const now = this.now();
       paintTimers(this.root, now);
       const wk = this.wk, line = this.root.querySelector('[data-wk-connection]');
-      if (line) line.textContent = !this.connected() ? t('offline') : wk.hostLiveUntil && now > wk.hostLiveUntil + 4000 ? t('hostAway') : '';
+      if (line) line.textContent = !this.connected() ? t('offline') : !this.table && wk.hostLiveUntil && now > wk.hostLiveUntil + 4000 ? t('hostAway') : '';
     }
     destroy() {
-      this.destroyed = true; clearInterval(this.timer); clearTimeout(this.disarm);
+      this.destroyed = true; clearInterval(this.timer); clearTimeout(this.disarm); clearTimeout(this.controlTimer);
       this.root.removeEventListener('click', this.click); this.root.removeEventListener('pointerdown', this.down);
+      this.controls.removeEventListener('change', this.settingsChange);
       for (const type of ['pointerup', 'pointercancel']) window.removeEventListener(type, this.up);
       this.input.removeEventListener('input', this.typing); this.input.removeEventListener('keydown', this.key);
     }

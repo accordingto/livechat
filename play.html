@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="open-mic.css?v=om-cards-1">
   <link rel="stylesheet" href="bomb-relay.css?v=br-pacing-3-1">
   <link rel="stylesheet" href="sketch-relay.css?v=relay-2">
-  <link rel="stylesheet" href="who-knows.css?v=wk-1">
+  <link rel="stylesheet" href="who-knows.css?v=wk-2">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -900,7 +900,10 @@
   <script src="bomb-relay-ui.js?v=br-pacing-3-1"></script>
   <script src="sketch-relay-art.js?v=relay-2"></script>
   <script src="sketch-relay-ui.js?v=relay-2"></script>
-  <script src="who-knows-ui.js?v=wk-1"></script>
+  <script src="who-knows-words.js?v=wk-2"></script>
+  <script src="who-knows-engine.js?v=wk-2"></script>
+  <script src="who-knows-sync.js?v=wk-2"></script>
+  <script src="who-knows-ui.js?v=wk-2"></script>
   <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
   <script src="open-mic-ui.js?v=om-cards-1"></script>
@@ -2475,6 +2478,7 @@
     let bombCard = null;
     let relayCard = null;
     let wkCard = null;
+    let wkTable = null;
     let openMicCard = null;
     let openMicTimer = null;
     let onceCard = null;
@@ -2497,6 +2501,37 @@
       bluffCardFrame.style.height = Math.max(500, Math.min(16000, event.data.height)) + 'px';
     });
     let talkClockOffset = 0;
+    // WHO KNOWS?: this card subscribes to the game's table and runs it with
+    // everyone else's cards, so no host page has to stay open.
+    function followWkTable(pointer) {
+      const playerNum = Number(pointer.playerNum);
+      if (!wkTable || wkTable.token !== pointer.wk.table || wkTable.actor !== playerNum) {
+        if (wkTable) wkTable.close();
+        if (wkCard) { wkCard.destroy(); wkCard = null; }
+        wkTable = new WHO_KNOWS_SYNC.Table({ db, code: session, token: pointer.wk.table, actor: playerNum,
+          onChange: paintWkTable, onPresence: paintWkTable, onStatus: () => wkCard?.paint() });
+        wkTable.setVisible(!document.hidden);
+        wkTable.connect();
+      }
+      paintWkTable();
+    }
+    function paintWkTable() {
+      if (!wkTable || latestData?.game !== 'whoknows' || latestData.wk?.version !== 2) return;
+      const view = wkTable.view();
+      if (!view) {
+        if (!wkCard) el.innerHTML = `<div class="secret-card wk-card"><p class="wk-soft">${WHO_KNOWS_UI.esc(WHO_KNOWS_UI.t(wkTable.loaded ? 'tableEmpty' : 'connecting'))}</p></div>`;
+        return;
+      }
+      if (!wkCard) wkCard = new WHO_KNOWS_UI.Card(el, {
+        nameBanner, table: true,
+        now: () => wkTable ? wkTable.now() : Date.now() + talkClockOffset,
+        connected: () => talkConnected,
+        send: command => wkTable ? wkTable.command(command.type, command) : Promise.reject(new Error('offline')),
+      });
+      wkCard.update(view);
+    }
+    // Read-only, for the browser checks: what this seat currently sees.
+    window.WHO_KNOWS_CARD = { view: () => wkTable?.view() || null };
     function showCard(data) {
       renderCard(data);
       fitCardWords();
@@ -2505,9 +2540,12 @@
     function renderCard(data) {
       setCardTitle(data.name || urlName);
       // WHO KNOWS? keeps one stable card (and its typed question) across updates.
-      const isWk = data.game === 'whoknows' && data.wk?.version === 1;
+      // Version 2 points this link at the game's table, which the cards run
+      // themselves; version 1 is a view from a host page that hasn't reloaded.
+      const isWk = data.game === 'whoknows' && (data.wk?.version === 1 || (data.wk?.version === 2 && /^[a-f0-9]{32}$/.test(data.wk.table || '')));
       document.body.classList.toggle('wk-card-page', isWk);
       if (wkCard && !isWk) { wkCard.destroy(); wkCard = null; }
+      if (wkTable && !(isWk && data.wk.version === 2)) { wkTable.close(); wkTable = null; }
       if (isWk) {
         document.title = `${data.name || urlName || 'Player'} · WHO KNOWS?`;
         document.body.classList.remove('sketch-relay-card-page', 'bomb-card-page', 'open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
@@ -2521,6 +2559,8 @@
         if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
         if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
         if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+        if (data.wk.version === 2) { followWkTable(data); return; }
+        if (wkCard?.table) { wkCard.destroy(); wkCard = null; }
         if (!wkCard) wkCard = new WHO_KNOWS_UI.Card(el, {
           nameBanner,
           now: () => Date.now() + talkClockOffset,
@@ -2980,6 +3020,7 @@
       if (bombCard) { bombCard.destroy(); bombCard = null; }
       document.body.classList.remove('bomb-card-page');
       if (wkCard) { wkCard.destroy(); wkCard = null; }
+      if (wkTable) { wkTable.close(); wkTable = null; }
       document.body.classList.remove('wk-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
@@ -3001,8 +3042,8 @@
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     let db = null;
     let latestData = null;
-    document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
+    document.addEventListener('visibilitychange', () => { dixitHostBridge?.setActive(!document.hidden); wkTable?.setVisible(!document.hidden); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; wkTable?.close(); wkTable = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
     window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {

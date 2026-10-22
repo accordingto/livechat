@@ -3,7 +3,10 @@
 // WK_QA_MODE=insider|werewolf, WK_QA_PLAYERS=4..9, WK_QA_OUTPUT=<dir outside the Hub>,
 // WK_QA_LAYOUT=0 skips the captures. Serves the REAL who-knows.html host and the
 // original play.html links against one isolated Firebase-compatible in-memory
-// authority. Every external request is intercepted; no live room is touched.
+// database. The host page is CLOSED right after Start: the cards then run the
+// table (clock, Table controls, next rounds) on their own; the host page is
+// reopened later only as an optional viewer. Every external request is
+// intercepted; no live room is touched.
 const { chromium } = require(process.argv[2] || 'playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -89,6 +92,7 @@ function installFirebase({ code, tokens, names, epoch }) {
       set: value => request({ type: 'set', path: location, value }),
       update: value => request({ type: 'update', path: location, value }),
       remove: () => request({ type: 'set', path: location, value: null }),
+      onDisconnect: () => ({ remove: async () => {}, cancel: async () => {} }),
       async transaction(updater) {
         for (let attempt = 0; attempt < 50; attempt++) {
           const { value: current } = await request({ type: 'get', path: location });
@@ -159,23 +163,20 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     for (let i = 0; i < 400; i++) { await delivery; if (await predicate()) return; await pause(25); }
     throw new Error('Browser state did not settle: ' + label);
   };
-  let host, players = [];
-  const state = () => host.evaluate(() => structuredClone(WHO_KNOWS_HOST.state));
-  const status = () => host.evaluate(() => WHO_KNOWS_HOST.status);
-  const cards = () => Promise.all(players.map(page => page.evaluate(() => structuredClone(window.__qaReceived))));
-  const card = n => players[n - 1];
+  let host = null, players = [];
   const control = () => Object.entries(db.get(`rooms/${code}/players`) || {}).find(([, value]) => value?.stateJson)?.[1] || null;
-  // Small clock steps keep the host lease valid; each step waits for a renewal.
-  const advance = async (ms, { renew = true } = {}) => {
-    while (ms > 0) {
-      const step = renew ? Math.min(ms, 8000) : ms; ms -= step; offset += step;
-      db.put('.info/serverTimeOffset', offset); deliver(); await delivery;
-      if (renew) await wait(() => (control()?.leaseUntil || 0) > epoch + offset + 4000, 'lease renewal');
-    }
-  };
+  const tableToken = () => Object.entries(db.get(`rooms/${code}/players`) || {}).find(([, value]) => value?.stateJson)?.[0] || null;
+  // The canonical table, read straight from the database: no page has to be open.
+  const state = async () => { const table = control(); return table?.stateJson ? JSON.parse(table.stateJson) : null; };
+  const status = () => host.evaluate(() => WHO_KNOWS_HOST.status);
+  // What each card currently shows for its own seat.
+  const cards = () => Promise.all(players.map(page => page.evaluate(() => window.WHO_KNOWS_CARD?.view() || null)));
+  const card = n => players[n - 1];
+  // The clock moves through serverTimeOffset; the cards tick it themselves.
+  const advance = async ms => { offset += ms; db.put('.info/serverTimeOffset', offset); deliver(); await delivery; };
   const allCards = async predicate => wait(async () => (await cards()).every(value => value && predicate(value.wk, value)), 'cards');
   const phase = async target => {
-    await wait(async () => (await state())?.phase === target, 'host phase ' + target);
+    await wait(async () => (await state())?.phase === target, 'phase ' + target);
     const session = (await state()).sessionId, stage = (await state()).stage;
     await allCards(wk => wk.sessionId === session && wk.stage === stage);
   };
@@ -185,6 +186,14 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await wait(async () => !(await button.isDisabled()), 'enabled ' + selector);
     await button.click();
   };
+  // Table controls live in a folded panel at the bottom of every active card.
+  const controls = async page => {
+    const panel = page.locator('[data-wk-controls]');
+    await panel.waitFor({ state: 'visible' });
+    if (!(await panel.evaluate(element => element.open))) await panel.locator('summary').click();
+    return panel;
+  };
+  const tool = async (page, selector) => { await controls(page); await tap(page, '[data-wk-controls] ' + selector); };
   const text = page => page.evaluate(() => document.body.innerText);
   const roleOf = (s, n) => s.round.roles[n];
   const nameOf = n => names[n - 1];
@@ -239,11 +248,12 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     for (const page of players) await page.setViewportSize({ width: 390, height: 900 });
     await wait(async () => (await status()) === 'ready' && !(await host.locator('#wk-start').isDisabled()), 'host ready');
     assert.equal(await host.locator('#wk-setup').isVisible(), true);
+    assert.match(await host.locator('#wk-setup .wk-note').innerText(), /you may close this page/);
     await views(host, 'host-setup', '#wk-start', [[1280, 800], [390, 844], [320, 568]]);
     for (const page of players) assert.match(await text(page), /Waiting for the host|等待主持人/);
     check('real entry: host waits on setup, every original link waits on the neutral card');
 
-    // ── start ──
+    // ── start, then close the host page ──
     if (mode === 'werewolf') {
       await host.click('[data-wk-mode-card="werewolf"]');
       assert.equal(await host.locator('#wk-tokens').isVisible(), true);
@@ -252,44 +262,45 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await host.click('#wk-start');
     await phase('choose');
     let s = await state();
+    const table = tableToken();
+    for (let i = 0; i < playerCount; i++)
+      assert.deepEqual(db.get(`rooms/${code}/players/${tokens[i]}`), { game: 'whoknows', playerNum: i + 1, name: names[i], wk: { version: 2, table } }, 'each link only points at the table');
     const mayor = s.round.mayor, others = s.round.players.filter(n => n !== mayor);
     const optionWords = s.round.options.map(id => WORDS.get(id));
     for (const n of s.round.players) {
-      const projection = (await cards())[n - 1].wk;
-      assert.equal(projection.me.role, roleOf(s, n));
-      assert.equal(JSON.stringify(projection).includes('"roles"'), false);
-      for (const word of optionWords) assert.equal(carries(JSON.stringify(projection), word), n === mayor, `card ${n} options: ${word.en}`);
       await wait(async () => (await card(n).locator('.wk-ticket-role').count()) === 1, 'ticket');
+      const role = await card(n).locator('.wk-ticket-role').innerText();
+      assert.ok(role.length > 0);
+      const shown = await text(card(n));
+      for (const word of optionWords) assert.equal(shows(shown, word), n === mayor, `card ${n} options: ${word.en}`);
     }
     for (const word of optionWords) assert.equal(shows(await text(host), word), false, 'host never shows the options: ' + word.en);
     assert.equal(await card(mayor).locator('.wk-option').count(), 3);
-    check(`${mode}: every link gets its own role card; only the answerer sees the three word options`);
+    check(`${mode}: Start points every link at the table; each card shows its own role, only the answerer sees the three word options`);
     await views(host, 'host-choose', '#wk-manage-open', HOSTS);
     await views(card(mayor), 'card-choose-answerer', '.wk-option', PHONES);
     await views(card(others[0]), 'card-choose-player', null, [[390, 844]]);
+    await host.close(); host = null;
+    check('the host page is closed from here on: the cards run the table');
 
-    // ── choose → countdown → questions ──
+    // ── choose → countdown → questions, with no host page ──
     const rerollBefore = (await state()).round.options.join();
     await tap(card(mayor), '[data-wk-action="reroll"]');
     await wait(async () => (await state()).round.options.join() !== rerollBefore, 'reroll');
     await wait(async () => list((await cards())[mayor - 1].wk.me.options).map(option => option.id).join() === (await state()).round.options.join(), 'new options on the card');
-    assert.equal(await card(mayor).locator('.wk-option').count(), 3);
     await tap(card(mayor), '.wk-option >> nth=1');
     await phase('countdown');
     s = await state();
     const secret = WORDS.get(s.round.wordId);
     const knowers = s.round.players.filter(n => n === mayor || ['insider', 'seer', 'werewolf'].includes(roleOf(s, n)));
     for (const n of s.round.players) {
-      const json = JSON.stringify((await cards())[n - 1]);
-      assert.equal(carries(json, secret), knowers.includes(n), `card ${n} word privacy`);
+      assert.equal(shows(await text(card(n)), secret), knowers.includes(n), `card ${n} word privacy on screen`);
       assert.equal((await card(n).locator('.wk-paper').count()) > 0, knowers.includes(n));
     }
-    assert.equal(shows(await text(host), secret), false, 'the shared screen never shows the secret');
-    check('after the answerer chooses, the word reaches exactly the roles that know it; the shared screen and the others never see it');
-    await views(host, 'host-countdown', '#wk-close', [[1280, 800]]);
+    check('after the answerer chooses, the word appears only on the cards whose role knows it');
     await advance(6000);
     await phase('questions');
-    check('the host clock starts the questions after the five-second countdown');
+    check('with the host page closed, a card starts the questions when the five-second countdown runs out');
 
     // ── questions: raise, type, answer ──
     const [a, b, c] = others;
@@ -300,14 +311,12 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await tap(card(b), '[data-wk-action="raise"]');
     await wait(async () => (await state()).round.queue.length === 1, 'b queued');
     await allCards(wk => wk.current?.playerNum === a && list(wk.queue).length === 1);
-    await wait(async () => (await host.locator('.wk-asking-name').innerText()) === nameOf(a), 'host now asking');
-    assert.match(await host.locator('.wk-asking-q').innerText(), /something you can eat/);
     assert.equal(await card(a).locator('.wk-zone-turn').count(), 1);
     assert.match(await card(b).innerText('body'), /#2|第 2/);
-    check('raising a hand forms one shared line; the asker’s typed question shows on the shared screen');
+    assert.match(await card(c).innerText('body'), /something you can eat/);
+    check('raising a hand forms one shared line; the asker’s typed question shows on the other cards');
     await views(card(a), 'card-your-turn', '[data-wk-action="lower"]', PHONES);
     await views(card(mayor), 'card-answerer', '[data-wk-action="answer"][data-wk-arg-answer="yes"]', PHONES);
-    // Someone typing keeps the same field, text and focus through updates.
     const draft = card(c).locator('[data-wk-input]');
     await draft.click(); await draft.pressSequentially('Is it bigger');
     const fieldBefore = await draft.evaluateHandle(element => element);
@@ -328,10 +337,18 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await wait(async () => (await state()).round.log.length === 3, 'answered c');
     await allCards(wk => list(wk.log).length === 3);
     assert.deepEqual((await state()).round.log.map(entry => [entry.playerNum, entry.answer]), [[a, 'yes'], [b, 'no'], [c, third]]);
-    assert.equal(await host.locator('.wk-log-row').count(), 3);
-    if (mode === 'werewolf') assert.match(await host.innerText('body'), /34 Yes\/No left/);
-    check('the answerer’s tokens log against each asker on every screen' + (mode === 'werewolf' ? '; Yes/No tokens count down' : ''));
+    if (mode === 'werewolf') assert.match(await card(a).innerText('body'), /34 Yes\/No left/i);
+    check('the answerer’s tokens log against each asker on every card' + (mode === 'werewolf' ? '; Yes/No tokens count down' : ''));
+
+    // The shared screen is optional: reopening it mid-round just shows the game.
+    host = await open('who-knows.html');
+    await wait(async () => (await status()) === 'ready', 'host reopened');
+    await wait(async () => (await host.locator('.wk-log-row').count()) === 3, 'host log');
+    assert.equal(await host.locator('#wk-game').isVisible(), true);
+    assert.equal(shows(await text(host), secret), false, 'the shared screen still never shows the secret');
     await views(host, 'host-questions', '#wk-close', HOSTS);
+    await host.close(); host = null;
+    check('reopening the host page mid-round shows the same game without restarting it; closing it again changes nothing');
 
     // Voices overlap: the answerer can hand the turn to whoever really spoke.
     await tap(card(a), '[data-wk-action="raise"]');
@@ -343,39 +360,39 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await tap(card(mayor), `.wk-other [data-wk-action="pickAsker"][data-wk-arg-player-num="${b}"]`);
     await wait(async () => (await state()).round.current?.playerNum === b && (await state()).round.queue[0]?.playerNum === a, 'picked b');
     await allCards(wk => wk.current?.playerNum === b);
-    assert.equal(await card(mayor).locator('.wk-other').count(), 0, 'the picker closes for the new asker');
     await tap(card(b), '[data-wk-action="lower"]');
     await wait(async () => (await state()).round.current?.playerNum === a, 'b stepped back');
-    await allCards(wk => wk.current?.playerNum === a);
     await tap(card(a), '[data-wk-action="lower"]');
     await wait(async () => !(await state()).round.current, 'line empty');
     await allCards(wk => !wk.current);
     check('the answerer can make whoever actually said it the asker; players can step out of the line');
 
-    // ── pause, resume, extend ──
+    // ── Table controls on a card: pause, resume, add time ──
     const d = others[3] ?? others[2];
     await card(d).locator('[data-wk-input]').fill('Is it found in a kitchen?');
     await card(d).evaluate(() => document.activeElement?.blur());
     const before = await state();
-    await host.click('#wk-pause');
+    await controls(card(a));
+    await views(card(a), 'card-controls', '[data-wk-controls] [data-wk-action="pause"]', PHONES);
+    await tool(card(a), '[data-wk-action="pause"]');
     await phase('paused');
-    await allCards(wk => wk.phase === 'paused');
-    assert.equal(await card(a).locator('.wk-zone h3').first().innerText(), 'PAUSED');
+    assert.equal(await card(b).locator('.wk-zone h3').first().innerText(), 'PAUSED');
+    await views(card(b), 'card-paused', '.wk-zone [data-wk-action="resume"]', [[390, 844]]);
     await advance(5000);
-    await host.click('#wk-pause');
+    await tap(card(b), '.wk-zone [data-wk-action="resume"]');
     await phase('questions');
     const resumed = await state();
     assert.equal(resumed.deadline - (epoch + offset), before.deadline - (epoch + offset - 5000));
-    await host.click('#wk-extend');
+    await tool(card(c), '[data-wk-action="extend"]');
     await wait(async () => (await state()).deadline === resumed.deadline + 60000, 'extended');
     assert.equal(await card(d).locator('[data-wk-input]').inputValue(), 'Is it found in a kitchen?', 'a pause keeps a half-typed question');
     await card(d).locator('[data-wk-input]').fill('');
-    check('pause freezes the clock for everyone (keeping half-typed questions), resume keeps the remaining time and +1 min extends it');
+    check('any player pauses from Table controls, another resumes from their card (remaining time kept), a third adds a minute');
 
     // ── a player reloads mid-round ──
     await card(b).reload();
     await wait(async () => (await card(b).locator('.wk-ticket-role').count()) === 1, 'reloaded card');
-    assert.equal((await card(b).evaluate(() => window.__qaReceived?.wk?.me?.role)), roleOf(await state(), b));
+    assert.equal(await card(b).evaluate(() => window.WHO_KNOWS_CARD.view()?.wk?.me?.role), roleOf(await state(), b));
     check('a reloaded player link comes back to the same role and round');
 
     // ── the guess ──
@@ -386,7 +403,6 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     assert.equal((await state()).phase, 'questions', 'one tap on Correct does nothing yet');
     await views(card(mayor), 'card-correct-armed', '.wk-correct', [[390, 844]]);
     await tap(card(mayor), '.wk-correct');
-    s = await state();
     const guesser = b;
     if (mode === 'werewolf') {
       await phase('hunt');
@@ -394,11 +410,8 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
       const wolves = s.round.players.filter(n => roleOf(s, n) === 'werewolf');
       const seer = s.round.players.find(n => roleOf(s, n) === 'seer');
       await allCards(wk => wk.word?.id === s.round.wordId && list(wk.wolves).length === wolves.length);
-      await wait(async () => shows(await text(host), secret), 'word public');
       check('a correct guess makes the word public and reveals the Werewolves for the hunt');
-      await views(host, 'host-hunt', '#wk-close', HOSTS);
       await views(card(wolves[0]), 'card-hunt-wolf', `[data-wk-action="pick"]`, PHONES);
-      // The pack picks someone other than the Seer: the village wins.
       for (const wolf of wolves) {
         const target = list((await cards())[wolf - 1].wk.me.voteTargets).find(n => n !== seer);
         await tap(card(wolf), `[data-wk-action="pick"][data-wk-arg-target="${target}"]`);
@@ -413,12 +426,11 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
       await phase('discuss');
       s = await state();
       await allCards(wk => wk.word?.id === s.round.wordId);
-      await wait(async () => shows(await text(host), secret), 'word public');
       check('a correct guess makes the word public and starts a discussion as long as the guessing took');
-      await views(host, 'host-discuss', '#wk-close', HOSTS);
-      await host.click('#wk-close');
+      await tool(card(others[0]), '[data-wk-action="close"]');
       await phase('judge');
       s = await state();
+      check('a player starts the vote early from Table controls');
       await views(card(s.round.players.find(n => n !== guesser)), 'card-judge', '[data-wk-action="judge"]', PHONES);
       for (const n of s.round.players.filter(n => n !== guesser)) {
         await tap(card(n), '[data-wk-action="judge"][data-wk-arg-choice="no"]');
@@ -427,7 +439,6 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
       await phase('vote');
       s = await state();
       const insider = s.round.players.find(n => roleOf(s, n) === 'insider');
-      await views(host, 'host-vote', '#wk-close', HOSTS);
       for (const n of s.round.players) {
         const choices = list((await cards())[n - 1].wk.me.voteTargets);
         const target = choices.includes(insider) ? insider : choices[0];
@@ -441,9 +452,7 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
       check('a majority No sends everyone to a vote; catching the Insider gives the Master and every Common +1');
     }
     for (const n of s.round.players) assert.equal((await card(n).locator('.wk-reveal-card').count()), playerCount);
-    assert.equal(await host.locator('.wk-reveal-card').count(), playerCount);
-    check('the result reveals every role, the word and the points on the shared screen and every card');
-    await views(host, 'host-result', '#wk-next', HOSTS);
+    check('the result reveals every role, the word and the points on every card');
     await views(card(others[0]), 'card-result', '[data-wk-action="next"]', PHONES);
 
     // ── next round from a card ──
@@ -453,75 +462,119 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     s = await state();
     assert.equal(s.roundNo, 2); assert.notEqual(s.round.mayor, mayor);
     assert.ok(!s.round.options.includes(firstWord), 'a used word is not offered again');
-    await wait(async () => (await host.locator('.wk-history li').count()) === 1, 'history');
-    check('any active player can start the next round; the answerer rotates and used words are not repeated');
+    assert.equal(s.history.length, 1);
+    check('any active player starts the next round; the answerer rotates and used words are not repeated');
 
-    // ── host controls: sit out, cancel, rejoin ──
+    // ── players manage the table: sit out, cancel, I'm back ──
     const out = s.round.players.find(n => n !== s.round.mayor);
-    await host.click('#wk-manage-open');
-    await host.locator(`[data-wk-seat="${out}"]`).click();
+    const manager = s.round.players.find(n => n !== out);
+    await tool(card(manager), `[data-wk-action="exclude"][data-wk-arg-player-num="${out}"]`);
+    await wait(async () => /Tap again/.test(await card(manager).locator(`[data-wk-controls] [data-wk-arg-player-num="${out}"][data-wk-action="exclude"]`).innerText()), 'sit-out armed');
+    assert.equal((await state()).roster.find(p => p.playerNum === out).active, true, 'one tap does not sit anyone out');
+    await tool(card(manager), `[data-wk-action="exclude"][data-wk-arg-player-num="${out}"]`);
     await wait(async () => (await state()).roster.find(p => p.playerNum === out).active === false, 'sat out');
-    await views(host, 'host-controls', '#wk-save-settings', [[1280, 800], [390, 844]]);
-    await host.click('#wk-void');
-    assert.match(await host.locator('#wk-void').innerText(), /Tap again/);
-    await host.click('#wk-void');
+    await views(card(manager), 'card-controls-players', '[data-wk-controls] [data-wk-action="void"]', [[390, 844], [320, 568]]);
+    await tool(card(manager), '[data-wk-action="void"]');
+    await tool(card(manager), '[data-wk-action="void"]');
     await phase('result');
     assert.equal((await state()).round.outcome.key, 'void');
-    await host.locator('#wk-manage .wk-dialog-header button').click();
-    const rejoin = async () => {
-      await host.click('#wk-manage-open');
-      await host.locator(`[data-wk-seat="${out}"]`).click();
-      await wait(async () => (await state()).roster.find(p => p.playerNum === out).active === true, 'rejoined');
-      await host.locator('#wk-manage .wk-dialog-header button').click();
-    };
+    await card(out).locator('.wk-back').waitFor({ state: 'visible' });
     if (playerCount === 4) {
-      // Three active players cannot start a round: the host is told why.
-      await host.click('#wk-next');
-      await wait(async () => /At least 4 players/.test(await host.locator('#wk-error').innerText()), 'too few players');
+      await tap(card(manager), '[data-wk-action="next"]');
+      await wait(async () => /At least 4 players/.test(await card(manager).locator('[data-wk-error]').innerText()), 'too few players');
       assert.equal((await state()).phase, 'result');
-      await rejoin();
-      await host.click('#wk-next');
+      await tap(card(out), '.wk-back');
+      await wait(async () => (await state()).roster.find(p => p.playerNum === out).active === true, 'back');
+      await tap(card(manager), '[data-wk-action="next"]');
       await phase('choose');
-      check('a four-player table cannot start a round with someone sitting out; bringing them back starts it');
+      check('a four-player table cannot start a round with someone sitting out; they tap “I’m back” on their own card and it starts');
     } else {
-      await host.click('#wk-next');
+      await tap(card(manager), '[data-wk-action="next"]');
       await phase('choose');
       s = await state();
       assert.equal(s.round.players.includes(out), false);
       await wait(async () => (await card(out).locator('.wk-ticket.is-muted').count()) === 1, 'sitting out card');
       assert.match(await card(out).innerText('body'), /sitting out/i);
-      await rejoin();
+      await views(card(out), 'card-sitting-out', '.wk-back', [[390, 844]]);
+      await tap(card(out), '.wk-back');
+      await wait(async () => (await state()).roster.find(p => p.playerNum === out).active === true, 'back');
+      check('a player sits someone out (two taps) and cancels a round from their card; the other comes back with “I’m back”');
     }
-    check('the host can sit a player out, cancel a round without points (two taps) and bring the player back next round');
 
-    // ── host reload keeps the same game ──
-    const session = (await state()).sessionId, stage = (await state()).stage;
-    await host.reload();
-    await advance(15000, { renew: false }); // the closed tab's lease runs out
-    await wait(async () => (await status()) === 'ready' && (await state())?.sessionId === session, 'host reload');
-    assert.equal((await state()).stage, stage);
+    // ── next-round settings from a card ──
+    const other = mode === 'werewolf' ? 'insider' : 'werewolf';
+    s = await state();
+    const editor = s.round.players.find(n => n !== s.round.mayor);
+    await controls(card(editor));
+    await card(editor).selectOption('[data-wk-controls] [data-wk-set="mode"]', other);
+    await card(editor).selectOption('[data-wk-controls] [data-wk-set="questionMinutes"]', '3');
+    await views(card(editor), 'card-controls-settings', '[data-wk-controls] [data-wk-save-settings]', [[390, 844], [320, 568]]);
+    await tap(card(editor), '[data-wk-controls] [data-wk-save-settings]');
+    await wait(async () => (await state()).settings.mode === other && (await state()).settings.questionMinutes === 3, 'settings saved');
+    assert.match(await card(editor).locator('[data-wk-controls-note]').innerText(), /next round/);
+    assert.equal((await state()).round.mode, mode, 'the current round keeps its mode');
+    await tool(card(editor), '[data-wk-action="void"]'); await tool(card(editor), '[data-wk-action="void"]');
+    await phase('result');
+    await tap(card(editor), '[data-wk-action="next"]');
+    await phase('choose');
+    s = await state();
+    assert.equal(s.round.mode, other); assert.equal(s.round.questionMs, 180000);
+    check('a player changes the mode and question time for the next round from their card');
+
+    // ── the question clock runs out with no host page ──
+    await tap(card(s.round.mayor), '.wk-option >> nth=0');
+    await phase('countdown');
+    await advance(6000);
+    await phase('questions');
+    await advance(180000 + 2000);
+    const expected = other === 'werewolf' ? 'accuse' : 'masterGuess';
+    await phase(expected);
+    assert.equal((await state()).round.endReason, 'time');
+    check(`the cards end the questions when time runs out (${expected}), with no host page open`);
+
+    // ── the host page, reopened on "another computer", follows the table ──
+    await card(1).evaluate(roomCode => {
+      const key = 'room-session-' + roomCode, saved = JSON.parse(localStorage.getItem(key));
+      delete saved.whoKnowsControlToken; localStorage.setItem(key, JSON.stringify(saved));
+    }, code);
+    const session = (await state()).sessionId;
+    host = await open('who-knows.html');
+    await wait(async () => (await status()) === 'ready', 'host adopted');
+    assert.equal(await host.evaluate(() => WHO_KNOWS_HOST.state?.sessionId), session);
     assert.equal(await host.locator('#wk-game').isVisible(), true);
-    check('a reloaded host page takes the lease back and continues the same game');
+    check('a host page without the saved table token finds the running game through the player links');
 
-    // ── another game takes a link: suspend, then start again ──
+    // ── another game borrows a link: bring the cards back ──
     db.put(`rooms/${code}/players/${tokens[2]}`, { game: 'bombrelay', playerNum: 3, bomb: { version: 1, sessionId: 'other-game' } }); deliver();
     await wait(async () => (await status()) === 'switched', 'switched');
-    assert.equal(await host.locator('#wk-setup').isVisible(), true);
-    assert.equal(await host.locator('#wk-start').isDisabled(), false);
-    await host.click('#wk-start');
-    await wait(async () => (await state()).sessionId !== session && (await status()) === 'ready', 'restart after switch');
-    const fresh = (await state()).sessionId;
-    await allCards(wk => wk.sessionId === fresh);
-    check('a link taken by another game suspends this one; Start begins a fresh game on every link');
+    await host.locator('#wk-continue').waitFor({ state: 'visible' });
+    await views(host, 'host-switched', '#wk-continue', [[1280, 800], [390, 844]]);
+    await host.click('#wk-continue');
+    await wait(async () => (await status()) === 'ready', 'continued');
+    assert.equal((await state()).sessionId, session);
+    await allCards(wk => wk.sessionId === session);
+    check('when another game borrows a link, the host page brings every card back to the same game');
+    await host.close(); host = null;
 
-    // ── end game → final standings ──
+    // ── end the game from a card, then start a new one from a card ──
+    await tool(card(2), '[data-wk-action="stop"]'); await tool(card(2), '[data-wk-action="stop"]');
+    await phase('finished');
+    await wait(async () => (await card(1).locator('.wk-rank').count()) === playerCount, 'standings');
+    await views(card(1), 'card-finished', '[data-wk-main] [data-wk-action="restart"]', [[390, 844], [320, 568]]);
+    await tap(card(1), '[data-wk-main] [data-wk-action="restart"]');
+    await phase('choose');
+    s = await state();
+    assert.equal(s.roundNo, 1); assert.deepEqual(s.scores, {});
+    check('a player ends the game from Table controls and another starts a new game from the final standings');
+
+    host = await open('who-knows.html');
+    await wait(async () => (await status()) === 'ready', 'host final');
     await host.click('#wk-manage-open');
     await host.click('#wk-stop'); await host.click('#wk-stop');
     await phase('finished');
-    await wait(async () => (await host.locator('.wk-rank').count()) === playerCount, 'standings');
+    await wait(async () => (await host.locator('.wk-rank').count()) === playerCount, 'host standings');
     await views(host, 'host-finished', '#wk-again', HOSTS);
-    await views(card(1), 'card-finished', null, [[390, 844]]);
-    check('ending the game shows the final standings on the shared screen and every card');
+    check('the optional host page still has its own controls when it is open');
 
     assert.deepEqual(errors, []);
     for (const url of blocked) assert.match(url, /gstatic\.com\/firebasejs/, 'only the Firebase SDK is intercepted: ' + url);

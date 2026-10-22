@@ -20,30 +20,31 @@ original; neither title is used as the game name. Players need 4–9 seats.
 
 `index.html` lists WHO KNOWS? right after Bomb Relay (before BLUFF PARTY, whose
 last-four order is locked by tests). `who-knows.html` is the shared host screen.
-Original player links open `play.html`, whose `whoknows` branch mounts
-`WHO_KNOWS_UI.Card`. Cards only render projections; they never load the words,
-engine or sync modules.
+Original player links open `play.html`. Its `whoknows` branch follows the
+game's table with `WHO_KNOWS_SYNC.Table` and mounts `WHO_KNOWS_UI.Card` in
+table mode, so play.html loads the words, engine, sync and UI modules.
 
 - `who-knows-words.js` — 300 bilingual guessable words: easy 120, medium 120,
   hard 60, stable ids `wk-e001`…, categories for future filtering.
 - `who-knows-engine.js` — pure rules: create/apply/view, no DOM or Firebase.
-- `who-knows-sync.js` — trusted-host Firebase transport (Bomb Relay/CUT model).
+- `who-knows-sync.js` — the card-run table: `Table` (every card and the host
+  page) and `HostTable` (start, pointers, Hub renames, room checks).
 - `who-knows-ui.js` — bilingual dictionary, original flat SVG role art, shared
   stage renderer and the player Card.
 - `who-knows-host.js`, `who-knows.html`, `who-knows.css` — host page and the
   scoped moonlit design (also used by the card page via `body.wk-card-page`).
 - `assets/who-knows/mark.svg` — Hub and header mark.
-- Cache tag `wk-1` on every WHO KNOWS asset in both entry pages.
+- Cache tag `wk-2` on every WHO KNOWS asset in both entry pages.
 
 ## Round flow
 
 1. **Choose.** The answerer rotates fairly: everyone answers once before anyone
-   answers twice, never twice in a row; the host may name the next answerer.
+   answers twice, never twice in a row; any player may name the next answerer.
    Their card offers three words (Mixed = one easy, one medium, one hard) and up
    to 10 rerolls. Words used in this room are not offered again until a level
    runs out. Every other card shows its secret role; the shared screen shows only
    the public role counts.
-2. **Countdown** 5 s (host can start now).
+2. **Countdown** 5 s (anyone can start now from Table controls).
 3. **Questions** (Insider 5 min, Werewolf 4 min by default; 3/4/5/6/8). Players
    ask out loud. Tapping 🙋 on a card joins one shared line; an optional typed
    question (≤80 characters, markup and control characters removed) shows on the
@@ -78,59 +79,83 @@ Werewolf mode by default keeps the Mayor an honest Villager; the advanced option
 deals the Mayor a secret role too (a Werewolf Mayor may give misleading tokens).
 Werewolves: auto = 2 from 7 active players, otherwise 1; “2” needs 6 players.
 
-## Authority and privacy
+## Authority and privacy — no page has to stay open
 
-Same trusted-host architecture as Bomb Relay and CUT. The canonical state —
-including the word and every role — lives only in the host control node
-`rooms/{code}/players/{whoKnowsControlToken}` with a 14 s lease renewed every 4 s.
-Only the leased host runs the clock (200 ms pulse; idle ticks never write) and
-the RNG (host-captured `now`/`seed`, so replayed transactions stay identical).
+The host page is needed only to start (or restart) WHO KNOWS? on the room's
+links. After that the players' cards run the game; the host page is an optional
+shared screen and can be closed or reopened at any time.
 
+- The canonical state (word and roles included) lives in one table node,
+  `rooms/{code}/players/{whoKnowsControlToken}/stateJson`. Start writes a pointer
+  to every original link: `{ game:'whoknows', playerNum, name,
+  wk:{ version:2, table } }`. Pointers carry no state, word or role.
+- Every card subscribes to the table and renders `view(state, n)` for its own
+  seat. A card applies its own command with one compare-and-set transaction on
+  `stateJson`, fenced to the `sessionId` and `stage` it showed: two taps can
+  never both win (the other gets “things moved on”), and nobody relays them.
+  Each command carries its own captured time and seed, so a retried transaction
+  computes the same result.
+- The clock: deadlines are absolute, server-corrected times. Each client checks
+  every 250 ms. Presence (`table/presence/{client}`, removed on disconnect) ranks
+  who ticks an expired clock: the host page if open, then the lowest-numbered
+  visible card, then others 0.9 s apart; a card in the background waits behind
+  visible ones. A tick is a fenced command, so extra ticks are no-ops. Pause
+  keeps at least 3 s.
+- Any active player has the host's powers from their card (see below); only the
+  Hub rename stays with the host page. Someone sitting out can only bring
+  themselves back.
 - `view(state, 0)` (shared screen) never contains the word before the guess, the
-  three options, or any seat→role pair; only public role counts.
-- Each card gets `view(state, n)`: its own role, its Werewolf teammates, and the
-  word only if its role knows it. Cards are written in parallel by full
-  replacement of `wk`, so no field from an earlier phase lingers.
-- A card writes one `wkAction` inside a transaction fenced to the shown
-  `sessionId` and `stage` (the phase counter). Only whitelisted fields reach the
-  rules; ids are deduplicated; each actor gets an exact reply.
-- Host buttons that advance the table (close/extend/next) are stage-fenced too,
-  so a double click cannot skip a phase. Closing the questions or any vote needs
-  a second tap; cancelling a round, restarting and ending the game too.
-- Opening baselines: a new game only takes cards still showing what they showed
-  when Start was pressed. A link taken by another game suspends this one
-  (`switched`); Start begins a fresh game. A saved game for a different number of
-  seats is never projected (`rosterChanged`). Names edited in the Hub follow into
-  the running game (`rename`), keeping seats, scores and secrets.
+  three options, or any seat→role pair; each card's screen shows only its own
+  role, its Werewolf teammates and the word if its role knows it.
+- **Trade-off (no server):** every participating card can read the table node.
+  No screen shows another player's secret, but a player using developer tools
+  could. Player tokens are never shared, so other games keep their privacy. The
+  previous version had the same exposure for the host's browser; full secrecy
+  would need the independent game service, which must be deployed from the
+  service's own project.
+- Host page: reopened anywhere, it follows the table its links point at (even
+  without the saved token). If another game borrows a link it shows
+  `switched` with “Bring every card back to this game” (same game continues) or
+  Start (new game). A saved game for a different number of seats is never reused
+  (`rosterChanged`). Names edited in the Hub follow in (`rename`), keeping seats,
+  scores and secrets. Links still showing an older lease-host view of the same
+  session are migrated to pointers automatically; an older host page that sees
+  pointers suspends itself.
 - Firebase drops empty arrays; canonical state is JSON text and the UI reads
-  projections through `list()`.
+  views through `list()`.
 
-The shared host page holds the canonical state in memory; like the other
-trusted-host games it must stay open, and a player acting as host could inspect
-it with developer tools. Pause keeps at least 3 s; a sleeping host catches up
-once on wake. A reloaded host takes the lease back and continues the same game.
+## Table controls (every active card) and the host page
 
-## Host controls
+Every active player's card has a folded **Table controls** panel: Pause/Resume,
++1 min (questions) / +30 s, close the current phase (two taps when it ends the
+questions or a vote), sit a player out (two taps) or back in, choose the next
+answerer, settings for the next round (mode, time, difficulty, tokens, wolves,
+advanced options), cancel this round (two taps), restart with scores at 0 (two
+taps) and end the game (two taps). A paused card also shows Resume; a card
+sitting out shows “I'm back”; the final standings show “Start a new game”. The
+answerer leaving during choose/countdown/questions cancels the round; a voter
+leaving completes the ballot.
 
-Pause/Resume, +1 min (questions) / +30 s (other timed phases), phase close,
-Next round, and Host controls: sit a player out or back in (the answerer leaving
-during choose/countdown/questions cancels the round; a voter leaving completes
-the ballot), choose the next answerer, settings for the next round (including
-switching modes), cancel this round, restart with scores at 0, end game.
-`who-knows.html?demo=1` runs a whole game on one device with a switchable card
-view and no Firebase.
+The host page keeps the same controls in its own dialog. `who-knows.html?demo=1`
+runs a whole game on one device with a switchable card view and no Firebase.
 
 ## Validation
 
-- `node --test tests/who-knows-*.test.cjs` — engine (22), sync (7) and
-  integration (6): roles, fair rotation, options/history, privacy of the shared
+- `node --test tests/who-knows-*.test.cjs` — engine (23), sync (9) and
+  integration (6): roles, rotation, options/history, privacy of the shared
   screen and non-knowers, line/answers/tokens, every ending, pause/extend,
-  idempotency, leaving players, rename, stale-stage fences, lease takeover,
-  game-switch suspension, roster change, page wiring and complete EN/ZH strings.
+  shared table permissions, card-run rounds with the host page closed, CAS
+  races, tick ranking, sit-out/self-return, settings, restart/end, host
+  adoption, borrowed links, roster change, rename, migration, page wiring and
+  complete EN/ZH strings.
 - `node tests/who-knows-ui.browser.cjs <playwright>` with `WK_QA_MODE` and
   `WK_QA_PLAYERS` drives the real host page and original play.html links against
   an isolated Firebase-compatible fixture with a controlled clock (no external
-  network, no live room): 18 checks and ~60 EN/ZH captures at 1280/390/320,
+  network, no live room). The host page is closed right after Start; the cards
+  then play every phase, keep the clock, pause/resume/extend, sit out and return,
+  change next-round settings, let the question clock run out, end and restart.
+  The host page is reopened as a viewer, adopts the table without its saved
+  token and brings a borrowed link back. EN/ZH captures at 1280/390/320 with
   overflow, clipped-text, tap-target (≥44 px) and occlusion checks.
 - Not verified here: real Firebase from this environment, physical phones and
   a human voice-session playtest.
