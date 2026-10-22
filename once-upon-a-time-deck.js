@@ -1,9 +1,9 @@
 (function (root, factory) {
   'use strict';
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./once-upon-a-time-modern-future-deck.js'));
-  else if (typeof define === 'function' && define.amd) define(['./once-upon-a-time-modern-future-deck'], factory);
-  else root.ONCE_DECK = factory(root.ONCE_MODERN_FUTURE_DECK);
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (modernFuture) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./once-upon-a-time-modern-future-deck.js'), require('./once-upon-a-time-halloween-deck.js'));
+  else if (typeof define === 'function' && define.amd) define(['./once-upon-a-time-modern-future-deck', './once-upon-a-time-halloween-deck'], factory);
+  else root.ONCE_DECK = factory(root.ONCE_MODERN_FUTURE_DECK, root.ONCE_HALLOWEEN_DECK);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (modernFuture, halloween) {
   'use strict';
 
   // Original, hand-authored core deck. A title, its language and its art can change
@@ -14,7 +14,8 @@
   // character description. A small set of fairy-tale twists keeps the deck varied.
   // Legacy slugs stay stable for saved games and still use their literal artwork.
   // Original additions favor broad actions and reusable story hooks; category
-  // totals need not match. Existing cards and Interrupt flags remain unchanged.
+  // totals need not match. IDs, words and artwork remain stable. The legacy
+  // Interrupt pool is retained so an already-running game keeps its old rules.
   const assetRoot = 'assets/once-upon-a-time/';
   const categories = Object.freeze([
     { id: 'character', label: 'Character', color: '#d4af37', iconKey: 'crown' },
@@ -166,12 +167,23 @@
     ]]
   ];
 
+  // Six Interrupts per category: 30/129 cards, up from 20/129. This is a
+  // fixed physical-card mix, never a guaranteed quota in each player's hand.
+  const extraInterruptIds = new Set([
+    'once-character-lost-heir', 'once-character-moon-cat',
+    'once-thing-empty-crown', 'once-thing-old-map',
+    'once-place-empty-village', 'once-place-secret-tunnel',
+    'once-aspect-fearless', 'once-aspect-hungry',
+    'once-event-search', 'once-event-return'
+  ]);
+  const legacyInterruptIds = Object.freeze(storyGroups.flatMap(([category, rows]) =>
+    rows.filter(([, , isInterrupt]) => isInterrupt).map(([slug]) => 'once-' + category + '-' + slug)));
   const storyCards = Object.freeze(storyGroups.flatMap(([category, rows]) =>
     rows.map(([slug, title, isInterrupt]) => Object.freeze({
       id: 'once-' + category + '-' + slug,
       title,
       category,
-      isInterrupt,
+      isInterrupt: isInterrupt || extraInterruptIds.has('once-' + category + '-' + slug),
       artKey: 'story.' + category + '.' + slug,
       imagePath: assetRoot + category + '/' + slug + '-v2.webp',
       thumbnailPath: assetRoot + category + '/' + slug + '-v2-thumb.webp'
@@ -240,8 +252,8 @@
     thumbnailPath: assetRoot + 'ending/' + slug + '-v2-thumb.webp'
   })));
 
-  const classic = Object.freeze({ id: 'classic', title: 'Classic fairy tales', storyCards, endingCards });
-  const worlds = Object.freeze([classic, ...(modernFuture?.id === 'modern-future' ? [modernFuture] : [])]);
+  const classic = Object.freeze({ id: 'classic', title: 'Classic fairy tales', storyCards, endingCards, legacyInterruptIds });
+  const worlds = Object.freeze([classic, ...(modernFuture?.id === 'modern-future' ? [modernFuture] : []), ...(halloween?.id === 'halloween' ? [halloween] : [])]);
   const getWorld = id => worlds.find(world => world.id === id) || null;
   const storyById = Object.freeze(Object.fromEntries(worlds.flatMap(world => world.storyCards.map(card => [card.id, card]))));
   const endingById = Object.freeze(Object.fromEntries(worlds.flatMap(world => world.endingCards.map(card => [card.id, card]))));

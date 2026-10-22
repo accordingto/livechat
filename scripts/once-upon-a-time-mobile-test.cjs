@@ -8,7 +8,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const base=(process.env.ONCE_UI_BASE||'http://127.0.0.1:8095/').replace(/\/?$/,'/');
 const proof=process.env.ONCE_UI_PROOF_DIR;
 const world=process.env.ONCE_UI_WORLD||'classic';
-assert.ok(['classic','modern-future'].includes(world),'ONCE_UI_WORLD must be classic or modern-future');
+assert.ok(['classic','modern-future','halloween'].includes(world),'ONCE_UI_WORLD must be classic, modern-future or halloween');
 const selectedPool=deck.getWorld(world),textPools=process.env.ONCE_UI_TEXT_WORLDS==='all'?deck.worlds:[selectedPool];
 assert.ok(selectedPool,'the selected authored world must exist');
 const storyIds=new Set(selectedPool.storyCards.map(card=>card.id)),endingIds=new Set(selectedPool.endingCards.map(card=>card.id));

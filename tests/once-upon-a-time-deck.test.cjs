@@ -34,9 +34,9 @@ test('expanded deck contains 129 story cards and 51 distinct endings with varied
   for (const [category, expected] of Object.entries(categoryCounts)) {
     const cards = DECK.storyCards.filter(card => card.category === category);
     assert.equal(cards.length, expected, category);
-    assert.equal(cards.filter(card => card.isInterrupt).length, 4, category + ' Interrupt cards');
+    assert.equal(cards.filter(card => card.isInterrupt).length, 6, category + ' Interrupt cards');
   }
-  assert.equal(DECK.storyCards.filter(card => card.isInterrupt).length, 20);
+  assert.equal(DECK.storyCards.filter(card => card.isInterrupt).length, 30);
 });
 
 test('15 original additions supply short story hooks without replacing released cards or adding Interrupts', () => {
@@ -53,7 +53,8 @@ test('15 original additions supply short story hooks without replacing released 
   }
   const released = DECK.storyCards.filter(card => !addedIds.has(card.id));
   assert.equal(released.length, 114);
-  const rows = released.map(card => [card.id, card.title, card.category, card.isInterrupt,
+  const legacyInterrupts = new Set(DECK.getWorld('classic').legacyInterruptIds);
+  const rows = released.map(card => [card.id, card.title, card.category, legacyInterrupts.has(card.id),
     card.artKey, card.imagePath, card.thumbnailPath]).sort((a, b) => a[0].localeCompare(b[0]));
   // Snapshot of all 114 released records before this additive content update.
   assert.equal(crypto.createHash('sha256').update(JSON.stringify(rows)).digest('hex'),
@@ -106,7 +107,7 @@ test('Story vocabulary mostly uses flexible core words with a small set of fairy
   }
 });
 
-test('vocabulary refresh retains legacy card identities, artwork and the original Interrupt pool', () => {
+test('vocabulary refresh retains legacy card identities, artwork and the saved-game Interrupt pool', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'assets/once-upon-a-time/art-manifest.json'), 'utf8'));
   assert.deepEqual(DECK.storyCards.map(card => card.id).sort(),
     Object.keys(manifest.cards).filter(id => !id.startsWith('once-ending-')).sort());
@@ -119,7 +120,8 @@ test('vocabulary refresh retains legacy card identities, artwork and the origina
   };
   const expected = Object.entries(interruptIds).flatMap(([category, slugs]) =>
     slugs.map(slug => 'once-' + category + '-' + slug));
-  assert.deepEqual(DECK.storyCards.filter(card => card.isInterrupt).map(card => card.id).sort(), expected.sort());
+  assert.deepEqual([...DECK.getWorld('classic').legacyInterruptIds].sort(), expected.sort());
+  for (const id of expected) assert.equal(DECK.storyById[id].isInterrupt, true, 'an original Interrupt remains an Interrupt');
   const renamed = {
     'once-character-quiet-prince': 'Prince',
     'once-character-sea-sister': 'Mermaid',

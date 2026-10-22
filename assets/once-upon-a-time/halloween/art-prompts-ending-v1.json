@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "world": "halloween",
+  "generator": "built-in image_gen",
+  "category": "ending",
+  "entries": [
+    {
+      "id": "once-hw-ending-cake",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: Humans and a big gentle monster sitting safely together around a cake stand with only crumbs and a tiny last slice remaining, everyone content and full; friendly humorous meal, no threat or gore. Meaning context only: Nobody was eaten. The cake was not so lucky. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "Humans and a big gentle monster sitting safely together around a cake stand with only crumbs and a tiny last slice remaining, everyone content and full; friendly humorous meal, no threat or gore.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-8e111370-69f6-40cc-b864-9e60505f8158.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/cake-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/cake-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/cake-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-castle-cafe",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A cozy castle hall transformed into a welcoming café, a smiling vampire serving pumpkin pie to humans and a ghost, warm lamps and little tables; no signage or readable menu. Meaning context only: They kept the castle and turned it into a café. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A cozy castle hall transformed into a welcoming café, a smiling vampire serving pumpkin pie to humans and a ghost, warm lamps and little tables; no signage or readable menu.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-be17cec3-c0bf-4f4a-9404-7d29e076981b.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/castle-cafe-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/castle-cafe-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/castle-cafe-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-cleaning-bill",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: Adult Halloween adventurers and a friendly witch staring in comic disbelief at a long blank paper receipt beside a very messy room full of harmless confetti, pumpkin crumbs and cobweb decorations; no readable numbers. Meaning context only: In the end, they were more afraid of the cleaning bill. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "Adult Halloween adventurers and a friendly witch staring in comic disbelief at a long blank paper receipt beside a very messy room full of harmless confetti, pumpkin crumbs and cobweb decorations; no readable numbers.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-1a7f8b0d-9c9c-4261-a298-11989a329c77.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/cleaning-bill-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/cleaning-bill-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/cleaning-bill-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-extra-chair",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A harmless whimsical wooden chair wearing a party hat and the same scarf as its surprised adult friends, all looking at it with amused curiosity at a cozy Halloween party; no painful transformation or body horror. Meaning context only: The party ended when someone turned into a chair. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A harmless whimsical wooden chair wearing a party hat and the same scarf as its surprised adult friends, all looking at it with amused curiosity at a cozy Halloween party; no painful transformation or body horror.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-cc9bcd7c-da31-4a33-b1b8-3dec917e31a0.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/extra-chair-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/extra-chair-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/extra-chair-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-floating-friend",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: Two adult humans warmly welcoming a smiling translucent ghost who floats beside their kitchen table with a teacup; reassuring friendship and warm pumpkin lanterns. Meaning context only: They made a new friend, who happened to float. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "Two adult humans warmly welcoming a smiling translucent ghost who floats beside their kitchen table with a teacup; reassuring friendship and warm pumpkin lanterns.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-24ec0724-bd94-4697-be6c-0536cbf382d7.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/floating-friend-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/floating-friend-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/floating-friend-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-ghost-job",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A proud smiling ghost working behind a cozy hotel reception desk, politely handing an ordinary key to an adult guest, a little coin purse nearby; warm everyday comedy, no readable documents. Meaning context only: The ghost got the job and finally paid the rent. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A proud smiling ghost working behind a cozy hotel reception desk, politely handing an ordinary key to an adult guest, a little coin purse nearby; warm everyday comedy, no readable documents.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-fa266cf8-547f-40a5-8ca2-8ac96aeb11ab.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/ghost-job-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/ghost-job-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/ghost-job-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-homework",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: Adult university students still in Halloween costumes sitting at a kitchen table with untouched notebooks as dawn rises outside, looking sheepish but amused after an adventure; no readable writing. Meaning context only: The world was safe. Their homework was not finished. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "Adult university students still in Halloween costumes sitting at a kitchen table with untouched notebooks as dawn rises outside, looking sheepish but amused after an adventure; no readable writing.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-20ec6d6f-0a59-47fd-8e51-b49c61bebd93.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/homework-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/homework-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/homework-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-hungry-stomach",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: Adult adventurers in a shadowy kitchen laughing with relief as one sheepish friend pats their empty stomach beside a plate of snacks; no visible monster or frightening sound-effect text. Meaning context only: The scariest sound was someone's hungry stomach. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "Adult adventurers in a shadowy kitchen laughing with relief as one sheepish friend pats their empty stomach beside a plate of snacks; no visible monster or frightening sound-effect text.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-b3f7a23c-4983-4291-b026-6658c857e045.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/hungry-stomach-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/hungry-stomach-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/hungry-stomach-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-last-bus",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: Tired but smiling adult Halloween adventurers at a quiet bus stop watching the last bus gently drive away, their pumpkin buckets beside them; playful anticlimax, no readable signs. Meaning context only: They saved the night, then missed the last bus. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "Tired but smiling adult Halloween adventurers at a quiet bus stop watching the last bus gently drive away, their pumpkin buckets beside them; playful anticlimax, no readable signs.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-1bcf6fe2-100d-4154-843a-9439bffe48b6.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/last-bus-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/last-bus-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/last-bus-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-mostly-costume",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A smiling adult lifting off a fluffy monster costume head while one tiny real furry tail still peeks out behind them; warm Halloween dressing room, teasing gentle mystery, no horror reveal. Meaning context only: It was only a costume. Mostly. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A smiling adult lifting off a fluffy monster costume head while one tiny real furry tail still peeks out behind them; warm Halloween dressing room, teasing gentle mystery, no horror reveal.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-e2e69cd4-2efc-4a88-8778-cba424a93acd.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/mostly-costume-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/mostly-costume-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/mostly-costume-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-pumpkin-pie",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A large open treasure chest overflowing with neatly stacked delicious pumpkin pies instead of gold, delighted adult adventurers holding forks; golden cozy light, silly abundant reward. Meaning context only: The treasure was a lifetime supply of pumpkin pie. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A large open treasure chest overflowing with neatly stacked delicious pumpkin pies instead of gold, delighted adult adventurers holding forks; golden cozy light, silly abundant reward.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-a4400685-6d82-4acd-b0d6-9eb497de3f6d.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/pumpkin-pie-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/pumpkin-pie-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/pumpkin-pie-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-secret-dance",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A witch, an adult human and a friendly skeleton looking bashful and amused after a wildly silly party dance, one wearing a crooked party hat and another holding dancing shoes; warm nonjudgmental humor. Meaning context only: They all agreed never to mention the dancing again. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A witch, an adult human and a friendly skeleton looking bashful and amused after a wildly silly party dance, one wearing a crooked party hat and another holding dancing shoes; warm nonjudgmental humor.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-f231aa8a-dedf-4000-9041-213e09ed0734.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/secret-dance-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/secret-dance-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/secret-dance-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-silly-voice",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A relieved adult adventurer back to normal after a harmless spell, speaking with an exaggerated squeaky expression while friends laugh kindly at a cozy table; magical sparkles fading, no speech bubbles or text. Meaning context only: The curse ended, but the silly voice stayed. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A relieved adult adventurer back to normal after a harmless spell, speaking with an exaggerated squeaky expression while friends laugh kindly at a cozy table; magical sparkles fading, no speech bubbles or text.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-e644e28d-3768-4334-9342-448057dbb27e.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/silly-voice-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/silly-voice-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/silly-voice-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-small-cat",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A tiny black kitten peeking out of a huge open treasure chest while surprised adult adventurers lean in with delighted smiles; warm friendly Halloween reveal. Meaning context only: The big secret was a very small cat. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A tiny black kitten peeking out of a huge open treasure chest while surprised adult adventurers lean in with delighted smiles; warm friendly Halloween reveal.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-68407525-ea15-459c-9b45-56f40791095b.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/small-cat-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/small-cat-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/small-cat-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-snack",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A huge fluffy purple monster sitting politely at a small kitchen table with a tiny plate of cookies, relieved adult adventurers offering tea; reassuring funny reveal, warm orange light, no threat. Meaning context only: And the monster only wanted a snack. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A huge fluffy purple monster sitting politely at a small kitchen table with a tiny plate of cookies, relieved adult adventurers offering tea; reassuring funny reveal, warm orange light, no threat.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-1b299fd7-742a-4f50-b963-eb62d374d6e5.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/snack-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/snack-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/snack-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-strange-pet",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A happy adult household relaxing on a sofa with an odd tiny friendly pet that has bat wings, fluffy fur and three round ears, a pumpkin-shaped pet bowl nearby; reassuring cozy comic ending. Meaning context only: And they lived happily ever after, with one very strange pet. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A happy adult household relaxing on a sofa with an odd tiny friendly pet that has bat wings, fluffy fur and three round ears, a pumpkin-shaped pet bowl nearby; reassuring cozy comic ending.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-f0235aee-af22-4060-8c49-2bdd8de56bb9.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/strange-pet-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/strange-pet-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/strange-pet-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-stuck-costume",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: An adult hero in an oversized cheerful pumpkin costume squeezing into an ordinary breakfast chair at sunrise, amused friends nearby; clearly safe comfortable comedy, no distress or restraint. Meaning context only: By morning, the hero was still stuck in the costume. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "An adult hero in an oversized cheerful pumpkin costume squeezing into an ordinary breakfast chair at sunrise, amused friends nearby; clearly safe comfortable comedy, no distress or restraint.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-0ab790ed-4e48-4a89-88d9-d628905a2098.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/stuck-costume-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/stuck-costume-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/stuck-costume-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-tuesdays",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A friendly adult witch proudly demonstrating a broom that floats beside a weekly calendar with exactly one of seven plain blank columns glowing; playful limited magic, no readable calendar words or numbers. Meaning context only: The spell worked, but only on Tuesdays. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A friendly adult witch proudly demonstrating a broom that floats beside a weekly calendar with exactly one of seven plain blank columns glowing; playful limited magic, no readable calendar words or numbers.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-a95cafd0-f66c-4c25-9771-e0e3ac72ec1c.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/tuesdays-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/tuesdays-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/tuesdays-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-washing-up",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A formerly dramatic cloaked villain in a bright flowered apron washing a tall pile of dishes while friendly guests relax at a candlelit table; clean cheerful redemption, no weapons or threat. Meaning context only: The villain apologized and did the washing-up. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A formerly dramatic cloaked villain in a bright flowered apron washing a tall pile of dishes while friendly guests relax at a candlelit table; clean cheerful redemption, no weapons or threat.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-a7318df6-5a4c-4a8b-b9e2-a9bfc14aa23a.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/washing-up-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/washing-up-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/washing-up-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    },
+    {
+      "id": "once-hw-ending-wrong-shoes",
+      "prompt": "Use case: illustration-story. Asset type: ONE original portrait 2:3 illustration for a Halloween storytelling ENDING card. Scene: A cheerful group of adult Halloween party guests leaving a warmly lit doorway with full candy buckets, each wearing visibly mismatched shoes such as a slipper and a boot; gentle comic detail. Meaning context only: Everyone went home with candy and the wrong shoes. Style/medium: richly detailed painterly storybook illustration, gently realistic anatomy, evocative tactile materials, readable main subject, warm cozy candlelight and soft midnight-blue shadows, pumpkin-orange and plum accents. Mood: a FUNNY reassuring Halloween story payoff, charming absurdity and friendly expressive adults, not nursery clip art. Framing: single full-bleed portrait 2:3 scene, preserve readable silhouettes at thumbnail size. IMPORTANT: this illustration must literally match the event described, not just a generic Halloween party. Avoid blood, wounds, gore, pain, horror closeups, jump scares, threatening weapons, brands, logos, any readable text, numbers, caption, border, card UI or watermark. The ending sentence is provided as meaning context only and MUST NOT be written in the image. All text/frames will be rendered separately by the game.",
+      "semanticDescription": "A cheerful group of adult Halloween party guests leaving a warmly lit doorway with full candy buckets, each wearing visibly mismatched shoes such as a slipper and a boot; gentle comic detail.",
+      "originalGeneratedFile": "C:\\Users\\user\\.codex\\generated_images\\01a0bf2b-cfe8-7502-b674-9bcc9107b85c\\exec-038d534d-46e8-4701-933f-da6194c7df64.png",
+      "originalLocalFile": "assets/once-upon-a-time/halloween/ending/wrong-shoes-v1.png",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/wrong-shoes-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/wrong-shoes-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "semanticReview": "Visually checked against the ending sentence: literal gentle comic payoff, no horror/gore or embedded card text."
+    }
+  ]
+}

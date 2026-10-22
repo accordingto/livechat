@@ -25,7 +25,9 @@ test('the host page loads its modules in dependency order and every file parses'
 });
 
 test('original player links render the WHO KNOWS card and fence actions to the shown stage', () => {
-  const play = read('play.html');
+  // Source-layout checks are independent of Git's Windows CRLF checkout mode.
+  // Only test input is normalized; the shipped page and game behavior are unchanged.
+  const play = read('play.html').replace(/\r\n/g, '\n');
   assert.match(play, /<script src="who-knows-ui\.js\?v=wk-1"><\/script>/);
   assert.match(play, /<link rel="stylesheet" href="who-knows\.css\?v=wk-1">/);
   assert.doesNotMatch(play, /<script src="who-knows-(?:words|engine|sync|host)\.js/, 'cards only render the host projection');

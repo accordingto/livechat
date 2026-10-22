@@ -9,10 +9,10 @@
     theirTurn:['仔細聽故事；適合時可以用手牌打斷。','Listen for your cards. Interrupt when their elements are mentioned.'],
     sharedTurn:['大家一起延續同一個故事。','Keep one continuous story going.'],
     lobby:['準備一起說故事','Get ready to tell a story'], ready:['準備好了','Ready'], notReady:['尚未準備','Not ready'],
-    storyWorld:['故事世界','Story world'], classicWorld:['古典童話','Classic fairy tales'], modernWorld:['現代與未來','Modern & Future'],
+    storyWorld:['故事世界','Story world'], classicWorld:['古典童話','Classic fairy tales'], modernWorld:['現代與未來','Modern & Future'], halloweenWorld:['萬聖節','Spooky Halloween'],
     openingCards:['起始故事手牌','Starting Story Cards'], originalAutomatic:['原作（依人數自動）','Original (automatic)'], customCards:['{n} 張（Hub 自訂）','{n} cards (Hub custom)'],
     openingHand:['每人 {n} 張故事牌 + 1 張結局牌','{n} Story Cards + 1 Ending per player'], saveSettings:['儲存設定','Save settings'],
-    worldsSeparate:['一次只用一個世界的牌，不會混牌。','One world per game. The two decks stay separate.'],
+    worldsSeparate:['一次只用一個世界的牌，不會混牌。','One world per game. Each deck stays separate.'],
     ruleOriginalHands:['原作自動手牌：2 人 9 張、3 人 8 張、4 人 7 張、5 人 6 張、6 人 5 張；每人另有 1 張結局牌。3–9 張的手動設定是 Hub 自訂。','Original automatic hands: 2 players get 9 cards; 3 get 8; 4 get 7; 5 get 6; 6 get 5. Each also gets 1 Ending. Manual 3–9-card hands are a Hub custom setting.'],
     unready:['取消準備','Not ready yet'], readyHint:['準備按鈕僅供參考；主持人可直接發牌開始。','Ready is optional. The host can deal cards and begin at any time.'],
     deal:['發牌','Deal cards'], first:['誰最像這張牌？','Who looks most like this card?'],
@@ -100,8 +100,8 @@
   function button(type,label,extra='',secondary=false,disabled=false){return '<button type="button" class="once-button'+(secondary?' once-button--secondary':'')+'" data-once-action="'+esc(type)+'" '+extra+(disabled?' disabled':'')+'>'+esc(t(label))+'</button>';}
   const player=(s,num)=>list(s.roster).find(p=>p.playerNum===num||p.id===num);
   const name=(s,num)=>player(s,num)?.name||'Player '+num;
-  const worldId=s=>s.world==='modern-future'?'modern-future':'classic';
-  const worldTitle=id=>t(id==='modern-future'?'modernWorld':'classicWorld');
+  const worldId=s=>['classic','modern-future','halloween'].includes(s.world)?s.world:'classic';
+  const worldTitle=id=>t(id==='halloween'?'halloweenWorld':id==='modern-future'?'modernWorld':'classicWorld');
   const configuredHand=s=>Number.isInteger(s.handSize)?s.handSize:null;
   const openingSeats=s=>Number.isInteger(s.membership?.activeCount)?s.membership.activeCount:list(s.roster).filter(p=>p.active!==false&&p.pending!==true).length;
   const openingCount=(s,handSize=configuredHand(s))=>handSize??(configuredHand(s)===null&&Number.isInteger(s.resolvedHandSize)?s.resolvedHandSize:Math.max(5,11-openingSeats(s)));
@@ -111,7 +111,7 @@
     const changed=settings.world!==worldId(s)||selectedHand!==configuredHand(s);
     const summary='<p class="once-opening-count">'+esc(t('openingHand',{n:openingCount(s,selectedHand)}))+'</p>';
     if(!editable)return '<div class="once-lobby-settings once-lobby-settings--readonly"><span class="once-world-tag">'+esc(worldTitle(worldId(s)))+'</span>'+summary+'</div>';
-    return '<div class="once-lobby-settings"><div class="once-settings-fields"><label>'+esc(t('storyWorld'))+'<select data-once-setting="world"><option value="classic"'+(settings.world==='classic'?' selected':'')+'>'+esc(worldTitle('classic'))+'</option><option value="modern-future"'+(settings.world==='modern-future'?' selected':'')+'>'+esc(worldTitle('modern-future'))+'</option></select></label><label>'+esc(t('openingCards'))+'<select data-once-setting="handSize"><option value="original"'+(selectedHand===null?' selected':'')+'>'+esc(t('originalAutomatic'))+'</option>'+Array.from({length:7},(_,i)=>i+3).map(n=>'<option value="'+n+'"'+(selectedHand===n?' selected':'')+'>'+esc(t('customCards',{n}))+'</option>').join('')+'</select></label></div><div class="once-settings-summary">'+summary+button('configure','saveSettings','',true,!changed)+'</div><p class="once-muted once-worlds-note">'+esc(t('worldsSeparate'))+'</p></div>';
+    return '<div class="once-lobby-settings"><div class="once-settings-fields"><label>'+esc(t('storyWorld'))+'<select data-once-setting="world">'+['classic','modern-future','halloween'].map(id=>'<option value="'+id+'"'+(settings.world===id?' selected':'')+'>'+esc(worldTitle(id))+'</option>').join('')+'</select></label><label>'+esc(t('openingCards'))+'<select data-once-setting="handSize"><option value="original"'+(selectedHand===null?' selected':'')+'>'+esc(t('originalAutomatic'))+'</option>'+Array.from({length:7},(_,i)=>i+3).map(n=>'<option value="'+n+'"'+(selectedHand===n?' selected':'')+'>'+esc(t('customCards',{n}))+'</option>').join('')+'</select></label></div><div class="once-settings-summary">'+summary+button('configure','saveSettings','',true,!changed)+'</div><p class="once-muted once-worlds-note">'+esc(t('worldsSeparate'))+'</p></div>';
   }
   function rulesHTML(s={}){return '<details class="once-help" data-once-detail="rules"><summary>'+esc(t('help'))+'</summary><p>'+esc(t('ruleGoal'))+'</p><div class="once-category-key">'+list(deck().categories).map(c=>'<span class="once-cat-'+esc(c.id)+'">'+icon(c.id)+esc(c.label)+'</span>').join('')+'</div>'+['ruleOriginalHands','ruleStory','ruleNormal','ruleSpecial','rulePass','ruleChallenge','ruleEnding',s.sharedControls===true?'ruleSharedTrust':'ruleTrust'].map(k=>'<p>'+esc(t(k))+'</p>').join('')+'</details>';}
   function voteHTML(s,host){
@@ -287,7 +287,7 @@
       const select=event.target.closest('[data-once-setting]'),s=this.data?.once;
       if(!select||!this.el.contains(select)||select.disabled||this.pending||this.options.disabled?.()||s?.phase!=='LOBBY'||s.actions?.configure!==true)return;
       const field=select.dataset.onceSetting,value=select.value;
-      if(field==='world'&&!['classic','modern-future'].includes(value)||field==='handSize'&&value!=='original'&&!/^[3-9]$/.test(value)||!['world','handSize'].includes(field))return;
+      if(field==='world'&&!['classic','modern-future','halloween'].includes(value)||field==='handSize'&&value!=='original'&&!/^[3-9]$/.test(value)||!['world','handSize'].includes(field))return;
       this.settingsDraft={...(this.settingsDraft||{world:worldId(s),handSize:configuredHand(s)}),[field]:field==='handSize'?(value==='original'?null:Number(value)):value};
       this.error='';this.render();
     }

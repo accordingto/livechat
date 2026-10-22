@@ -1,0 +1,3768 @@
+{
+  "version": 1,
+  "world": "halloween",
+  "complete": true,
+  "uniqueIllustrationCount": 170,
+  "generatedIllustrationCount": 110,
+  "reusedIllustrationCount": 60,
+  "storyCardCount": 150,
+  "endingCardCount": 20,
+  "mainWidth": 768,
+  "mainHeight": 1152,
+  "thumbnailWidth": 384,
+  "thumbnailHeight": 576,
+  "generator": "built-in image_gen",
+  "totalBytes": 43517266,
+  "newlyGeneratedBytes": 28226942,
+  "note": "110 individually generated Halloween paintings and 60 explicitly reused, same-title existing paintings. Every listed image has a checked 2:3 main and thumbnail; visual semantics are supported by the recorded review, not automatically judged by this inventory builder. Original PNG provenance is retained separately. Card words and frames remain HTML.",
+  "provenanceFiles": [
+    "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+    "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+    "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+    "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+    "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+    "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json"
+  ],
+  "cards": {
+    "once-hw-character-ghost": {
+      "artKey": "halloween.character.ghost",
+      "imagePath": "assets/once-upon-a-time/halloween/character/ghost-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/ghost-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One softly glowing translucent ghost floating above a creaky floor in a moonlit old house; expressive curious face, a clear floating shape, candlelit cozy Halloween atmosphere.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "2045dca410b8697c2bb9c7f2abf83b1934bcb24eda9b10cdcbb8b75bc292a81f",
+        "bytes": 160936,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "662753cef23d9ce06a87efb550929ca9a24a9021c336f2b4ed8872b30ef28a07",
+        "bytes": 52524,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-witch": {
+      "artKey": "story.character.river-witch",
+      "imagePath": "assets/once-upon-a-time/character/river-witch-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/river-witch-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-river-witch",
+      "semanticDescription": "Reuse the existing meaning-matched Witch painting without alteration, from once-character-river-witch.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "e968a0861569a09b32f002d61faedf5cb2183a3b9d0839803026c87ed3c392b4",
+        "bytes": 222842,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "d03451a30c3a93ea475b054e65ac0a5d4d57e9754a5e76f9632c21162846421b",
+        "bytes": 71810,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-vampire": {
+      "artKey": "halloween.character.vampire",
+      "imagePath": "assets/once-upon-a-time/halloween/character/vampire-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/vampire-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A polite adult vampire with small clean fangs and a high-collared cape, holding a teacup at an open castle window at night; no blood or threatening pose.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "2fd766b565004e625459d5c937245e5604b35a3b1d234f9bee4aa8c90dfe8953",
+        "bytes": 181810,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "6b3319028f14e7027165592c3a0042e78c396d4bdda9ad9b935a2c6c7b9043c3",
+        "bytes": 55534,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-werewolf": {
+      "artKey": "halloween.character.werewolf",
+      "imagePath": "assets/once-upon-a-time/halloween/character/werewolf-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/werewolf-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly shaggy werewolf with wolf ears, muzzle and paws wearing a slightly too-small cardigan beneath a full moon; clearly a wolf-person, warm storybook humor.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "3561dbdec0dc0935c622ce4b11b6d923da0c1d28e853d437d1d3cffd2c7742bc",
+        "bytes": 255286,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "e501707f47c64060feeb58058aab478582460ba79cc5fa6b55cf0d95f51eb724",
+        "bytes": 75820,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-skeleton": {
+      "artKey": "halloween.character.skeleton",
+      "imagePath": "assets/once-upon-a-time/halloween/character/skeleton-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/skeleton-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A clean stylized animated skeleton cheerfully tipping a tiny top hat on a pumpkin-lit path; clearly visible simple bones, no gore, not a realistic human corpse.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "4fae39d007f6303c912cd03865c8126538532163e66950aeba15bea9c6c659e7",
+        "bytes": 201764,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "7716f3f963e8b600bcbac9f59faae7bf22d3def86d34a987e156f765da0ae476",
+        "bytes": 69128,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-mummy": {
+      "artKey": "halloween.character.mummy",
+      "imagePath": "assets/once-upon-a-time/halloween/character/mummy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/mummy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly round-eyed mummy entirely wrapped in clean aged linen bandages, trying to gather a loose trailing strip in a warmly lit museum room; no wounds or exposed body parts.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "7686b4812f245e272be7db63a091bf22911df95a4ac48a67fd73612a65f98ee7",
+        "bytes": 163966,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "8176cfbef386f41910176cab901bb1322541b5b4b825800fa7c76a1933c49900",
+        "bytes": 56278,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-zombie": {
+      "artKey": "halloween.character.zombie",
+      "imagePath": "assets/once-upon-a-time/halloween/character/zombie-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/zombie-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A sleepy green cartoon-storybook zombie in a rumpled jacket slowly carrying a grocery bag past glowing pumpkins; intact friendly face and body, no wounds, no blood, no exposed organs.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "71eb2c827f51080d5fab95222f33d640871224d820431eb9524da1223a6a2234",
+        "bytes": 184734,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "04fab66bdb4264b74d0ddb1b6942c327944129ebdd161c4ffd16c97f90336334",
+        "bytes": 63464,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-black-cat": {
+      "artKey": "halloween.character.black-cat",
+      "imagePath": "assets/once-upon-a-time/halloween/character/black-cat-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/black-cat-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One glossy black cat with bright golden eyes sitting proudly on an old stone wall; warm pumpkin lantern below and a moonlit roof behind, full recognizable cat silhouette.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "5f38e189a5d8ed5a45005e908a58a0727c16fb0b9bc9d12db69cfde5c7247773",
+        "bytes": 186676,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "440d6f926a15c1011a9d5b30daeb391e609ec1956b6cb0e0d9ff1ba51606756a",
+        "bytes": 60032,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-bat": {
+      "artKey": "halloween.character.bat",
+      "imagePath": "assets/once-upon-a-time/halloween/character/bat-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/bat-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One small furry bat with wide membranous wings flying in front of a bright moon above quiet autumn rooftops; endearing face, clearly recognizable bat.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "d928f774ad3db8e9781593fcc8160c1c21424ba20ff23f8d4ca078d29a6b76f1",
+        "bytes": 181458,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "954af923be43461be86efc2fddf154ab8565dfca88ef282e8993fa568d5eae43",
+        "bytes": 56264,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-spider": {
+      "artKey": "halloween.character.spider",
+      "imagePath": "assets/once-upon-a-time/halloween/character/spider-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/spider-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One small friendly eight-legged spider hanging from a single silvery thread beside an intricate web on a pumpkin-lit window; readable spider shape, no horror close-up.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "184798a2d47607047f0be14be1135e48508966b05da259501bcd4947a515c67a",
+        "bytes": 174034,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f8c5c02ac409a1e32b12c6b7b7789462278d14ca8a62a74e585d2ae85f2b960a",
+        "bytes": 59246,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-scarecrow": {
+      "artKey": "halloween.character.scarecrow",
+      "imagePath": "assets/once-upon-a-time/halloween/character/scarecrow-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/scarecrow-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A straw-stuffed scarecrow in a patched coat and floppy hat standing in a misty pumpkin field, with a black crow comfortably perched on its arm; curious gentle expression.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "6b8c03800b84d09115907006e1e7c10d04b98fe648c5113be718e160bcae7f8c",
+        "bytes": 240580,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "35ffa151dc161404ed6d06457db8f4cbfc86090e3b29dd27ffbebd59da5c279a",
+        "bytes": 74592,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-monster": {
+      "artKey": "halloween.character.monster",
+      "imagePath": "assets/once-upon-a-time/halloween/character/monster-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/monster-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A large unfamiliar furry purple monster with small horns peeking shyly through a little cottage doorway; oversized harmless paws, no threatening teeth or violence.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "07879503eb08b1ef26319560888bc1740abb2a7751d7a80ab2080c2fb1f71076",
+        "bytes": 173362,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "dabc438199f1cc992fa576f2473581f390a56a4f94bdb52108359ee9b9d1a3fc",
+        "bytes": 54522,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-fortune-teller": {
+      "artKey": "halloween.character.fortune-teller",
+      "imagePath": "assets/once-upon-a-time/halloween/character/fortune-teller-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/fortune-teller-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult fantasy fortune teller in a star-patterned shawl looking into a glowing crystal ball at a candlelit carnival booth; no ethnic stereotype, no readable signs.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "de27e77ad33524fda67167a8a24ed406b39bad305d1a240163c30bf8df73f3ef",
+        "bytes": 205172,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "dc41b54ca2c6f86ef4d6b1731847bba825ef693b94f00639305ec5dce704e0bd",
+        "bytes": 66458,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-pirate": {
+      "artKey": "halloween.character.pirate",
+      "imagePath": "assets/once-upon-a-time/halloween/character/pirate-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/pirate-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult storybook pirate in a tricorn hat and long coat standing on a misty ship deck beside a closed treasure chest; autumn moonlight, no visible weapons or threatening pose.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "afd6553f70630410b8b1f507498d739af5ba62ce851b8a0e1e914bcc7f493174",
+        "bytes": 197116,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "b581002bde639290f656b2bcff5e24c3a0ea967e6445abfcb367045d529953e6",
+        "bytes": 62604,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-magician": {
+      "artKey": "halloween.character.magician",
+      "imagePath": "assets/once-upon-a-time/halloween/character/magician-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/magician-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult stage magician in a dark velvet coat and top hat producing a glowing pumpkin from a hat on a small warmly lit Halloween stage; playful surprised expression.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "a3e3a1bda71e27b5b76a4ff8f789b6d81025490e8f3d3e8642c6f59fc1768b96",
+        "bytes": 131192,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "ba5f6990bd4ebfb5e53a1d6372ad7344ccd0c415c35412ac3e42d213d64b92be",
+        "bytes": 45830,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-caretaker": {
+      "artKey": "story.character.candle-keeper",
+      "imagePath": "assets/once-upon-a-time/character/candle-keeper-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/candle-keeper-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-candle-keeper",
+      "semanticDescription": "Reuse the existing meaning-matched Caretaker painting without alteration, from once-character-candle-keeper.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "52e5f83e06be20e39afa70bc6c9d1cf9bddb6ca273cbba08b821c44f90b96053",
+        "bytes": 162380,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "2c9bb91b3b6fab62a85f641b1fae0d3dff46fb9db74489252ca186734d167183",
+        "bytes": 48700,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-traveler": {
+      "artKey": "story.character.lost-heir",
+      "imagePath": "assets/once-upon-a-time/character/lost-heir-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/lost-heir-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-lost-heir",
+      "semanticDescription": "Reuse the existing meaning-matched Traveler painting without alteration, from once-character-lost-heir.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "4320ab067e5afcfdce600bac6fda84338e150529e3f5b249d97e9157046cd0f3",
+        "bytes": 234112,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "658f4fa4e4d844e3c76f6f5251cd16cb8801710e906d437a371064009d9a3b31",
+        "bytes": 67422,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-crow": {
+      "artKey": "story.character.wise-crow",
+      "imagePath": "assets/once-upon-a-time/character/wise-crow-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/wise-crow-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-wise-crow",
+      "semanticDescription": "Reuse the existing meaning-matched Crow painting without alteration, from once-character-wise-crow.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "5e36f07c25a4acf8b43d8f7de472d94348c4117c8370fee675fa2bdedf617457",
+        "bytes": 244140,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "d1430abd65c85bd083762bde156b568cfed442758f84bf6667602657cd7e3015",
+        "bytes": 76822,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-dragon": {
+      "artKey": "story.character.tiny-dragon",
+      "imagePath": "assets/once-upon-a-time/character/tiny-dragon-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/tiny-dragon-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-tiny-dragon",
+      "semanticDescription": "Reuse the existing meaning-matched Dragon painting without alteration, from once-character-tiny-dragon.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "274c762cdb5d71b47ca9fba4a32917fd7f350bbeb09e74b10d9628c65538ed7c",
+        "bytes": 158490,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "b63d8363ee5323d920ec8ff7d49a98f92467fc852f86e94b025428e99161e77c",
+        "bytes": 54332,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-masked-guest": {
+      "artKey": "story.character.masked-guest",
+      "imagePath": "assets/once-upon-a-time/character/masked-guest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/masked-guest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-masked-guest",
+      "semanticDescription": "Reuse the existing meaning-matched Masked Guest painting without alteration, from once-character-masked-guest.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "336e13a1adef0e85788483364539ead3f226f78bd4b86e6ff5f6e08ae12aa235",
+        "bytes": 144332,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "04c83cb9802c0b28072151ae50e1d0ef515d452748d5afe409ae71da223d77c5",
+        "bytes": 44846,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-guard": {
+      "artKey": "story.character.gate-guard",
+      "imagePath": "assets/once-upon-a-time/character/gate-guard-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/gate-guard-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-gate-guard",
+      "semanticDescription": "Reuse the existing meaning-matched Guard painting without alteration, from once-character-gate-guard.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "dc595784aad708e20365ece1e1a3bd2e0e670a379fe170a99b09d3f3be17a8f2",
+        "bytes": 224174,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f47fb802ca5e2b44e49c9a5be0acbc2a125017ca7e1fde7ae3dd431398483207",
+        "bytes": 66322,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-friend": {
+      "artKey": "story.character.friend",
+      "imagePath": "assets/once-upon-a-time/character/friend-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/friend-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-friend",
+      "semanticDescription": "Reuse the existing meaning-matched Friend painting without alteration, from once-character-friend.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "dc87135585aa1b60bdb778368c29b304e616b162e15f52692d47dbf77fb4824a",
+        "bytes": 234256,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "80bf5a526f990e3ceb10837795c2df2f0af575be3614bb75a6128afb11f25e9e",
+        "bytes": 75832,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-thief": {
+      "artKey": "story.character.thief",
+      "imagePath": "assets/once-upon-a-time/character/thief-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/character/thief-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-character-thief",
+      "semanticDescription": "Reuse the existing meaning-matched Thief painting without alteration, from once-character-thief.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "a769c978aecb9bcc61ede0e0942461451ca9afe9bde991e4cfe384fcbb7ec8ff",
+        "bytes": 150924,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "e04d426bb16a011e306b490dd7e6244ff2498ab0d61c97bbb4e2a368d543b5b4",
+        "bytes": 52472,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-scientist": {
+      "artKey": "modern-future.character.scientist",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/scientist-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/scientist-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-character-scientist",
+      "semanticDescription": "An adult scientist in a lab coat examining a small glowing sample in a modern laboratory.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "ff10c1850ba5f687a8adf8f88902f04cc2eb0ce833464379c0610af581fef356",
+        "bytes": 88118,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "62cb9f0399c5c39eb97e56a628f30cea74188ac5f3ce7f7fe52eea47aa5efc9a",
+        "bytes": 33852,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-stranger": {
+      "artKey": "modern-future.character.stranger",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/stranger-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/stranger-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-character-stranger",
+      "semanticDescription": "A mysterious but harmless adult stranger waiting at a modern railway platform with a suitcase.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "80740e862f9debb3c998fb971d6522b7394360cdf8878d61f845c3564f0d3ba2",
+        "bytes": 102864,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4e46c68da18e4caed53b417893cff26e18916003fda966f8df382ee34e596253",
+        "bytes": 37910,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-detective": {
+      "artKey": "modern-future.character.detective",
+      "imagePath": "assets/once-upon-a-time/modern-future/character/detective-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/character/detective-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-character-detective",
+      "semanticDescription": "An adult detective examining a clue on a city sidewalk with a small magnifying glass.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "3c606891ecba2cf4fdd326b809474f4e8e44abd4a372c279d9eb836bcc536814",
+        "bytes": 124966,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "89e825cecc58f299145f8f05b401a242466d3c3921fd1353746a55635a7dfcfc",
+        "bytes": 44058,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-talking-pumpkin": {
+      "artKey": "halloween.character.talking-pumpkin",
+      "imagePath": "assets/once-upon-a-time/halloween/character/talking-pumpkin-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/talking-pumpkin-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A large orange pumpkin with a cheerful expressive carved face chatting with a curious black cat on an autumn porch; whimsical and friendly, no speech lettering.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "b533fa6588e534479ddc8133acb6cf370657372e5abb09e65da0188ce2c1e476",
+        "bytes": 174390,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "6e99c037a5cba3c06137dfc6829fa342ef4f6f89b734a9a6cdaeefbef843e146",
+        "bytes": 58736,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-goblin": {
+      "artKey": "halloween.character.goblin",
+      "imagePath": "assets/once-upon-a-time/halloween/character/goblin-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/goblin-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A little green goblin with long ears and a patched jacket sneaking a cookie from a pumpkin-shaped jar in a warm kitchen; playful mischief, no weapon.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "91c621b3f1a2349edf5b5ab6d7db9c1a97cf0f9e91af13b5d35138a676b68edf",
+        "bytes": 153118,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "cde5d0eab7cfbeb46b1447522536c3aff1102e2468f26987adc30528303ddcec",
+        "bytes": 50112,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-alien": {
+      "artKey": "halloween.character.alien",
+      "imagePath": "assets/once-upon-a-time/halloween/character/alien-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/alien-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A small friendly turquoise alien with two antennae wearing a paper witch hat at a Halloween party, curiously holding a pumpkin bucket; no recognizable franchise design.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "ed58a22f8aeb0a70b1579d4b79c492037acc1e683f5e223a1918b613fc7b0445",
+        "bytes": 166258,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "921f18d888d4365a57effbc8705925746890febad24275f37fb0455efaa58ae6",
+        "bytes": 58204,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-character-ghost-dog": {
+      "artKey": "halloween.character.ghost-dog",
+      "imagePath": "assets/once-upon-a-time/halloween/character/ghost-dog-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/character/ghost-dog-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A translucent softly glowing ghost dog wagging its curling tail and floating above a cozy rug, a little ball hovering beside it; affectionate and not frightening.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-character-v1.json",
+      "main": {
+        "sha256": "1d2f848e4978b39fe072af52c2336e756f974e5c68ea458193eaead488c45c8e",
+        "bytes": 158308,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "b866cbd4519fcf6c703997f3d962dc9013f8a77a6fce7dcca45a1a8d5c91a3eb",
+        "bytes": 50858,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-pumpkin": {
+      "artKey": "halloween.thing.pumpkin",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/pumpkin-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/pumpkin-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One large bright orange pumpkin with a curling green stem resting on autumn leaves; a tiny candle and carved pumpkin lantern softly visible behind, main pumpkin fully recognizable.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "ab548c5c7a9c5ab31549a19519de11cb5bd77898d8c5d5375cee2a4451801ede",
+        "bytes": 163834,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "89a65ecf4c06a15a7547a3dea2b933181eb122b373b93ed0edcf930fdc055a80",
+        "bytes": 54416,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-candy": {
+      "artKey": "halloween.thing.candy",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/candy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/candy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A little pile of colorful wrapped candies spilling from a pumpkin-shaped bowl on a wooden table; recognizable sweets, cozy golden light, no wrapper text or branding.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "716c07c86f10f4c0e792238820876363ba06e615e4ffb09cce8bf7ca73b0fd52",
+        "bytes": 138424,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "fc80c57fc03e32879ec73aa3a0baf8c939db32666c46676f002a2c0173c85dcc",
+        "bytes": 48566,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-broom": {
+      "artKey": "halloween.thing.broom",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/broom-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/broom-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One rustic wooden broom with tied straw bristles hovering just above the floor of a witch's cottage; full broom visible, moonlight and scattered autumn leaves.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "6a9ad3fd1ee211bc77738d58e761fa8e6d583c1396a5cc0994827806433c3ebc",
+        "bytes": 223080,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "1d38f5e62d42b4c83d7060fa74209d3acc60c6a9db606e5586fd68e2547f4e27",
+        "bytes": 71670,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-mask": {
+      "artKey": "halloween.thing.mask",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/mask-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/mask-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One ornate black-and-gold masquerade eye mask with ribbon ties resting on purple velvet beside a small pumpkin; clear eye openings and no face inside.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "6d1de6150be31821ab5effae7302db91879d3d30a8ef14157907be84bea98ab4",
+        "bytes": 178482,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "fb9a0db254b4b74bc2e662e8cd5800ef44d6b606732319216f47d9576bdbc734",
+        "bytes": 56910,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-costume": {
+      "artKey": "halloween.thing.costume",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/costume-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/costume-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A complete cheerful pumpkin costume with a round orange body and little green leaf hat hanging on a clothes stand in an autumn dressing room; visibly a costume rather than a real pumpkin.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "65abc1dc0734c5050b91950d9848e40953a51b5f485c8e7f732a88ba1f7eb7cc",
+        "bytes": 172928,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9744147e188b69899e387cd94762506bdc299ccb45c48d29723a0a5ad3e42402",
+        "bytes": 58068,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-candle": {
+      "artKey": "halloween.thing.candle",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/candle-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/candle-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One thick ivory candle with a gently flickering golden flame in a brass holder, melted wax on an old wooden table and a softly shadowed room behind.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "22d2a0eeddce10d98ed375e2142fc549943cc64500b3f546bd05e6766b85fab3",
+        "bytes": 139592,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "a822edc8b65c4a3aa51dc848c7790a2b33dcc7a0465e69961060583eea8c2793",
+        "bytes": 48350,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-cauldron": {
+      "artKey": "halloween.thing.cauldron",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/cauldron-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/cauldron-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One round black iron cauldron with curved handles and three short feet, bubbling with a harmless glowing green mixture in a candlelit cottage; whole pot visible.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "a28871a3f3fc7745da36db5da8c717171dac32fb573734d2349a6f2c21cc9458",
+        "bytes": 173310,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "0210d35a8694745f233ca6503ba7b3c4ecf7d1449be51ba0aaa54b2ad862c1dc",
+        "bytes": 58008,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-potion": {
+      "artKey": "story.thing.sleeping-potion",
+      "imagePath": "assets/once-upon-a-time/thing/sleeping-potion-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/sleeping-potion-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-sleeping-potion",
+      "semanticDescription": "Reuse the existing meaning-matched Potion painting without alteration, from once-thing-sleeping-potion.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "b33875555bdb1b2116c4b3808537891e797ae227e16e3502ed1fd8d575e0c89d",
+        "bytes": 151134,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "89fc7c181f2fcc639acfb0091bbabbc555d723bf6610908f944c553c8716a838",
+        "bytes": 49486,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-mirror": {
+      "artKey": "story.thing.copper-mirror",
+      "imagePath": "assets/once-upon-a-time/thing/copper-mirror-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/copper-mirror-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-copper-mirror",
+      "semanticDescription": "Reuse the existing meaning-matched Mirror painting without alteration, from once-thing-copper-mirror.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "52bf7a2a2d13246087d0345354c88a0901c5d3a44c67e8d5569b603da706494e",
+        "bytes": 160518,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "d7e0541e69d00c03fd78de12fee048f959bc51885e6f4cc52ce32772fdc8b864",
+        "bytes": 53570,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-key": {
+      "artKey": "story.thing.key",
+      "imagePath": "assets/once-upon-a-time/thing/key-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/key-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-key",
+      "semanticDescription": "Reuse the existing meaning-matched Key painting without alteration, from once-thing-key.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "4987dbcbe08d9d4dd7031ff87fe976cd17449f6970c44cf17d396dfb06d81b0d",
+        "bytes": 141148,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "113ca581d2a37a5217bdded88d041adf52fe4589b7a2361456deaa1f546a8dec",
+        "bytes": 43280,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-cobweb": {
+      "artKey": "halloween.thing.cobweb",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/cobweb-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/cobweb-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An intricate silvery cobweb stretching across the corner of an old arched window, its strands sparkling in moonlight; an autumn garden softly visible beyond, no large spider.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "d821efb56b5ebfedd68f0a5928d52bce7c2b585e985516be40f52f7d2c03991a",
+        "bytes": 237314,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "01a7e907a1e194f13091b2f9b58e0bf0cabd49f6dbc48d9a961e0142448ba805",
+        "bytes": 75060,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-spell-book": {
+      "artKey": "halloween.thing.spell-book",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/spell-book-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/spell-book-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One thick old spell book open on a cottage table with softly glowing abstract diagrams, a bookmark and a small candle; no legible words, symbols must not resemble real-world religious text.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "33837a4e66644bddce32606e68b89a159469bdf743f41d231ea3313eb09486bd",
+        "bytes": 179752,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "252abd41f6e708f976dace279819a8e409bfe4ad253caaf153bd3459fe33e0b5",
+        "bytes": 60532,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-magic-wand": {
+      "artKey": "halloween.thing.magic-wand",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/magic-wand-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/magic-wand-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One slender wooden magic wand with a glowing star-like tip resting diagonally on midnight-blue velvet; a small trail of harmless golden sparks and autumn leaves.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "afc2b41588ff4660655ba19d17bca57144fc3125cdaa8449e1f1fce00e51194f",
+        "bytes": 164658,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "ba677c196c05b00e08631e2e85f0b05e90bb3ea3c7a8fef93a7ebaa72dea9d82",
+        "bytes": 53414,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-crystal-ball": {
+      "artKey": "halloween.thing.crystal-ball",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/crystal-ball-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/crystal-ball-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One round clear crystal ball on a carved wooden stand, containing a tiny glowing image of a moonlit castle; warm carnival-booth setting, no text.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "b7d4f121f1013a154ab904e1b9ddc3573eca72fa3dbeb728b79f1657acb24b6a",
+        "bytes": 177830,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "aaf2de8e59d04a33c4a35789e43d4c7972ecc2ff9efdd8ef9896da52a6ed662b",
+        "bytes": 58504,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-coffin": {
+      "artKey": "halloween.thing.coffin",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/coffin-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/coffin-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One clearly coffin-shaped closed purple wooden box in a tidy vampire bedroom, a soft cushion and a tiny sleep mask lying on the lid; cozy comic mood, no body, no burial or gore.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "bad34343539a08193a28ef2b236203e3b57393c66ad0e4629ecc603173f70783",
+        "bytes": 200606,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4a08fc28b529e9ecdd95a41a5dbc62186c13b58509ded752c227133aae76d78e",
+        "bytes": 60452,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-lantern": {
+      "artKey": "story.thing.lantern",
+      "imagePath": "assets/once-upon-a-time/thing/lantern-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/lantern-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-lantern",
+      "semanticDescription": "Reuse the existing meaning-matched Lantern painting without alteration, from once-thing-lantern.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "e9de716a693a0e14e5d3043282f687b1e2dbbb891474ce9981582b7cc4bd2384",
+        "bytes": 168536,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "47d77ef898e2cfc6c61ea7860b67cc103a598c083ae77ca74baa3669be0e3ff6",
+        "bytes": 55902,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-bell": {
+      "artKey": "story.thing.glass-bell",
+      "imagePath": "assets/once-upon-a-time/thing/glass-bell-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/glass-bell-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-glass-bell",
+      "semanticDescription": "Reuse the existing meaning-matched Bell painting without alteration, from once-thing-glass-bell.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "d3ce861e2463cdbe7f94b4f521a5c7e6a6277dee5d0c9904256a2b1ad9fa7484",
+        "bytes": 149236,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "caa5bc838cbd00704c4b61989065e4dc1bcfda9eb5e6b6133cbc8eef3c1fda11",
+        "bytes": 51130,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-cloak": {
+      "artKey": "story.thing.warm-cloak",
+      "imagePath": "assets/once-upon-a-time/thing/warm-cloak-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/warm-cloak-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-warm-cloak",
+      "semanticDescription": "Reuse the existing meaning-matched Cloak painting without alteration, from once-thing-warm-cloak.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "adc23fa309829ee0b2639988e4ff00da6feaf4bfefee8a7e6050b929384e4d16",
+        "bytes": 211808,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4d33139321f9f42b5056c0bf5ec2db08ca2fff6264abfa934072394aeb89178a",
+        "bytes": 59202,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-feather": {
+      "artKey": "story.thing.black-feather",
+      "imagePath": "assets/once-upon-a-time/thing/black-feather-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/black-feather-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-black-feather",
+      "semanticDescription": "Reuse the existing meaning-matched Feather painting without alteration, from once-thing-black-feather.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "2dcd611d70895d444deb6cb4f8d4db5471e00b6128c9e9335b89c00946c5754a",
+        "bytes": 224298,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "ec28141e486a1f5a9dee5a517008c68a3b5ada867c304427122daf90479a201c",
+        "bytes": 62298,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-letter": {
+      "artKey": "story.thing.secret-letter",
+      "imagePath": "assets/once-upon-a-time/thing/secret-letter-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/secret-letter-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-secret-letter",
+      "semanticDescription": "Reuse the existing meaning-matched Letter painting without alteration, from once-thing-secret-letter.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "960e0ed66d6d5287edd8e9f47dc9bea77250fcc2301c1f1441487222ec6b1bdb",
+        "bytes": 198670,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "c5b51dfd78a6a55f6113fa554285fb5f9742a61805098297aed844a4d7d8a44c",
+        "bytes": 65254,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-ring": {
+      "artKey": "story.thing.stone-ring",
+      "imagePath": "assets/once-upon-a-time/thing/stone-ring-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/stone-ring-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-stone-ring",
+      "semanticDescription": "Reuse the existing meaning-matched Ring painting without alteration, from once-thing-stone-ring.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "80b122b47d5cabb6c17353c68d3119c1754b4e67cc5acfae5969149431362abf",
+        "bytes": 166152,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "c0a871426e09daa811acfe0001d18eb5282b97bcf42a18eeca00cd9684f190d0",
+        "bytes": 58728,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-rope": {
+      "artKey": "story.thing.rope",
+      "imagePath": "assets/once-upon-a-time/thing/rope-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/rope-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-rope",
+      "semanticDescription": "Reuse the existing meaning-matched Rope painting without alteration, from once-thing-rope.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "a8214151ead0516c35cb03ecf49ef6759255c991efc81e93a68759f2aa623ba6",
+        "bytes": 208436,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "10d9150ae4eaa4749db76e0824b478fac3c96baaa52a7800093f287eaa7f7502",
+        "bytes": 63086,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-book": {
+      "artKey": "story.thing.book",
+      "imagePath": "assets/once-upon-a-time/thing/book-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/book-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-book",
+      "semanticDescription": "Reuse the existing meaning-matched Book painting without alteration, from once-thing-book.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "5a57322e101f4b0839bcf287bd5417e675dc79a412fae468a147d08ea75d0fff",
+        "bytes": 177734,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "3969368abd4b339fee19e3b3ffe30ecfa96d78780b88ccb660d3e5be48168a7d",
+        "bytes": 56276,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-chest": {
+      "artKey": "story.thing.locked-chest",
+      "imagePath": "assets/once-upon-a-time/thing/locked-chest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/thing/locked-chest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-thing-locked-chest",
+      "semanticDescription": "Reuse the existing meaning-matched Chest painting without alteration, from once-thing-locked-chest.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "ae9e3dc34cae6a29fdbc4037d2fad8b9b9748d10f212655c0fa413a3440043a6",
+        "bytes": 198824,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "5140bac5551b7d06835a093b1456615a89d7cef442f717a0e439596cfa55d138",
+        "bytes": 55870,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-candy-apple": {
+      "artKey": "halloween.thing.candy-apple",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/candy-apple-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/candy-apple-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One shiny red candy apple on a wooden stick, resting on parchment beside autumn leaves and a small pumpkin; unmistakable apple shape and glossy sugar shell.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "62dac648db1d6a48b26241e60416935ff2d5c7780613d6b73e265a9e33965454",
+        "bytes": 161650,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "42882c793e7b873ff8e729064fbfa57340a9aa490098f6651a73749f0cf5fd78",
+        "bytes": 55022,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-rubber-duck": {
+      "artKey": "halloween.thing.rubber-duck",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/rubber-duck-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/rubber-duck-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One bright yellow rubber duck wearing a tiny black witch hat, floating in an old bathtub with soft lavender bubbles; warm silly Halloween atmosphere.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "9d81ae89ffe5335b8880a2a5e5a38813bcb8fbda2e36bb34a97fe6ee94b3dfb8",
+        "bytes": 190842,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9ce46fe4c09370648c1ebe20767723900999336b519b53c6ff244330131ee902",
+        "bytes": 64746,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-fake-teeth": {
+      "artKey": "halloween.thing.fake-teeth",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/fake-teeth-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/fake-teeth-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A pair of clearly artificial white plastic vampire fangs resting in an open costume box on purple cloth; no mouth, no blood, no realistic detached body part.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "297996b313082ec2122f5431499afd9a88f3a5ad7e1602b1eac70c6944755472",
+        "bytes": 136552,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "8f1bf64352103dd4b5becaefdaf0ec83ca3a5b79239b2129ab12f9afd652c13a",
+        "bytes": 45358,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-doorbell": {
+      "artKey": "halloween.thing.doorbell",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/doorbell-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/doorbell-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A large old-fashioned brass doorbell button beside a purple wooden door, pumpkin garland and warm porch light; clear pressable button, no writing.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "4de6cfab7a433050f3b8f5ab0889bcb30de859316cd42ab91e8ca6ff07353203",
+        "bytes": 137652,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "1b71567dbae99949cb3599ce2cb3807f2593c18dba27ace2a58aeed3ad9ab62a",
+        "bytes": 42828,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-balloon": {
+      "artKey": "halloween.thing.balloon",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/balloon-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/balloon-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One round orange balloon with a smiling simple pumpkin face, tied to a little chair in a moonlit party room; clear balloon string and shiny rubber shape.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "a2e217f224651f4afb0a886b146425cdfd69b66f52a49c400086206ab1634542",
+        "bytes": 191224,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "366d6604c7dc29f5e0817189572b1ac30934d2b3969de0cd58f6603b951f417c",
+        "bytes": 64708,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-thing-flashlight": {
+      "artKey": "halloween.thing.flashlight",
+      "imagePath": "assets/once-upon-a-time/halloween/thing/flashlight-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/thing/flashlight-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One ordinary metal flashlight casting a bright cone of light across a dusty attic floor toward a harmless tiny black cat; Halloween atmosphere without threat.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-thing-v1.json",
+      "main": {
+        "sha256": "eb5b31dd37752700f5445f1624ea08aa5dee429f02e89cfc3265da487d8e196e",
+        "bytes": 149976,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "3b6a60bc5c0157292f8adaf230fa0dc396c9246e495b0a6942cec496732218fe",
+        "bytes": 47570,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-haunted-house": {
+      "artKey": "halloween.place.haunted-house",
+      "imagePath": "assets/once-upon-a-time/halloween/place/haunted-house-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/haunted-house-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A crooked old Victorian-style house under an autumn moon, two friendly translucent ghosts peeking from warm windows and pumpkins by the porch; inviting spooky storybook scene.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "12d1d378f5c4ffc1066dbc86113767ce68c0dadacfc0d01036f8cc1a553a6f10",
+        "bytes": 244952,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9a4e2322d9468fed6f1e6ceddc4c223223fd0ff9ecad9b79168410e2b7f666c3",
+        "bytes": 71938,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-graveyard": {
+      "artKey": "halloween.place.graveyard",
+      "imagePath": "assets/once-upon-a-time/halloween/place/graveyard-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/graveyard-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A peaceful moonlit graveyard with simple weathered headstones, curling mist and autumn leaves, a small black cat on the path; no open graves, corpses, legible inscriptions or religious symbols.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "d20c3c1de6e06b15b6d3adda49aa040eca72b946a13e9061332ecf4744c0e83c",
+        "bytes": 239920,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "d191ddfa5b74725a192faa623bf848a43bb157a68eb6ad1341a2ec1e5c9e1c93",
+        "bytes": 72716,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-pumpkin-patch": {
+      "artKey": "halloween.place.pumpkin-patch",
+      "imagePath": "assets/once-upon-a-time/halloween/place/pumpkin-patch-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/pumpkin-patch-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A broad autumn field full of orange pumpkins on curling green vines, a rustic fence and a little barn under a large moon; clear cozy pumpkin-patch setting.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "f6d1315063b0ca079e73e7fe4c4176a5e8f93e5b952ce2bd1e06cdf5c36dad52",
+        "bytes": 235126,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "2e046cab7e45bbeb7ef3065b4d5078a79ad69457cc6ee99a466f6bceed4770eb",
+        "bytes": 72196,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-castle": {
+      "artKey": "story.place.island-castle",
+      "imagePath": "assets/once-upon-a-time/place/island-castle-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/island-castle-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-island-castle",
+      "semanticDescription": "Reuse the existing meaning-matched Castle painting without alteration, from once-place-island-castle.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "d6d97b48f80d3981329052060b7146ef576c886c5ccdf08f95d7a2f9f236aa3d",
+        "bytes": 258026,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "5522664a1d4cd291b0eabc99f67341d4b32dcd58214e5f69b9585252886c4c4c",
+        "bytes": 76640,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-forest": {
+      "artKey": "story.place.forest",
+      "imagePath": "assets/once-upon-a-time/place/forest-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/forest-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-forest",
+      "semanticDescription": "Reuse the existing meaning-matched Forest painting without alteration, from once-place-forest.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "c8a937467740e6934ff36a29fee9a9d8cea349f2bdb60919f9c077d20cb0359f",
+        "bytes": 298778,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "35f6cca44cbd67bd8709f8ee90e8ff5f96e511be2a27d4ccb3475599288345bf",
+        "bytes": 83832,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-attic": {
+      "artKey": "story.place.dark-attic",
+      "imagePath": "assets/once-upon-a-time/place/dark-attic-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/dark-attic-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-dark-attic",
+      "semanticDescription": "Reuse the existing meaning-matched Attic painting without alteration, from once-place-dark-attic.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "e5609bfe574dd8fee754caf88e7f5ae7d8d8b8c68d06a962aafc20592c5c523a",
+        "bytes": 171246,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "cce8b5129b4a50364ce9a4b4b480462e23d815d71a93b1a42bed493578dad695",
+        "bytes": 50558,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-basement": {
+      "artKey": "halloween.place.basement",
+      "imagePath": "assets/once-upon-a-time/halloween/place/basement-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/basement-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Stone steps leading down into an old house's basement, shelves of jars and pumpkins visible by one warm hanging lamp; mysterious but safe, no trapped person or violence.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "3910b01b78579f84a3e7c569f304d4b03069d753798d6afa866c1a7f9f9fa3c3",
+        "bytes": 197838,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "104739c799262b839d11d07269eb974c43f2f7bcc89065a28a2ffe5be1671a12",
+        "bytes": 60178,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-tunnel": {
+      "artKey": "story.place.secret-tunnel",
+      "imagePath": "assets/once-upon-a-time/place/secret-tunnel-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/secret-tunnel-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-secret-tunnel",
+      "semanticDescription": "Reuse the existing meaning-matched Tunnel painting without alteration, from once-place-secret-tunnel.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "ec069eec4aace6d2fe4cac95e4a3afacb7806c4845e77e98625ee7f3de4e214a",
+        "bytes": 210478,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "e4842547e3c92c5e82fc0716f407cb60cf0eb6ace79b1d022a3e3eb46df03a7c",
+        "bytes": 60218,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-cave": {
+      "artKey": "story.place.seaside-cave",
+      "imagePath": "assets/once-upon-a-time/place/seaside-cave-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/seaside-cave-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-seaside-cave",
+      "semanticDescription": "Reuse the existing meaning-matched Cave painting without alteration, from once-place-seaside-cave.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "4726d86ac97efb600d91205294b8539035205bc8bde3aebd3e9eba9e6bc7f100",
+        "bytes": 284988,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9b426978b431a396462df04dcd2e1eb127b847df341acd68a639b393ae98be91",
+        "bytes": 81672,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-tower": {
+      "artKey": "story.place.lonely-tower",
+      "imagePath": "assets/once-upon-a-time/place/lonely-tower-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/lonely-tower-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-lonely-tower",
+      "semanticDescription": "Reuse the existing meaning-matched Tower painting without alteration, from once-place-lonely-tower.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "226baa20787467427dce863af691a2e2e7eeb2cafe8faeeb5d3e9db0f8bfbc1c",
+        "bytes": 221230,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f4cc0d7a7298ade89cf7718f92a7ceb4c1e334b9b2718488326993b18767a2af",
+        "bytes": 63830,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-candy-shop": {
+      "artKey": "halloween.place.candy-shop",
+      "imagePath": "assets/once-upon-a-time/halloween/place/candy-shop-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/candy-shop-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A warmly lit old-fashioned candy shop interior with glass jars of colorful sweets and pumpkin-shaped bowls, a few friendly ghost decorations; no logos, labels or readable signs.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "c526dcc8298720ea13b3476af993b09a5432eef20e1b7d99241a9997183e0ee3",
+        "bytes": 214680,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4451db5f4ff68a840c75f2866e6c4daa2a04aed830cf49a546c0d8d095a5c11a",
+        "bytes": 70216,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-carnival": {
+      "artKey": "halloween.place.carnival",
+      "imagePath": "assets/once-upon-a-time/halloween/place/carnival-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/carnival-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A cheerful autumn carnival at night with a glowing Ferris wheel, striped tents and pumpkin lanterns, a gentle magical fog; no clowns or horror imagery, no readable signs.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "b904055cf977899e68ab831ec972398a32e436c92ea0021fc287bbd7b2110ff0",
+        "bytes": 260248,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "fdc2693cc16f2928c7bc62d7e88c46afc1c003489fa7fd513574fa61b160c8c2",
+        "bytes": 82112,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-old-hotel": {
+      "artKey": "halloween.place.old-hotel",
+      "imagePath": "assets/once-upon-a-time/halloween/place/old-hotel-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/old-hotel-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "The welcoming but mysterious lobby of an old hotel, curved staircase, brass room keys and an empty reception desk lit by warm lamps; autumn night outside, no written room numbers or signs.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "0c09e12fc8ff03a5e8cf964978cca0b6e90b1fd2ddef8ef199172c4f6da19538",
+        "bytes": 199934,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "dc11dbab9b0ef0a7faddea7efa9bf295ec8cfdae92317bd5509551fb4a9c60b2",
+        "bytes": 60784,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-laboratory": {
+      "artKey": "halloween.place.laboratory",
+      "imagePath": "assets/once-upon-a-time/halloween/place/laboratory-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/laboratory-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A whimsical spooky inventor's laboratory with glass tubes, harmless colorful bubbling flasks and a pumpkin-powered machine, full room view under purple and gold light; no dangerous medical procedures.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "b0e0b43a32786b653153fec88e5fe241e43bd1d0eb0b13eea366ada530e0d3ca",
+        "bytes": 269486,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "256349d73bba4e5c69faf784274e0c2194e090daf4b1799d542117db29eb6970",
+        "bytes": 79582,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-moon": {
+      "artKey": "modern-future.place.moon",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/moon-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/moon-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-place-moon",
+      "semanticDescription": "The rocky surface of the moon with a small distant lunar base and Earth in the black sky.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "38b0c85a07387086b4e2f0c8beaae5788578a66b1053bbddb461271d7fc185f6",
+        "bytes": 171028,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "b9d0906082d9615a086a123751e1a16a421575d20bf7ed29cefadb47834f9e7e",
+        "bytes": 48062,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-kitchen": {
+      "artKey": "story.place.royal-kitchen",
+      "imagePath": "assets/once-upon-a-time/place/royal-kitchen-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/royal-kitchen-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-royal-kitchen",
+      "semanticDescription": "Reuse the existing meaning-matched Kitchen painting without alteration, from once-place-royal-kitchen.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "28609a71097d6aaa2caee157df8c2ec27cad10aa441fb660db60a18a39964e09",
+        "bytes": 211462,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "109b579a302d8a1f495af70628ca679132a351c89f4ef1d877e792d2570bbf33",
+        "bytes": 72648,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-village": {
+      "artKey": "story.place.empty-village",
+      "imagePath": "assets/once-upon-a-time/place/empty-village-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/empty-village-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-empty-village",
+      "semanticDescription": "Reuse the existing meaning-matched Village painting without alteration, from once-place-empty-village.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "3fdb60c51c0e2b026a22defa3917673fd98a48f7e912bfc190ea05087051b573",
+        "bytes": 297878,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "0e344b13c1f2431d89af74b29bdeddad3baf32bfad1496f863e59f9f2e8ca583",
+        "bytes": 86410,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-market": {
+      "artKey": "story.place.market-square",
+      "imagePath": "assets/once-upon-a-time/place/market-square-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/place/market-square-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-place-market-square",
+      "semanticDescription": "Reuse the existing meaning-matched Market painting without alteration, from once-place-market-square.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "46f574404a40be17418dc4d6da69a2e9d07e14a8161c23f1eeae1425d1c89104",
+        "bytes": 314364,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "bc72ecb2b66e655f05a07aa7b6d92336dd6d77c3a9202f1ab875d2ee0f81daf4",
+        "bytes": 92352,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-cafe": {
+      "artKey": "modern-future.place.cafe",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/cafe-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/cafe-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-place-cafe",
+      "semanticDescription": "A welcoming modern neighborhood café interior with coffee cups and warm lamps.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "ea5b507ab756ba6d20391cc852d26b99044f306523dbad623d8ed93993bbde26",
+        "bytes": 132414,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "8951ec2ba2975c08e5d57773dcb62468ac11baaa1c460ce88d91ffe4adbed0a0",
+        "bytes": 48260,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-rooftop": {
+      "artKey": "modern-future.place.rooftop",
+      "imagePath": "assets/once-upon-a-time/modern-future/place/rooftop-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/place/rooftop-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-place-rooftop",
+      "semanticDescription": "A contemporary apartment rooftop garden overlooking a city at sunset.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "967401241a4bd1e0b0220d8f7270b68fe287baec54f16d58652226ce205cc0c8",
+        "bytes": 174466,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "d4d017608a4ecab8bb920239517e975dc8c27f70ef2046ffc364ba98a7d5f7aa",
+        "bytes": 55658,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-costume-shop": {
+      "artKey": "halloween.place.costume-shop",
+      "imagePath": "assets/once-upon-a-time/halloween/place/costume-shop-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/costume-shop-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A cozy costume shop packed with clearly visible witch hats, capes, pumpkin outfits and animal masks on rails; welcoming interior, no readable signage.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "39a4aaca6f823ba959e90e32f3d9e6025956d0b0244c37770f57e2cf266ff622",
+        "bytes": 240080,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "00ed0546d31e40e52ad5124cd6a57595aac7992dadb851e4c437c771673d7452",
+        "bytes": 73350,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-maze": {
+      "artKey": "halloween.place.maze",
+      "imagePath": "assets/once-upon-a-time/halloween/place/maze-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/maze-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An autumn hedge maze seen from slightly above, several winding paths around a central pumpkin lantern and a clear entrance; gentle mystery rather than danger.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "958151425a0e3884f10fc4fdbfde5ba3bec06e405484c43d7101707cd8d4a0f8",
+        "bytes": 318270,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "ea40e63596916cf47d8bda44dbcb5d3d1a1a95eba136bb4056d41123133cf4fa",
+        "bytes": 86458,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-swamp": {
+      "artKey": "halloween.place.swamp",
+      "imagePath": "assets/once-upon-a-time/halloween/place/swamp-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/swamp-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A quiet swamp at twilight with shallow still water, mossy trees, glowing fireflies and a frog on a log; readable wetlands landscape, no danger or monster.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "306787239272d482b9d597380040a5ded875edb41ed2408071948a2c04d99828",
+        "bytes": 211606,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "402abe743063b091b81629aa0955d36d2387234206e6723c72560c0327dc8a7d",
+        "bytes": 63814,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-secret-room": {
+      "artKey": "halloween.place.secret-room",
+      "imagePath": "assets/once-upon-a-time/halloween/place/secret-room-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/secret-room-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A bookcase swung open to reveal a small inviting secret room with a glowing pumpkin lantern and an old writing desk; clear concealed doorway, no readable book titles.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "a0f362914ae1c15ec7703f44333c44862ba78416b0f04a46a1a0042dd8901912",
+        "bytes": 191004,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "94a9138dd6e5a6437d3621288abcb3663d58a29d862beb960ed8987cc6d2db83",
+        "bytes": 54868,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-ballroom": {
+      "artKey": "halloween.place.ballroom",
+      "imagePath": "assets/once-upon-a-time/halloween/place/ballroom-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/ballroom-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A grand but cozy old ballroom with polished floor, chandeliers and pumpkin lanterns, one pair of empty dancing shoes near the center; full spacious interior.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "7df48ffe337a357d9b05ef92d96e02f335e7955ca14a9a141670ec0981db2829",
+        "bytes": 233244,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "db1419fba911c02433cac4757d7f01b3f5cd335dccea7180754efa3a47cd4773",
+        "bytes": 71188,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-theater": {
+      "artKey": "halloween.place.theater",
+      "imagePath": "assets/once-upon-a-time/halloween/place/theater-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/theater-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A small old theater with red velvet curtains, a wooden stage and cozy pumpkin lanterns along the aisle; clear stage and audience seats, no posters or written signs.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "a0c0fd45d78148fb7786ce0196d5f471ccae88bc1744da62276e23daf937e4e7",
+        "bytes": 175086,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "33cd15da559137fcd80f00e91497e01410aea8c67e5c8fc0bbb69debab082f32",
+        "bytes": 53194,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-toy-shop": {
+      "artKey": "halloween.place.toy-shop",
+      "imagePath": "assets/once-upon-a-time/halloween/place/toy-shop-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/toy-shop-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A whimsical old toy shop with wooden trains, soft toy monsters and cheerful puppet displays, candlelike warm lighting and autumn window decorations; no creepy dolls.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "811afc9f7c93a5826871175c882565c7ac635fa29749e58dbf97b07673898850",
+        "bytes": 213792,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "63da068bdc02f0503438483d607018e12beccebe9da5087822ee576c232c3ec3",
+        "bytes": 69302,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-diner": {
+      "artKey": "halloween.place.diner",
+      "imagePath": "assets/once-upon-a-time/halloween/place/diner-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/diner-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A cozy roadside diner at midnight with red booths, a plate of pumpkin pie and a friendly ghost-shaped salt shaker; warm windows and no legible signage.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "241cdd2408669e0613b5d401b02914eee24aea1ef69013c792614704d7f1228a",
+        "bytes": 178228,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "5d805fd6a1dcf729fef814a2dc57460fba0c865453e12327ecf267e05e4e1062",
+        "bytes": 57764,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-bathroom": {
+      "artKey": "halloween.place.bathroom",
+      "imagePath": "assets/once-upon-a-time/halloween/place/bathroom-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/bathroom-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An old-fashioned bathroom with claw-foot bathtub, orange towels, a little black cat on the rug and a rubber duck in bubbles; warm cozy interior, no people or horror reflection.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "0e8f06e62eef98ad4f07716238800d0dc7768090a02da60a5f7dcca08ce53cd0",
+        "bytes": 208288,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "e11476c58ca99712200d46cb886077db65287792d8a64f970f23b8144bfc76e7",
+        "bytes": 61804,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-place-portal": {
+      "artKey": "halloween.place.portal",
+      "imagePath": "assets/once-upon-a-time/halloween/place/portal-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/place/portal-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An oval glowing magical portal standing in an autumn garden, clearly showing a cheerful pumpkin-filled world beyond; safe inviting magic, no threatening creature.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-place-v1.json",
+      "main": {
+        "sha256": "e513c09b1514a69f120c307d74508ae49c159c8796a285ce2dc97f46f29419aa",
+        "bytes": 268852,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "915e084a9db6959afa63ce4bd69da98b7dbd52912a1f01f928bd4dc8585c706f",
+        "bytes": 82818,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-haunted": {
+      "artKey": "halloween.aspect.haunted",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/haunted-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/haunted-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An old armchair with two friendly translucent ghosts drifting around it in a candlelit room; the haunted object clear, no frightening faces or threatening action.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "6bf97ef12d27c7f8dad27458de24e96a2aef44c2ad7db9be4f7bb376f5a350bf",
+        "bytes": 243730,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "27563453abdd53262241e9c240783f17600becc5f34352f65430517ca50df1a1",
+        "bytes": 57592,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-hungry": {
+      "artKey": "story.aspect.hungry",
+      "imagePath": "assets/once-upon-a-time/aspect/hungry-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/hungry-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-hungry",
+      "semanticDescription": "Reuse the existing meaning-matched Hungry painting without alteration, from once-aspect-hungry.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "e4acbc30eea4bae2fae1f1e0cd0adb00268021ba4b9064602ca6f4967ef2596c",
+        "bytes": 192338,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "01fb7a417fc583197fec93e49df05fe043426127984475d3d948723ba1c5a5cb",
+        "bytes": 63288,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-invisible": {
+      "artKey": "story.aspect.invisible",
+      "imagePath": "assets/once-upon-a-time/aspect/invisible-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/invisible-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-invisible",
+      "semanticDescription": "Reuse the existing meaning-matched Invisible painting without alteration, from once-aspect-invisible.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "36d52b7032ffade6006a0685fe2e9206eae28bf7b2264e1f1356b893e587f760",
+        "bytes": 251094,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "be0ba429cca45051d1d69d92e297a8b4eca9801d895c2184f8a082afa20e4d2f",
+        "bytes": 76406,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-cursed": {
+      "artKey": "halloween.aspect.cursed",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/cursed-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/cursed-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An ordinary pair of boots hopping by itself inside a harmless swirling purple magical cloud in a witch's cottage; playful visible trouble caused by a curse, no pain or dark religious imagery.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "5e849a7a963a234e41a443173ba939f367173512b613b1543c79b2855e6ebf9b",
+        "bytes": 233688,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "d443f3764b1cc4da625b5f46c3b4e6c41be82f59a8337adf2aca8d5c220fcf38",
+        "bytes": 61056,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-sleepy": {
+      "artKey": "halloween.aspect.sleepy",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/sleepy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/sleepy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly adult vampire in slippers drooping sleepily over a teacup, half-closed eyes and a little yawn, warm candlelit room at dawn; no blood.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "8d2fbbd320328c3359b51d28163c274083d4cadafc5b9ac3cce712aa93a9ee23",
+        "bytes": 196308,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f94e60939cf04945fef162300733dd0f10ab7e0256945b55aae3cab60dd69621",
+        "bytes": 50358,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-creepy": {
+      "artKey": "halloween.aspect.creepy",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/creepy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/creepy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A dim crooked hallway with a gently open door, drifting autumn leaves and a rocking chair, mysterious blue shadows balanced by warm light; a mildly creepy setting without any scary face or threat.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "a9e3507e7cecdeabadcb730730843b01ff2b655586cbab2faf5fe9b7ebb63241",
+        "bytes": 179184,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "32efbae2ae5d83ea7e1c68278003712a4ac48f0c7a773fd94dd29457ddfd85a5",
+        "bytes": 45330,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-glowing": {
+      "artKey": "halloween.aspect.glowing",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/glowing-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/glowing-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "One small pumpkin radiating a bright soft turquoise magical glow from its whole surface in a dark autumn garden, light reflecting clearly on nearby leaves.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "dfee8a38692886aa1057392a47b08a00a5f6fdc5e03d01d937ecc5708b2003e1",
+        "bytes": 209088,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "dfa72c678b703809900107911c33cf9538068ebab531fbbad26b8bd514e96644",
+        "bytes": 59050,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-lost": {
+      "artKey": "modern-future.aspect.lost",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/lost-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/lost-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-aspect-lost",
+      "semanticDescription": "An adult traveler at a modern city crossroads looking confused at a folded map.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "315e3b57447bebc914b330c0de802336159e52729a454598476a4171bc930e5e",
+        "bytes": 131728,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "5767d6e817c8956ba9462dfacf4f5a4a49571ce7c51b25257a87551bdb8f4d85",
+        "bytes": 47974,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-tiny": {
+      "artKey": "story.aspect.tiny",
+      "imagePath": "assets/once-upon-a-time/aspect/tiny-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/tiny-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-tiny",
+      "semanticDescription": "Reuse the existing meaning-matched Tiny painting without alteration, from once-aspect-tiny.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "bd076059a21fe210b031944194715ba1dc8eb0bcc7c70f7179747149e9ba6136",
+        "bytes": 193904,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "86c67919f63e08869e7cc5e39a31737149dcde1e7dae69e4c016a1bf3e9c0f35",
+        "bytes": 62502,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-noisy": {
+      "artKey": "halloween.aspect.noisy",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/noisy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/noisy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly skeleton enthusiastically banging two saucepan lids together while two startled but smiling party guests cover their ears; no text or drawn sound-effect lettering.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "e74dd6df480539faddaa61cf177864436a89d706d1902d1d7dd6f424f52e658d",
+        "bytes": 164166,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4433c08843c6fbc90f758c26c0b89d79a6b34dcad6ffdee4c256dfb0b122dee1",
+        "bytes": 48056,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-sticky": {
+      "artKey": "halloween.aspect.sticky",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/sticky-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/sticky-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult party guest trying to lift a hand from a plate of stretchy caramel candy, harmless golden strands visibly connecting fingers and plate; pumpkins in background, comic not painful.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "b52638a0d43c4fa4f18a9ff10d9170c93cde9a44a09266b2c5ffc011a5cc0171",
+        "bytes": 153724,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "bcff9772e59443b95742bce929ccb01d2124d8028ddd3061336f2e250092be8f",
+        "bytes": 46454,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-flying": {
+      "artKey": "halloween.aspect.flying",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/flying-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/flying-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A clearly ordinary wooden chair flying high above autumn rooftops, its four legs visible against a bright moon, a gentle magical sparkle trail; no occupant in danger.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "ebb612f6a77bb8af02f0dd07dc139264ca2947896486d6482982436d9eba8649",
+        "bytes": 188708,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9ad3fb21de2c78e68f2697b5d37989536d1cf436f328f104185c3b725c144ed9",
+        "bytes": 48300,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-disguised": {
+      "artKey": "story.aspect.disguised",
+      "imagePath": "assets/once-upon-a-time/aspect/disguised-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/disguised-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-disguised",
+      "semanticDescription": "Reuse the existing meaning-matched Disguised painting without alteration, from once-aspect-disguised.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "7f164c996c059aa564c88b25bb5aa0b4056606cdb1ba14ba40bae8b1ec2e292d",
+        "bytes": 231196,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f7c1d7c34d9a153447ca30356154833c4958dea3b40151ea89572b8373879a6e",
+        "bytes": 70316,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-upside-down": {
+      "artKey": "halloween.aspect.upside-down",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/upside-down-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/upside-down-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A magical cottage room with a dining table and chairs attached upside down to the ceiling while a pumpkin and rug remain normally on the floor; clear readable inversion, no person hanging.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "6643bf2df2b9af5189653dfdcb4ac896b859cb70e386ef7393748d89f59b0677",
+        "bytes": 251038,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "6c6da9fbdfb1335090e0f0b279cc076e5fb36925a51eca581ba1291ace7dc6c5",
+        "bytes": 59828,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-brave": {
+      "artKey": "story.aspect.fearless",
+      "imagePath": "assets/once-upon-a-time/aspect/fearless-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/fearless-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-fearless",
+      "semanticDescription": "Reuse the existing meaning-matched Brave painting without alteration, from once-aspect-fearless.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "f60a0a7a813eaf1bdf332b2d78cff8c03fa4d439cec0c256d853a9c52a209c16",
+        "bytes": 243934,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "3aae82c4b76ebcdf0ae68a4161a3c4c32f19089f023bbaa29173f8802e6cce33",
+        "bytes": 76550,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-broken": {
+      "artKey": "story.aspect.broken",
+      "imagePath": "assets/once-upon-a-time/aspect/broken-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/broken-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-broken",
+      "semanticDescription": "Reuse the existing meaning-matched Broken painting without alteration, from once-aspect-broken.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "8b1c75b4488eee81293ce42b438e2b3dee3c09a03ef96291717d2fedbb5bd687",
+        "bytes": 206628,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "c6e5b90c997344c034de98f44feca8f7c1ed22929b6c28f31b8a67d0420c35a7",
+        "bytes": 68902,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-unlucky": {
+      "artKey": "story.aspect.unlucky",
+      "imagePath": "assets/once-upon-a-time/aspect/unlucky-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/unlucky-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-unlucky",
+      "semanticDescription": "Reuse the existing meaning-matched Unlucky painting without alteration, from once-aspect-unlucky.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "b54bfb00f0366550b59647fc4e03aff329437a4c3127543a795cad67790145ce",
+        "bytes": 253562,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "18b06073e45cdc654d90f4d091837de71786b8cb93f23c6e507dd6c0f19e96cf",
+        "bytes": 79314,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-silent": {
+      "artKey": "story.aspect.silent",
+      "imagePath": "assets/once-upon-a-time/aspect/silent-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/silent-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-silent",
+      "semanticDescription": "Reuse the existing meaning-matched Silent painting without alteration, from once-aspect-silent.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "040cec8b2a7553b514fb585dbd77180c0867c8d0c9d023a03b798b15f41b4a06",
+        "bytes": 167648,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "78750a7d5b9dcb38c9e3e3769bbc56057485843f68108bf040d269aab5b4daba",
+        "bytes": 57048,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-lonely": {
+      "artKey": "story.aspect.lonely",
+      "imagePath": "assets/once-upon-a-time/aspect/lonely-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/lonely-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-lonely",
+      "semanticDescription": "Reuse the existing meaning-matched Lonely painting without alteration, from once-aspect-lonely.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "3691d19045eaa2f91b6ad4b406f43001611be244595aaa34b91a21f19ef40b57",
+        "bytes": 220732,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9df9e4150e33137dd37177af090bb1d571442cf6f8d0db66a6442190b1caaf07",
+        "bytes": 67242,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-forgotten": {
+      "artKey": "story.aspect.forgotten",
+      "imagePath": "assets/once-upon-a-time/aspect/forgotten-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/aspect/forgotten-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-aspect-forgotten",
+      "semanticDescription": "Reuse the existing meaning-matched Forgotten painting without alteration, from once-aspect-forgotten.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "18eb793b3c6d71b17435fe7217c6898d6f1c4be4d59751fdb15211747ce9f03f",
+        "bytes": 211096,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "0a478250065ec75976ba4b1a0dc0d19d504ce8336a28f68000ad76f9f9bae2ec",
+        "bytes": 63670,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-suspicious": {
+      "artKey": "modern-future.aspect.suspicious",
+      "imagePath": "assets/once-upon-a-time/modern-future/aspect/suspicious-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/aspect/suspicious-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-aspect-suspicious",
+      "semanticDescription": "An adult in everyday clothes giving a doubtful sideways glance at an unopened parcel in a modern lobby.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "43830c6a3a170b98fad53a37017d10f1cce09f832182b5173286d5b1b25c6994",
+        "bytes": 89288,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "3502057cbaa32b9a21d3cfea4b9548e8a6b2dc1d5d5d9f5180751eae216541f2",
+        "bytes": 32086,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-hairy": {
+      "artKey": "halloween.aspect.hairy",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/hairy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/hairy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly little monster with an enormous cloud of soft shaggy fur, only its happy eyes and little feet visible, holding a tiny comb in a Halloween bedroom.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "a763f912427646fa633a03d8bf9deebc77529cee294f7bb41699215ab30a2eb8",
+        "bytes": 247488,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "e91ae65290d2eb347fe0c46c5ddae105f0eeac6acbc712f7b54475ebc4c395f8",
+        "bytes": 62564,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-smelly": {
+      "artKey": "halloween.aspect.smelly",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/smelly-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/smelly-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An old boot on a pumpkin-decorated table emitting gentle stylized green odor swirls while a friendly ghost pinches its nose; clean comic mood, no disgusting bodily content.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "449c4ad11db5049d061f19297f5575356ef94fc2a43091b153d86fad9d78de14",
+        "bytes": 198116,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "6e87d91b755d904e402ea06c7c05a12a2ef8bca3fa974e3c586e3a32f57e0216",
+        "bytes": 51474,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-purple": {
+      "artKey": "halloween.aspect.purple",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/purple-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/purple-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An ordinary pumpkin and a little black cat both magically turned bright purple in a witch kitchen, normal orange pumpkins beside them as a clear color comparison.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "8a785f1e3168d0b7f7ad344534c69cf646e10ffc2cc29d7a38e17f57470ce119",
+        "bytes": 206854,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "3f6882f2dd9514dfc0c2a8c6a3944d603404784494c939258c35b5ce0de6c79e",
+        "bytes": 57108,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-wet": {
+      "artKey": "halloween.aspect.wet",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/wet-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/wet-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A dripping adult in a cheerful witch costume standing safely on a porch after rain, water drops on hat and cloak, amused black cat beside them; no danger.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "4912b1ce9767d430dea0f9cde3ec0ed9205f507cd20858a289c20c8142ebd367",
+        "bytes": 245244,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "0181c67ec186ddc68dea93bb3e0b8105422f0554116da490b0be737853baf846",
+        "bytes": 63240,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-squishy": {
+      "artKey": "halloween.aspect.squishy",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/squishy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/squishy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A soft round green toy monster being gently squeezed by two adult hands so its friendly face becomes comically wide; Halloween tabletop, clearly soft and harmless.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "7dfbf7e1294759aca8ebfb1b26fdcaf83640686b56c7abd61e58285ee565a96a",
+        "bytes": 150438,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9fc2f3e90681fcb4bdb5448e0ff044c9ce51e0df6345a6be1c68da2fad99a9f8",
+        "bytes": 42158,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-sparkly": {
+      "artKey": "halloween.aspect.sparkly",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/sparkly-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/sparkly-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A simple witch hat coated in clearly visible gold and violet glitter sparkles on a velvet cushion, warm light and soft Halloween decorations behind.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "60cf86ec2b5fb713711a2eafbef75b2163fa78bdd3bf3675f63d968f19e5f6d5",
+        "bytes": 228688,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "ccc00219c584d48913238571e7baf2e2d6d00b322cc5e29dbc8945459aba0fd1",
+        "bytes": 64092,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-nervous": {
+      "artKey": "halloween.aspect.nervous",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/nervous-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/nervous-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly ghost nervously holding a cup with both hands before knocking on a welcoming pumpkin-lit door, shy expression and a reassuring little cat beside it.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "a638e4bbbc5f81e63d41527069c65bac605586ad27320f8525d4b968183486ab",
+        "bytes": 197624,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "e670c2afd3214187b07b0dfa4d08f2ca179d6b66fee5eada34999ce7b805857f",
+        "bytes": 51162,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-clumsy": {
+      "artKey": "halloween.aspect.clumsy",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/clumsy-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/clumsy-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly mummy accidentally tangling its own loose bandage while carrying an empty tray, a few harmless wrapped candies on the floor; light comic stumble without injury.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "742b7c1d1171af19ca82bc8167c9f524376ff9daf86dcdbb9c2375a65777ec8b",
+        "bytes": 200930,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "33e23a152f3b7654125a5d67d8ca410d2db6456376d5f10dde07216efdd0676e",
+        "bytes": 56582,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-aspect-ticklish": {
+      "artKey": "halloween.aspect.ticklish",
+      "imagePath": "assets/once-upon-a-time/halloween/aspect/ticklish-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/aspect/ticklish-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A furry gentle monster laughing uncontrollably as one tiny feather brushes its foot, seated safely on a cushion in a warm pumpkin-lit room; innocent comic tickle.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-aspect-v1.json",
+      "main": {
+        "sha256": "62aafecb82022bd193369ebb35005ba00c47ec797aed69a4b77b4a29ba9330a3",
+        "bytes": 210000,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "36ac9e10e3410d0e7bd48c31f1b41400f0cd0c0c6df666f0f8dfc3ed57d46124",
+        "bytes": 54210,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-trick-or-treat": {
+      "artKey": "halloween.event.trick-or-treat",
+      "imagePath": "assets/once-upon-a-time/halloween/event/trick-or-treat-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/trick-or-treat-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Two adult friends in playful Halloween costumes holding pumpkin candy buckets at a warmly lit doorway as a smiling neighbor offers wrapped sweets; no readable sign or costume branding.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "a1332fa283cb4af357e5b2ab39d4331168dea136f777c2cf4060d6cfe25a7dec",
+        "bytes": 211710,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "a2d499f962a180d175e58e845fb4456d7c471a798f5a4ad24ef1a34d0795ee83",
+        "bytes": 57556,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-knock": {
+      "artKey": "halloween.event.knock",
+      "imagePath": "assets/once-upon-a-time/halloween/event/knock-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/knock-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Close view of a gloved adult hand knocking on a heavy old wooden door with a brass knocker, pumpkin lantern glowing beside the doorstep; clear contact action, no text.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "d4cb787ba433a65d97715f06b765bb12f90a0cea67503c205613fd440e46d9ce",
+        "bytes": 203522,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "938dfd5166630207e28d54ddf678e603ff5252a61a102c6b5ea76be0b0cfc87e",
+        "bytes": 51378,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-blackout": {
+      "artKey": "modern-future.event.blackout",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/blackout-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/blackout-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-event-blackout",
+      "semanticDescription": "A modern city street suddenly dark with unlit buildings, residents illuminating it with flashlights.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "89f955043ba510e5e89105195dbdf908114877f5529da6451cb6d73cb4bbd2a4",
+        "bytes": 86472,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "0b83a86ad48188250434d281c56d5f27e5e7a4687668ce272fc5c6c5d4813cf9",
+        "bytes": 24904,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-storm": {
+      "artKey": "story.event.sudden-storm",
+      "imagePath": "assets/once-upon-a-time/event/sudden-storm-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/sudden-storm-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-sudden-storm",
+      "semanticDescription": "Reuse the existing meaning-matched Storm painting without alteration, from once-event-sudden-storm.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "19c872d4039ba8185d6b04a93e7e4fdb56b0176ae53f0f2b6d475960c355c5a4",
+        "bytes": 295096,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4372c1913b19092729c830bc8219dbde4bc41fbc3f3817a8c1d070278acc1e95",
+        "bytes": 81126,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-midnight": {
+      "artKey": "halloween.event.midnight",
+      "imagePath": "assets/once-upon-a-time/halloween/event/midnight-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/midnight-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An old clock tower at night with both hands pointing straight up, the moon behind it and a few bats passing; clock face uses simple marks without readable numerals.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "60456293c76ffc6129f7377731e51bfed30f08f81ace74c5010e8c1c073a0d26",
+        "bytes": 231708,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "a98d2f0e435dfd441fe5ae8dedfba9dda8d0c06982cf71833bd382332914a49f",
+        "bytes": 58336,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-spell": {
+      "artKey": "halloween.event.spell",
+      "imagePath": "assets/once-upon-a-time/halloween/event/spell-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/spell-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult witch making a sparkling magical gesture that lifts autumn leaves into a glowing spiral above a cauldron; clear act of casting a harmless spell, no written runes.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "ed9cf11b4c79e674e23ffa145d7be70595d7ddef32f1cc0e801e9559103bbd91",
+        "bytes": 261586,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4468639b45f032ac2c98be9afb36116677226c82bd811375aa631b35a6f278ed",
+        "bytes": 71042,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-transformation": {
+      "artKey": "halloween.event.transformation",
+      "imagePath": "assets/once-upon-a-time/halloween/event/transformation-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/transformation-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A pumpkin halfway through a harmless magical transformation into a little carriage, pumpkin body clearly becoming wheels and a door within a swirl of golden sparkles; no painful body change.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "262f8c592ac6bcf4578f921e888d47d8dd26050261ffe383cbdd435486f9d879",
+        "bytes": 254464,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "5638ce936033a8a2ea7e84171ed78f1a0a2475ba24599cbb0e00fea984b53dca",
+        "bytes": 66064,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-chase": {
+      "artKey": "story.event.chase",
+      "imagePath": "assets/once-upon-a-time/event/chase-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/chase-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-chase",
+      "semanticDescription": "Reuse the existing meaning-matched Chase painting without alteration, from once-event-chase.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "d0e6e0c51352e33f38ed8836822503162e460b83462c727ce37416cb87a6390c",
+        "bytes": 243588,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "96cd6b8f4724633f61eaf4efda7738cf8227a743fd105b43b73d06f76f6e7394",
+        "bytes": 77640,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-escape": {
+      "artKey": "story.event.narrow-escape",
+      "imagePath": "assets/once-upon-a-time/event/narrow-escape-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/narrow-escape-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-narrow-escape",
+      "semanticDescription": "Reuse the existing meaning-matched Escape painting without alteration, from once-event-narrow-escape.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "5c2b8a295cf182051eab2229b64526137bcb00cdf41481b828619ea436b9a2de",
+        "bytes": 237466,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "57db5f04a586cdfae8ab13a7e82f87d894893ff881a5f7638a50cfb8fc8a5cbf",
+        "bytes": 71784,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-party": {
+      "artKey": "halloween.event.party",
+      "imagePath": "assets/once-upon-a-time/halloween/event/party-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/party-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A small lively Halloween party with adult humans, a friendly ghost and a vampire sharing cake beneath pumpkin lanterns; cheerful gathering, no text or branded decorations.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "7bd667838467b9db12ac2072858c5f949549d3411563db932e2f15ddf8aefab2",
+        "bytes": 206196,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "0907127ddf9ca77bc93d341d639668a75dd4eba372c1092171c2efc57e13b251",
+        "bytes": 54480,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-disappearance": {
+      "artKey": "halloween.event.disappearance",
+      "imagePath": "assets/once-upon-a-time/halloween/event/disappearance-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/disappearance-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A magician's empty outline dissolving into harmless violet sparkles on a little Halloween stage, with a hat and shoes left behind and amused adult viewers; clear magical disappearance.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "1018cc6a91d1a0e328805cdc3c31aafacd43a4dcd7dcc15a22694396eadfb335",
+        "bytes": 177514,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4ac48d8868a96523276d4402ed99e33cfa8438cb8633d1c58b6b8aa9df771711",
+        "bytes": 46828,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-surprise": {
+      "artKey": "modern-future.event.surprise",
+      "imagePath": "assets/once-upon-a-time/modern-future/event/surprise-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/modern-future/event/surprise-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-mf-event-surprise",
+      "semanticDescription": "Friends surprising an adult with a small birthday cake in a modern apartment, joyful expressions.",
+      "provenanceFile": "assets/once-upon-a-time/modern-future/art-manifest-v1.json",
+      "main": {
+        "sha256": "2f4adfc15cd888b0ca0ce03acdfa0e064d9765b431aac121f140379bc71f4144",
+        "bytes": 96700,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "cf749cda4816fb9829476ea4175312f1cdb50a11274d9a237548d00448d2da1e",
+        "bytes": 35590,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-getting-lost": {
+      "artKey": "story.event.lost-path",
+      "imagePath": "assets/once-upon-a-time/event/lost-path-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/lost-path-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-lost-path",
+      "semanticDescription": "Reuse the existing meaning-matched Getting Lost painting without alteration, from once-event-lost-path.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "8c2c8483c0f2ae16094595b5319426830bcd67e6218442b92b944274bff6ef9f",
+        "bytes": 226410,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "c1849c6a8fa82765eb0d7b8a5c2b3631d8288304dd4ef2adec4736cf2b6eb07c",
+        "bytes": 67766,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-laughter": {
+      "artKey": "story.event.laughter",
+      "imagePath": "assets/once-upon-a-time/event/laughter-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/laughter-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-laughter",
+      "semanticDescription": "Reuse the existing meaning-matched Laughter painting without alteration, from once-event-laughter.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "c5e78761177fe77e9032afcc68afd87e954fb9d64682d78aebfa8dbc57cab1ca",
+        "bytes": 184618,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9c67ce6cbc099c602d91f40d48c4d3cf0a30240e2a9ce9755a93081d1542f3ad",
+        "bytes": 60006,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-mistake": {
+      "artKey": "story.event.mistake",
+      "imagePath": "assets/once-upon-a-time/event/mistake-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/mistake-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-mistake",
+      "semanticDescription": "Reuse the existing meaning-matched Mistake painting without alteration, from once-event-mistake.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "3f33527ead56edc0979c00952cda2a5c3fd17e0373d6c11dab253ef3f17c8220",
+        "bytes": 194584,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "59d2acca68429493c54fb908e19cc614a88a1f88f2410e9e69094b9d84ce54d3",
+        "bytes": 62390,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-secret-meeting": {
+      "artKey": "story.event.secret-meeting",
+      "imagePath": "assets/once-upon-a-time/event/secret-meeting-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/secret-meeting-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-secret-meeting",
+      "semanticDescription": "Reuse the existing meaning-matched Secret Meeting painting without alteration, from once-event-secret-meeting.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "fe65773cf7cb8d15b77de0219fd21c9b41cedab23a6c455e14be9ba708d01b75",
+        "bytes": 133058,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "5647353a249a63806c79b641e621f10e9b3b222cfe3bff8331374488c3666924",
+        "bytes": 40994,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-door-opens": {
+      "artKey": "story.event.door-opens",
+      "imagePath": "assets/once-upon-a-time/event/door-opens-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/door-opens-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-door-opens",
+      "semanticDescription": "Reuse the existing meaning-matched Door Opens painting without alteration, from once-event-door-opens.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "59e4814ac8229fc1bfb8554e1037dc3cdf6cd0d422058b15885c6327e9c17080",
+        "bytes": 209900,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "3b4b46eadbb12612e74f1616e719f5b87fd540317547c8e849ff966965f0c176",
+        "bytes": 58178,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-secret-revealed": {
+      "artKey": "story.event.hidden-truth",
+      "imagePath": "assets/once-upon-a-time/event/hidden-truth-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/hidden-truth-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-hidden-truth",
+      "semanticDescription": "Reuse the existing meaning-matched Secret Revealed painting without alteration, from once-event-hidden-truth.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "d0b94a1a1dbc7115964dac26437bace6cd94c0438271b7faa62614c5be3eab3b",
+        "bytes": 158822,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "5edf3b16868bf9ea57818ebde3af157cac0c50635649a3c625d548689c22b270",
+        "bytes": 45972,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-feast": {
+      "artKey": "story.event.feast",
+      "imagePath": "assets/once-upon-a-time/event/feast-v2.webp",
+      "thumbnailPath": "assets/once-upon-a-time/event/feast-v2-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "reuse",
+      "sourceCardId": "once-event-feast",
+      "semanticDescription": "Reuse the existing meaning-matched Feast painting without alteration, from once-event-feast.",
+      "provenanceFile": "assets/once-upon-a-time/art-manifest.json",
+      "main": {
+        "sha256": "35c603375ad08362bf415b5f66419176289a347868a4e0831f600394644a4d35",
+        "bytes": 207016,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "fbe5ec01244e974a687e665a11ef2d18e66da2d21d70594c33361cdf124322fa",
+        "bytes": 68748,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-prank": {
+      "artKey": "halloween.event.prank",
+      "imagePath": "assets/once-upon-a-time/halloween/event/prank-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/prank-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly ghost putting a silly paper witch hat on a startled but smiling adult while another friend laughs; warm kitchen, harmless obvious prank.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "d8973c76e2da461e1a884a8421d3395f94ba9402bc7c29ce9029b2ac3b398154",
+        "bytes": 171772,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f3eabef8b183cefdb2170ba82c5b64e59f735222d438c77f0d4ee919e06b8b6b",
+        "bytes": 49440,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-floating": {
+      "artKey": "halloween.event.floating",
+      "imagePath": "assets/once-upon-a-time/halloween/event/floating-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/floating-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Several ordinary teacups and cookies gently floating above a Halloween kitchen table while an adult looks delighted; clear visible gap above the table, safe magic.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "21e3f2f53f8775d3b5376dff160ca7cf2ad7454628acdcc13d446743e88b127d",
+        "bytes": 208682,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4119a2260e4e330bec8e30647e79202bd874ed772a4de635688add2620eae34f",
+        "bytes": 60348,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-dancing": {
+      "artKey": "halloween.event.dancing",
+      "imagePath": "assets/once-upon-a-time/halloween/event/dancing-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/dancing-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly skeleton and an adult witch dancing a silly energetic dance together on a cozy pumpkin-lit wooden floor; clear motion and joyful body language.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "7536382d79332a6be0944ff96690aa3aa93a3b55417afe18ae76a5c194e2df91",
+        "bytes": 225008,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "b45280c4920d2b5ae441673940de7eb2c84a14514b979c5c83d80c386c381163",
+        "bytes": 61926,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-sneezing": {
+      "artKey": "halloween.event.sneezing",
+      "imagePath": "assets/once-upon-a-time/halloween/event/sneezing-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/sneezing-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly small dragon sneezing a harmless burst of autumn leaves instead of fire into a handkerchief, eyes closed and friends amused; no illness or injury imagery.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "a0c81a3a402321378003c6a45265d62bad507e6f1ebf04104fb4832eff67b112",
+        "bytes": 218164,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4da0e60464004653ab5d2e0f5de184a8d299a81ae4b54a115f31ca322e0acaae",
+        "bytes": 57768,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-hiccup": {
+      "artKey": "halloween.event.hiccup",
+      "imagePath": "assets/once-upon-a-time/halloween/event/hiccup-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/hiccup-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A round friendly monster making a surprised hiccup expression while one tiny harmless soap bubble escapes its mouth at a party table; no sound text.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "ef9b22f137b9452945e787e7e6a8083a59339f16b0f3cd24c53bd0c9aea46603",
+        "bytes": 152406,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "fef33197f9df64445721c966b61df87d9e084c1a66843de9a9d45d5a2ccad499",
+        "bytes": 44284,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-candy-hunt": {
+      "artKey": "halloween.event.candy-hunt",
+      "imagePath": "assets/once-upon-a-time/halloween/event/candy-hunt-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/candy-hunt-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Two adult friends in simple costumes searching a cozy autumn garden with small candy baskets, a few wrapped sweets visibly hidden beside pumpkins; no children or brands.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "69a8e7d35eb5bcb167e53928b173442a2b3535a3e54c9f49a4456c21e90b62ab",
+        "bytes": 204646,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "19f695973f0484d6ab73fb4109277dc4842c954ec8dc80ce99a785b8617b05bc",
+        "bytes": 55686,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-costume-contest": {
+      "artKey": "halloween.event.costume-contest",
+      "imagePath": "assets/once-upon-a-time/halloween/event/costume-contest-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/costume-contest-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A playful row of adult Halloween contestants dressed as a pumpkin, a witch and a friendly robot, smiling beside a simple golden cup on a small stage; no signs or numbers.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "412e301e9076c288513587b409bd90a85b91c8ecced9f6b69467ab33e9a6d7a9",
+        "bytes": 207296,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "d7ef3e9701d3bb6f8d46d1f5d278fe890ce446c09fc4685a421f391f63961f09",
+        "bytes": 57876,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-door-slam": {
+      "artKey": "halloween.event.door-slam",
+      "imagePath": "assets/once-upon-a-time/halloween/event/door-slam-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/door-slam-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An old wooden door swinging shut and scattering a few light autumn leaves in a hallway while a friendly ghost looks surprised; safe harmless motion, no trapped fingers or lettering.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "78535ad68f188fb2d1b131a2f3d5292778a1516df68611da9d7d46d782ae911b",
+        "bytes": 162966,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "220d048a2de369cb0f519bb899a129f1109c4233fc389cfe3660461dcdd45fbc",
+        "bytes": 43848,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-moonrise": {
+      "artKey": "halloween.event.moonrise",
+      "imagePath": "assets/once-upon-a-time/halloween/event/moonrise-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/moonrise-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A huge warm full moon rising above a quiet pumpkin field and dark autumn treetops, a few tiny bats in the sky; peaceful clearly readable moonrise.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "5e3b6a4ea2573c502b5aec0c4563efa76bfe451ce82ddb55b0f12a991f9dc3aa",
+        "bytes": 220474,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "a6e1c0e210539a85248ad5c5433395d78581fb88f8a2e2cdb0dcc314987c70ad",
+        "bytes": 52988,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-swap": {
+      "artKey": "halloween.event.swap",
+      "imagePath": "assets/once-upon-a-time/halloween/event/swap-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/swap-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult witch and a friendly alien swapping a pointed hat and a shiny space helmet at a cozy Halloween party, both smiling at the unexpected fit.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "c7d66d1676c9cec753b5a5c111fee2b6ae5138b4d25911fd1f9ee06c1077d3d7",
+        "bytes": 194372,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "095a4e89e48dd8338fe22ef683ab9862de3daf45649523821c31e37f28d0e7a1",
+        "bytes": 55854,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-event-pizza-delivery": {
+      "artKey": "halloween.event.pizza-delivery",
+      "imagePath": "assets/once-upon-a-time/halloween/event/pizza-delivery-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/event/pizza-delivery-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult delivery rider offering a stack of closed blank pizza boxes at a glowing castle doorway while a polite vampire answers, warm funny everyday contrast; no brand or text.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-event-v1.json",
+      "main": {
+        "sha256": "4c24baa0359c9e4e088365c016a7cc015d586d69ee480d7c76f9f8cb0754f367",
+        "bytes": 194118,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "6aeb68ec21b1f395743f576e3aac3a46d7c411624bbaaf24271107c5d8d1b81c",
+        "bytes": 49908,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-snack": {
+      "artKey": "halloween.ending.snack",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/snack-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/snack-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A huge fluffy purple monster sitting politely at a small kitchen table with a tiny plate of cookies, relieved adult adventurers offering tea; reassuring funny reveal, warm orange light, no threat.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "2fd8a62a0c05041136ae75f425714df21cb21daacb2309ae9c9781ba597f650e",
+        "bytes": 168074,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "dff8e7d98215c46f7416a1beeab0c44500b147438f3bd6b1f50bc12104adf851",
+        "bytes": 53138,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-last-bus": {
+      "artKey": "halloween.ending.last-bus",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/last-bus-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/last-bus-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Tired but smiling adult Halloween adventurers at a quiet bus stop watching the last bus gently drive away, their pumpkin buckets beside them; playful anticlimax, no readable signs.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "ed64c64bdaa118930f90307ab6539ca59ba6d2a1f538e91d4bb6d08e39bf310c",
+        "bytes": 214104,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "020c144cffb110398d76ea2ca4ca9a2d5b9cd928a53091800f3fd8c3828c57a3",
+        "bytes": 65766,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-small-cat": {
+      "artKey": "halloween.ending.small-cat",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/small-cat-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/small-cat-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A tiny black kitten peeking out of a huge open treasure chest while surprised adult adventurers lean in with delighted smiles; warm friendly Halloween reveal.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "3a954df1f399b520489479fa249f6ba78f9070639f1333e3d2fafdae78afde35",
+        "bytes": 185314,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "95addf1fffc9bead3f93d70f37bd37529b608f09978b672191133cf11b7da2aa",
+        "bytes": 61814,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-castle-cafe": {
+      "artKey": "halloween.ending.castle-cafe",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/castle-cafe-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/castle-cafe-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A cozy castle hall transformed into a welcoming café, a smiling vampire serving pumpkin pie to humans and a ghost, warm lamps and little tables; no signage or readable menu.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "a4c66e058821dd0646318b9f6c5d185387bb78bf3eec4dae61b7dcdbe7183694",
+        "bytes": 178652,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "e8c6164fb0550c133f71b1a9550b5e4a8312c9a4932ec6ccb67db082735d73a0",
+        "bytes": 59954,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-silly-voice": {
+      "artKey": "halloween.ending.silly-voice",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/silly-voice-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/silly-voice-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A relieved adult adventurer back to normal after a harmless spell, speaking with an exaggerated squeaky expression while friends laugh kindly at a cozy table; magical sparkles fading, no speech bubbles or text.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "23f20db98eb1b9a8df888869e0e37c0b44ddefd70bad8a0f0178f8b61a175160",
+        "bytes": 140262,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "27f5c47650adbec8b5f25dd38ab4a6a79b7e304f59803d322e490b0540822746",
+        "bytes": 50688,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-wrong-shoes": {
+      "artKey": "halloween.ending.wrong-shoes",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/wrong-shoes-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/wrong-shoes-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A cheerful group of adult Halloween party guests leaving a warmly lit doorway with full candy buckets, each wearing visibly mismatched shoes such as a slipper and a boot; gentle comic detail.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "719f221da9bca9de95d23f3ea793505f0aa47582b3350900ae980d3c08ef8149",
+        "bytes": 204906,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "83ef5dc9a6b6b266ed293e3787e216409d190d0001e11da6c16751606e1cdd7b",
+        "bytes": 67290,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-hungry-stomach": {
+      "artKey": "halloween.ending.hungry-stomach",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/hungry-stomach-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/hungry-stomach-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Adult adventurers in a shadowy kitchen laughing with relief as one sheepish friend pats their empty stomach beside a plate of snacks; no visible monster or frightening sound-effect text.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "20f39ba373151872e77d23c61784819a11764cc23b34d3457c7931fb7823690b",
+        "bytes": 159674,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "8e33931195b87639eb70724d8e07f10b9497294489dc0fc80703837ddd37c4ee",
+        "bytes": 54310,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-washing-up": {
+      "artKey": "halloween.ending.washing-up",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/washing-up-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/washing-up-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A formerly dramatic cloaked villain in a bright flowered apron washing a tall pile of dishes while friendly guests relax at a candlelit table; clean cheerful redemption, no weapons or threat.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "e74888ab005acfc33cc661d43d2fd42011022b40fcfc850cf0c76255e8052513",
+        "bytes": 214538,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "a6873143fa8eea66d8799a05d59ff5c3f9c97189b156c2bdd79e861f71783bb2",
+        "bytes": 67016,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-mostly-costume": {
+      "artKey": "halloween.ending.mostly-costume",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/mostly-costume-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/mostly-costume-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A smiling adult lifting off a fluffy monster costume head while one tiny real furry tail still peeks out behind them; warm Halloween dressing room, teasing gentle mystery, no horror reveal.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "00a2adcb53cf03255c027dffefe49b9d9818735cf38bc5a7cea35463dacc1ba7",
+        "bytes": 185292,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "aaa45b90fd95ca5160330a1b253a65a0ba3ac5cf676b8d146548880f42a92c0b",
+        "bytes": 59552,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-floating-friend": {
+      "artKey": "halloween.ending.floating-friend",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/floating-friend-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/floating-friend-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Two adult humans warmly welcoming a smiling translucent ghost who floats beside their kitchen table with a teacup; reassuring friendship and warm pumpkin lanterns.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "903d9fb408d807a82a5a60ed3f6679aa540c9892e57157221a2df33cb1b09dc4",
+        "bytes": 172476,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "70dec88b860e5e9be09d2ac671566fc81bdf8f3aa4659a36fe59539c78a741dd",
+        "bytes": 56768,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-pumpkin-pie": {
+      "artKey": "halloween.ending.pumpkin-pie",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/pumpkin-pie-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/pumpkin-pie-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A large open treasure chest overflowing with neatly stacked delicious pumpkin pies instead of gold, delighted adult adventurers holding forks; golden cozy light, silly abundant reward.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "90e89ebe0329e7be1a1160fe5d2cd169a06fecadbcf5a1df0f1d684f3e88c88c",
+        "bytes": 226738,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "4288e90fb6121bc0160d858d4825f33c1c6b54795a99e57a342b5bfbf1e6f3d8",
+        "bytes": 68736,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-stuck-costume": {
+      "artKey": "halloween.ending.stuck-costume",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/stuck-costume-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/stuck-costume-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "An adult hero in an oversized cheerful pumpkin costume squeezing into an ordinary breakfast chair at sunrise, amused friends nearby; clearly safe comfortable comedy, no distress or restraint.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "d0f53435d970ffb0803b38ea74eadef57f537b68cefe085c2b6167d968d4db1b",
+        "bytes": 165006,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "00c2d9f6ff1a150f03cd8afd659670f2582bb8c42f18793c43fa6288d7bfdef0",
+        "bytes": 54550,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-secret-dance": {
+      "artKey": "halloween.ending.secret-dance",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/secret-dance-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/secret-dance-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A witch, an adult human and a friendly skeleton looking bashful and amused after a wildly silly party dance, one wearing a crooked party hat and another holding dancing shoes; warm nonjudgmental humor.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "2e3e2a6fea3dc581595c5c811f9375d16ab510923e78085e1369703867756533",
+        "bytes": 235920,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f40c68b95d469b3d98c6ad0278c14e368d6571ff4a7dda37be616e7488a06300",
+        "bytes": 72964,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-cake": {
+      "artKey": "halloween.ending.cake",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/cake-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/cake-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Humans and a big gentle monster sitting safely together around a cake stand with only crumbs and a tiny last slice remaining, everyone content and full; friendly humorous meal, no threat or gore.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "df208034e140f52ed360c6df5ea3148e6b43388e2776452edf12f5702a20a40d",
+        "bytes": 202948,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "f801eaa410ff4476b350db9e2cf6cc4c9be7ad9843ddb6924b1a8096ff030119",
+        "bytes": 63688,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-tuesdays": {
+      "artKey": "halloween.ending.tuesdays",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/tuesdays-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/tuesdays-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A friendly adult witch proudly demonstrating a broom that floats beside a weekly calendar with exactly one of seven plain blank columns glowing; playful limited magic, no readable calendar words or numbers.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "fa6e7da7cc84937e9e7fd90d9bcea37795da4b45c56ec9caf33c5e744a1e1799",
+        "bytes": 179734,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "59ee749b5b5c66eb540d366ea8ed005f0b7200227d020056746d6d84bffa491e",
+        "bytes": 55172,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-extra-chair": {
+      "artKey": "halloween.ending.extra-chair",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/extra-chair-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/extra-chair-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A harmless whimsical wooden chair wearing a party hat and the same scarf as its surprised adult friends, all looking at it with amused curiosity at a cozy Halloween party; no painful transformation or body horror.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "600bf91bb680ab9d03b61820946530dcf1d911ff23196fb7115a69da788e9840",
+        "bytes": 214262,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "671825bb5b6b9d5ff3b77d2c1060f80eb9aff1e5a4a96d556439922efa90861f",
+        "bytes": 66920,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-ghost-job": {
+      "artKey": "halloween.ending.ghost-job",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/ghost-job-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/ghost-job-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A proud smiling ghost working behind a cozy hotel reception desk, politely handing an ordinary key to an adult guest, a little coin purse nearby; warm everyday comedy, no readable documents.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "2691c403d0fe944a4b1a8122b8d6baaf95254c425c1477b96f64877443d51dd7",
+        "bytes": 158362,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "bd754e327e4f0fa4a3c714c44d4bcd7697813477ab53c0e01eace490fd590afa",
+        "bytes": 52950,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-cleaning-bill": {
+      "artKey": "halloween.ending.cleaning-bill",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/cleaning-bill-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/cleaning-bill-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Adult Halloween adventurers and a friendly witch staring in comic disbelief at a long blank paper receipt beside a very messy room full of harmless confetti, pumpkin crumbs and cobweb decorations; no readable numbers.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "ee1a868b78d7a55e124fb30f4e5eefc5fa03fd2c099a186c9107745571aa0b77",
+        "bytes": 190420,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "cc9cf3028a2feae617d90d661faee42dfb01b9550e61cf4ec7d08e670cdf0fd3",
+        "bytes": 63280,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-homework": {
+      "artKey": "halloween.ending.homework",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/homework-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/homework-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "Adult university students still in Halloween costumes sitting at a kitchen table with untouched notebooks as dawn rises outside, looking sheepish but amused after an adventure; no readable writing.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "ce5dc8dba6cf3a1cd8b3db9f26b4654d6729bbb59a0bc9d27ea16b159a1fa75c",
+        "bytes": 161090,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "cfb4eaaedec95ee2ffb653adf3ce77acbec04537dcb1035c90e9d9a3da302aef",
+        "bytes": 53528,
+        "width": 384,
+        "height": 576
+      }
+    },
+    "once-hw-ending-strange-pet": {
+      "artKey": "halloween.ending.strange-pet",
+      "imagePath": "assets/once-upon-a-time/halloween/ending/strange-pet-v1.webp",
+      "thumbnailPath": "assets/once-upon-a-time/halloween/ending/strange-pet-v1-thumb.webp",
+      "status": "semantic-illustration",
+      "artOrigin": "new",
+      "sourceCardId": null,
+      "semanticDescription": "A happy adult household relaxing on a sofa with an odd tiny friendly pet that has bat wings, fluffy fur and three round ears, a pumpkin-shaped pet bowl nearby; reassuring cozy comic ending.",
+      "provenanceFile": "assets/once-upon-a-time/halloween/art-prompts-ending-v1.json",
+      "main": {
+        "sha256": "3799a23ee0a7f8bf05b95dcf1b2eef7b53e64b65cd932ee744e3953bc04ee85a",
+        "bytes": 220542,
+        "width": 768,
+        "height": 1152
+      },
+      "thumbnail": {
+        "sha256": "9760533b32b5c92bdd3cd9c6999740bff10a48ed70c92b2362f8b0e7191f8282",
+        "bytes": 67530,
+        "width": 384,
+        "height": 576
+      }
+    }
+  }
+}

@@ -6,4 +6,5 @@ node_modules/
 # Generated print-sized originals are preserved locally; deploy optimized WebP assets.
 assets/once-upon-a-time/*/*-v2.png
 assets/once-upon-a-time/modern-future/*/*-v1.png
+assets/once-upon-a-time/halloween/*/*-v1.png
 assets/chat-wolf/roles/*-v1.png

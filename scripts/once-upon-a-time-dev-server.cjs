@@ -7,7 +7,8 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 http.createServer((req,res)=>{
   let relative;try{relative=decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1)||'once-upon-a-time.html';}catch(e){res.writeHead(400);res.end();return;}
   if(relative==='once-art-gallery.html'){res.writeHead(200,{'Content-Type':mime['.html'],'Cache-Control':'no-store'});res.end(require('./once-upon-a-time-art-gallery.cjs')());return;}
-  const permitted=/^[a-z][a-z0-9.-]*\.(html|css|js|png|webp|json)$/.test(relative)||/^assets\/once-upon-a-time\/(?:[a-z-]+\/)?[a-z0-9.-]+\.(png|webp|svg|json)$/.test(relative)||/^assets\/once-upon-a-time\/modern-future\/(?:character|thing|place|aspect|event|ending)\/[a-z0-9.-]+\.(png|webp|json)$/.test(relative);
+  if(relative==='once-halloween-art-gallery.html'){res.writeHead(200,{'Content-Type':mime['.html'],'Cache-Control':'no-store'});res.end(require('./once-upon-a-time-halloween-gallery.cjs').galleryHTML());return;}
+  const permitted=/^[a-z][a-z0-9.-]*\.(html|css|js|png|webp|json)$/.test(relative)||/^assets\/once-upon-a-time\/(?:[a-z-]+\/)?[a-z0-9.-]+\.(png|webp|svg|json)$/.test(relative)||/^assets\/once-upon-a-time\/(?:modern-future|halloween)\/(?:character|thing|place|aspect|event|ending)\/[a-z0-9.-]+\.(png|webp|json)$/.test(relative);
   if(!permitted){res.writeHead(404);res.end('Not found');return;}
   const file=path.resolve(root,relative);
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end('Not found');return;}

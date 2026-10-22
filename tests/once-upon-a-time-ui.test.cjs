@@ -641,7 +641,8 @@ test('lobby previews original hand counts, separate worlds and clearly labelled 
     assert.match(html, /<option value="original" selected>/);
     assert.equal((html.match(/Hub custom<\/option>/g) || []).length, 0);
     assert.equal((html.match(/cards \(Hub custom\)<\/option>/g) || []).length, 7);
-    assert.match(html, /One world per game\. The two decks stay separate\./);
+    assert.match(html, /One world per game\. Each deck stays separate\./);
+    assert.match(html, /Spooky Halloween/);
     assert.equal(action(html, 'configure').disabled, true, 'unchanged settings do not make a request');
     for (const handSize of [3, 9]) {
       const draft = UI.tableHTML(data, { host: true, settingsDraft: { world: 'modern-future', handSize } });

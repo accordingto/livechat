@@ -1,3 +1,25 @@
+## CURRENT: Once Spooky Halloween + Interrupt mix — 2026-10-22
+
+Read once-halloween-release.md. Third separate world: 150 Story (30/category),
+20 funny Endings, 90 new Story paintings +20 new Ending paintings +60 explicit
+same-title/category art reuses. Independent once-hw IDs; no cross-world dealing.
+Do not overwrite Classic/Modern content/art or alter hand counts/ending/takeover
+rules. New-world module loads before base in host/player/launcher/CommonJS.
+Caches once-spooky-1 / hub-launch-5. Classic Interrupts30/129, Modern15/60,
+Halloween40/150; no per-hand quota. Saved interruptProfile2 is new-deal only;
+missing profile keeps old20/10 powers/markings until restart/fresh deal. All
+server validations and projected cards use the same profile. Commands cannot
+upgrade it. Publish frontend AND existing independent executor, preserve secrets,
+other games/queue/search handlers. New images/prompts are built-in image_gen,
+not runtime AI calls. All170artchecked;110new main/thumbWebPs26.9MiB,complete
+art-manifest-v1.json. FullHub2220/2220pass;three-worldChrome settings12/12;
+all3worlds×5viewportcompletegames/image-stability and428texts320/375pass.
+Existing service READY dpl_2uaWr5WATv5DhLRFzrXUvn1CsqdM; freshsix-player
+production checks Halloween9=711,Classicauto=471,Modern9=711,clean7/7each.
+Frontend publication/read-onlyproductionchecks pending; no physical-device or
+human balance verification claimed. WHO KNOWS test-onlyCRLF normalization
+retains its exact integration assertion; no unrelated game behavior changed.
+
 ## CURRENT: WHO KNOWS? — Insider and Werewolf modes in one game — 2026-10-22
 
 Read who-knows-mode.md for rules, authority and privacy. New Hub game

@@ -18,6 +18,12 @@ var ONCE_ENGINE = (() => {
   const endingById = deck.endingById || Object.fromEntries(endingCards.map(card => [card.id, card]));
   const worldPool = id => typeof deck.getWorld === 'function' ? deck.getWorld(id) :
     id === 'classic' ? { id: 'classic', storyCards, endingCards } : null;
+  // Interrupt membership is a per-game rule, not live library metadata. Saved
+  // games without a marker retain the original mix until their next deal.
+  const INTERRUPT_PROFILE = 2;
+  const isInterrupt = (s, card) => !!card && (s.interruptProfile === INTERRUPT_PROFILE ? card.isInterrupt === true :
+    (worldPool(s.world)?.legacyInterruptIds || list(worldPool(s.world)?.storyCards).filter(c => c.isInterrupt).map(c => c.id)).includes(card.id));
+  const projectedStoryCard = (s, id) => storyById[id] ? { ...copy(storyById[id]), isInterrupt: isInterrupt(s, storyById[id]) } : null;
   const validHandSize = value => value === null || Number.isInteger(value) && value >= 3 && value <= 9;
   const resolvedHandSize = s => s.handSize == null ? Math.max(5, 11 - activeRoster(s).length) : s.handSize;
   const HOST_TYPES = ['configure', 'deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
@@ -47,7 +53,7 @@ var ONCE_ENGINE = (() => {
     if (!validHandSize(handSize)) throw new Error('invalid_hand_size');
     return {
       version: 1, sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
-      world, handSize, resolvedHandSize: handSize == null ? Math.max(5, 11 - players.length) : handSize,
+      world, handSize, resolvedHandSize: handSize == null ? Math.max(5, 11 - players.length) : handSize, interruptProfile: INTERRUPT_PROFILE,
       roster: players.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80) })),
       readiness: {}, hands: {}, endings: {}, storyteller: null, winner: null,
       storyDeck: [], storyDiscard: [], storyHeld: [], endingDeck: [], endingDiscard: [],
@@ -62,6 +68,7 @@ var ONCE_ENGINE = (() => {
     // Existing sessions keep every already-dealt card. Missing metadata only
     // describes their original classic/automatic setup; it never triggers a deal.
     if (s.world == null) s.world = 'classic';
+    if (s.interruptProfile == null) s.interruptProfile = 1;
     if (s.handSize == null) s.handSize = null;
     for (const key of ['roster', 'storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history', 'log']) s[key] = list(s[key]);
     for (const key of ['readiness', 'hands', 'endings', 'replies', 'seen']) s[key] = s[key] || {};
@@ -285,6 +292,7 @@ var ONCE_ENGINE = (() => {
         if (!pool) { reject('invalid_world'); break; }
         if (!validHandSize(s.handSize)) { reject('invalid_hand_size'); break; }
         if (list(pool.storyCards).length < activeRoster(s).length * count + 1 || list(pool.endingCards).length < activeRoster(s).length) { reject('insufficient_cards'); break; }
+        s.interruptProfile = INTERRUPT_PROFILE;
         s.storyDeck = randomize(s, list(pool.storyCards).map(card => card.id), cmd, 'story-deal');
         s.endingDeck = randomize(s, list(pool.endingCards).map(card => card.id), cmd, 'ending-deal');
         s.resolvedHandSize = count;
@@ -325,7 +333,7 @@ var ONCE_ENGINE = (() => {
         if (!card || !s.hands[actor].includes(cmd.cardId)) { reject('invalid_card'); break; }
         if (mode === 'category') {
           if (!s.categoryOpportunity || cmd.opportunityId !== s.categoryOpportunity.id) { reject('stale_opportunity'); break; }
-          if (!card.isInterrupt || card.category !== s.categoryOpportunity.category) { reject('wrong_category'); break; }
+          if (!isInterrupt(s, card) || card.category !== s.categoryOpportunity.category) { reject('wrong_category'); break; }
         }
         const oldStoryteller = s.storyteller;
         const rollback = mode === 'normal' ? copy({ storyDeck: s.storyDeck, storyDiscard: s.storyDiscard, storyHeld: s.storyHeld, hands: s.hands, rngState: s.rngState, latestPlay: s.latestPlay || null }) : null;
@@ -456,7 +464,7 @@ var ONCE_ENGINE = (() => {
   function view(current, playerNum, now) {
     const s = normalize(current), actor = Number(playerNum), mine = s.roster.find(p => p.playerNum === actor), host = actor === 0;
     const player = !!mine, eligible = player && mine.active !== false && mine.pending !== true, manager = host || eligible && s.sharedControls === true, enough = s.sharedControls !== true || activeRoster(s).length >= 2, speaking = eligible && actor === s.storyteller, story = enough && s.phase === 'STORYTELLING';
-    const hand = player ? s.hands[actor].filter(id => storyById[id]).map(id => copy(storyById[id])) : [];
+    const hand = player ? s.hands[actor].filter(id => storyById[id]).map(id => projectedStoryCard(s, id)) : [];
     const vote = s.vote, pending = s.interrupt;
     const mayReturn = !!(s.latestPlay && s.latestPlay.playerNum === s.storyteller && s.storyHeld.includes(s.latestPlay.cardId));
     const actions = {
@@ -480,8 +488,8 @@ var ONCE_ENGINE = (() => {
       world: s.world, handSize: s.handSize, resolvedHandSize: s.resolvedHandSize,
       roster: s.roster.map(p => ({ playerNum: p.playerNum, name: p.name, active: p.active !== false, pending: p.pending === true, memberStatus: p.active === false ? 'away' : p.pending === true ? 'next_turn' : 'active', handCount: s.hands[p.playerNum].length, ready: s.readiness[p.playerNum] === true })),
       membership: { enabled: s.sharedControls === true, minPlayers: 2, maxPlayers: 6, activeCount: activeRoster(s).length, pendingCount: s.roster.filter(p => p.active !== false && p.pending === true).length },
-      starterCard: s.starterCard ? copy(storyById[s.starterCard]) : null,
-      history: s.history.map(event => ({ ...event, card: copy(storyById[event.cardId]) })),
+      starterCard: s.starterCard ? projectedStoryCard(s, s.starterCard) : null,
+      history: s.history.map(event => ({ ...event, card: projectedStoryCard(s, event.cardId) })),
       categoryOpportunity: s.categoryOpportunity ? copy(s.categoryOpportunity) : null,
       interrupt: pending ? { id: pending.id, eventId: pending.eventId, cardId: pending.cardId, oldStoryteller: pending.oldStoryteller, interrupter: pending.interrupter } : null,
       vote: vote ? { id: vote.id, kind: vote.kind, subjectPlayer: vote.subjectPlayer, eligible: vote.eligible.slice(),
@@ -490,7 +498,7 @@ var ONCE_ENGINE = (() => {
         returnLatest: vote.returnLatest === true, requiresSocial: !vote.eligible.length } : null,
       endingCard: ['ENDING_REVIEW', 'FINISHED'].includes(s.phase) && s.endingPlayed ? copy(endingById[s.endingPlayed.cardId]) : null,
       passPlayer: s.passPlayer || null, canReturnLatest: mayReturn,
-      returnableCard: mayReturn ? copy(storyById[s.latestPlay.cardId]) : null,
+      returnableCard: mayReturn ? projectedStoryCard(s, s.latestPlay.cardId) : null,
       deckCounts: { story: s.storyDeck.length, storyDiscard: s.storyDiscard.length, ending: s.endingDeck.length, endingDiscard: s.endingDiscard.length },
       readiness: player && s.readiness[actor] === true, actions, log: copy(s.log), lastAction: s.lastAction ? copy(s.lastAction) : null,
       reply: s.replies[actor] ? copy(s.replies[actor]) : null,
