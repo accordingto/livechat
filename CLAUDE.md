@@ -16,8 +16,10 @@ art-manifest-v1.json. FullHub2220/2220pass;three-worldChrome settings12/12;
 all3worlds×5viewportcompletegames/image-stability and428texts320/375pass.
 Existing service READY dpl_2uaWr5WATv5DhLRFzrXUvn1CsqdM; freshsix-player
 production checks Halloween9=711,Classicauto=471,Modern9=711,clean7/7each.
-Frontend publication/read-onlyproductionchecks pending; no physical-device or
-human balance verification claimed. WHO KNOWS test-onlyCRLF normalization
+Frontendbf735a3published,Onceassets778/778 andsharedexecutor63/63matched.
+Servicehealth/CORS/invalid-ticket/private404pass;actualproductionChrome
+syntheticHalloween5layouts/5completegames/all428texts/image-stabilitypass.
+No physical-device or human balance verification claimed. WHO KNOWS test-onlyCRLF normalization
 retains its exact integration assertion; no unrelated game behavior changed.
 
 ## CURRENT: WHO KNOWS? — Insider and Werewolf modes in one game — 2026-10-22

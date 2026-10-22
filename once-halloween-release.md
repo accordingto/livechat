@@ -115,6 +115,21 @@ seven marked, ownership/session/ETag-checked nodes; cleanupFailed0. No existing
 room was entered or changed. Current four Once source modules are also retained
 in the existing service source tree for future maintenance.
 
-Frontend publication and read-only production asset/browser verification are
-the remaining release step. Physical multi-device, Safari/Firefox, human voice
-and entertainment/balance playtests are not claimed by these automated checks.
+Frontend gameplay source **bf735a3** is pushed to `accordingto/livechat` main and
+published at https://livechat-two-alpha.vercel.app/once-upon-a-time.html.
+Read-only production comparison matched **778/778 Once assets**, including every
+new main/thumbnail painting and all provenance/manifests, plus **63/63 shared
+executor/role/Bomb assets**. Stable service health/CORS/invalid-ticket rejection
+passed; private runtime paths return404 on both hosts.
+
+Native Chrome against the actual production website also passed Halloween's
+five viewport layouts, five complete **synthetic demo** games, all428card texts
+at320/375px and image stability/privacy cleanup. Its room/Firebase requests are
+blocked; it is not confused with the separate real six-player service checks
+above. Existing rooms/user browser profiles were not accessed. Production
+375/1280px screenshots are saved in the task's
+`halloween-preview/production-browser-qa/` directory.
+
+Physical multi-device, Safari/Firefox, human voice and entertainment/balance
+playtests are not claimed by these automated checks. All required implementation
+and both production deployments are complete; no external setup is pending.
