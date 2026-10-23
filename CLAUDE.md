@@ -29,6 +29,14 @@ RS 3 and 9 players 23 checks/92 captures each, EN/ZH at 1280/390/320, zero
 layout/contrast findings, zero page errors. The audit now also skips text under
 a transient toast's drop shadow. No live-Firebase probe from this sandbox;
 physical phones and a human voice playtest remain unverified.
+Gameplay source 4aa41a3 is pushed to main; Vercel deployment
+3o4bv4KBJcNgChhuzxbPTfkHwpSa reports success. Read back from production:
+word-limit-engine.js?v=wl-2 (shuffleCounts 0–4 default 3, lineCooldownMs 3000,
+`case 'line'`, no vote/twist cases) and room-survey-engine.js?v=rs-2 (answer
+times 0/10/15/20/30 default 15, buzz/taken/locked/duplicate, no nextTurn).
+Not confirmed: one room-survey.html fetch still showed the old "Time per turn"
+fallback label (possibly the fetcher's 15-minute cache), and further reads were
+blocked by the fetch tool's session limit; the shell cannot reach the site.
 
 ## CURRENT: Start after a game switch (CUT, Bomb Relay, Sketch Relay) — 2026-10-24
 
