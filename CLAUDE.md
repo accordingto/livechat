@@ -47,6 +47,16 @@ captures each, EN/ZH at 1280/390/320 with overflow, clipped text, ≥44px
 targets, occlusion and rendered-contrast (glyph pixels, 4.5:1/3:1) audits:
 zero findings, zero page errors. No live-Firebase probe from this sandbox;
 physical phones and a human voice playtest remain unverified.
+Gameplay source ee81696 is pushed to main; Vercel Production deployment
+Eu1FxMmxoid3MjqLq6R4KHGMBPE2 reports success. Read back from
+https://livechat-two-alpha.vercel.app: index.html ends …Sketch Relay → WORD
+LIMIT THEATER (👥 2–9) → ROOM SURVEY (👥 3–9) with the new copy; both host
+pages show their title/h1; card-table.js/-ui.js/.css (ct-1), word-limit
+engine/content/ui and CSS (wl-1), room-survey engine/content/ui and CSS (rs-1)
+and the Patrick Hand OFL licence carry this release (twist recap, chevrons,
+bottom flash toast, 98 prompts, ladders). The fetcher strips play.html scripts,
+so its wiring was not read back separately; the shell cannot reach the site,
+so no byte-hash comparison was possible.
 
 ## CURRENT: Once Spooky Halloween + Interrupt mix — 2026-10-22
 
