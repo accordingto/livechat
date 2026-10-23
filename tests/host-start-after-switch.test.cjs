@@ -10,7 +10,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+// Keep source-layout assertions independent of Git's Windows CRLF checkout.
+const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8').replace(/\r\n/g, '\n');
 
 for (const [file, startLine] of [
   ['cut-host.js', /byId\('start'\)\.disabled = busy \|\| !\(editing \? canControl\(\) : canStart\(\)\);/],

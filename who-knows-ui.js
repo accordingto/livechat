@@ -77,6 +77,20 @@ var WHO_KNOWS_UI = (() => {
     discussTitle: ['誰早就知道答案？', 'Who already knew?'],
     discussHint: ['有人帶路帶得太順了嗎？大家聊聊。討論時間＝剛才猜的時間。', 'Was someone leading you there a little too well? Talk it over. You get as long as the guessing took.'],
     discussInsider: ['低調一點，假裝你也是平民。', 'Stay hidden. Blend in with the Commons.'],
+    speakingTitle: ['輪流發言', 'Speaking turns'],
+    speakingNow: ['{name} 發言中', '{name} has the floor'],
+    speakingYourTurn: ['輪到你發言', 'Your turn to speak'],
+    speakingHint: ['說說你懷疑誰、剛才觀察到了什麼，或替自己辯護。其他人先聽。', 'Say who you suspect, share what you noticed, or defend yourself. Everyone else listens.'],
+    answererSpeakingRule: ['發問已結束，現在可以正常說話。輪到你時，說說觀察或替自己辯護。', 'The questions are over, so you may speak normally now. On your turn, share your observations or defend yourself.'],
+    masterListeningRule: ['先聽大家輪流發言，接著你有一次指認內鬼的機會。', 'Listen to each player’s turn, then you get one guess at the Insider.'],
+    speakingProgress: ['第 {n} / {total} 位', 'Speaker {n} / {total}'],
+    speakingNext: ['接著：{name}', 'Up next: {name}'],
+    speakingAfter_judge: ['全員發言後，先判斷猜中者是不是內鬼。', 'After everyone speaks, judge whether the guesser is the Insider.'],
+    speakingAfter_masterGuess: ['發言結束後，由出題人指認內鬼。', 'After the turns, the Master names the Insider.'],
+    speakingAfter_accuse: ['全員發言後，投票找出狼人。', 'After everyone speaks, vote to find a Werewolf.'],
+    speakerDone: ['我說完了', 'I’m done'], nextSpeaker: ['下一位發言', 'Next speaker'],
+    close_speaking: ['略過剩餘發言', 'Skip remaining turns'],
+    skipSpeakingConfirm: ['再按一次：略過剩餘發言', 'Tap again to skip the remaining turns'],
     previousRounds: ['前幾輪', 'EARLIER ROUNDS'],
     win_village: ['村民贏', 'Village won'], win_wolves: ['狼人贏', 'Werewolves won'], win_commons: ['平民贏', 'Commons won'],
     win_insider: ['內鬼贏', 'Insider won'], win_none: ['沒人贏', 'No winner'], win_void: ['取消', 'Cancelled'],
@@ -109,6 +123,7 @@ var WHO_KNOWS_UI = (() => {
     pointsTitle: ['計分', 'SCORING'],
     setupTitle: ['選擇模式', 'Choose a mode'], start: ['開始第一輪', 'Start the first round'],
     minutes: ['發問時間', 'Question time'], minutesN: ['{n} 分鐘', '{n} min'],
+    turnSeconds: ['每人發言時間', 'Time per speaker'], secondsN: ['{n} 秒', '{n} s'],
     tokens: ['是／否標記數量', 'Yes/No tokens'], tokensNone: ['不限', 'No limit'],
     difficulty: ['單字難度', 'Word difficulty'], diff_mixed: ['混合（三種難度各一）', 'Mixed — one of each'],
     diff_easy: ['簡單', 'Easy'], diff_medium: ['中等', 'Medium'], diff_hard: ['困難', 'Hard'],
@@ -165,13 +180,13 @@ var WHO_KNOWS_UI = (() => {
     rules_insider_2: ['其他人拿到秘密身分：一位內鬼（也知道答案）和平民。', 'Everyone else gets a secret role: one Insider, who also knows the word, and Commons.'],
     rules_insider_3: ['用說的問是非題。想問的人先在卡片上按 🙋 排隊；出題人只能按「是／不是／不知道」。', 'Ask yes-or-no questions out loud. Tap 🙋 on your card to get in line. The Master can only tap Yes, No or I don’t know.'],
     rules_insider_4: ['有人說出完整單字時，出題人按「答對了」。時間內沒猜中，大家一起輸（可選：出題人有一次指認內鬼的機會）。', 'When someone says the exact word, the Master taps Correct. If time runs out, everyone loses (optional: the Master gets one guess at the Insider).'],
-    rules_insider_5: ['接著討論：剛剛有人帶路帶得太順嗎？先判斷猜中的人是不是內鬼；多數說不是，就全體投票。', 'Then talk it over: was someone guiding a little too well? First judge the guesser; if most say no, everyone votes for a suspect.'],
+    rules_insider_5: ['輪流發言，說出懷疑或替自己辯護。猜中時，先判斷猜中者是不是內鬼；多數說不是，就全體投票。若開啟出題人指認，沒猜中時先聽每位玩家發言，再由出題人指認。', 'Take turns sharing suspicions or defending yourself. If the word was found, first judge the guesser; if most say no, everyone votes. With the Master’s guess option on, a missed word lets each player speak before the Master picks.'],
     scoring_insider: ['抓到內鬼：出題人和平民各 +1。內鬼躲過：內鬼 +3。', 'Insider caught: the Master and every Common +1. Insider escapes: +3.'],
     rules_werewolf_1: ['每輪有一位村長（大家輪流）。他選一個秘密單字，之後不能說話，只能按標記回答。', 'Each round one player is the Mayor (everyone takes turns). They pick a secret word, then stay silent and answer only by tapping tokens.'],
     rules_werewolf_2: ['秘密身分：一位先知和 1–2 隻狼人也知道答案，其他人是村民。', 'Secret roles: one Seer and 1–2 Werewolves also know the word. Everyone else is a Villager.'],
     rules_werewolf_3: ['用說的問是非題，先按 🙋 排隊。「是／不是」標記用完，發問就結束。', 'Ask yes-or-no questions out loud — line up with 🙋 first. When the Yes/No tokens run out, the questions end.'],
     rules_werewolf_4: ['猜中了：狼人現身，有 30 秒找出先知。找到就是狼人贏，找錯就是村民贏。', 'Word found: the Werewolves are revealed and get 30 seconds to find the Seer. Right — the Werewolves win. Wrong — the village wins.'],
-    rules_werewolf_5: ['沒猜中：大家有 90 秒投票找狼人。最高票（至少兩票）揭曉，抓到狼人就是村民贏。', 'Not found: everyone has 90 seconds to vote for a Werewolf. The most-voted player (two votes or more) is revealed. Catch one and the village wins.'],
+    rules_werewolf_5: ['沒猜中：全員輪流發言，再用 45 秒投票找狼人。最高票（至少兩票）揭曉，抓到狼人就是村民贏。', 'Not found: everyone takes a speaking turn, then has 45 seconds to vote for a Werewolf. The most-voted player (two votes or more) is revealed. Catch one and the village wins.'],
     scoring_werewolf: ['猜中且先知安全：村民各 +2（先知再 +1）。投票抓到狼人：村民各 +1。狼人勝利：每隻 +2。', 'Word found and the Seer safe: every villager +2 (the Seer +1 more). A Werewolf caught in the vote: villagers +1. Werewolves win: +2 each.'],
   };
   if (typeof I18N !== 'undefined') I18N.registerDict('whoknows', Object.fromEntries(Object.entries(dict).map(([k, v]) => [k, { zh: v[0], en: v[1] }])));
@@ -195,8 +210,8 @@ var WHO_KNOWS_UI = (() => {
   const ANSWERS = { insider: ['yes', 'no', 'unknown', 'correct'], werewolf: ['yes', 'no', 'maybe', 'close', 'far', 'correct'] };
   const RULES = () => typeof WHO_KNOWS_ENGINE !== 'undefined' ? WHO_KNOWS_ENGINE.CONFIG : {
     modes: ['insider', 'werewolf'], questionMinutes: [3, 4, 5, 6, 8], defaultQuestionMinutes: { insider: 5, werewolf: 4 },
-    difficulties: ['mixed', 'easy', 'medium', 'hard'], tokenOptions: [0, 20, 30, 36], wolfOptions: ['auto', 1, 2] };
-  const TIMED = ['countdown', 'questions', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess'];
+    difficulties: ['mixed', 'easy', 'medium', 'hard'], tokenOptions: [0, 20, 30, 36], wolfOptions: ['auto', 1, 2], turnSecondsOptions: [20, 25, 30], defaultTurnSeconds: 25 };
+  const TIMED = ['countdown', 'questions', 'hunt', 'accuse', 'discuss', 'speaking', 'judge', 'vote', 'masterGuess'];
   // Closing these ends the guessing or settles a vote, so it takes two taps.
   const CONFIRM_CLOSE = ['questions', 'hunt', 'accuse', 'judge', 'vote', 'masterGuess'];
   const WINNER = { village_word: 'village', village_vote: 'village', wolves_seer: 'wolves', wolves_hidden: 'wolves', commons_found: 'commons', master_found: 'commons', insider_wins: 'insider', nobody: 'none', void: 'void' };
@@ -229,7 +244,7 @@ var WHO_KNOWS_UI = (() => {
   function timer(wk, { big = false, total = null } = {}) {
     if (wk.phase === 'paused') return `<span class="wk-clock${big ? ' is-big' : ''} is-paused">${esc(clock(wk.remainingMs || 0))}</span>`;
     if (!(wk.deadline > 0)) return '';
-    return `<span class="wk-clock${big ? ' is-big' : ''}" data-wk-deadline="${Number(wk.deadline)}"${total ? ` data-wk-total="${Number(total)}"` : ''}>—:—</span>`;
+    return `<span class="wk-clock${big ? ' is-big' : ''}" data-wk-deadline="${Number(wk.deadline)}"${wk.phase === 'speaking' ? ' data-wk-warning-ms="8000"' : ''}${total ? ` data-wk-total="${Number(total)}"` : ''}>—:—</span>`;
   }
   // Paint every live countdown in `root` from one clock; no re-render needed.
   function paintTimers(root, now) {
@@ -238,7 +253,7 @@ var WHO_KNOWS_UI = (() => {
       const left = Number(el.dataset.wkDeadline) - now;
       const text = el.dataset.wkFormat === 'seconds' ? String(Math.max(0, Math.ceil(left / 1000))) : clock(left);
       if (el.textContent !== text) el.textContent = text;
-      el.classList.toggle('is-low', left <= 30000 && left > 0 && el.dataset.wkFormat !== 'seconds');
+      el.classList.toggle('is-low', left <= Number(el.dataset.wkWarningMs || 30000) && left > 0 && el.dataset.wkFormat !== 'seconds');
       const ring = el.closest('[data-wk-ring]');
       if (ring && el.dataset.wkTotal) ring.style.setProperty('--wk-progress', String(Math.max(0, Math.min(1, left / Number(el.dataset.wkTotal)))));
     }
@@ -273,7 +288,8 @@ var WHO_KNOWS_UI = (() => {
       const n = player.playerNum, role = result ? obj(result.roles)[n] : null;
       const answerer = wk.mayor === n && player.inRound;
       const pos = queue.indexOf(n);
-      const cls = ['wk-seat', player.active ? '' : 'is-out', n === me ? 'is-me' : '', wk.current?.playerNum === n ? 'is-asking' : '',
+      const speakingNow = (wk.phase === 'speaking' || (wk.phase === 'paused' && wk.pausedFrom === 'speaking')) && wk.speaking?.playerNum === n;
+      const cls = ['wk-seat', player.active ? '' : 'is-out', n === me ? 'is-me' : '', wk.current?.playerNum === n || speakingNow ? 'is-asking' : '',
         answerer ? 'is-answerer' : '', voted.has(n) ? 'is-voted' : '', result && list(result.outcome?.winners).includes(n) ? 'is-winner' : ''].filter(Boolean).join(' ');
       let badge = '';
       if (role) badge = `<span class="wk-seat-role" style="--role:${roleColor(role)}"><span class="wk-chip-art">${roleArt(role, wk, n)}</span>${esc(answerer && wk.mode === 'werewolf' && role === 'villager' ? t('role_mayor') : t('role_' + role))}${answerer && wk.mode === 'werewolf' && role !== 'villager' ? ` · ${esc(t('role_mayor'))}` : ''}</span>`;
@@ -281,6 +297,7 @@ var WHO_KNOWS_UI = (() => {
       else if (wk.current?.playerNum === n) badge = `<span class="wk-seat-flag is-now">${esc(t('nowAsking'))}</span>`;
       else if (pos >= 0) badge = `<span class="wk-seat-flag">#${pos + 2}</span>`;
       else if (voted.has(n)) badge = `<span class="wk-seat-flag is-voted">${esc(t('youVoted'))}</span>`;
+      if (speakingNow) badge += `<span class="wk-seat-flag is-now">${esc(t('speakingTitle'))}</span>`;
       const points = result && obj(result.points)[n] ? `<span class="wk-seat-points">+${Number(result.points[n])}</span>` : '';
       return `<li class="${cls}"><span class="wk-seat-top"><span class="wk-seat-name">${esc(player.name || t('player', { n }))}${n === me ? ` <em>${esc(t('you'))}</em>` : ''}</span><span class="wk-seat-score">${esc(pts(player.score))}${points}</span></span>${badge}${player.active ? miniTally(tallies[n]) : `<span class="wk-seat-flag">${esc(t('sittingOut'))}</span>`}</li>`;
     }).join('')}</ol>`;
@@ -346,6 +363,12 @@ var WHO_KNOWS_UI = (() => {
   function ballotProgress(wk) {
     return wk.ballots ? `<p class="wk-progress-line">${esc(t('votedCount', { cast: wk.ballots.cast, total: wk.ballots.total }))}</p>` : '';
   }
+  function speaking(wk, mine = false) {
+    const turn = wk.speaking || {}, order = list(turn.order);
+    const next = order.slice(Number(turn.index) + 1).find(n => seatsOf(wk).some(p => p.playerNum === n && p.active));
+    const heading = mine ? t('speakingYourTurn') : t('speakingNow', { name: nameOf(wk, turn.playerNum) });
+    return `${wk.word ? paper(wk.word, { kicker: t('wordFound') }) + guessLine(wk) : `<p class="wk-kicker">${esc(endLine(wk))}</p>`}<p class="wk-kicker">${esc(t('speakingTitle'))} · ${esc(t('speakingProgress', { n: Number(turn.index) + 1, total: turn.total || order.length }))}</p><h3 class="wk-speaking-name">${esc(heading)}</h3>${timer(wk)}<p class="wk-hint">${esc(t('speakingHint'))}</p>${next != null ? `<p class="wk-speaking-next">${esc(t('speakingNext', { name: nameOf(wk, next) }))}</p>` : ''}<p class="wk-soft">${esc(t('speakingAfter_' + turn.after))}</p>`;
+  }
 
   // ── the shared host screen ─────────────────────────────────────────────
   function focus(wk) {
@@ -361,6 +384,7 @@ var WHO_KNOWS_UI = (() => {
       case 'hunt': return `${paper(wk.word, { kicker: t('wordFound'), size: 'is-wide' })}${guessLine(wk)}<div class="wk-wolves"><span class="wk-focus-art is-small">${art('werewolf')}</span><span>${esc(t('wolvesRevealed', { names: names(wk, wk.wolves) }))}</span></div><h3 class="wk-title">${esc(t('huntTitle'))}</h3>${timer(wk)}<p class="wk-hint">${esc(t('huntHint'))}</p>${ballotProgress(wk)}`;
       case 'accuse': return `<p class="wk-kicker">${esc(endLine(wk))}</p><span class="wk-focus-art">${art('werewolf')}</span><h3 class="wk-title">${esc(t('accuseTitle'))}</h3>${timer(wk)}<p class="wk-hint">${esc(t('accuseHint'))}</p>${ballotProgress(wk)}`;
       case 'discuss': return `${paper(wk.word, { kicker: t('wordFound'), size: 'is-wide' })}${guessLine(wk)}<h3 class="wk-title">${esc(t('discussTitle'))}</h3>${timer(wk)}<p class="wk-hint">${esc(t('discussHint'))}</p>`;
+      case 'speaking': return speaking(wk);
       case 'judge': return `${paper(wk.word, { kicker: t('wordFound') })}<span class="wk-focus-art is-small">${art('insider')}</span><h3 class="wk-title">${esc(t('judgeTitle', { name: nameOf(wk, wk.judgeTarget) }))}</h3>${timer(wk)}<p class="wk-hint">${esc(t('judgeHint', { name: nameOf(wk, wk.judgeTarget) }))}</p>${ballotProgress(wk)}`;
       case 'vote': return `${paper(wk.word, { kicker: t('wordFound') })}<span class="wk-focus-art is-small">${art('insider')}</span><h3 class="wk-title">${esc(t('voteTitle'))}</h3>${timer(wk)}<p class="wk-hint">${esc(t('voteHint', { name: nameOf(wk, wk.judgeTarget) }))}</p>${ballotProgress(wk)}`;
       case 'masterGuess': return `<p class="wk-kicker">${esc(endLine(wk))}</p><span class="wk-focus-art">${art('master')}</span><h3 class="wk-title">${esc(t('masterGuessTitle', { name: answerer }))}</h3>${timer(wk)}<p class="wk-hint">${esc(t('masterGuessHint'))}</p>`;
@@ -373,7 +397,7 @@ var WHO_KNOWS_UI = (() => {
     const strip = `<div class="wk-strip"><span class="wk-pill">${esc(t('round', { n: wk.roundNo }))}</span><span class="wk-pill">${esc(t('mode_' + wk.mode))}</span>${wk.mayor != null ? `<span class="wk-pill">${esc(t(answererKey(wk.mode)))} · ${esc(nameOf(wk, wk.mayor))}</span>` : ''}</div>`;
     if (wk.phase === 'result') return `<div class="wk-stage wk-phase-result">${strip}${resultBlock(wk, 0)}</div>`;
     const paused = wk.phase === 'paused' ? `<div class="wk-paused"><strong>${esc(t('paused'))}</strong><span>${esc(t('pausedHint'))}</span></div>` : '';
-    const showLog = ['questions', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess'].includes(wk.phase === 'paused' ? wk.pausedFrom : wk.phase);
+    const showLog = ['questions', 'hunt', 'accuse', 'discuss', 'speaking', 'judge', 'vote', 'masterGuess'].includes(wk.phase === 'paused' ? wk.pausedFrom : wk.phase);
     const side = showLog ? `<aside class="wk-side"><span class="wk-kicker">${esc(t('answersTitle'))}</span>${logList(wk)}</aside>`
       : `<aside class="wk-side wk-side-rules"><span class="wk-kicker">${esc(t('mode_' + wk.mode))}</span><p>${esc(t('pitch_' + wk.mode))}</p><span class="wk-kicker">${esc(t('tokensLegend'))}</span><div class="wk-tokens-legend">${(ANSWERS[wk.mode] || ANSWERS.insider).map(tokenLabel).join('')}</div>${historyList(wk)}</aside>`;
     return `<div class="wk-stage wk-phase-${esc(wk.phase)}${wk.phase === 'paused' ? ' wk-from-' + esc(wk.pausedFrom) : ''}">${strip}<div class="wk-main"><section class="wk-focus">${paused}${focus(wk)}</section>${side}</div>${seats(wk, 0)}</div>`;
@@ -475,7 +499,7 @@ var WHO_KNOWS_UI = (() => {
     readSettings() {
       const get = key => this.controls.querySelector(`[data-wk-set="${key}"]`);
       const wolves = get('wolves')?.value;
-      return { mode: get('mode').value, questionMinutes: Number(get('questionMinutes').value), difficulty: get('difficulty').value,
+      return { mode: get('mode').value, questionMinutes: Number(get('questionMinutes').value), turnSeconds: Number(get('turnSeconds').value), difficulty: get('difficulty').value,
         tokens: Number(get('tokens').value), wolves: wolves === 'auto' ? 'auto' : Number(wolves),
         mayorSecret: !!get('mayorSecret')?.checked, masterGuess: !!get('masterGuess')?.checked };
     }
@@ -548,6 +572,7 @@ var WHO_KNOWS_UI = (() => {
     theme(wk) {
       const me = wk.me || {};
       if (wk.phase === 'questions' && me.asking) return 'is-asking';
+      if (wk.phase === 'speaking' && me.canFinishSpeaking) return 'is-asking';
       if (wk.phase === 'questions' && me.isMayor) return 'is-answering';
       if (wk.phase === 'result' && wk.result) return list(wk.result.outcome?.winners).includes(this.data.playerNum) ? 'is-won' : 'is-lost';
       return 'role-' + (me.role || 'none');
@@ -566,6 +591,7 @@ var WHO_KNOWS_UI = (() => {
         title = t('role_mayor'); goal = t('goal_mayor'); artKey = 'mayor';
         if (role !== 'villager' && wk.composition?.mayorSecret) extra = `<span class="wk-ticket-secret" style="--role:${roleColor(role)}">${esc(t('alsoSecret', { role: t('role_' + role) }))} · ${esc(t('goal_mayor_' + role))}</span>`;
       }
+      if (me.isMayor && (wk.phase === 'speaking' || (wk.phase === 'paused' && wk.pausedFrom === 'speaking'))) goal = t(wk.speaking?.after === 'masterGuess' ? 'masterListeningRule' : 'answererSpeakingRule');
       const pack = role === 'werewolf' ? `<p class="wk-pack">${esc(list(me.teammates).length ? t('yourPack', { names: names(wk, me.teammates) }) : t('packAlone'))}</p>` : '';
       // Once the word is public the zone below shows it; one paper card is enough.
       return `<div class="wk-ticket" style="--role:${roleColor(me.isMayor ? 'mayor' : role)}"><span class="wk-ticket-art">${art(artKey)}</span><span class="wk-ticket-text"><span class="wk-kicker">${esc(t('youAre'))}</span><strong class="wk-ticket-role">${esc(title)}</strong><span class="wk-ticket-goal">${esc(goal)}</span>${extra}</span></div>${me.word && !wk.word ? paper(me.word) : ''}${pack}`;
@@ -598,6 +624,7 @@ var WHO_KNOWS_UI = (() => {
       }
       if (phase === 'countdown') return box('wk-zone-count', `<p class="wk-kicker">${esc(t('getReady'))}</p><div class="wk-count is-small"><span data-wk-deadline="${Number(wk.deadline) || 0}" data-wk-format="seconds">5</span></div><p>${esc(me.isMayor ? (wk.mode === 'werewolf' ? t('mayorSilent') : t('masterRule')) : t('getReadyHint'))}</p>`);
       if (phase === 'questions') return this.questions(wk);
+      if (phase === 'speaking') return box('wk-zone-speaking' + (me.canFinishSpeaking ? ' is-my-speaking-turn' : ''), `${speaking(wk, !!me.canFinishSpeaking)}${me.canFinishSpeaking ? `<button type="button" class="wk-button wk-primary wk-huge" data-wk-action="speakerDone" data-wk-arg-turn-id="${esc(wk.speaking?.turnId)}"${busy ? ' disabled' : ''}>${esc(t('speakerDone'))}</button>` : ''}`);
       if (phase === 'hunt') {
         const head = `${paper(wk.word, { kicker: t('wordFound') })}${guessLine(wk)}<p class="wk-wolves-line">${esc(t('wolvesRevealed', { names: names(wk, wk.wolves) }))}</p>`;
         if (me.canVote) return box('wk-zone-vote is-hunt', `${head}<h3>${esc(t('huntPick'))}</h3>${timer(wk)}${this.targets(wk, 'pick')}`);
@@ -693,7 +720,11 @@ var WHO_KNOWS_UI = (() => {
       if (timed || phase === 'paused') {
         const row = [button(phase === 'paused' ? 'resume' : 'pause', t(phase === 'paused' ? 'resume' : 'pause'))];
         if (timed && phase !== 'countdown') row.push(button('extend', t(phase === 'questions' ? 'extendQuestions' : 'extendOther')));
-        if (timed) row.push(CONFIRM_CLOSE.includes(phase) ? button('close', t('close_' + phase), { confirm: 'close:' + wk.stage, confirmLabel: t('tapAgain') }) : button('close', t('close_' + phase)));
+        if (phase === 'speaking') {
+          const args = ` data-wk-arg-turn-id="${esc(wk.speaking?.turnId)}"`;
+          row.push(button('nextSpeaker', t('nextSpeaker'), { args }));
+          row.push(button('close', t('close_speaking'), { args, confirm: 'close:' + wk.stage, confirmLabel: t('skipSpeakingConfirm') }));
+        } else if (timed) row.push(CONFIRM_CLOSE.includes(phase) ? button('close', t('close_' + phase), { confirm: 'close:' + wk.stage, confirmLabel: t('tapAgain') }) : button('close', t('close_' + phase)));
         parts.push(section(t('clockTools'), `<div class="wk-tool-row">${row.join('')}</div>`));
       }
       const next = wk.nextAnswerer;
@@ -720,9 +751,9 @@ var WHO_KNOWS_UI = (() => {
     }
     settingsForm(settings) {
       const rules = RULES(), mode = settings.mode || 'insider';
-      const select = (key, values, label, value) => `<label class="wk-field"><span>${esc(label)}</span><select data-wk-set="${key}">${values.map(v => `<option value="${esc(v)}"${String(v) === String(value) ? ' selected' : ''}>${esc(key === 'mode' ? t('mode_' + v) : key === 'questionMinutes' ? t('minutesN', { n: v }) : key === 'difficulty' ? t('diff_' + v) : key === 'tokens' ? (Number(v) === 0 ? t('tokensNone') : String(v)) : t('wolves_' + v))}</option>`).join('')}</select></label>`;
+      const select = (key, values, label, value) => `<label class="wk-field"><span>${esc(label)}</span><select data-wk-set="${key}">${values.map(v => `<option value="${esc(v)}"${String(v) === String(value) ? ' selected' : ''}>${esc(key === 'mode' ? t('mode_' + v) : key === 'questionMinutes' ? t('minutesN', { n: v }) : key === 'turnSeconds' ? t('secondsN', { n: v }) : key === 'difficulty' ? t('diff_' + v) : key === 'tokens' ? (Number(v) === 0 ? t('tokensNone') : String(v)) : t('wolves_' + v))}</option>`).join('')}</select></label>`;
       const check = (key, value, label, hint, only) => `<label class="wk-check" data-wk-set-only="${only}"><input type="checkbox" data-wk-set="${key}"${value ? ' checked' : ''}><span><span>${esc(label)}</span><small>${esc(hint)}</small></span></label>`;
-      return `<section class="wk-tools"><span class="wk-kicker">${esc(t('nextSettings'))}</span><div class="wk-settings wk-card-settings">${select('mode', rules.modes, t('modeLabel'), mode)}${select('questionMinutes', rules.questionMinutes, t('minutes'), settings.questionMinutes ?? rules.defaultQuestionMinutes[mode])}${select('difficulty', rules.difficulties, t('difficulty'), settings.difficulty || 'mixed')}<div class="wk-mode-only" data-wk-set-only="werewolf">${select('tokens', rules.tokenOptions, t('tokens'), settings.tokens ?? 36)}${select('wolves', rules.wolfOptions, t('wolves'), settings.wolves ?? 'auto')}</div></div>${check('mayorSecret', !!settings.mayorSecret, t('mayorSecret'), t('mayorSecretHint'), 'werewolf')}${check('masterGuess', settings.masterGuess !== false, t('masterGuess'), t('masterGuessOptHint'), 'insider')}<button type="button" class="wk-button wk-small wk-primary" data-wk-save-settings>${esc(t('saveSettings'))}</button></section>`;
+      return `<section class="wk-tools"><span class="wk-kicker">${esc(t('nextSettings'))}</span><div class="wk-settings wk-card-settings">${select('mode', rules.modes, t('modeLabel'), mode)}${select('questionMinutes', rules.questionMinutes, t('minutes'), settings.questionMinutes ?? rules.defaultQuestionMinutes[mode])}${select('difficulty', rules.difficulties, t('difficulty'), settings.difficulty || 'mixed')}${select('turnSeconds', rules.turnSecondsOptions || [20, 25, 30], t('turnSeconds'), settings.turnSeconds ?? 25)}<div class="wk-mode-only" data-wk-set-only="werewolf">${select('tokens', rules.tokenOptions, t('tokens'), settings.tokens ?? 36)}${select('wolves', rules.wolfOptions, t('wolves'), settings.wolves ?? 'auto')}</div></div>${check('mayorSecret', !!settings.mayorSecret, t('mayorSecret'), t('mayorSecretHint'), 'werewolf')}${check('masterGuess', settings.masterGuess !== false, t('masterGuess'), t('masterGuessOptHint'), 'insider')}<button type="button" class="wk-button wk-small wk-primary" data-wk-save-settings>${esc(t('saveSettings'))}</button></section>`;
     }
     showModeOnly(mode) {
       for (const element of this.controls.querySelectorAll('[data-wk-set-only]')) element.hidden = element.dataset.wkSetOnly !== (mode || 'insider');

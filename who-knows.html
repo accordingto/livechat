@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0f1421">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="who-knows.css?v=wk-2">
+  <link rel="stylesheet" href="who-knows.css?v=wk-3">
 </head>
 <body class="wk-page">
   <div class="topbar">
@@ -61,6 +61,7 @@
       <div class="wk-settings">
         <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-minutes"></select></label>
         <label class="wk-field"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-difficulty"></select></label>
+        <label class="wk-field"><span data-i18n="whoknows.turnSeconds">Time per speaker</span><select id="wk-turn-seconds"></select></label>
         <div class="wk-mode-only" data-wk-only="werewolf" hidden>
           <label class="wk-field"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-tokens"></select></label>
           <label class="wk-field"><span data-i18n="whoknows.wolves">Werewolves</span><select id="wk-wolves"></select></label>
@@ -84,6 +85,7 @@
       <div id="wk-scene"></div>
       <div class="wk-actions wk-session-actions">
         <button type="button" class="wk-button wk-primary" id="wk-close" hidden></button>
+        <button type="button" class="wk-button" id="wk-skip-speaking" hidden></button>
         <button type="button" class="wk-button wk-primary" id="wk-next" hidden data-i18n="whoknows.nextRound">Next round</button>
         <button type="button" class="wk-button wk-primary" id="wk-again" hidden data-i18n="whoknows.playAgain">Play again</button>
         <button type="button" class="wk-button" id="wk-settings" hidden data-i18n="whoknows.changeSettings">Change settings</button>
@@ -141,6 +143,7 @@
       <label class="wk-field"><span data-i18n="whoknows.modeLabel">Mode</span><select id="wk-m-mode"></select></label>
       <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-m-minutes"></select></label>
       <label class="wk-field"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-m-difficulty"></select></label>
+      <label class="wk-field"><span data-i18n="whoknows.turnSeconds">Time per speaker</span><select id="wk-m-turn-seconds"></select></label>
       <div class="wk-mode-only" data-wk-m-only="werewolf" hidden>
         <label class="wk-field"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-m-tokens"></select></label>
         <label class="wk-field"><span data-i18n="whoknows.wolves">Werewolves</span><select id="wk-m-wolves"></select></label>
@@ -168,10 +171,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="who-knows-words.js?v=wk-2"></script>
-  <script src="who-knows-engine.js?v=wk-2"></script>
-  <script src="who-knows-sync.js?v=wk-2"></script>
-  <script src="who-knows-ui.js?v=wk-2"></script>
-  <script src="who-knows-host.js?v=wk-2"></script>
+  <script src="who-knows-words.js?v=wk-3"></script>
+  <script src="who-knows-engine.js?v=wk-3"></script>
+  <script src="who-knows-sync.js?v=wk-3"></script>
+  <script src="who-knows-ui.js?v=wk-3"></script>
+  <script src="who-knows-host.js?v=wk-3"></script>
 </body>
 </html>

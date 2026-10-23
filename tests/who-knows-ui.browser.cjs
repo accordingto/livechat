@@ -92,7 +92,10 @@ function installFirebase({ code, tokens, names, epoch }) {
       set: value => request({ type: 'set', path: location, value }),
       update: value => request({ type: 'update', path: location, value }),
       remove: () => request({ type: 'set', path: location, value: null }),
-      onDisconnect: () => ({ remove: async () => {}, cancel: async () => {} }),
+      onDisconnect: () => ({
+        remove: () => request({ type: 'disconnectRemove', path: location }),
+        cancel: () => request({ type: 'disconnectCancel', path: location }),
+      }),
       async transaction(updater) {
         for (let attempt = 0; attempt < 50; attempt++) {
           const { value: current } = await request({ type: 'get', path: location });
@@ -115,7 +118,6 @@ function installFirebase({ code, tokens, names, epoch }) {
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 // Exact matches only: "Secret" is a word in the bank and also part of the key "mayorSecret".
 const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.includes(`"en":${JSON.stringify(word.en)}`);
-const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\\p{L}]|$)`, 'u').test(text);
 
 (async () => {
   fs.mkdirSync(output, { recursive: true });
@@ -133,11 +135,18 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
   const browser = await chromium.launch({ headless: true, ...(process.env.WK_QA_CHANNEL ? { channel: process.env.WK_QA_CHANNEL } : {}) });
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   let delivery = Promise.resolve();
+  const disconnects = new Map();
   const deliver = () => {
     const tree = db.dump();
     delivery = delivery.then(() => Promise.all([...pages].map(page => page.isClosed() ? null : page.evaluate(tree => window.__qaDeliver?.(tree), tree).catch(() => {}))));
   };
-  await context.exposeBinding('__qaFirebase', (_source, request) => {
+  await context.exposeBinding('__qaFirebase', (source, request) => {
+    if (request.type === 'disconnectRemove' || request.type === 'disconnectCancel') {
+      if (!disconnects.has(source.page)) disconnects.set(source.page, new Set());
+      const paths = disconnects.get(source.page);
+      if (request.type === 'disconnectRemove') paths.add(request.path); else paths.delete(request.path);
+      return { committed: false };
+    }
     const result = db.request(request);
     if (result.committed) setTimeout(deliver, 0);
     return result;
@@ -152,7 +161,15 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
   const open = async url => {
     const item = await context.newPage(); pages.add(item);
     item.on('pageerror', error => errors.push({ url: item.url(), message: error.message }));
-    item.on('close', () => pages.delete(item));
+    const disconnect = () => {
+      // Firebase removes registered presence even when pagehide cannot finish
+      // an async remove. Reload/navigation also closes the old connection;
+      // keeping its presence would leave a ghost ahead of the live tickers.
+      for (const location of disconnects.get(item) || []) db.put(location, null);
+      disconnects.delete(item); deliver();
+    };
+    item.on('framenavigated', frame => { if (frame === item.mainFrame()) disconnect(); });
+    item.on('close', () => { pages.delete(item); disconnect(); });
     await item.goto(base + '/' + url);
     return item;
   };
@@ -166,6 +183,8 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
   let host = null, players = [];
   const control = () => Object.entries(db.get(`rooms/${code}/players`) || {}).find(([, value]) => value?.stateJson)?.[1] || null;
   const tableToken = () => Object.entries(db.get(`rooms/${code}/players`) || {}).find(([, value]) => value?.stateJson)?.[0] || null;
+  const presence = () => db.get(`rooms/${code}/players/${tableToken()}/presence`) || {};
+  const oneConnection = n => Object.values(presence()).filter(entry => entry?.actor === n).length === 1;
   // The canonical table, read straight from the database: no page has to be open.
   const state = async () => { const table = control(); return table?.stateJson ? JSON.parse(table.stateJson) : null; };
   const status = () => host.evaluate(() => WHO_KNOWS_HOST.status);
@@ -195,6 +214,10 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
   };
   const tool = async (page, selector) => { await controls(page); await tap(page, '[data-wk-controls] ' + selector); };
   const text = page => page.evaluate(() => document.body.innerText);
+  // "Table", "Clock" and "Secret" are valid answers as well as interface
+  // copy. Check the actual word/option labels, plus each seat's projected
+  // payload below, rather than treating fixed controls as a leaked answer.
+  const renderedWord = async (page, word) => (await page.locator('.wk-option strong[lang="en"], .wk-paper strong[lang="en"]').allTextContents()).includes(word.en);
   const roleOf = (s, n) => s.round.roles[n];
   const nameOf = n => names[n - 1];
   // ── layout captures with overflow, occlusion and tap-target checks ──
@@ -242,6 +265,71 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
   };
   const PHONES = [[390, 844], [320, 568]], HOSTS = [[1280, 800], [390, 844]];
 
+  const speakingTurns = async (after, { captureTurns = false, skipRest = false } = {}) => {
+    await phase('speaking');
+    let s = await state();
+    const eligible = s.round.players.filter(n => s.roster.find(p => p.playerNum === n)?.active && !(after === 'masterGuess' && n === s.round.mayor));
+    let turn = (await cards())[0].wk.speaking;
+    assert.deepEqual(list(turn.order).slice().sort((a, b) => a - b), eligible);
+    assert.equal(turn.after, after);
+    await allCards(wk => wk.speaking?.turnId === turn.turnId && wk.speaking.playerNum === turn.playerNum);
+    for (const n of s.round.players)
+      assert.equal(await card(n).locator('[data-wk-main] [data-wk-action="speakerDone"]').count(), n === turn.playerNum ? 1 : 0, 'only the speaker has Done');
+    if (!s.round.guess) {
+      const secret = WORDS.get(s.round.wordId);
+      const nonKnower = s.round.players.find(n => n !== s.round.mayor && !['insider', 'seer', 'werewolf'].includes(roleOf(s, n)));
+      if (nonKnower) {
+        assert.equal(await renderedWord(card(nonKnower), secret), false, 'unfound word stays private during speeches');
+        assert.equal(carries(JSON.stringify((await cards())[nonKnower - 1]), secret), false, 'the non-knower projection carries no secret');
+      }
+    }
+    if (captureTurns) {
+      host = await open('who-knows.html');
+      await wait(async () => (await status()) === 'ready', 'host speaking viewer');
+      await views(host, 'host-speaking-' + after, '#wk-manage-open', HOSTS);
+      await host.close(); host = null;
+      await views(card(turn.playerNum), 'card-speaking-current-' + after, '[data-wk-main] [data-wk-action="speakerDone"]', PHONES);
+      await views(card(eligible.find(n => n !== turn.playerNum) || turn.playerNum), 'card-speaking-listener-' + after, null, PHONES);
+    }
+    const deadline = s.deadline, beforeId = turn.turnId;
+    const reloader = eligible.find(n => n !== turn.playerNum);
+    await card(reloader).reload(); await allCards(wk => wk.speaking?.turnId === beforeId);
+    await wait(() => oneConnection(reloader), 'reloaded speaker card has one live connection');
+    assert.equal((await state()).deadline, deadline, 'reloading keeps the current speech deadline');
+    await tap(card(turn.playerNum), '[data-wk-main] [data-wk-action="speakerDone"]');
+    await wait(async () => (await state()).round.speaking.index === 1, 'speaker Done');
+    await phase('speaking');
+    turn = (await cards())[0].wk.speaking;
+    await tool(card(eligible.find(n => n !== turn.playerNum) || turn.playerNum), '[data-wk-action="nextSpeaker"]');
+    await wait(async () => (await state()).round.speaking.index === 2, 'Next speaker');
+    await phase('speaking');
+    s = await state(); turn = (await cards())[0].wk.speaking;
+    await advance(s.deadline - (epoch + offset) + 5000);
+    await wait(async () => (await state()).round.speaking.index === 3 || (await state()).phase === after, 'speech deadline');
+    if ((await state()).phase === 'speaking' && skipRest) {
+      const manager = eligible[0];
+      await tool(card(manager), '[data-wk-action="close"]');
+      assert.equal((await state()).phase, 'speaking', 'skipping remaining speeches takes two taps');
+      if (captureTurns) await views(card(manager), 'card-speaking-skip-confirm', '[data-wk-controls] [data-wk-action="close"]', [[390, 844], [320, 568]]);
+      // Capturing four translated layouts can outlast the real 4 s safety
+      // confirmation. Re-arm if it expired, then exercise the second tap.
+      if (!(await card(manager).locator('[data-wk-controls] [data-wk-action="close"]').evaluate(button => button.classList.contains('is-armed'))))
+        await tool(card(manager), '[data-wk-action="close"]');
+      await tool(card(manager), '[data-wk-action="close"]');
+    } else {
+      while ((await state()).phase === 'speaking') {
+        await phase('speaking');
+        const current = (await cards())[0].wk.speaking;
+        const stage = (await state()).stage;
+        await tap(card(current.playerNum), '[data-wk-main] [data-wk-action="speakerDone"]');
+        await wait(async () => (await state()).phase !== 'speaking' || (await state()).stage !== stage, 'next speech');
+      }
+    }
+    await phase(after);
+    if (after === 'accuse') assert.equal((await state()).deadline - (epoch + offset), 45000);
+    check(`shared speaking turns before ${after}: Done, Next speaker, timed handoff, reload with the same deadline${skipRest ? ', two-tap skip' : ''}`);
+  };
+
   try {
     host = await open('who-knows.html');
     players = await Promise.all(tokens.map(token => open('play.html?s=' + code + '&p=' + token)));
@@ -271,10 +359,9 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
       await wait(async () => (await card(n).locator('.wk-ticket-role').count()) === 1, 'ticket');
       const role = await card(n).locator('.wk-ticket-role').innerText();
       assert.ok(role.length > 0);
-      const shown = await text(card(n));
-      for (const word of optionWords) assert.equal(shows(shown, word), n === mayor, `card ${n} options: ${word.en}`);
+      for (const word of optionWords) assert.equal(await renderedWord(card(n), word), n === mayor, `card ${n} options: ${word.en}`);
     }
-    for (const word of optionWords) assert.equal(shows(await text(host), word), false, 'host never shows the options: ' + word.en);
+    for (const word of optionWords) assert.equal(await renderedWord(host, word), false, 'host never shows the options: ' + word.en);
     assert.equal(await card(mayor).locator('.wk-option').count(), 3);
     check(`${mode}: Start points every link at the table; each card shows its own role, only the answerer sees the three word options`);
     await views(host, 'host-choose', '#wk-manage-open', HOSTS);
@@ -294,7 +381,8 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     const secret = WORDS.get(s.round.wordId);
     const knowers = s.round.players.filter(n => n === mayor || ['insider', 'seer', 'werewolf'].includes(roleOf(s, n)));
     for (const n of s.round.players) {
-      assert.equal(shows(await text(card(n)), secret), knowers.includes(n), `card ${n} word privacy on screen`);
+      assert.equal(await renderedWord(card(n), secret), knowers.includes(n), `card ${n} word privacy on screen`);
+      assert.equal(carries(JSON.stringify((await cards())[n - 1]), secret), knowers.includes(n), `card ${n} word privacy in projected payload`);
       assert.equal((await card(n).locator('.wk-paper').count()) > 0, knowers.includes(n));
     }
     check('after the answerer chooses, the word appears only on the cards whose role knows it');
@@ -345,7 +433,7 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await wait(async () => (await status()) === 'ready', 'host reopened');
     await wait(async () => (await host.locator('.wk-log-row').count()) === 3, 'host log');
     assert.equal(await host.locator('#wk-game').isVisible(), true);
-    assert.equal(shows(await text(host), secret), false, 'the shared screen still never shows the secret');
+    assert.equal(await renderedWord(host, secret), false, 'the shared screen still never shows the secret');
     await views(host, 'host-questions', '#wk-close', HOSTS);
     await host.close(); host = null;
     check('reopening the host page mid-round shows the same game without restarting it; closing it again changes nothing');
@@ -392,6 +480,7 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     // ── a player reloads mid-round ──
     await card(b).reload();
     await wait(async () => (await card(b).locator('.wk-ticket-role').count()) === 1, 'reloaded card');
+    await wait(() => oneConnection(b), 'reloaded player card has one live connection');
     assert.equal(await card(b).evaluate(() => window.WHO_KNOWS_CARD.view()?.wk?.me?.role), roleOf(await state(), b));
     check('a reloaded player link comes back to the same role and round');
 
@@ -402,6 +491,8 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await wait(async () => (await card(mayor).locator('.wk-correct.is-armed').count()) === 1, 'armed');
     assert.equal((await state()).phase, 'questions', 'one tap on Correct does nothing yet');
     await views(card(mayor), 'card-correct-armed', '.wk-correct', [[390, 844]]);
+    if (!(await card(mayor).locator('.wk-correct').evaluate(button => button.classList.contains('is-armed'))))
+      await tap(card(mayor), '.wk-correct');
     await tap(card(mayor), '.wk-correct');
     const guesser = b;
     if (mode === 'werewolf') {
@@ -423,12 +514,11 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
       assert.equal(s.scores[seer], 3);
       check('the Werewolves miss the Seer: every villager +2, the Seer +3');
     } else {
-      await phase('discuss');
+      await phase('speaking');
       s = await state();
       await allCards(wk => wk.word?.id === s.round.wordId);
-      check('a correct guess makes the word public and starts a discussion as long as the guessing took');
-      await tool(card(others[0]), '[data-wk-action="close"]');
-      await phase('judge');
+      check('a correct guess makes the word public and gives every player a timed speaking turn');
+      await speakingTurns('judge', { captureTurns: true, skipRest: true });
       s = await state();
       check('a player starts the vote early from Table controls');
       await views(card(s.round.players.find(n => n !== guesser)), 'card-judge', '[data-wk-action="judge"]', PHONES);
@@ -508,9 +598,10 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await controls(card(editor));
     await card(editor).selectOption('[data-wk-controls] [data-wk-set="mode"]', other);
     await card(editor).selectOption('[data-wk-controls] [data-wk-set="questionMinutes"]', '3');
+    await card(editor).selectOption('[data-wk-controls] [data-wk-set="turnSeconds"]', '20');
     await views(card(editor), 'card-controls-settings', '[data-wk-controls] [data-wk-save-settings]', [[390, 844], [320, 568]]);
     await tap(card(editor), '[data-wk-controls] [data-wk-save-settings]');
-    await wait(async () => (await state()).settings.mode === other && (await state()).settings.questionMinutes === 3, 'settings saved');
+    await wait(async () => (await state()).settings.mode === other && (await state()).settings.questionMinutes === 3 && (await state()).settings.turnSeconds === 20, 'settings saved');
     assert.match(await card(editor).locator('[data-wk-controls-note]').innerText(), /next round/);
     assert.equal((await state()).round.mode, mode, 'the current round keeps its mode');
     await tool(card(editor), '[data-wk-action="void"]'); await tool(card(editor), '[data-wk-action="void"]');
@@ -518,7 +609,7 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await tap(card(editor), '[data-wk-action="next"]');
     await phase('choose');
     s = await state();
-    assert.equal(s.round.mode, other); assert.equal(s.round.questionMs, 180000);
+    assert.equal(s.round.mode, other); assert.equal(s.round.questionMs, 180000); assert.equal(s.round.turnSeconds, 20);
     check('a player changes the mode and question time for the next round from their card');
 
     // ── the question clock runs out with no host page ──
@@ -528,7 +619,7 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
     await phase('questions');
     await advance(180000 + 2000);
     const expected = other === 'werewolf' ? 'accuse' : 'masterGuess';
-    await phase(expected);
+    await speakingTurns(expected, { captureTurns: true });
     assert.equal((await state()).round.endReason, 'time');
     check(`the cards end the questions when time runs out (${expected}), with no host page open`);
 
@@ -585,6 +676,9 @@ const shows = (text, word) => new RegExp(`(^|[^\\p{L}])${word.en.replace(/[.*+?^
   } catch (error) {
     report.failure = String(error.stack || error);
     report.errors = errors;
+    const failedState = await state();
+    report.failureContext = { phase: failedState?.phase, stage: failedState?.stage, deadline: failedState?.deadline,
+      now: epoch + offset, offset, presence: clone(presence()) };
     fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));
     try { await host?.screenshot({ path: path.join(output, 'failure-host.png'), fullPage: true }); } catch (_) {}
     console.error(error); console.error('page errors:', JSON.stringify(errors, null, 1));

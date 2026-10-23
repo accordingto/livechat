@@ -31,7 +31,7 @@
   const ENGINE = () => root.WHO_KNOWS_ENGINE;
   // Only these fields of a command ever reach the rules. (`names` is the host
   // page's Hub rename; the rules refuse it from any card.)
-  const FIELDS = ['wordId', 'askId', 'answer', 'text', 'playerNum', 'target', 'choice', 'active', 'settings', 'names'];
+  const FIELDS = ['wordId', 'askId', 'turnId', 'answer', 'text', 'playerNum', 'target', 'choice', 'active', 'settings', 'names'];
   const parse = raw => { if (typeof raw !== 'string') return null; try { return JSON.parse(raw); } catch (_) { return null; } };
   const isTable = token => /^[a-f0-9]{32}$/.test(token || '');
   const pointsAt = (value, token) => value?.game === 'whoknows' && value.wk?.version === 2 && value.wk.table === token;

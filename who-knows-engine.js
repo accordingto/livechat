@@ -18,6 +18,8 @@
  * card to join one shared line; the answerer taps a token for whoever is at the
  * front. Every answer is logged against its asker, like the physical tokens
  * that pile up in front of each player.
+ * Three endings give each player a timed speaking turn before the ballot.
+ * A found word in Werewolf mode still starts the immediate Seer hunt.
  *
  * The canonical state (secret word and hidden roles included) lives in one
  * table node. view() gives the shared screen (actor 0) nothing private and
@@ -40,12 +42,13 @@ var WHO_KNOWS_ENGINE = (() => {
     tokenOptions: Object.freeze([0, 20, 30, 36]), defaultTokens: 36,
     difficulties: Object.freeze(['mixed', 'easy', 'medium', 'hard']), defaultDifficulty: 'mixed',
     wolfOptions: Object.freeze(['auto', 1, 2]),
+    turnSecondsOptions: Object.freeze([20, 25, 30]), defaultTurnSeconds: 25,
     answers: Object.freeze({
       insider: Object.freeze(['yes', 'no', 'unknown', 'correct']),
       werewolf: Object.freeze(['yes', 'no', 'maybe', 'close', 'far', 'correct']),
     }),
     countdownMs: 5000,
-    huntMs: 30000, accuseMs: 90000,
+    huntMs: 30000, accuseMs: 45000,
     discussMinMs: 30000, judgeMs: 30000, voteMs: 45000, masterGuessMs: 30000,
     extendQuestionsMs: 60000, extendOtherMs: 30000,
     resumeFloorMs: 3000,
@@ -62,7 +65,7 @@ var WHO_KNOWS_ENGINE = (() => {
       void: Object.freeze({ team: null, points: 0 }),
     }),
   });
-  const TIMED = Object.freeze(['countdown', 'questions', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess']);
+  const TIMED = Object.freeze(['countdown', 'questions', 'speaking', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess']);
   const VOTING = Object.freeze(['hunt', 'accuse', 'judge', 'vote', 'masterGuess']);
   const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
@@ -97,7 +100,7 @@ var WHO_KNOWS_ENGINE = (() => {
   // ── settings ───────────────────────────────────────────────────────────
   function defaultSettings(mode = 'insider') {
     return { mode, questionMinutes: CONFIG.defaultQuestionMinutes[mode], tokens: CONFIG.defaultTokens,
-      difficulty: CONFIG.defaultDifficulty, wolves: 'auto', mayorSecret: false, masterGuess: true };
+      difficulty: CONFIG.defaultDifficulty, wolves: 'auto', turnSeconds: CONFIG.defaultTurnSeconds, mayorSecret: false, masterGuess: true };
   }
   // Omitted fields keep the current choice; a mode change without an explicit
   // length takes that mode's usual length. Invalid values throw.
@@ -116,8 +119,10 @@ var WHO_KNOWS_ENGINE = (() => {
     const wolvesRaw = input.wolves === undefined ? base.wolves : input.wolves;
     const wolves = wolvesRaw === 'auto' ? 'auto' : Number(wolvesRaw);
     if (!CONFIG.wolfOptions.includes(wolves)) throw new Error('invalid_options');
+    const turnSeconds = input.turnSeconds === undefined ? base.turnSeconds : Number(input.turnSeconds);
+    if (!CONFIG.turnSecondsOptions.includes(turnSeconds)) throw new Error('invalid_options');
     for (const key of ['mayorSecret', 'masterGuess']) if (input[key] !== undefined && typeof input[key] !== 'boolean') throw new Error('invalid_options');
-    return { mode, questionMinutes: minutes, tokens, difficulty, wolves,
+    return { mode, questionMinutes: minutes, tokens, difficulty, wolves, turnSeconds,
       mayorSecret: input.mayorSecret ?? !!base.mayorSecret, masterGuess: input.masterGuess ?? base.masterGuess !== false };
   }
   function wolfCount(setting, players) {
@@ -185,13 +190,13 @@ var WHO_KNOWS_ENGINE = (() => {
     const s = state.settings;
     state.roundNo++;
     const round = {
-      no: state.roundNo, mode: s.mode, questionMs: s.questionMinutes * 60000,
+      no: state.roundNo, mode: s.mode, questionMs: s.questionMinutes * 60000, turnSeconds: s.turnSeconds,
       tokens: s.mode === 'werewolf' ? s.tokens : 0, difficulty: s.difficulty,
       wolves: s.wolves, mayorSecret: s.mode === 'werewolf' && s.mayorSecret, masterGuess: s.mode === 'insider' && s.masterGuess,
       mayor: null, players: [], roles: {}, options: [], rerolls: 0, wordId: null,
       startedAt: null, endedAt: null, endReason: null,
       queue: [], current: null, askSerial: 0, log: [], tokensUsed: 0, guess: null,
-      votes: {}, judge: {}, picks: {}, masterPick: null, judgeResult: null, outcome: null, points: {},
+      votes: {}, judge: {}, picks: {}, masterPick: null, judgeResult: null, outcome: null, points: {}, speaking: null,
     };
     round.mayor = drawMayor(state, random);
     dealRoles(state, round, random);
@@ -248,17 +253,47 @@ var WHO_KNOWS_ENGINE = (() => {
     enter(state, 'questions', now, round.questionMs);
   }
   function nextAsker(round) { round.current = round.queue.length ? round.queue.shift() : null; }
-  function endQuestions(state, now, reason) {
+  function speakingView(state) {
+    const round = state.round, speaking = round?.speaking;
+    if (!speaking || !(state.phase === 'speaking' || (state.phase === 'paused' && state.pausedFrom === 'speaking'))) return null;
+    const order = list(speaking.order);
+    return { order: order.slice(), index: speaking.index, playerNum: order[speaking.index] ?? null,
+      turnId: `${round.no}-${speaking.serial}`, total: order.length, seconds: round.turnSeconds || CONFIG.defaultTurnSeconds, after: speaking.after };
+  }
+  function finishSpeaking(state, now) {
+    const after = state.round.speaking.after;
+    enter(state, after, now, { judge: CONFIG.judgeMs, masterGuess: CONFIG.masterGuessMs, accuse: CONFIG.accuseMs }[after]);
+    if (allVoted(state)) resolve(state, now);
+  }
+  function advanceSpeaker(state, now) {
+    const speaking = state.round.speaking;
+    const paused = state.phase === 'paused' && state.pausedFrom === 'speaking';
+    do { speaking.index++; } while (speaking.index < speaking.order.length && !playing(state, speaking.order[speaking.index]));
+    speaking.serial++;
+    if (speaking.index >= speaking.order.length) finishSpeaking(state, now);
+    else enter(state, 'speaking', now, state.round.turnSeconds * 1000);
+    // Sitting out the speaker while paused must never restart the table clock.
+    if (paused && TIMED.includes(state.phase)) {
+      state.remainingMs = state.deadline - now; state.pausedFrom = state.phase;
+      state.phase = 'paused'; state.deadline = null;
+    }
+  }
+  function beginSpeaking(state, now, after, random) {
+    const round = state.round;
+    const players = roundPlayers(round).filter(n => playing(state, n) && (after !== 'masterGuess' || n !== round.mayor));
+    round.speaking = { order: shuffle(players, random), index: 0, serial: 1, after };
+    if (!players.length) finishSpeaking(state, now);
+    else enter(state, 'speaking', now, round.turnSeconds * 1000);
+  }
+  function endQuestions(state, now, reason, random) {
     const round = state.round;
     round.endReason = reason; round.endedAt = now; round.queue = []; round.current = null;
     if (round.mode === 'werewolf') {
       if (reason === 'correct') enter(state, 'hunt', now, CONFIG.huntMs);
-      else enter(state, 'accuse', now, CONFIG.accuseMs);
+      else beginSpeaking(state, now, 'accuse', random);
     } else if (reason === 'correct') {
-      // Classic Insider: the discussion lasts as long as the guessing took.
-      const used = Math.max(0, now - (round.startedAt ?? now));
-      enter(state, 'discuss', now, Math.max(CONFIG.discussMinMs, Math.min(round.questionMs, used)));
-    } else if (round.masterGuess) enter(state, 'masterGuess', now, CONFIG.masterGuessMs);
+      beginSpeaking(state, now, 'judge', random);
+    } else if (round.masterGuess) beginSpeaking(state, now, 'masterGuess', random);
     else finishRound(state, now, 'nobody');
   }
   function tally(box) {
@@ -279,6 +314,7 @@ var WHO_KNOWS_ENGINE = (() => {
       const caught = top >= 2 ? leaders.filter(n => roleOf(round, n) === 'werewolf') : [];
       finishRound(state, now, caught.length ? 'village_vote' : 'wolves_hidden', { revealed: top >= 2 ? leaders : [], caught });
     } else if (state.phase === 'discuss') {
+      // Keep the deadline/flow of rounds saved before timed speaking turns.
       enter(state, 'judge', now, CONFIG.judgeMs);
       if (allVoted(state)) resolve(state, now);
       return;
@@ -349,6 +385,7 @@ var WHO_KNOWS_ENGINE = (() => {
   }
 
   function normalize(state) {
+    if (!CONFIG.turnSecondsOptions.includes(state.settings.turnSeconds)) state.settings.turnSeconds = CONFIG.defaultTurnSeconds;
     state.roster = roster(state); state.history = list(state.history);
     state.scores = state.scores || {}; state.seen = state.seen || {}; state.replies = state.replies || {};
     state.rotation = Object.assign({ bag: [], last: null, next: null }, state.rotation || {});
@@ -356,16 +393,18 @@ var WHO_KNOWS_ENGINE = (() => {
     state.wordHistory = { used: list(state.wordHistory?.used) };
     const round = state.round;
     if (round) {
+      if (!CONFIG.turnSecondsOptions.includes(round.turnSeconds)) round.turnSeconds = CONFIG.defaultTurnSeconds;
+      if (round.speaking) round.speaking.order = list(round.speaking.order);
       round.players = list(round.players); round.options = list(round.options); round.queue = list(round.queue); round.log = list(round.log);
       for (const key of ['roles', 'votes', 'judge', 'picks', 'points']) round[key] = round[key] || {};
     }
   }
-  const PLAYER_COMMANDS = new Set(['choose', 'reroll', 'raise', 'lower', 'text', 'pickAsker', 'skip', 'answer', 'vote', 'judge', 'pick', 'masterPick', 'next']);
-  const HOST_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'setNext', 'exclude', 'restart', 'settings', 'stop', 'next', 'rename']);
+  const PLAYER_COMMANDS = new Set(['choose', 'reroll', 'raise', 'lower', 'text', 'pickAsker', 'skip', 'answer', 'vote', 'judge', 'pick', 'masterPick', 'next', 'speakerDone']);
+  const HOST_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'setNext', 'exclude', 'restart', 'settings', 'stop', 'next', 'rename', 'nextSpeaker']);
   // The table runs without a host page: any active player may use these from
   // their own card, and anyone still seated may tick an expired clock. Only the
   // Hub's rename stays with the host page.
-  const TABLE_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'setNext', 'exclude', 'restart', 'settings', 'stop']);
+  const TABLE_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'setNext', 'exclude', 'restart', 'settings', 'stop', 'nextSpeaker']);
   function allowed(state, actor, type, input) {
     if (actor === 0) return HOST_COMMANDS.has(type);
     if (PLAYER_COMMANDS.has(type)) return true;
@@ -398,14 +437,27 @@ var WHO_KNOWS_ENGINE = (() => {
     // Cards are fenced to the stage they showed; host buttons that advance
     // the table (close / extend / next) are fenced too, so a double click
     // cannot skip a whole phase.
-    else if (!fresh && (!host || ['close', 'extend', 'next'].includes(type))) fail('stale_turn');
+    else if (!fresh && (!host || ['close', 'extend', 'next', 'nextSpeaker'].includes(type))) fail('stale_turn');
     else switch (type) {
       case 'tick':
       case 'close': {
         if (!TIMED.includes(state.phase)) { fail('not_available'); break; }
         if (state.phase === 'countdown') beginQuestions(state, now);
-        else if (state.phase === 'questions') endQuestions(state, now, type === 'tick' ? 'time' : 'host');
+        else if (state.phase === 'questions') endQuestions(state, now, type === 'tick' ? 'time' : 'host', random);
+        else if (state.phase === 'speaking') {
+          if (type === 'tick') advanceSpeaker(state, now);
+          else if (input.turnId !== speakingView(state).turnId) fail('stale_turn');
+          else finishSpeaking(state, now);
+        }
         else resolve(state, now);
+        break;
+      }
+      case 'speakerDone':
+      case 'nextSpeaker': {
+        const speaking = speakingView(state);
+        if (state.phase !== 'speaking' || !speaking || (type === 'speakerDone' && (!playing(state, actor) || actor !== speaking.playerNum))) { fail('not_available'); break; }
+        if (input.turnId !== speaking.turnId) { fail('stale_turn'); break; }
+        advanceSpeaker(state, now);
         break;
       }
       case 'choose': {
@@ -466,8 +518,8 @@ var WHO_KNOWS_ENGINE = (() => {
         if (answer === 'yes' || answer === 'no') round.tokensUsed++;
         if (answer === 'correct') {
           round.guess = { playerNum: asked.playerNum, elapsedMs: Math.max(0, now - round.startedAt) };
-          endQuestions(state, now, 'correct');
-        } else if (round.tokens > 0 && round.tokensUsed >= round.tokens) endQuestions(state, now, 'tokens');
+          endQuestions(state, now, 'correct', random);
+        } else if (round.tokens > 0 && round.tokensUsed >= round.tokens) endQuestions(state, now, 'tokens', random);
         else nextAsker(round);
         break;
       }
@@ -537,6 +589,7 @@ var WHO_KNOWS_ENGINE = (() => {
             for (const [voter, target] of Object.entries(round[box])) if (target === number) delete round[box][voter];
           }
           if (round.masterPick === number) round.masterPick = null;
+          if (live === 'speaking' && speakingView(state)?.playerNum === number) advanceSpeaker(state, now);
           if (VOTING.includes(state.phase) && allVoted(state)) resolve(state, now);
         }
         if (!want && state.rotation.next === number) state.rotation.next = null;
@@ -626,6 +679,7 @@ var WHO_KNOWS_ENGINE = (() => {
       rerollsLeft: isMayor && phase === 'choose' ? Math.max(0, CONFIG.maxRerolls - round.rerolls) : 0,
       queuePos: 0, asking: false, myText: '',
       canRaise: false, canAnswer: false, answers: round ? CONFIG.answers[round.mode] : [],
+      canFinishSpeaking: phase === 'speaking' && playing(state, n) && speakingView(state)?.playerNum === n,
       vote: null, judge: null, pick: null, canVote: false, voteTargets: [], canJudge: false,
       canNext: phase === 'result' && !!mine?.active,
       // Table controls on the card: pause, add time, players, settings.
@@ -664,9 +718,10 @@ var WHO_KNOWS_ENGINE = (() => {
     const wk = {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, stage: state.stage, phase,
       pausedFrom: phase === 'paused' ? state.pausedFrom : null,
-      settings: copy(state.settings), roundNo: state.roundNo,
+      settings: Object.assign({ turnSeconds: CONFIG.defaultTurnSeconds }, copy(state.settings)), roundNo: state.roundNo,
       mode: round?.mode || state.settings.mode, mayor: round?.mayor ?? null,
       composition: composition(round),
+      speaking: speakingView(state),
       deadline: timed ? state.deadline : null, remainingMs: phase === 'paused' ? state.remainingMs : null,
       questionMs: round?.questionMs ?? null, startedAt: round?.startedAt ?? null,
       tokens: round ? { used: round.tokensUsed, budget: round.tokens } : null,

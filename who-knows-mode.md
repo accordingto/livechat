@@ -9,8 +9,8 @@ this idea in one game, played on the existing room and original player links:
 | Answerer | **Master** (public) | **Mayor** (public) |
 | Answers | Yes / No / I don't know / Correct | Yes / No / Maybe / So close / Way off / Correct |
 | Hidden roles | 1 **Insider** (knows the word), the rest **Commons** | 1 **Seer** + 1–2 **Werewolves** (both know the word), the rest **Villagers** |
-| Word found | discuss → judge the guesser → vote | Werewolves are revealed and hunt the Seer |
-| Word not found | everyone loses, or the Master's one guess (option) | everyone votes to find a Werewolf |
+| Word found | speaking turns → judge the guesser → vote | Werewolves are revealed and hunt the Seer |
+| Word not found | everyone loses, or speaking turns → Master's one guess (option) | speaking turns → everyone votes to find a Werewolf |
 
 The mechanics are adapted from the party games known as Insider (Oink Games,
 2016) and Werewords (Bézier Games, 2017). Names, art, words and wording here are
@@ -34,7 +34,7 @@ table mode, so play.html loads the words, engine, sync and UI modules.
 - `who-knows-host.js`, `who-knows.html`, `who-knows.css` — host page and the
   scoped moonlit design (also used by the card page via `body.wk-card-page`).
 - `assets/who-knows/mark.svg` — Hub and header mark.
-- Cache tag `wk-2` on every WHO KNOWS asset in both entry pages.
+- Cache tag `wk-3` on every WHO KNOWS asset in both entry pages.
 
 ## Round flow
 
@@ -55,7 +55,7 @@ table mode, so play.html loads the words, engine, sync and UI modules.
    runs out the questions end. Every answer is logged against its asker on every
    screen, like the physical tokens.
 4. After a correct guess the word is public (it was said aloud).
-   - Insider: discussion lasts as long as the guessing took (30 s minimum), then
+   - Insider: everyone, including the Master and guesser, gets a speaking turn, then
      everyone except the guesser judges “is the guesser the Insider?” (30 s). A
      majority Yes reveals the guesser. Otherwise everyone votes for a suspect
      (45 s, the answerer cannot be chosen); the most votes is revealed and a tie
@@ -64,12 +64,22 @@ table mode, so play.html loads the words, engine, sync and UI modules.
      here for tapping cards online) to pick the Seer. As in the published Deluxe
      rules, each Werewolf may pick a different player; any correct pick wins.
 5. If the word is not found:
-   - Insider: everyone loses, or (default on) the Master gets one 30 s guess at
-     the Insider.
-   - Werewolf: everyone votes (90 s) for a Werewolf. The most-voted player(s) are
+   - Insider: everyone loses, or (default on) everyone except the Master gets a
+     speaking turn before the Master gets one 30 s guess at the Insider.
+   - Werewolf: everyone, including the Mayor, gets a speaking turn before a
+     45 s vote for a Werewolf. The most-voted player(s) are
      revealed only with at least two votes; a Werewolf among them is caught.
 6. **Result** reveals every role, the word, ballots and points on every screen.
    Any active player (or the host) starts the next round.
+
+Speaking turns use one shuffled order saved on the canonical table. Each player
+gets 20, 25 or 30 seconds (default 25, a next-round setting captured when the
+round starts), a small clock and “I'm done” on their own card. The clock or
+“Next speaker” passes the floor once; skipping all remaining turns takes two
+taps. Sitting out the speaker advances the floor; returning does not add a new
+turn. Pause/Resume and time extensions keep working. A paused speaker leaving
+does not resume the clock. No answer recognition or new question-time queue
+is involved. If the word was not found it stays private during the turns.
 
 Scores add up across rounds: Commons win (Insider caught, or the Master's guess)
 → the Master and every Common +1; the Insider escapes → +3. Word found and Seer
@@ -95,6 +105,11 @@ shared screen and can be closed or reopened at any time.
   never both win (the other gets “things moved on”), and nobody relays them.
   Each command carries its own captured time and seed, so a retried transaction
   computes the same result.
+- Speaking advances additionally carry a round/turn token. A stale “I'm done”,
+  “Next speaker” or skip-all action cannot advance the following speaker; each
+  new speaker increments the stage and uses the existing absolute clock. A
+  reconnect reads that deadline rather than restarting a turn. Saved older
+  `discuss` or 90 s `accuse` rounds keep their current deadline and flow.
 - The clock: deadlines are absolute, server-corrected times. Each client checks
   every 250 ms. Presence (`table/presence/{client}`, removed on disconnect) ranks
   who ticks an expired clock: the host page if open, then the lowest-numbered
@@ -141,13 +156,14 @@ runs a whole game on one device with a switchable card view and no Firebase.
 
 ## Validation
 
-- `node --test tests/who-knows-*.test.cjs` — engine (23), sync (9) and
+- `node --test tests/who-knows-*.test.cjs` — engine (29), sync (11) and
   integration (6): roles, rotation, options/history, privacy of the shared
   screen and non-knowers, line/answers/tokens, every ending, pause/extend,
   shared table permissions, card-run rounds with the host page closed, CAS
   races, tick ranking, sit-out/self-return, settings, restart/end, host
   adoption, borrowed links, roster change, rename, migration, page wiring and
-  complete EN/ZH strings.
+  complete EN/ZH strings. Speaking checks also cover each ending's eligibility,
+  command races, reconnects, round-setting snapshots and paused speaker removal.
 - `node tests/who-knows-ui.browser.cjs <playwright>` with `WK_QA_MODE` and
   `WK_QA_PLAYERS` drives the real host page and original play.html links against
   an isolated Firebase-compatible fixture with a controlled clock (no external

@@ -148,9 +148,9 @@ test('with the host page closed, the cards play a whole Insider round and keep t
   await cards[common].command('extend'); await settle();
   assert.equal(s.state().deadline, deadline + 60000);
   await cards[master].command('answer', { askId: cards[master].view().wk.current.id, answer: 'correct' }); await settle();
-  assert.equal(s.state().phase, 'discuss');
+  assert.equal(s.state().phase, 'speaking');
   assert.equal(cards[common].view().wk.word.id, s.state().round.wordId, 'the guessed word is public');
-  await cards[common].command('close'); await settle();
+  await cards[common].command('close', { turnId: cards[common].view().wk.speaking.turnId }); await settle();
   assert.equal(s.state().phase, 'judge');
   for (const n of s.state().round.players.filter(n => n !== insider)) await cards[n].command('judge', { choice: 'yes' });
   await settle();
@@ -292,5 +292,60 @@ test('a phone back from the background reads the table once; a card offline refu
   assert.equal(c.state.phase, 'result');
   s.db.setInfo('.info/connected', false); await settle();
   await assert.rejects(c.command('next'), /offline/);
+  s.close();
+});
+
+test('simultaneous Done and Next speaker transactions pass one shared turn only once', async () => {
+  const s = setup(5); const h = s.host(); await settle();
+  await h.start({}); await settle(); h.close();
+  const cards = Object.fromEntries([1, 2, 3, 4, 5].map(n => [n, s.card(n)])); await settle();
+  const master = s.state().round.mayor;
+  await cards[master].command('choose', { wordId: s.state().round.options[0] }); await settle();
+  s.now = s.state().deadline + 200; cards[1].pulse(); await settle();
+  const asker = s.state().round.players.find(n => n !== master);
+  await cards[asker].command('raise'); await settle();
+  await cards[master].command('answer', { askId: s.state().round.current.id, answer: 'correct' }); await settle();
+  assert.equal(s.state().phase, 'speaking');
+  const turn = cards[1].view().wk.speaking;
+  const other = s.state().round.players.find(n => n !== turn.playerNum);
+  const results = await Promise.allSettled([
+    cards[turn.playerNum].command('speakerDone', { turnId: turn.turnId }),
+    cards[other].command('nextSpeaker', { turnId: turn.turnId }),
+  ]);
+  await settle();
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
+  assert.equal(results.find(result => result.status === 'rejected').reason.message, 'stale_turn');
+  const next = cards[1].view().wk.speaking;
+  assert.equal(next.index, turn.index + 1);
+  for (const card of Object.values(cards)) assert.deepEqual(card.view().wk.speaking, next);
+  assert.deepEqual(s.state().scores, {}); assert.deepEqual(s.state().history, []);
+  await assert.rejects(cards[other].command('close', { turnId: turn.turnId }), /stale_turn/);
+  assert.equal(cards[1].view().wk.speaking.index, turn.index + 1);
+  s.close();
+});
+
+test('ranked card ticks and a reconnect preserve the shared speaking deadline instead of restarting it', async () => {
+  const s = setup(5); const h = s.host(); await settle();
+  await h.start({ settings: { mode: 'werewolf', turnSeconds: 20 } }); await settle(); h.close();
+  const cards = [1, 2, 3, 4, 5].map(s.card); await settle();
+  const master = s.state().round.mayor;
+  await cards[master - 1].command('choose', { wordId: s.state().round.options[0] }); await settle();
+  s.now = s.state().deadline + 5000; for (const card of cards) card.pulse(); await settle();
+  assert.equal(s.state().phase, 'questions');
+  s.now = s.state().deadline + 5000; for (const card of cards) card.pulse(); await settle();
+  assert.equal(s.state().phase, 'speaking');
+  const turn = cards[0].view().wk.speaking, deadline = s.state().deadline;
+  s.now += 7000;
+  cards[2].close(); await settle(); const reconnected = s.card(3); await settle();
+  assert.equal(reconnected.state.deadline, deadline);
+  assert.deepEqual(reconnected.view().wk.speaking, turn);
+  const active = [cards[0], cards[1], reconnected, cards[3], cards[4]];
+  s.now = deadline + 5000; for (const card of active) card.pulse(); await settle();
+  const next = reconnected.view().wk.speaking;
+  assert.equal(next.index, turn.index + 1); assert.notEqual(next.turnId, turn.turnId);
+  assert.equal(s.state().deadline - s.now, 20000);
+  const stage = s.state().stage;
+  for (const card of active) card.pulse(); await settle();
+  assert.equal(s.state().stage, stage, 'duplicate tick attempts cannot skip a new speaker');
   s.close();
 });

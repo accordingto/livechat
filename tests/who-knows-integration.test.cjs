@@ -12,11 +12,11 @@ const UI = require('../who-knows-ui.js');
 
 test('the host page loads its modules in dependency order and every file parses', () => {
   const html = read('who-knows.html');
-  const files = [...html.matchAll(/<script src="(who-knows-[^"?]+\.js)(?:\?v=wk-2)?"/g)].map(match => match[1]);
+  const files = [...html.matchAll(/<script src="(who-knows-[^"?]+\.js)(?:\?v=wk-3)?"/g)].map(match => match[1]);
   assert.deepEqual(files, ['who-knows-words.js', 'who-knows-engine.js', 'who-knows-sync.js', 'who-knows-ui.js', 'who-knows-host.js']);
-  for (const file of files) { new vm.Script(read(file)); assert.match(html, new RegExp(file.replace('.', '\\.') + '\\?v=wk-2')); }
+  for (const file of files) { new vm.Script(read(file)); assert.match(html, new RegExp(file.replace('.', '\\.') + '\\?v=wk-3')); }
   assert.match(html, /<h1>WHO KNOWS\?<\/h1>/);
-  assert.match(html, /href="who-knows\.css\?v=wk-2"/);
+  assert.match(html, /href="who-knows\.css\?v=wk-3"/);
   assert.match(html, /href="index\.html\?step=2"/);
   assert.ok(html.indexOf('room.js') < html.indexOf('who-knows-words.js'));
   for (const id of ['wk-setup', 'wk-game', 'wk-scene', 'wk-manage', 'wk-start', 'wk-close', 'wk-next', 'wk-pause', 'wk-extend', 'wk-again', 'wk-void', 'wk-restart', 'wk-stop', 'wk-switched', 'wk-continue', 'room-mount'])
@@ -28,9 +28,9 @@ test('original player links run the table themselves; an older host page view st
   // Source-layout checks are independent of Git's Windows CRLF checkout mode.
   // Only test input is normalized; the shipped page and game behavior are unchanged.
   const play = read('play.html').replace(/\r\n/g, '\n');
-  const files = [...play.matchAll(/<script src="(who-knows-[^"?]+\.js)\?v=wk-2"><\/script>/g)].map(match => match[1]);
+  const files = [...play.matchAll(/<script src="(who-knows-[^"?]+\.js)\?v=wk-3"><\/script>/g)].map(match => match[1]);
   assert.deepEqual(files, ['who-knows-words.js', 'who-knows-engine.js', 'who-knows-sync.js', 'who-knows-ui.js'], 'cards load the rules and the table client, never the host page');
-  assert.match(play, /<link rel="stylesheet" href="who-knows\.css\?v=wk-2">/);
+  assert.match(play, /<link rel="stylesheet" href="who-knows\.css\?v=wk-3">/);
   assert.match(play, /data\.wk\?\.version === 2 && \/\^\[a-f0-9\]\{32\}\$\/\.test\(data\.wk\.table \|\| ''\)/, 'only a well-formed table token is followed');
   assert.match(play, /new WHO_KNOWS_SYNC\.Table\(\{ db, code: session, token: pointer\.wk\.table, actor: playerNum,/);
   assert.match(play, /nameBanner, table: true,/);
@@ -78,7 +78,7 @@ test('every interface string exists in English and Traditional Chinese', () => {
     ...WORDS.LEVELS.map(level => 'level_' + level),
     ...E.CONFIG.difficulties.map(difficulty => 'diff_' + difficulty),
     ...E.CONFIG.wolfOptions.map(option => 'wolves_' + option),
-    ...['countdown', 'questions', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess'].map(phase => 'close_' + phase),
+    ...['countdown', 'questions', 'speaking', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess'].map(phase => 'close_' + phase),
     ...Object.keys(E.CONFIG.points).map(key => 'out_' + key),
     ...Object.keys(E.CONFIG.points).filter(key => key !== 'void').map(key => 'sub_' + key), 'sub_void_host', 'sub_void_answerer_left',
     ...['village', 'wolves', 'commons', 'insider', 'none', 'void'].map(team => 'win_' + team),

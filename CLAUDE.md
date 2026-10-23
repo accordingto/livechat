@@ -1,3 +1,43 @@
+## CURRENT: WHO KNOWS? speaking turns before three endings — 2026-10-24
+
+The previously completed Claude change was never pushed and its complete patch
+was unavailable after the session reached its quota. This release implements
+the user's confirmed requirements on the current main, preserving subsequent
+WORD LIMIT THEATER and ROOM SURVEY updates; it is not that original commit.
+
+Insider word found: all players (Master and guesser included) take one speaking
+turn, then the existing judge/vote ending. Insider word not found with the
+Master's guess option on: everyone except the Master speaks, then the existing
+30 s Master guess. With the option off the original nobody-wins result stays.
+Werewolf word not found: everyone including the Mayor speaks, then a 45 s
+ballot (previously 90 s combined discussion/vote). Werewolf word found stays
+an immediate 30 s Seer hunt. Scoring, question queue, tokens and words unchanged.
+
+Speaking time is a next-round setting, 20/25/30 s, default 25, snapshotted at
+round start. Shuffled order, current index and serial are canonical state;
+the existing table CAS and absolute clock run every turn, even with the host
+page closed. Only the speaker gets "I'm done"; host/active cards can advance
+one speaker, or skip the remaining turns with two taps. Commands carry both
+the stage and speaking-turn token. Pause, extend, sit-out and reconnect preserve
+the clock; excluding a paused speaker does not resume it. Missing old settings
+default to 25; old saved discuss/accuse deadlines are preserved. EN/ZH, host
+and original play.html links load wk-3 consistently. Frontend-only: executor,
+database rules, dependencies and other games are unchanged.
+
+Validation: WHO KNOWS 46/46 (engine 29, sync 11, integration 6); full Hub
+2279/2279, zero failures/skips. The browser fixture now models onDisconnect
+presence cleanup and checks actual word labels plus view payloads instead of
+mistaking fixed text such as "Table controls" for a secret word. Capture delays
+cannot accidentally expire the test's two-tap confirmation. The unrelated
+host-start regression test normalizes Windows CRLF before its existing regexes;
+no other game's source changed. Browser flows pass for Insider 4/9 players
+(26 checks each) and Werewolf 4/9 (24 each), host closed after Start; Insider
+4 captures 96 views and Werewolf 9 captures 82, EN/ZH at 1280/390/320 with
+zero overflow/clipping/tap-target/occlusion findings and zero page errors.
+Reload/navigation cleanup is additionally checked to leave one presence per
+reloaded player. Real Firebase, physical phones, human voice-session playtests
+and pixel-level contrast auditing are not claimed by these isolated checks.
+
 ## CURRENT: WORD LIMIT THEATER line scoring, ROOM SURVEY buzz-in — 2026-10-24
 
 User requests (read word-limit-mode.md, room-survey-mode.md, card-table-mode.md).

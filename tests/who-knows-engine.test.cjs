@@ -12,6 +12,8 @@ function game(count = 5, settings = {}, seed = 11) {
     state: E.create({ id: 'session-' + seed, roster, settings, now: clock, seed }),
     get now() { return clock; }, advance(ms) { clock += ms; },
     cmd(actor, type, extra = {}) {
+      if (type === 'close' && g.state.phase === 'speaking' && extra.turnId === undefined)
+        extra = Object.assign({ turnId: E.view(g.state, 0).wk.speaking.turnId }, extra);
       const input = Object.assign({ id: `cmd-${++serial}-xxxxxxxx`, type, actor, sessionId: g.state.sessionId, stage: g.state.stage, now: clock, seed: serial * 977 }, extra);
       g.state = E.apply(g.state, input);
       return g.state.replies?.[actor]?.id === input.id ? g.state.replies[actor].error : 'ignored';
@@ -50,7 +52,9 @@ test('games need four active players and reject invalid settings', () => {
   assert.throws(() => game(5, { tokens: 12 }), /invalid_options/);
   const g = game(4);
   assert.equal(g.state.phase, 'choose');
-  assert.deepEqual(g.state.settings, { mode: 'insider', questionMinutes: 5, tokens: 36, difficulty: 'mixed', wolves: 'auto', mayorSecret: false, masterGuess: true });
+  assert.deepEqual(g.state.settings, { mode: 'insider', questionMinutes: 5, tokens: 36, difficulty: 'mixed', wolves: 'auto', mayorSecret: false, masterGuess: true, turnSeconds: 25 });
+  for (const turnSeconds of [20, 25, 30]) assert.equal(game(4, { turnSeconds }).round.turnSeconds, turnSeconds);
+  for (const turnSeconds of [0, 19, 21, 31, 'oops']) assert.throws(() => game(4, { turnSeconds }), /invalid_options/);
   assert.equal(E.parseSettings({ mode: 'werewolf' }).questionMinutes, 4, 'each mode starts with its own usual length');
   assert.equal(E.parseSettings({ mode: 'werewolf' }, { ...E.defaultSettings('insider'), questionMinutes: 6 }).questionMinutes, 4);
   assert.equal(E.parseSettings({ tokens: 0 }, { ...E.defaultSettings('werewolf'), questionMinutes: 6 }).questionMinutes, 6);
@@ -211,13 +215,15 @@ test('the Yes/No budget ends Werewolf questions; time ends them too', () => {
   for (let i = 0; i < 19; i++) assert.equal(g.ask(asker, i % 2 ? 'yes' : 'no'), '');
   assert.equal(g.state.phase, 'questions');
   assert.equal(g.ask(asker, 'no'), '');
-  assert.equal(g.state.phase, 'accuse'); assert.equal(g.round.endReason, 'tokens');
+  assert.equal(g.state.phase, 'speaking'); assert.equal(g.round.endReason, 'tokens');
+  assert.equal(g.cmd(0, 'close'), ''); assert.equal(g.state.phase, 'accuse');
   const t = game(4, { mode: 'werewolf' });
   t.choose();
   t.advance(t.round.questionMs - 1); const before = t.state;
   assert.equal(t.cmd(0, 'tick'), 'ignored'); assert.equal(t.state, before, 'early ticks do not write');
   t.advance(1); assert.equal(t.cmd(0, 'tick'), '');
-  assert.equal(t.state.phase, 'accuse'); assert.equal(t.round.endReason, 'time');
+  assert.equal(t.state.phase, 'speaking'); assert.equal(t.round.endReason, 'time');
+  assert.equal(t.cmd(0, 'close'), ''); assert.equal(t.state.phase, 'accuse');
   assert.equal(E.view(t.state, 0).wk.word, null, 'an unguessed word stays secret during the vote');
 });
 
@@ -267,6 +273,7 @@ test('Werewolf: if nobody picks in time the Seer is safe; two Werewolves each ge
 test('Werewolf vote: a Werewolf among the most-voted (with at least two votes) is caught', () => {
   const g = game(5, { mode: 'werewolf' }, 8);
   g.choose(); g.advance(g.round.questionMs); g.cmd(0, 'tick');
+  g.cmd(0, 'close');
   const wolf = g.role('werewolf')[0];
   const voters = g.round.players;
   for (const n of voters) assert.equal(g.cmd(n, 'vote', { target: n === wolf ? voters.find(x => x !== wolf) : wolf }), '');
@@ -275,12 +282,14 @@ test('Werewolf vote: a Werewolf among the most-voted (with at least two votes) i
 
   const split = game(4, { mode: 'werewolf' }, 8);
   split.choose(); split.advance(split.round.questionMs); split.cmd(0, 'tick');
+  split.cmd(0, 'close');
   const seats = split.round.players;
   seats.forEach((n, i) => split.cmd(n, 'vote', { target: seats[(i + 1) % seats.length] }));
   assert.equal(split.round.outcome.key, 'wolves_hidden', 'one vote each means nobody stands out');
 
   const tie = game(6, { mode: 'werewolf' }, 8);
   tie.choose(); tie.advance(tie.round.questionMs); tie.cmd(0, 'tick');
+  tie.cmd(0, 'close');
   const w = tie.role('werewolf')[0], v = tie.round.players.filter(n => n !== w);
   // Two votes for the wolf and two for one villager: both are revealed.
   const plan = new Map([[v[0], w], [v[1], w], [v[2], v[4]], [v[3], v[4]], [v[4], v[0]], [w, v[1]]]);
@@ -290,18 +299,24 @@ test('Werewolf vote: a Werewolf among the most-voted (with at least two votes) i
   assert.equal(tie.cmd(v[0], 'vote', { target: w }), 'not_available', 'ballots close with the result');
 });
 
-test('Insider: discussion lasts as long as the guessing took, then the guesser is judged', () => {
+test('Insider: every player speaks once, then the guesser is judged with the existing rules', () => {
   const g = game(6, {}, 21);
   g.choose();
   const insider = g.role('insider')[0];
   g.advance(95000);
   g.ask(insider, 'correct', 'Is it a window?');
-  assert.equal(g.state.phase, 'discuss');
-  assert.equal(g.state.deadline - g.now, 95000);
+  assert.equal(g.state.phase, 'speaking');
+  assert.equal(g.state.deadline - g.now, 25000);
   assert.equal(E.view(g.state, 0).wk.judgeTarget, insider);
   const quick = game(6, {}, 21); quick.choose(); quick.ask(quick.others()[0], 'correct');
-  assert.equal(quick.state.deadline - quick.now, E.CONFIG.discussMinMs, 'never shorter than 30 seconds');
-  g.advance(95000); g.cmd(0, 'tick');
+  assert.equal(quick.state.deadline - quick.now, 25000, 'speech time is independent of how long guessing took');
+  const heard = [];
+  while (g.state.phase === 'speaking') {
+    const speaking = E.view(g.state, 0).wk.speaking;
+    heard.push(speaking.playerNum);
+    g.advance(25000); assert.equal(g.cmd(0, 'tick'), '');
+  }
+  assert.deepEqual(heard.slice().sort((a, b) => a - b), g.round.players);
   assert.equal(g.state.phase, 'judge');
   assert.equal(g.cmd(insider, 'judge', { choice: 'no' }), 'not_available', 'the guesser does not judge themselves');
   for (const n of g.round.players.filter(n => n !== insider)) assert.equal(g.cmd(n, 'judge', { choice: 'yes' }), '');
@@ -315,7 +330,7 @@ test('Insider: accusing an innocent guesser hands the Insider the win; a tie use
   wrong.choose();
   const insider = wrong.role('insider')[0], innocent = wrong.role('common')[0];
   wrong.ask(innocent, 'correct');
-  wrong.advance(E.CONFIG.discussMinMs); wrong.cmd(0, 'tick');
+  wrong.cmd(0, 'close');
   for (const n of wrong.round.players.filter(n => n !== innocent)) wrong.cmd(n, 'judge', { choice: 'yes' });
   assert.equal(wrong.round.outcome.key, 'insider_wins');
   assert.deepEqual(wrong.round.points, { [insider]: 3 });
@@ -344,6 +359,9 @@ test('Insider: time out ends with nobody winning, or the Master’s single guess
   assert.deepEqual(g.state.scores, {});
   const m = game(5, {}, 51);
   m.choose(); m.advance(m.round.questionMs); m.cmd(0, 'tick');
+  assert.equal(m.state.phase, 'speaking');
+  assert.ok(!m.round.speaking.order.includes(m.round.mayor), 'the Master listens to the others before the single guess');
+  m.cmd(0, 'close');
   assert.equal(m.state.phase, 'masterGuess');
   assert.equal(m.cmd(m.others()[0], 'masterPick', { target: m.role('insider')[0] }), 'not_available');
   assert.equal(m.cmd(m.round.mayor, 'masterPick', { target: m.role('insider')[0] }), '');
@@ -386,6 +404,7 @@ test('commands are idempotent and the answerer leaving cancels the round without
 test('a voter leaving completes the ballot; too few players cannot start a round', () => {
   const g = game(5, { mode: 'werewolf' }, 9);
   g.choose(); g.advance(g.round.questionMs); g.cmd(0, 'tick');
+  g.cmd(0, 'close');
   const wolf = g.role('werewolf')[0], [last, ...rest] = g.round.players.filter(n => n !== wolf);
   for (const n of rest) g.cmd(n, 'vote', { target: wolf });
   g.cmd(wolf, 'vote', { target: rest[0] });
@@ -473,4 +492,134 @@ test('no host needed: any active player runs the table, someone sitting out can 
   assert.equal(g.cmd(a, 'stop'), ''); assert.equal(g.state.phase, 'finished');
   assert.equal(g.cmd(b, 'restart', { settings: g.state.settings }), '');
   assert.equal(g.state.phase, 'choose'); assert.deepEqual(g.state.scores, {});
+});
+
+test('three endings give each eligible player one speaking turn and keep the unguessed word private', () => {
+  for (const [mode, found, after] of [['insider', true, 'judge'], ['insider', false, 'masterGuess'], ['werewolf', false, 'accuse']]) {
+    const g = game(6, { mode }, 63);
+    g.choose();
+    if (found) g.ask(g.others()[0], 'correct');
+    else { g.advance(g.round.questionMs); g.cmd(0, 'tick'); }
+    assert.equal(g.state.phase, 'speaking', mode + ':' + found);
+    const eligible = g.round.players.filter(n => !(mode === 'insider' && !found && n === g.round.mayor));
+    const speaking = E.view(g.state, 0).wk.speaking;
+    assert.deepEqual(speaking.order.slice().sort((a, b) => a - b), eligible);
+    assert.equal(speaking.total, eligible.length); assert.equal(speaking.after, after); assert.equal(speaking.seconds, 25);
+    assert.equal(new Set(speaking.order).size, eligible.length);
+    assert.deepEqual(g.state.scores, {});
+    assert.equal(E.view(g.state, 0).wk.ballots, null, 'no early ballot');
+    assert.equal(E.view(g.state, 0).wk.word?.id || null, found ? g.round.wordId : null);
+    for (const n of g.round.players) {
+      const card = E.view(g.state, n).wk;
+      assert.equal(card.me.canFinishSpeaking, n === speaking.playerNum);
+      assert.equal(card.me.canVote, false); assert.equal(card.me.canJudge, false);
+      assert.equal(JSON.stringify(card).includes('"roles"'), false);
+    }
+    const heard = [];
+    while (g.state.phase === 'speaking') {
+      const turn = E.view(g.state, 0).wk.speaking;
+      heard.push(turn.playerNum);
+      assert.equal(g.cmd(turn.playerNum, 'speakerDone', { turnId: turn.turnId }), '');
+    }
+    assert.deepEqual(heard.slice().sort((a, b) => a - b), eligible);
+    assert.equal(g.state.phase, after);
+    assert.equal(g.state.deadline - g.now, after === 'accuse' ? 45000 : 30000);
+  }
+  const hunt = game(6, { mode: 'werewolf' }); hunt.choose(); hunt.ask(hunt.others()[0], 'correct');
+  assert.equal(hunt.state.phase, 'hunt'); assert.equal(hunt.state.deadline - hunt.now, 30000);
+  assert.equal(E.view(hunt.state, 0).wk.speaking, null, 'finding the word still goes straight to the hunt');
+});
+
+test('speaking commands fence both stage and turn, so retries and simultaneous buttons advance only once', () => {
+  const g = game(6); g.choose(); g.ask(g.others()[0], 'correct');
+  const turn = E.view(g.state, 0).wk.speaking;
+  const other = g.round.players.find(n => n !== turn.playerNum);
+  assert.equal(g.cmd(other, 'speakerDone', { turnId: turn.turnId }), 'not_available');
+  assert.equal(g.cmd(turn.playerNum, 'speakerDone', { turnId: 'wrong-turn' }), 'stale_turn');
+  assert.equal(g.cmd(other, 'nextSpeaker', { turnId: 'wrong-turn' }), 'stale_turn');
+  const before = g.state;
+  const input = { id: 'speaker-race-xxxxxxxx', type: 'speakerDone', actor: turn.playerNum, sessionId: before.sessionId, stage: before.stage, turnId: turn.turnId, now: g.now, seed: 123 };
+  const once = E.apply(before, input);
+  assert.deepEqual(E.apply(before, input), once, 'transaction updater retries are deterministic');
+  assert.equal(E.apply(once, input), once, 'replaying the committed command is a no-op');
+  g.state = once;
+  assert.equal(E.view(g.state, 0).wk.speaking.index, turn.index + 1);
+  assert.equal(g.cmd(other, 'nextSpeaker', { stage: before.stage, turnId: turn.turnId }), 'stale_turn');
+  const next = E.view(g.state, 0).wk.speaking;
+  assert.equal(g.cmd(other, 'nextSpeaker', { turnId: turn.turnId }), 'stale_turn', 'fresh stage cannot revive an old turn');
+  assert.equal(g.cmd(other, 'nextSpeaker', { turnId: next.turnId }), '', 'an active card may pass the floor');
+  assert.equal(E.view(g.state, 0).wk.speaking.index, turn.index + 2);
+  assert.deepEqual(g.state.scores, {}); assert.deepEqual(g.state.history, []);
+});
+
+test('speaking pause, timeout and next-round settings preserve the captured turn length', () => {
+  const g = game(5, { turnSeconds: 20 }); g.choose(); g.ask(g.others()[0], 'correct');
+  const turn = E.view(g.state, 0).wk.speaking;
+  assert.equal(g.cmd(0, 'settings', { settings: { turnSeconds: 30 } }), '');
+  assert.equal(g.state.settings.turnSeconds, 30); assert.equal(g.round.turnSeconds, 20);
+  assert.equal(g.state.deadline - g.now, 20000);
+  g.advance(7000); assert.equal(g.cmd(0, 'pause'), '');
+  assert.equal(g.state.remainingMs, 13000); g.advance(500000);
+  const paused = g.state; assert.equal(g.cmd(0, 'tick'), 'ignored'); assert.equal(g.state, paused);
+  assert.equal(g.cmd(0, 'resume'), ''); assert.equal(g.state.deadline - g.now, 13000);
+  assert.equal(E.view(g.state, 0).wk.speaking.turnId, turn.turnId);
+  g.advance(12999); const early = g.state; assert.equal(g.cmd(0, 'tick'), 'ignored'); assert.equal(g.state, early);
+  g.advance(1); assert.equal(g.cmd(0, 'tick'), '');
+  const next = E.view(g.state, 0).wk.speaking;
+  assert.equal(next.index, turn.index + 1); assert.notEqual(next.turnId, turn.turnId);
+  assert.equal(g.state.deadline - g.now, 20000);
+  const moved = g.state; assert.equal(g.cmd(0, 'tick'), 'ignored'); assert.equal(g.state, moved);
+  g.cmd(0, 'void'); g.cmd(0, 'next'); assert.equal(g.round.turnSeconds, 30);
+});
+
+test('sitting out a speaker passes the floor once and returning never repeats a completed turn', () => {
+  const g = game(6); g.choose(); g.ask(g.others()[0], 'correct');
+  const first = E.view(g.state, 0).wk.speaking;
+  const future = first.order.at(-1);
+  assert.equal(g.cmd(0, 'exclude', { playerNum: first.playerNum, active: false }), '');
+  assert.equal(g.state.phase, 'speaking', 'the answerer may leave now without cancelling the ended questions');
+  const next = E.view(g.state, 0).wk.speaking;
+  assert.notEqual(next.playerNum, first.playerNum);
+  assert.equal(g.cmd(first.playerNum, 'exclude', { playerNum: first.playerNum, active: true }), '');
+  assert.equal(g.cmd(0, 'exclude', { playerNum: future, active: false }), '');
+  const heard = [];
+  while (g.state.phase === 'speaking') {
+    const turn = E.view(g.state, 0).wk.speaking; heard.push(turn.playerNum);
+    assert.equal(g.cmd(turn.playerNum, 'speakerDone', { turnId: turn.turnId }), '');
+  }
+  assert.equal(g.state.phase, 'judge');
+  assert.ok(!heard.includes(first.playerNum)); assert.ok(!heard.includes(future));
+  assert.equal(new Set(heard).size, heard.length); assert.deepEqual(g.state.scores, {});
+});
+
+test('a saved legacy discussion keeps its original deadline and advances without redealing or changing scores', () => {
+  const g = game(5); g.choose(); g.ask(g.others()[0], 'correct');
+  g.state.phase = 'discuss'; g.state.deadline = g.now + 42000;
+  delete g.round.speaking; delete g.round.turnSeconds; delete g.state.settings.turnSeconds;
+  const secret = g.round.wordId, roles = JSON.stringify(g.round.roles), history = JSON.stringify(g.state.wordHistory);
+  g.advance(41999); const old = g.state;
+  assert.equal(g.cmd(0, 'tick'), 'ignored'); assert.equal(g.state, old);
+  assert.equal(g.state.deadline, g.now + 1);
+  g.advance(1); assert.equal(g.cmd(0, 'tick'), ''); assert.equal(g.state.phase, 'judge');
+  assert.equal(g.round.wordId, secret); assert.equal(JSON.stringify(g.round.roles), roles);
+  assert.equal(JSON.stringify(g.state.wordHistory), history); assert.deepEqual(g.state.scores, {});
+});
+
+test('sitting out a paused speaker keeps the table paused and gives the next speaker a full turn', () => {
+  const g = game(6, { turnSeconds: 30 }); g.choose(); g.ask(g.others()[0], 'correct');
+  const first = E.view(g.state, 0).wk.speaking;
+  g.advance(11000); assert.equal(g.cmd(0, 'pause'), '');
+  assert.equal(g.state.remainingMs, 19000);
+  const unrelated = first.order.at(-1);
+  assert.equal(g.cmd(0, 'exclude', { playerNum: unrelated, active: false }), '');
+  assert.equal(g.state.phase, 'paused'); assert.equal(g.state.remainingMs, 19000);
+  assert.equal(E.view(g.state, 0).wk.speaking.turnId, first.turnId);
+  assert.equal(g.cmd(0, 'exclude', { playerNum: first.playerNum, active: false }), '');
+  assert.equal(g.state.phase, 'paused'); assert.equal(g.state.pausedFrom, 'speaking'); assert.equal(g.state.deadline, null);
+  assert.equal(g.state.remainingMs, 30000);
+  const next = E.view(g.state, 0).wk.speaking;
+  assert.notEqual(next.playerNum, first.playerNum); assert.notEqual(next.turnId, first.turnId);
+  g.advance(90000); const before = g.state; assert.equal(g.cmd(0, 'tick'), 'ignored'); assert.equal(g.state, before);
+  assert.equal(g.cmd(0, 'resume'), ''); assert.equal(g.state.phase, 'speaking');
+  assert.equal(g.state.deadline - g.now, 30000); assert.equal(E.view(g.state, 0).wk.speaking.turnId, next.turnId);
 });

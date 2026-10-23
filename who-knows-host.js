@@ -11,7 +11,7 @@
   const byId = id => document.getElementById('wk-' + id);
   const demo = new URLSearchParams(location.search).get('demo') === '1';
   const demoRoster = ['Amy', 'Kevin', 'Jason', 'Willy', 'Mia'].map((name, i) => ({ playerNum: i + 1, name, active: true }));
-  const TIMED = ['countdown', 'questions', 'hunt', 'accuse', 'discuss', 'judge', 'vote', 'masterGuess'];
+  const TIMED = ['countdown', 'questions', 'hunt', 'accuse', 'discuss', 'speaking', 'judge', 'vote', 'masterGuess'];
   // Closing these ends the guessing or settles a vote, so it takes two taps.
   const CONFIRM_CLOSE = ['questions', 'hunt', 'accuse', 'judge', 'vote', 'masterGuess'];
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
@@ -29,12 +29,12 @@
 
   // ── settings forms (setup and "next round" in Host controls) ──────────
   const FORMS = {
-    setup: { mode: () => setupMode, minutes: 'minutes', difficulty: 'difficulty', tokens: 'tokens', wolves: 'wolves', mayorSecret: 'mayor-secret', masterGuess: 'master-guess', only: 'data-wk-only' },
-    manage: { mode: () => byId('m-mode').value, minutes: 'm-minutes', difficulty: 'm-difficulty', tokens: 'm-tokens', wolves: 'm-wolves', mayorSecret: 'm-mayor-secret', masterGuess: 'm-master-guess', only: 'data-wk-m-only' },
+    setup: { mode: () => setupMode, minutes: 'minutes', turnSeconds: 'turn-seconds', difficulty: 'difficulty', tokens: 'tokens', wolves: 'wolves', mayorSecret: 'mayor-secret', masterGuess: 'master-guess', only: 'data-wk-only' },
+    manage: { mode: () => byId('m-mode').value, minutes: 'm-minutes', turnSeconds: 'm-turn-seconds', difficulty: 'm-difficulty', tokens: 'm-tokens', wolves: 'm-wolves', mayorSecret: 'm-mayor-secret', masterGuess: 'm-master-guess', only: 'data-wk-m-only' },
   };
   function readSettings(form) {
     const f = FORMS[form], wolves = byId(f.wolves).value;
-    return { mode: f.mode(), questionMinutes: Number(byId(f.minutes).value), difficulty: byId(f.difficulty).value,
+    return { mode: f.mode(), questionMinutes: Number(byId(f.minutes).value), turnSeconds: Number(byId(f.turnSeconds).value), difficulty: byId(f.difficulty).value,
       tokens: Number(byId(f.tokens).value), wolves: wolves === 'auto' ? 'auto' : Number(wolves),
       mayorSecret: byId(f.mayorSecret).checked, masterGuess: byId(f.masterGuess).checked };
   }
@@ -43,6 +43,7 @@
     const f = FORMS[form];
     if (form === 'setup') selectMode(s.mode, { keepMinutes: true }); else byId('m-mode').value = s.mode;
     byId(f.minutes).value = String(s.questionMinutes); byId(f.difficulty).value = s.difficulty;
+    byId(f.turnSeconds).value = String(s.turnSeconds ?? 25);
     byId(f.tokens).value = String(s.tokens); byId(f.wolves).value = String(s.wolves);
     byId(f.mayorSecret).checked = !!s.mayorSecret; byId(f.masterGuess).checked = s.masterGuess !== false;
     showOnly(form);
@@ -68,6 +69,7 @@
     };
     for (const prefix of ['', 'm-']) {
       pick(prefix + 'minutes', E.CONFIG.questionMinutes, n => t('minutesN', { n }));
+      pick(prefix + 'turn-seconds', E.CONFIG.turnSecondsOptions || [20, 25, 30], n => t('secondsN', { n }));
       pick(prefix + 'difficulty', E.CONFIG.difficulties, d => t('diff_' + d));
       pick(prefix + 'tokens', E.CONFIG.tokenOptions, n => n === 0 ? t('tokensNone') : String(n));
       pick(prefix + 'wolves', E.CONFIG.wolfOptions, w => t('wolves_' + w));
@@ -113,8 +115,11 @@
       const hostView = !actor, phase = wk.phase, timed = TIMED.includes(phase);
       if (armed.startsWith('close:') && armed !== 'close:' + wk.stage) disarm();
       byId('close').hidden = !hostView || !timed;
-      byId('close').textContent = !timed ? '' : armed === 'close:' + wk.stage ? t('tapAgain') : t('close_' + phase);
-      byId('close').classList.toggle('wk-danger', armed === 'close:' + wk.stage);
+      byId('close').textContent = !timed ? '' : phase === 'speaking' ? t('nextSpeaker') : armed === 'close:' + wk.stage ? t('tapAgain') : t('close_' + phase);
+      byId('close').classList.toggle('wk-danger', phase !== 'speaking' && armed === 'close:' + wk.stage);
+      byId('skip-speaking').hidden = !hostView || phase !== 'speaking';
+      byId('skip-speaking').textContent = t(armed === 'close:' + wk.stage ? 'skipSpeakingConfirm' : 'close_speaking');
+      byId('skip-speaking').classList.toggle('wk-danger', armed === 'close:' + wk.stage);
       byId('extend').hidden = !hostView || !timed || phase === 'countdown';
       byId('extend').textContent = t(phase === 'questions' ? 'extendQuestions' : 'extendOther');
       byId('pause').hidden = !hostView || !(timed || phase === 'paused');
@@ -123,7 +128,7 @@
       byId('again').hidden = !hostView || phase !== 'finished';
       byId('settings').hidden = !hostView || phase !== 'finished';
       byId('manage-open').hidden = !hostView;
-      for (const id of ['close', 'extend', 'pause', 'next', 'again', 'settings', 'manage-open']) byId(id).disabled = busy || !canControl();
+      for (const id of ['close', 'skip-speaking', 'extend', 'pause', 'next', 'again', 'settings', 'manage-open']) byId(id).disabled = busy || !canControl();
       renderManage(wk);
     } else {
       if (demoCard) { demoCard.destroy(); demoCard = null; demoCardActor = 0; }
@@ -230,8 +235,14 @@
   });
   byId('close').addEventListener('click', () => {
     const wk = view(); if (!wk) return;
+    if (wk.phase === 'speaking') { disarm(); command('nextSpeaker', { stage: wk.stage, turnId: wk.speaking?.turnId }); return; }
     if (CONFIRM_CLOSE.includes(wk.phase) && armed !== 'close:' + wk.stage) { arm('close:' + wk.stage); return; }
     disarm(); command('close', { stage: wk.stage });
+  });
+  byId('skip-speaking').addEventListener('click', () => {
+    const wk = view(); if (!wk || wk.phase !== 'speaking') return;
+    if (armed !== 'close:' + wk.stage) { arm('close:' + wk.stage); return; }
+    disarm(); command('close', { stage: wk.stage, turnId: wk.speaking?.turnId });
   });
   byId('extend').addEventListener('click', () => command('extend', { stage: stage() }));
   byId('pause').addEventListener('click', () => command(state?.phase === 'paused' ? 'resume' : 'pause'));
