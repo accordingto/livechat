@@ -1,3 +1,21 @@
+## CURRENT: Start after a game switch (CUT, Bomb Relay, Sketch Relay) — 2026-10-24
+
+User report: after playing another game (noticed after the new card-table
+games), returning to a game's host page showed "The room has switched to
+another game. Tap Start to play again." with a grey Start. Cause: CUT, Bomb
+Relay and Sketch Relay host pages required an unsuspended transport
+(canControl) for Start, while the transport suspends itself whenever its cards
+show another game; their sync start() already accepts that (allowSwitched /
+clears suspended). Pre-existing for any switch (also after Pick a Side); Open
+Mic, Talk, Dixit and Once already allowed it. Fix: canStart (connected + lease
+or service) drives Start; canControl = canStart && !suspended for everything
+else; CUT's settings-save while editing still uses canControl. Cache tags kept
+(Vercel revalidates; CUT tags are locked consistent). Tests:
+tests/host-start-after-switch.test.cjs plus a Bomb host runtime case; full
+suite 2269/2269. Local browser repro (isolated fixture, leases expired by the
+clock): CUT/Bomb/Sketch start and take the cards back after WORD LIMIT
+THEATER, ROOM SURVEY, WHO KNOWS? and Pick a Side; before the fix Start was grey.
+
 ## CURRENT: WORD LIMIT THEATER and ROOM SURVEY on card-run tables — 2026-10-23
 
 Read card-table-mode.md, word-limit-mode.md and room-survey-mode.md. User

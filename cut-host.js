@@ -20,7 +20,9 @@
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => CUT_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
-  const canControl = () => !closed && !sync?.suspended && (demo || !!(sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1)));
+  // Starting is allowed after the room switched games: Start takes the cards back.
+  const canStart = () => !closed && (demo || !!(sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1)));
+  const canControl = () => canStart() && !sync?.suspended;
   const sound = new CUT_UI.Sound(paintSound);
   const view = () => state ? CUT_ENGINE.view(state, 0, now()).cut : null;
   const knownError = message => message === 'invalid_setup' ? 'invalid_roster' : message === 'invalid_player' ? 'not_available'
@@ -151,7 +153,7 @@
     byId('setup').hidden = status === 'setupNeeded' || (!!cut && !switched && !editing);
     byId('session').hidden = !cut || switched || editing;
     byId('start').textContent = t(editing ? 'saveSettings' : 'start');
-    byId('start').disabled = busy || !canControl();
+    byId('start').disabled = busy || !(editing ? canControl() : canStart());
     byId('setup-close').hidden = !editing;
     byId('setup-close').disabled = busy || !canControl();
     byId('settings-hint').hidden = !editing;
@@ -225,7 +227,8 @@
     return succeeded;
   }
   async function start(restart = false) {
-    if (busy || !canControl()) return;
+    const allowed = () => editing && !restart ? canControl() : canStart();
+    if (busy || !allowed()) return;
     const options = restart && state ? { ...jumpTimingOf(state), mode: modeOf(state), mainMinutes: mainMinutesOf(state.mainMinutes), speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
     if (!options) return;
     // This call runs inside the Show-topic click gesture, allowing Web Audio on mobile.
@@ -238,7 +241,7 @@
     busy = true; error = ''; render();
     try {
       await audioReady;
-      if (!canControl()) return;
+      if (!allowed()) return;
       startingSession = state?.sessionId || '';
       if (demo) {
         state = CUT_ENGINE.create({ ...options, id: uid(), roster: demoRoster, now: now(), seed: seed() });

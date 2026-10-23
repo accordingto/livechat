@@ -11,7 +11,9 @@
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => BOMB_RELAY_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
-  const canControl = () => !closed && !sync?.suspended && (demo || !!(sync?.connected && sync?.own));
+  // Starting is allowed after the room switched games: Start takes the cards back.
+  const canStart = () => !closed && (demo || !!(sync?.connected && sync?.own));
+  const canControl = () => canStart() && !sync?.suspended;
   const view = () => state ? BOMB_RELAY_ENGINE.view(state, 0).bomb : null;
   const sound = new BOMB_RELAY_UI.Sound(paintSound);
   const knownError = message => ['offline', 'other_host', 'not_enough_players', 'invalid_roster', 'invalid_options', 'not_available', 'stale_turn', 'too_late'].includes(message) ? message : 'error';
@@ -154,7 +156,7 @@
     byId('game').hidden = !bomb || switched || editing;
     // While playing, the shared screen gives its height to the table, not the title.
     document.body.classList.toggle('br-playing', !byId('game').hidden);
-    byId('start').disabled = busy || !canControl();
+    byId('start').disabled = busy || !canStart();
     byId('setup-cancel').hidden = !editing;
     byId('error').textContent = error ? t(error) : '';
     const actor = demo ? Number(byId('demo-view').value) : 0;
@@ -230,7 +232,7 @@
     return succeeded;
   }
   async function start({ restart = false } = {}) {
-    if (busy || !canControl()) return;
+    if (busy || !canStart()) return;
     if (!restart && !validBounds('', byId('fuse').value)) return;
     const chosen = restart && state ? { timing: timingPending || BOMB_RELAY_ENGINE.timingSettings(state), cards: state.cards,
       category: BOMB_RELAY_DECK.categories.includes(state.category) ? state.category : 'mixed',

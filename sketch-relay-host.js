@@ -18,7 +18,9 @@
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const now = () => sync ? sync.now() : Date.now();
   const relay = () => state ? E.view(state, 0, now()).relay : null;
-  const canControl = () => !closed && (demo || !!(sync && sync.own && !sync.suspended));
+  // Starting is allowed after the room switched games: Start takes the cards back.
+  const canStart = () => !closed && (demo || !!(sync && sync.own));
+  const canControl = () => canStart() && !sync?.suspended;
   const knownError = message => ['offline', 'other_host', 'not_available', 'stale_turn', 'not_enough_players', 'invalid_roster', 'invalid_options'].includes(message) ? message : 'error';
   const countOK = n => n >= E.MIN_PLAYERS && n <= E.MAX_PLAYERS;
 
@@ -48,7 +50,7 @@
     $('setup-close').hidden = !editing;
     $('players-line').textContent = status === 'setupNeeded' ? '' : countOK(count) ? t('playersLine', { n: count }) : t('needPlayers');
     $('players-line').classList.toggle('is-bad', !countOK(count));
-    $('start').disabled = busy || !canControl() || !countOK(count);
+    $('start').disabled = busy || !canStart() || !countOK(count);
     $('error').textContent = error ? t(error) : '';
     if (view && !switched && !editing) {
       renderScene(view);
@@ -125,7 +127,7 @@
     if (await UI.confirm(message) && state?.sessionId === sessionId && state?.turnId === turnId) command(type);
   }
   async function start(options = settings()) {
-    if (busy || !canControl()) return;
+    if (busy || !canStart()) return;
     busy = true; error = ''; render();
     try {
       if (demo) state = E.create({ id: 'demo-' + seed() + '-' + Date.now(), roster: demoRoster, settings: options, now: now(), seed: seed() });

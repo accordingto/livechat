@@ -9,6 +9,7 @@ const copy = value => JSON.parse(JSON.stringify(value));
 // resolves BEFORE delivering onChange, reproducing Firebase's two async paths.
 function hostFixture() {
   let onChange, onStatus, failNext = false, lastStart = null, commandId = 0;
+  let transport = null;
   let canonical = E.create({ id: 'host-settings', roster: [1, 2, 3].map(playerNum => ({ playerNum, name: 'P' + playerNum })), now: 10000, seed: 1 });
   const elements = new Map(), listeners = new Map();
   const selectIds = new Set(['fuse', 'manage-speed', 'cards', 'category', 'library-category', 'demo-view']);
@@ -37,7 +38,7 @@ function hostFixture() {
   };
   document.getElementById = id => element(id.replace(/^br-/, ''));
   class Transport {
-    constructor(options) { onChange = options.onChange; onStatus = options.onStatus; this.count = 3; this.connected = true; this.own = true; this.suspended = false; }
+    constructor(options) { onChange = options.onChange; onStatus = options.onStatus; this.count = 3; this.connected = true; this.own = true; this.suspended = false; transport = this; }
     connect() { onStatus('ready'); onChange(copy(canonical)); }
     now() { return 11000 + commandId; }
     async command(type, extra) {
@@ -72,6 +73,9 @@ function hostFixture() {
     get lastStart() { return lastStart; },
     deliver(value = canonical) { onChange(copy(value)); }, repaint() { onStatus('ready'); },
     failNext() { failNext = true; }, switched() { onStatus('switched'); },
+    // The room moved to another game: the transport suspends itself.
+    suspend() { transport.suspended = true; onStatus('switched'); },
+    submit() { return listeners.get('setup:submit')({ preventDefault() {} }); },
     restart() { return context.window.BOMB_RELAY_HOST.start({ restart: true }); },
   };
 }
@@ -128,4 +132,12 @@ test('Restart retains both committed custom bounds while their value event is de
   assert.equal(host.state.settingsTiming.baseMinSeconds, undefined, 'the room value event remains delayed');
   await host.restart();
   assert.deepEqual(host.lastStart.timing, host.canonical.settingsTiming);
+});
+
+test('after the room switched to another game, Start stays available and takes the cards back', async () => {
+  const host = hostFixture();
+  host.suspend();
+  assert.equal(host.element('start').disabled, false, 'a suspended (switched) host can still start a new game');
+  await host.submit();
+  assert.ok(host.lastStart, 'Start reached the transport');
 });
