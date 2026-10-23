@@ -43,7 +43,7 @@ test('original player links run the table themselves; an older host page view st
   assert.match(play, /\{ wkAction: command \}/);
   assert.match(play, /if \(wkCard\) \{ wkCard\.destroy\(\); wkCard = null; \}\n\s+if \(wkTable\) \{ wkTable\.close\(\); wkTable = null; \}\n\s+document\.body\.classList\.remove\('wk-card-page'\);/, 'leaving to a waiting/error card removes it');
   assert.match(play, /wkCard\?\.destroy\(\); wkCard = null;/, 'pagehide disposes the card');
-  assert.match(play, /'sketchrelay', 'whoknows'\]\.includes\(latestData\?\.game\)/);
+  assert.match(play, /'sketchrelay', 'whoknows'(?:, '[a-z]+')*\]\.includes\(latestData\?\.game\)/);
   assert.match(play, /if \(wkCard\) wkCard\.paint\(\);/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
 });

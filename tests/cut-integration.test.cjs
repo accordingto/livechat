@@ -4,7 +4,9 @@ const root = path.resolve(__dirname, '..');
 test('CUT remains before Open Mic Rescue and original player cards have lifecycle cleanup', () => {
   const hub = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const links = [...hub.matchAll(/<a class="game-card[^\"]*" href="([^\"]+)"/g)].map(match => match[1]);
-  assert.equal(links.at(-3), 'cut.html'); assert.equal(links.at(-2), 'open-mic-rescue.html'); assert.equal(links.at(-1), 'sketch-relay.html'); assert.ok(links.indexOf('bluff-king-live-chat.html') < links.indexOf('cut.html'));
+  // The two newest games (WORD LIMIT THEATER, ROOM SURVEY) were added below Sketch Relay at the user's request.
+  assert.equal(links.at(-5), 'cut.html'); assert.equal(links.at(-4), 'open-mic-rescue.html'); assert.equal(links.at(-3), 'sketch-relay.html'); assert.ok(links.indexOf('bluff-king-live-chat.html') < links.indexOf('cut.html'));
+  assert.deepEqual(links.slice(-2), ['word-limit-theater.html', 'room-survey.html']);
   const cards = fs.readFileSync(path.join(root, 'play.html'), 'utf8');
   assert.match(cards, /new CUT_UI\.Card/); assert.match(cards, /cutCard\.destroy\(\)/);
   assert.match(cards, /current\.cut\?\.sessionId !== command\.sessionId/);

@@ -1,0 +1,126 @@
+/* ROOM SURVEY — original bilingual survey prompts.
+ *
+ * Each prompt asks for something short that many people answer the same way,
+ * so the room's answers pile up and rank. Seven packs; "mixed" draws from all.
+ * English is kept short and simple; the Chinese is written for Taiwan.
+ * All wording here is original.
+ */
+var ROOM_SURVEY_CONTENT = (() => {
+  'use strict';
+  const CATEGORIES = Object.freeze(['love', 'life', 'work', 'food', 'phone', 'secret', 'whatif']);
+  const q = (id, cat, en, zh) => Object.freeze({ id, cat, en, zh });
+  const QUESTIONS = Object.freeze([
+    // love & dating
+    q('rs-love-01', 'love', 'Something you’d hate your partner to see in your search history', '最不想被另一半看到的搜尋紀錄'),
+    q('rs-love-02', 'love', 'A worry you only have after you start dating', '開始交往之後才有的煩惱'),
+    q('rs-love-03', 'love', 'Something couples often fight about', '情侶最常為了什麼吵架'),
+    q('rs-love-04', 'love', 'A sign that someone likes you', '對方喜歡你的徵兆'),
+    q('rs-love-05', 'love', 'The worst place for a first date', '最糟的第一次約會地點'),
+    q('rs-love-06', 'love', 'Something you only do when you’re in love', '只有戀愛時才會做的事'),
+    q('rs-love-07', 'love', 'A gift you never want from your partner', '最不想收到的另一半禮物'),
+    q('rs-love-08', 'love', 'A sign that a relationship is ending', '感情快要結束的徵兆'),
+    q('rs-love-09', 'love', 'The first thing you check on a dating app profile', '看交友軟體時第一個看的地方'),
+    q('rs-love-10', 'love', 'A small lie people tell on a date', '約會時常說的小謊'),
+    q('rs-love-11', 'love', 'Something that makes you lose interest right away', '讓你瞬間冷掉的事'),
+    q('rs-love-12', 'love', 'A question you never want your partner to ask', '最不希望另一半問的問題'),
+    q('rs-love-13', 'love', 'Something people pretend to like on a date', '約會時會假裝喜歡的東西'),
+    q('rs-love-14', 'love', 'The first thing you notice about someone', '第一眼會注意對方的地方'),
+    q('rs-love-15', 'love', 'A silly reason to break up', '聽起來很荒謬的分手理由'),
+    q('rs-love-16', 'love', 'Something you hide from your partner', '會瞞著另一半的事'),
+    // everyday life
+    q('rs-life-01', 'life', 'The first thing you do when you wake up', '早上醒來的第一件事'),
+    q('rs-life-02', 'life', 'Something you always forget when you travel', '出門旅行最常忘記帶的東西'),
+    q('rs-life-03', 'life', 'A sign that you’re getting old', '自己變老的徵兆'),
+    q('rs-life-04', 'life', 'Something you do when you can’t sleep', '睡不著的時候會做的事'),
+    q('rs-life-05', 'life', 'A chore everyone hates', '大家最討厭的家事'),
+    q('rs-life-06', 'life', 'Something you bought and never used', '買了卻從來沒用過的東西'),
+    q('rs-life-07', 'life', 'The best thing about the weekend', '週末最棒的事'),
+    q('rs-life-08', 'life', 'Something that’s always in your bag', '包包裡一定會有的東西'),
+    q('rs-life-09', 'life', 'Something people do in an elevator', '大家在電梯裡會做的事'),
+    q('rs-life-10', 'life', 'A reason you’re late', '遲到的理由'),
+    q('rs-life-11', 'life', 'Something you always lose', '總是找不到的東西'),
+    q('rs-life-12', 'life', 'The first thing you do when you get home', '回到家第一件做的事'),
+    q('rs-life-13', 'life', 'Something you do when nobody is watching', '沒人看的時候會做的事'),
+    q('rs-life-14', 'life', 'A habit you want to quit', '想戒掉的習慣'),
+    q('rs-life-15', 'life', 'Something adults are still scared of', '長大後還是很怕的東西'),
+    q('rs-life-16', 'life', 'The first thing you’d buy if you got rich', '突然變有錢第一個會買的東西'),
+    // work & school
+    q('rs-work-01', 'work', 'An excuse people use to skip work', '請假最常用的藉口'),
+    q('rs-work-02', 'work', 'Something you do in a boring meeting', '無聊開會時會做的事'),
+    q('rs-work-03', 'work', 'What you secretly look at on your phone at work', '上班偷滑手機都在看什麼'),
+    q('rs-work-04', 'work', 'A sign your boss is in a bad mood', '老闆心情不好的徵兆'),
+    q('rs-work-05', 'work', 'The worst thing to hear on a Monday', '星期一最不想聽到的話'),
+    q('rs-work-06', 'work', 'Something you learned in school but never used', '在學校學了卻沒用過的東西'),
+    q('rs-work-07', 'work', 'Something everyone does the night before a test', '考試前一晚大家都會做的事'),
+    q('rs-work-08', 'work', 'Your dream job as a kid', '小時候的夢想職業'),
+    q('rs-work-09', 'work', 'A moment that makes you want to quit', '讓你想離職的瞬間'),
+    q('rs-work-10', 'work', 'The most annoying coworker habit', '最受不了的同事習慣'),
+    q('rs-work-11', 'work', 'What you say when you didn’t hear the question', '沒聽清楚問題時會說的話'),
+    q('rs-work-12', 'work', 'Something you secretly did in class', '上課偷偷做過的事'),
+    q('rs-work-13', 'work', 'Something you do on the first day at a new job', '新工作第一天會做的事'),
+    q('rs-work-14', 'work', 'What you think about at 3 p.m. at work', '下午三點上班時在想什麼'),
+    // food & drinks
+    q('rs-food-01', 'food', 'A dish that needs rice', '一定要配白飯的菜'),
+    q('rs-food-02', 'food', 'A convenience store snack you always buy', '便利商店必買的零食'),
+    q('rs-food-03', 'food', 'A food people pretend to like', '大家假裝喜歡的食物'),
+    q('rs-food-04', 'food', 'Something you add to instant noodles', '泡麵會加的料'),
+    q('rs-food-05', 'food', 'The best late-night snack', '最棒的宵夜'),
+    q('rs-food-06', 'food', 'A food that tastes better cold', '冷掉更好吃的食物'),
+    q('rs-food-07', 'food', 'A drink you order at a bubble tea shop', '去手搖飲店必點'),
+    q('rs-food-08', 'food', 'A food you hated as a kid', '小時候最討厭的食物'),
+    q('rs-food-09', 'food', 'Something you always buy at a night market', '逛夜市一定會買的東西'),
+    q('rs-food-10', 'food', 'A food you could eat every day', '天天吃也不會膩的食物'),
+    q('rs-food-11', 'food', 'A strange food combination you love', '你喜歡的奇怪食物組合'),
+    q('rs-food-12', 'food', 'What you eat when you’re sad', '難過的時候會吃什麼'),
+    q('rs-food-13', 'food', 'A food you never share', '絕對不分享的食物'),
+    q('rs-food-14', 'food', 'Something you always order at hot pot', '吃火鍋必點的料'),
+    // phone & internet
+    q('rs-phone-01', 'phone', 'The first app you open in the morning', '早上第一個打開的 App'),
+    q('rs-phone-02', 'phone', 'Something you search for at 2 a.m.', '半夜兩點會搜尋的東西'),
+    q('rs-phone-03', 'phone', 'A kind of video you can’t stop watching', '停不下來一直看的影片類型'),
+    q('rs-phone-04', 'phone', 'A reason to mute a group chat', '把群組設成靜音的理由'),
+    q('rs-phone-05', 'phone', 'The most annoying thing in a group chat', '群組裡最煩人的事'),
+    q('rs-phone-06', 'phone', 'Something you take photos of the most', '最常拍的東西'),
+    q('rs-phone-07', 'phone', 'What you do when your phone is at 1%', '手機剩 1% 時會做的事'),
+    q('rs-phone-08', 'phone', 'A sticker or emoji you use too much', '最常用的貼圖或表情符號'),
+    q('rs-phone-09', 'phone', 'Something on your phone you’d hate others to see', '手機裡最不想被別人看到的東西'),
+    q('rs-phone-10', 'phone', 'A reason to leave someone on read', '已讀不回的理由'),
+    q('rs-phone-11', 'phone', 'Something you buy online late at night', '半夜網購會買的東西'),
+    q('rs-phone-12', 'phone', 'What you post on social media the most', '最常在社群發的內容'),
+    q('rs-phone-13', 'phone', 'A password people use too often', '大家最常用的密碼'),
+    q('rs-phone-14', 'phone', 'The first thing you check on someone’s profile', '看別人個人頁時第一個看的地方'),
+    // small secrets
+    q('rs-secret-01', 'secret', 'Something you’d never admit in a job interview', '面試時絕對不會承認的事'),
+    q('rs-secret-02', 'secret', 'Something you do in the shower', '洗澡時會做的事'),
+    q('rs-secret-03', 'secret', 'A lie you told your parents', '對爸媽說過的謊'),
+    q('rs-secret-04', 'secret', 'A song you secretly love', '偷偷喜歡的歌'),
+    q('rs-secret-05', 'secret', 'An awkward moment on the MRT or bus', '搭捷運或公車時最尷尬的事'),
+    q('rs-secret-06', 'secret', 'Something you pretend to understand', '會假裝聽得懂的事'),
+    q('rs-secret-07', 'secret', 'A childhood habit you still have', '長大了還在做的小時候習慣'),
+    q('rs-secret-08', 'secret', 'What you do when nobody likes your post', '貼文沒人按讚時會做的事'),
+    q('rs-secret-09', 'secret', 'A reason you cancel plans at the last minute', '臨時取消約會的理由'),
+    q('rs-secret-10', 'secret', 'Something you’d never let your friends see', '絕對不給朋友看的東西'),
+    q('rs-secret-11', 'secret', 'What you talk about when you talk to yourself', '自言自語時都在說什麼'),
+    q('rs-secret-12', 'secret', 'Something you do when you’re home alone', '一個人在家時會做的事'),
+    // what if
+    q('rs-whatif-01', 'whatif', 'A superpower you would choose', '如果能有一種超能力'),
+    q('rs-whatif-02', 'whatif', 'One thing you’d bring to a desert island', '帶去無人島的一樣東西'),
+    q('rs-whatif-03', 'whatif', 'A country you’d move to', '如果能搬到任何國家'),
+    q('rs-whatif-04', 'whatif', 'A famous person you’d have dinner with', '最想一起吃晚餐的名人'),
+    q('rs-whatif-05', 'whatif', 'An animal you’d want to be', '如果能變成一種動物'),
+    q('rs-whatif-06', 'whatif', 'What you’d do with a surprise week off', '突然放假一週會做什麼'),
+    q('rs-whatif-07', 'whatif', 'A job you wouldn’t do for any money', '給多少錢都不做的工作'),
+    q('rs-whatif-08', 'whatif', 'Someone you’d switch lives with for a day', '想跟誰交換人生一天'),
+    q('rs-whatif-09', 'whatif', 'The first thing you’d save in a fire', '失火時第一個搶救的東西'),
+    q('rs-whatif-10', 'whatif', 'A skill you’d learn overnight', '如果能一夜學會一項技能'),
+    q('rs-whatif-11', 'whatif', 'The first thing you’d do if you won the lottery', '中樂透後第一件事'),
+    q('rs-whatif-12', 'whatif', 'A time you’d visit with a time machine', '搭時光機最想去的年代'),
+  ]);
+  const index = new Map(QUESTIONS.map(item => [item.id, item]));
+  return Object.freeze({
+    CATEGORIES, QUESTIONS,
+    get: id => index.get(id) || null,
+    pool: category => category && category !== 'mixed' ? QUESTIONS.filter(item => item.cat === category) : QUESTIONS.slice(),
+  });
+})();
+if (typeof module !== 'undefined' && module.exports) module.exports = ROOM_SURVEY_CONTENT;

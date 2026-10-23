@@ -70,14 +70,16 @@ test('unverified and disabled cards cannot enter either the loaded bank or the n
   }
 });
 
-test('BLUFF PARTY, CUT and Open Mic Rescue keep their order before the newest Sketch Relay game', () => {
+test('BLUFF PARTY, CUT, Open Mic Rescue and Sketch Relay keep their order before the two newest games at the bottom', () => {
   const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
   const cards = [...html.matchAll(/<a\b[^>]*\bclass="[^"]*\bgame-card\b[^"]*"[^>]*\bhref="([^"]+)"[^>]*>/g)];
   assert.ok(cards.length > 5);
-  assert.equal(cards.at(-4)[1], 'bluff-king-live-chat.html');
-  assert.equal(cards.at(-3)[1], 'cut.html');
-  assert.equal(cards.at(-2)[1], 'open-mic-rescue.html');
-  assert.equal(cards.at(-1)[1], 'sketch-relay.html');
+  assert.equal(cards.at(-6)[1], 'bluff-king-live-chat.html');
+  assert.equal(cards.at(-5)[1], 'cut.html');
+  assert.equal(cards.at(-4)[1], 'open-mic-rescue.html');
+  assert.equal(cards.at(-3)[1], 'sketch-relay.html');
+  assert.equal(cards.at(-2)[1], 'word-limit-theater.html');
+  assert.equal(cards.at(-1)[1], 'room-survey.html');
   assert.equal(cards.filter(match => match[1] === 'bluff-king-live-chat.html').length, 1);
 });
 
@@ -92,7 +94,7 @@ test('existing player links open legacy and original-seat private frames without
     URL, BLUFF_CARDS: require('../bluff-king-cards.js'), location: { href: 'https://hub.example/play.html?s=EXISTING&p=player-bearer#session=old-host-secret' },
     document: { body: { classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name), remove: (...names) => names.forEach(name => classes.delete(name)) } },
       createElement: kind => { assert.equal(kind, 'iframe'); return { remove() { this.removed = true; } }; } },
-    setCardTitle() {}, urlName: 'Existing player', el: { replaceChildren: frame => frames.push(frame) },
+    setCardTitle() {}, renderCtCard: () => false, urlName: 'Existing player', el: { replaceChildren: frame => frames.push(frame) },
     bluffCardFrame: null, wolfCardFrame: null, talkCard: null, cutCard: null, bombCard: null, relayCard: null, wkCard: null, wkTable: null, openMicCard: null, openMicTimer: null, onceCard: null, dixitCard: null, dixitHostBridge: null,
   });
   vm.runInContext(source.slice(start, finish) + 'return false;\n}', context);

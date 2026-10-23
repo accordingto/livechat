@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>WORD LIMIT THEATER · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#2a0c16">
+  <link rel="preload" href="assets/word-limit-theater/anton-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="card-table.css?v=ct-1">
+  <link rel="stylesheet" href="word-limit-theater.css?v=wl-1">
+</head>
+<body class="wl-page">
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
+    <span class="ct-soft" id="wl-room-label"></span>
+  </div>
+  <header class="header wl-header">
+    <span class="wl-mark"><img src="assets/word-limit-theater/mark.svg" alt="" width="72" height="72"></span>
+    <h1>WORD LIMIT THEATER</h1>
+    <p class="wl-subtitle" data-i18n="wordlimit.subtitle">Every actor gets a word limit. Act out one scene together.</p>
+  </header>
+  <main class="ct-shell wl-shell">
+    <div class="ct-panel ct-demo-bar" id="wl-demo-bar" hidden>
+      <span data-i18n="ct.demo">One-device demo</span>
+      <label class="ct-field"><span data-i18n="ct.demoView">Switch view</span><select id="wl-demo-view"></select></label>
+      <a class="back" href="word-limit-theater.html" data-i18n="ct.liveLink">Use my room</a>
+    </div>
+    <p class="ct-feedback ct-center" id="wl-status" role="status"></p>
+    <div class="ct-panel ct-center" id="wl-setup-needed" hidden>
+      <p class="ct-soft" data-i18n="ct.setupNeededText">Set up the room and player links in the Hub first.</p>
+      <p><a class="ct-button ct-primary" href="index.html?step=1" data-i18n="ct.setUpRoom">Set up the room</a></p>
+    </div>
+    <div class="ct-panel ct-center ct-switched" id="wl-switched" hidden>
+      <p><strong data-i18n="ct.switched">Some player cards are showing another game.</strong></p>
+      <p class="ct-soft" data-i18n="ct.switchedHint">Bring everyone back to this game, or start a new one below.</p>
+      <p><button type="button" class="ct-button ct-primary" id="wl-continue" data-i18n="ct.continueCards">Bring every card back to this game</button></p>
+    </div>
+
+    <form class="ct-panel wl-setup" id="wl-setup" novalidate>
+      <div class="wl-setup-pitch">
+        <div class="wl-setup-board" aria-hidden="true"><span>1</span><span>3</span><span>8</span></div>
+        <p data-i18n="wordlimit.pitch">Everyone draws a role and a word limit.</p>
+      </div>
+      <fieldset class="wl-units">
+        <legend data-i18n="wordlimit.unit">Lines are in</legend>
+        <label class="wl-unit-card"><input type="radio" name="wl-unit" value="words" checked><span class="wl-unit-sample" lang="en">Not. Today.</span><strong data-i18n="wordlimit.unitOption_words">English (count words)</strong></label>
+        <label class="wl-unit-card"><input type="radio" name="wl-unit" value="chars"><span class="wl-unit-sample" lang="zh-Hant">走吧</span><strong data-i18n="wordlimit.unitOption_chars">Chinese (count characters)</strong></label>
+      </fieldset>
+      <div class="ct-settings">
+        <label class="ct-field"><span data-i18n="wordlimit.sceneMinutes">Scene length</span><select id="wl-minutes"></select></label>
+      </div>
+      <div class="ct-checks">
+        <label class="ct-check"><input type="checkbox" id="wl-twists" checked><span><span data-i18n="wordlimit.twists">Drop a plot twist about a third of the way in</span></span></label>
+        <label class="ct-check"><input type="checkbox" id="wl-shuffle" checked><span><span data-i18n="wordlimit.shuffle">Swap everyone’s limits about two-thirds of the way in</span></span></label>
+        <label class="ct-check"><input type="checkbox" id="wl-vote" checked><span><span data-i18n="wordlimit.vote">Vote for an MVP after each scene</span></span></label>
+      </div>
+      <p class="ct-note"><span data-i18n="wordlimit.hostNote">Roles and limits are public, so everyone can catch a foul.</span> <span data-i18n="ct.hostOptional">Once it starts, you can close this page.</span></p>
+      <div class="ct-start-row">
+        <button type="submit" class="ct-button ct-primary ct-wide" id="wl-start" data-i18n="wordlimit.start">Start the first scene</button>
+        <button type="button" class="ct-button" id="wl-setup-cancel" hidden data-i18n="ct.close">Close</button>
+        <p class="ct-feedback ct-center" id="wl-count-note" role="status"></p>
+      </div>
+    </form>
+
+    <section id="wl-game" hidden aria-label="WORD LIMIT THEATER">
+      <div id="wl-scene"></div>
+      <div class="ct-actions" id="wl-actions"></div>
+      <details id="wl-controls" hidden></details>
+      <p class="ct-soft ct-center ct-host-optional" data-i18n="ct.hostOptional">Once it starts, you can close this page.</p>
+    </section>
+    <p class="ct-feedback ct-center" id="wl-error" role="status"></p>
+
+    <div class="ct-bottom">
+      <details class="ct-rules">
+        <summary data-i18n="ct.rules">How to play</summary>
+        <ol>
+          <li data-i18n="wordlimit.rules_1"></li>
+          <li data-i18n="wordlimit.rules_2"></li>
+          <li data-i18n="wordlimit.rules_3"></li>
+          <li data-i18n="wordlimit.rules_4"></li>
+          <li data-i18n="wordlimit.rules_5"></li>
+        </ol>
+      </details>
+      <a class="back ct-center" id="wl-demo-link" href="word-limit-theater.html?demo=1" data-i18n="ct.demoLink">Try it on one device</a>
+    </div>
+  </main>
+  <div id="room-mount" hidden></div>
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js?v=life-story-1"></script>
+  <script src="card-table.js?v=ct-1"></script>
+  <script src="card-table-ui.js?v=ct-1"></script>
+  <script src="word-limit-content.js?v=wl-1"></script>
+  <script src="word-limit-engine.js?v=wl-1"></script>
+  <script src="word-limit-ui.js?v=wl-1"></script>
+  <script src="word-limit-host.js?v=wl-1"></script>
+</body>
+</html>

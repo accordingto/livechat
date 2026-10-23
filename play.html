@@ -15,6 +15,9 @@
   <link rel="stylesheet" href="bomb-relay.css?v=br-pacing-3-1">
   <link rel="stylesheet" href="sketch-relay.css?v=relay-2">
   <link rel="stylesheet" href="who-knows.css?v=wk-2">
+  <link rel="stylesheet" href="card-table.css?v=ct-1">
+  <link rel="stylesheet" href="word-limit-theater.css?v=wl-1">
+  <link rel="stylesheet" href="room-survey.css?v=rs-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -904,6 +907,14 @@
   <script src="who-knows-engine.js?v=wk-2"></script>
   <script src="who-knows-sync.js?v=wk-2"></script>
   <script src="who-knows-ui.js?v=wk-2"></script>
+  <script src="card-table.js?v=ct-1"></script>
+  <script src="card-table-ui.js?v=ct-1"></script>
+  <script src="word-limit-content.js?v=wl-1"></script>
+  <script src="word-limit-engine.js?v=wl-1"></script>
+  <script src="word-limit-ui.js?v=wl-1"></script>
+  <script src="room-survey-content.js?v=rs-1"></script>
+  <script src="room-survey-engine.js?v=rs-1"></script>
+  <script src="room-survey-ui.js?v=rs-1"></script>
   <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
   <script src="open-mic-ui.js?v=om-cards-1"></script>
@@ -2532,6 +2543,71 @@
     }
     // Read-only, for the browser checks: what this seat currently sees.
     window.WHO_KNOWS_CARD = { view: () => wkTable?.view() || null };
+    // WORD LIMIT THEATER and ROOM SURVEY run on the same kind of card table as
+    // WHO KNOWS?: this link holds only a pointer, and this card follows the
+    // table and runs it together with everyone else's cards.
+    const CT_GAMES = {
+      wordlimit: { key: 'wl', page: 'wl-card-page', title: 'WORD LIMIT THEATER', ui: () => WORD_LIMIT_UI },
+      roomsurvey: { key: 'rs', page: 'rs-card-page', title: 'ROOM SURVEY', ui: () => ROOM_SURVEY_UI },
+    };
+    let ctCard = null, ctTable = null, ctGame = null;
+    function closeCt() {
+      if (ctCard) { ctCard.destroy(); ctCard = null; }
+      if (ctTable) { ctTable.close(); ctTable = null; }
+      ctGame = null;
+    }
+    function paintCtTable() {
+      const spec = CT_GAMES[ctGame];
+      if (!ctTable || !spec || latestData?.game !== ctGame) return;
+      const view = ctTable.view();
+      if (!view) {
+        if (!ctCard) el.innerHTML = `<div class="secret-card ct-card ${spec.key}-card"><p class="ct-soft">${CARD_TABLE_UI.esc(spec.ui().t(ctTable.loaded ? 'tableEmpty' : 'connecting'))}</p></div>`;
+        return;
+      }
+      if (!ctCard) ctCard = new (spec.ui().Card)(el, {
+        nameBanner,
+        now: () => ctTable ? ctTable.now() : Date.now() + talkClockOffset,
+        connected: () => talkConnected,
+        send: command => ctTable ? ctTable.command(command.type, command) : Promise.reject(new Error('offline')),
+      });
+      ctCard.update(view);
+    }
+    // Returns true when this link shows one of these games (and renders it);
+    // otherwise it tears its card down so another game can take the element.
+    function renderCtCard(data) {
+      const spec = CT_GAMES[data?.game];
+      const table = spec && data[spec.key]?.version === 1 && /^[a-f0-9]{32}$/.test(data[spec.key].table || '') ? data[spec.key].table : null;
+      document.body.classList.toggle('ct-card-page', !!table);
+      for (const other of Object.values(CT_GAMES)) document.body.classList.toggle(other.page, !!table && other === spec);
+      if (!table) { closeCt(); return false; }
+      document.title = `${data.name || urlName || 'Player'} · ${spec.title}`;
+      document.body.classList.remove('wk-card-page', 'sketch-relay-card-page', 'bomb-card-page', 'open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
+      if (wkCard) { wkCard.destroy(); wkCard = null; }
+      if (wkTable) { wkTable.close(); wkTable = null; }
+      if (relayCard) { relayCard.destroy(); relayCard = null; }
+      if (bombCard) { bombCard.destroy(); bombCard = null; }
+      if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+      if (cutCard) { cutCard.destroy(); cutCard = null; }
+      if (talkCard) { talkCard.destroy(); talkCard = null; }
+      if (onceCard) { onceCard.destroy(); onceCard = null; }
+      if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+      if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+      if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+      const playerNum = Number(data.playerNum);
+      if (!ctTable || ctGame !== data.game || ctTable.token !== table || ctTable.actor !== playerNum) {
+        closeCt();
+        ctGame = data.game;
+        ctTable = new (spec.ui().SYNC.Table)({ db, code: session, token: table, actor: playerNum,
+          onChange: paintCtTable, onPresence: paintCtTable, onStatus: () => ctCard?.paint() });
+        ctTable.setVisible(!document.hidden);
+        ctTable.connect();
+      }
+      paintCtTable();
+      return true;
+    }
+    // Read-only, for the browser checks: what this seat currently sees.
+    window.CARD_TABLE_CARD = { view: () => ctTable?.view() || null, game: () => ctGame };
     function showCard(data) {
       renderCard(data);
       fitCardWords();
@@ -2539,6 +2615,7 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
+      if (renderCtCard(data)) return;
       // WHO KNOWS? keeps one stable card (and its typed question) across updates.
       // Version 2 points this link at the game's table, which the cards run
       // themselves; version 1 is a view from a host page that hasn't reloaded.
@@ -3022,6 +3099,8 @@
       if (wkCard) { wkCard.destroy(); wkCard = null; }
       if (wkTable) { wkTable.close(); wkTable = null; }
       document.body.classList.remove('wk-card-page');
+      closeCt();
+      document.body.classList.remove('ct-card-page', 'wl-card-page', 'rs-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -3042,9 +3121,9 @@
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     let db = null;
     let latestData = null;
-    document.addEventListener('visibilitychange', () => { dixitHostBridge?.setActive(!document.hidden); wkTable?.setVisible(!document.hidden); });
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; wkTable?.close(); wkTable = null; openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
-    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows'].includes(latestData?.game)) tryRenderCard(); });
+    document.addEventListener('visibilitychange', () => { dixitHostBridge?.setActive(!document.hidden); wkTable?.setVisible(!document.hidden); ctTable?.setVisible(!document.hidden); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; wkTable?.close(); wkTable = null; closeCt(); openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
+    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows', 'wordlimit', 'roomsurvey'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -3063,7 +3142,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); if (wkCard) wkCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); if (wkCard) wkCard.paint(); if (ctCard) ctCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

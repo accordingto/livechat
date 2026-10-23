@@ -1,3 +1,53 @@
+## CURRENT: WORD LIMIT THEATER and ROOM SURVEY on card-run tables — 2026-10-23
+
+Read card-table-mode.md, word-limit-mode.md and room-survey-mode.md. User
+request: two new Hub games added at the bottom, same quality as the recent
+games; the host also plays on their own card and no page may need to stay open.
+Hub order now ends …Sketch Relay → WORD LIMIT THEATER (👥 2–9) → ROOM SURVEY
+(👥 3–9); bluff-bank/cut-integration/who-knows-integration lock that order.
+
+Both games use the WHO KNOWS? card-run model, packaged once in card-table.js,
+card-table-ui.js and card-table.css (CARD_TABLE.define → Table/HostTable). The
+host page only starts or restarts: it writes canonical state to
+rooms/{code}/players/{wordLimitControlToken|roomSurveyControlToken}/stateJson
+and a pointer {game:'wordlimit'|'roomsurvey', playerNum, name,
+wl|rs:{version:1, table}} to every original link. play.html (CT_GAMES branch)
+follows the table; every card applies its own commands with one sessionId/
+stage-fenced CAS. Absolute server-corrected deadlines, presence-ranked ticks,
+folded Table controls on every active card; only the Hub rename is
+host-page-only. Adoption, borrowed-link return, rosterChanged and rename work
+as in WHO KNOWS?.
+
+WORD LIMIT THEATER: classic limited-words improv (the user's reference was a
+YouTube short; scenes/twists/copy are original). 36 scenes × 9 roles, 40
+twists. Public line limits from a ladder (2: 1/4 … 8: 1–7/10, 9: 1–8/10), words
+in English or characters in Chinese. Cast 20 s → stopwatch scene 2–5 min
+(default 3) with a scripted twist at ~1/3 and a limit shuffle at ~2/3 → secret
+MVP vote 30 s → result. Extra twists (15 s table cool-down) and Foul taps
+(count only, no penalty). ROOM SURVEY: rotating Keeper picks one of 98 prompts
+in 7 packs (user's examples included) or writes one; everyone writes 1–3
+private answers; the Keeper merges/splits/removes; ranked board; guessers take
+turns out loud, a hit scores one point per writer, guessing your own burns it;
+first-letter hints; writers hidden unless the room turns them on.
+
+Privacy trade-off (same as WHO KNOWS?): every participating card can read the
+table node, so ROOM SURVEY's hidden answers/writers are readable with developer
+tools; no screen shows them. Frontend-only: no executor, database rule,
+dependency or secret change. Cache tags ct-1/wl-1/rs-1 in both host pages and
+play.html. Fonts self-hosted with OFL licences (Anton, Courier Prime, Patrick
+Hand); no runtime AI or external media.
+
+Validation: new tests 41/41 (WL engine 13, RS engine 12, card-table 9,
+integration 7); full Hub suite 2264/2264 with zero failures/skips.
+tests/card-table-ui.browser.cjs drives the real host page plus original
+play.html links on an isolated Firebase-compatible fixture (controlled clock,
+external network intercepted), host page CLOSED right after Start: WL 4/9
+pass 18 checks with 68 captures each, RS 3/9 pass 21 checks with 72
+captures each, EN/ZH at 1280/390/320 with overflow, clipped text, ≥44px
+targets, occlusion and rendered-contrast (glyph pixels, 4.5:1/3:1) audits:
+zero findings, zero page errors. No live-Firebase probe from this sandbox;
+physical phones and a human voice playtest remain unverified.
+
 ## CURRENT: Once Spooky Halloween + Interrupt mix — 2026-10-22
 
 Read once-halloween-release.md. Third separate world: 150 Story (30/category),

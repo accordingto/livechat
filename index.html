@@ -174,6 +174,8 @@
     .card-blue    { --accent:#3b82f6; --accent-rgb:59,130,246;  background: linear-gradient(110deg, rgba(59,130,246,.2)  0%, var(--surface) 50%); }
     .card-lime    { --accent:#a3e635; --accent-rgb:163,230,53;  background: linear-gradient(110deg, rgba(163,230,53,.18) 0%, var(--surface) 50%); }
     .card-gold    { --accent:#e7c47c; --accent-rgb:231,196,124; background: linear-gradient(110deg, rgba(231,196,124,.18) 0%, var(--surface) 50%); }
+    .card-velvet  { --accent:#ff6b81; --accent-rgb:255,107,129; background: linear-gradient(110deg, rgba(255,107,129,.18) 0%, var(--surface) 50%); }
+    .card-chalk   { --accent:#5fd3a4; --accent-rgb:95,211,164;  background: linear-gradient(110deg, rgba(95,211,164,.18) 0%, var(--surface) 50%); }
 
     /* ── Icon column ── */
     .card-icon-col {
@@ -808,6 +810,24 @@
       </div>
       <div class="card-arrow">→</div>
     </a>
+    <a class="game-card card-velvet" href="word-limit-theater.html">
+      <div class="card-icon-col"><span class="icon"><img src="assets/word-limit-theater/mark.svg" width="56" height="56" alt=""></span></div>
+      <div class="card-body">
+        <div class="card-meta"><span class="tag" data-i18n="index.tagWordLimit">Improv</span><span class="tag">👥 2–9</span></div>
+        <h2>WORD LIMIT THEATER</h2>
+        <p data-i18n="index.descWordLimit">Act out one scene together, but every line must be exactly your word limit: one word for some, eight for others. A twist lands, the limits swap, then vote for the MVP.</p>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a class="game-card card-chalk" href="room-survey.html">
+      <div class="card-icon-col"><span class="icon"><img src="assets/room-survey/mark.svg" width="56" height="56" alt=""></span></div>
+      <div class="card-body">
+        <div class="card-meta"><span class="tag" data-i18n="index.tagRoomSurvey">Survey &amp; guess</span><span class="tag">👥 3–9</span></div>
+        <h2>ROOM SURVEY</h2>
+        <p data-i18n="index.descRoomSurvey">Everyone secretly answers a fun prompt. The Keeper ranks what the room wrote, and you take turns guessing the top answers. Guess your own and it burns.</p>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
   </div>
 
   <footer>IceBreak Hub · <span data-i18n="index.footerTagline">All games are free &amp; no sign-up required</span></footer>
@@ -826,6 +846,10 @@
       tagOpenMic: { en: 'Talk & create', zh: '聊天＋即興' },
       tagBombRelay: { en: 'Answer & pass', zh: '聯想傳炸彈' },
       tagWhoKnows: { en: 'Ask & deduce', zh: '問答推理' },
+      tagWordLimit: { en: 'Improv', zh: '即興演出' },
+      descWordLimit: { en: 'Act out one scene together, but every line must be exactly your word limit: one word for some, eight for others. A twist lands, the limits swap, then vote for the MVP.', zh: '一起即興演一場戲，但每句台詞都要剛好是你的字數：有人只能說一個字，有人得說滿八個。演到一半來個轉折、字數大風吹，最後投票選 MVP。' },
+      tagRoomSurvey: { en: 'Survey & guess', zh: '調查猜答案' },
+      descRoomSurvey: { en: 'Everyone secretly answers a fun prompt. The Keeper ranks what the room wrote, and you take turns guessing the top answers. Guess your own and it burns.', zh: '大家偷偷回答同一個有趣題目，關主整理出「最多人寫」的排行榜，其他人輪流猜。猜到自己寫的答案會自爆。' },
       descWhoKnows: { en: 'One secret word, yes-or-no questions, and someone who already knows it. Choose Insider mode or Werewolf mode; everyone plays on their own card.', zh: '一個秘密單字，只能問是非題，而有人早就知道答案。可選內鬼模式或狼人模式，每個人用自己的玩家卡玩。' },
       descBombRelay: { en: 'Say one fitting answer and pass the bomb. 120 Everyday & Playful prompts, a secret fuse, and the fewest bomb cards wins. Funny is optional.', zh: '看同一題，說一個符合的答案，再傳炸彈。120 題日常／趣味聯想，引信時間保密，炸彈卡最少的人獲勝。普通答案就行，搞笑隨意。' },
       tagSketchRelay: { en: 'Draw & guess', zh: '畫畫＋猜' },

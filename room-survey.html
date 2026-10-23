@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ROOM SURVEY · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#0f241e">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="card-table.css?v=ct-1">
+  <link rel="stylesheet" href="room-survey.css?v=rs-1">
+</head>
+<body class="rs-page">
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
+    <span class="ct-soft" id="rs-room-label"></span>
+  </div>
+  <header class="header rs-header">
+    <span class="rs-mark"><img src="assets/room-survey/mark.svg" alt="" width="72" height="72"></span>
+    <h1>ROOM SURVEY</h1>
+    <p class="rs-subtitle" data-i18n="roomsurvey.subtitle">Your room is the survey. Answers more people wrote are worth more.</p>
+  </header>
+  <main class="ct-shell rs-shell">
+    <div class="ct-panel ct-demo-bar" id="rs-demo-bar" hidden>
+      <span data-i18n="ct.demo">One-device demo</span>
+      <label class="ct-field"><span data-i18n="ct.demoView">Switch view</span><select id="rs-demo-view"></select></label>
+      <a class="back" href="room-survey.html" data-i18n="ct.liveLink">Use my room</a>
+    </div>
+    <p class="ct-feedback ct-center" id="rs-status" role="status"></p>
+    <div class="ct-panel ct-center" id="rs-setup-needed" hidden>
+      <p class="ct-soft" data-i18n="ct.setupNeededText">Set up the room and player links in the Hub first.</p>
+      <p><a class="ct-button ct-primary" href="index.html?step=1" data-i18n="ct.setUpRoom">Set up the room</a></p>
+    </div>
+    <div class="ct-panel ct-center ct-switched" id="rs-switched" hidden>
+      <p><strong data-i18n="ct.switched">Some player cards are showing another game.</strong></p>
+      <p class="ct-soft" data-i18n="ct.switchedHint">Bring everyone back to this game, or start a new one below.</p>
+      <p><button type="button" class="ct-button ct-primary" id="rs-continue" data-i18n="ct.continueCards">Bring every card back to this game</button></p>
+    </div>
+
+    <form class="ct-panel rs-setup" id="rs-setup" novalidate>
+      <div class="rs-setup-pitch">
+        <ol class="rs-sample" aria-hidden="true">
+          <li><span class="rs-rank">1</span><span class="rs-sample-text">???</span><span class="rs-sample-tally" data-rs-sample="4"></span></li>
+          <li><span class="rs-rank">2</span><span class="rs-sample-text">???</span><span class="rs-sample-tally" data-rs-sample="3"></span></li>
+          <li class="is-hit"><span class="rs-rank">3</span><span class="rs-sample-text" data-i18n="roomsurvey.sampleAnswer">Snacks</span><span class="rs-sample-tally" data-rs-sample="2"></span></li>
+        </ol>
+        <p data-i18n="roomsurvey.pitch">Each round one player is the Keeper and picks a prompt.</p>
+      </div>
+      <div class="ct-settings">
+        <label class="ct-field"><span data-i18n="roomsurvey.category">Prompt pack</span><select id="rs-category"></select></label>
+        <label class="ct-field"><span data-i18n="roomsurvey.answers">Answers per person</span><select id="rs-answers"></select></label>
+        <label class="ct-field"><span data-i18n="roomsurvey.writeSeconds">Writing time</span><select id="rs-write"></select></label>
+        <label class="ct-field"><span data-i18n="roomsurvey.guessMinutes">Guessing time</span><select id="rs-guess"></select></label>
+        <label class="ct-field"><span data-i18n="roomsurvey.turnSeconds">Time per turn</span><select id="rs-turn"></select></label>
+      </div>
+      <div class="ct-checks">
+        <label class="ct-check"><input type="checkbox" id="rs-authors"><span><span data-i18n="roomsurvey.showAuthors">When a round ends, show who wrote each answer</span><small data-i18n="roomsurvey.showAuthorsHint">Off by default, so people write more freely.</small></span></label>
+      </div>
+      <p class="ct-note"><span data-i18n="roomsurvey.hostNote">The shared screen never shows an answer before it’s guessed.</span> <span data-i18n="ct.hostOptional">Once it starts, you can close this page.</span></p>
+      <div class="ct-start-row">
+        <button type="submit" class="ct-button ct-primary ct-wide" id="rs-start" data-i18n="roomsurvey.start">Start the first round</button>
+        <button type="button" class="ct-button" id="rs-setup-cancel" hidden data-i18n="ct.close">Close</button>
+        <p class="ct-feedback ct-center" id="rs-count-note" role="status"></p>
+      </div>
+    </form>
+
+    <section id="rs-game" hidden aria-label="ROOM SURVEY">
+      <div id="rs-scene"></div>
+      <div class="ct-actions" id="rs-actions"></div>
+      <details id="rs-controls" hidden></details>
+      <p class="ct-soft ct-center ct-host-optional" data-i18n="ct.hostOptional">Once it starts, you can close this page.</p>
+    </section>
+    <p class="ct-feedback ct-center" id="rs-error" role="status"></p>
+
+    <div class="ct-bottom">
+      <details class="ct-rules">
+        <summary data-i18n="ct.rules">How to play</summary>
+        <ol>
+          <li data-i18n="roomsurvey.rules_1"></li>
+          <li data-i18n="roomsurvey.rules_2"></li>
+          <li data-i18n="roomsurvey.rules_3"></li>
+          <li data-i18n="roomsurvey.rules_4"></li>
+          <li data-i18n="roomsurvey.rules_5"></li>
+        </ol>
+      </details>
+      <a class="back ct-center" id="rs-demo-link" href="room-survey.html?demo=1" data-i18n="ct.demoLink">Try it on one device</a>
+    </div>
+  </main>
+  <div id="room-mount" hidden></div>
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js?v=life-story-1"></script>
+  <script src="card-table.js?v=ct-1"></script>
+  <script src="card-table-ui.js?v=ct-1"></script>
+  <script src="room-survey-content.js?v=rs-1"></script>
+  <script src="room-survey-engine.js?v=rs-1"></script>
+  <script src="room-survey-ui.js?v=rs-1"></script>
+  <script src="room-survey-host.js?v=rs-1"></script>
+</body>
+</html>
