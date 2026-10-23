@@ -1,3 +1,35 @@
+## CURRENT: WORD LIMIT THEATER line scoring, ROOM SURVEY buzz-in — 2026-10-24
+
+User requests (read word-limit-mode.md, room-survey-mode.md, card-table-mode.md).
+WORD LIMIT THEATER: no MVP vote, no plot twists (removed "for now"; the 40
+twist cards stay unused in word-limit-content.js); limits swap 0–4 times per
+scene, default 3, evenly spread; each actor taps "I said a line" on their own
+card (3 s cool-down) and scores the points of the limit held at that moment;
+points per limit are a setting, default one point per word (0–50 each; boxes
+show the limits a room this size is dealt). Scene ends straight on its result;
+points count live and settle at the end; cancelled scenes score nothing; an
+early End keeps lines said. The 4-player 1/2/3/6 jump the user asked about is
+the ladder (intentional), not a bug. ROOM SURVEY: buzz-in like Say It (one
+holder, `taken`; miss/give-up/timeout locks that buzzer until every other
+guesser has missed once; a hit reopens everyone); own answer burns, enforced by
+the rules (writers are known); one player may not write the same answer twice
+(card warning + engine `duplicate`); merge is "stack", the Keeper's table lists
+biggest stacks first with rank and worth; tiles show worth. Scoring is still
+one point per writer (it already rises with the board rank). Answer time after
+buzzing 0/10/15/20/30 s, default 15. Tables saved by the earlier versions keep
+working (old settings map, old vote runs out into the result, old turn dropped).
+Shared: Controls passes the view to settingsForm (+ settingsScope); errors
+duplicate/taken/locked. Cache tags ct-2 / wl-2 / rs-2 in both host pages and
+play.html. Frontend-only: no service, rule, dependency or secret change.
+
+Validation: engines WL 14/14, RS 13/13; card-table 9/9; integration 7/7; full
+Hub suite 2271/2271, zero failures/skips. Browser checks on the isolated fixture,
+host page closed after Start: WL 4 and 9 players 19 checks/66 captures each,
+RS 3 and 9 players 23 checks/92 captures each, EN/ZH at 1280/390/320, zero
+layout/contrast findings, zero page errors. The audit now also skips text under
+a transient toast's drop shadow. No live-Firebase probe from this sandbox;
+physical phones and a human voice playtest remain unverified.
+
 ## CURRENT: Start after a game switch (CUT, Bomb Relay, Sketch Relay) — 2026-10-24
 
 User report: after playing another game (noticed after the new card-table

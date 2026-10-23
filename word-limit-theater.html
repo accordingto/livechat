@@ -9,8 +9,8 @@
   <link rel="preload" href="assets/word-limit-theater/anton-latin-400.woff2" as="font" type="font/woff2" crossorigin>
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="card-table.css?v=ct-1">
-  <link rel="stylesheet" href="word-limit-theater.css?v=wl-1">
+  <link rel="stylesheet" href="card-table.css?v=ct-2">
+  <link rel="stylesheet" href="word-limit-theater.css?v=wl-2">
 </head>
 <body class="wl-page">
   <div class="topbar">
@@ -51,13 +51,10 @@
       </fieldset>
       <div class="ct-settings">
         <label class="ct-field"><span data-i18n="wordlimit.sceneMinutes">Scene length</span><select id="wl-minutes"></select></label>
+        <label class="ct-field"><span data-i18n="wordlimit.shuffles">Limit swaps per scene</span><select id="wl-shuffles"></select></label>
       </div>
-      <div class="ct-checks">
-        <label class="ct-check"><input type="checkbox" id="wl-twists" checked><span><span data-i18n="wordlimit.twists">Drop a plot twist about a third of the way in</span></span></label>
-        <label class="ct-check"><input type="checkbox" id="wl-shuffle" checked><span><span data-i18n="wordlimit.shuffle">Swap everyone’s limits about two-thirds of the way in</span></span></label>
-        <label class="ct-check"><input type="checkbox" id="wl-vote" checked><span><span data-i18n="wordlimit.vote">Vote for an MVP after each scene</span></span></label>
-      </div>
-      <p class="ct-note"><span data-i18n="wordlimit.hostNote">Roles and limits are public, so everyone can catch a foul.</span> <span data-i18n="ct.hostOptional">Once it starts, you can close this page.</span></p>
+      <div id="wl-points"></div>
+      <p class="ct-note"><span data-i18n="wordlimit.hostNote">Roles, limits and points are public, so everyone can catch a foul.</span> <span data-i18n="ct.hostOptional">Once it starts, you can close this page.</span></p>
       <div class="ct-start-row">
         <button type="submit" class="ct-button ct-primary ct-wide" id="wl-start" data-i18n="wordlimit.start">Start the first scene</button>
         <button type="button" class="ct-button" id="wl-setup-cancel" hidden data-i18n="ct.close">Close</button>
@@ -93,11 +90,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="card-table.js?v=ct-1"></script>
-  <script src="card-table-ui.js?v=ct-1"></script>
-  <script src="word-limit-content.js?v=wl-1"></script>
-  <script src="word-limit-engine.js?v=wl-1"></script>
-  <script src="word-limit-ui.js?v=wl-1"></script>
-  <script src="word-limit-host.js?v=wl-1"></script>
+  <script src="card-table.js?v=ct-2"></script>
+  <script src="card-table-ui.js?v=ct-2"></script>
+  <script src="word-limit-content.js?v=wl-2"></script>
+  <script src="word-limit-engine.js?v=wl-2"></script>
+  <script src="word-limit-ui.js?v=wl-2"></script>
+  <script src="word-limit-host.js?v=wl-2"></script>
 </body>
 </html>

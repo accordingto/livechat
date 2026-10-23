@@ -143,9 +143,9 @@ test('Start points every original link at the table; each game keeps its own tab
   s.close();
 });
 
-test('WORD LIMIT THEATER: with the host page closed, the cards run a whole scene, the twists, the votes and the next scene', async () => {
+test('WORD LIMIT THEATER: with the host page closed, the cards run a whole scene, score their lines, swap limits and start the next scene', async () => {
   const s = setup(4); const h = s.host('wl'); await settle();
-  await h.start({ settings: { sceneMinutes: 2, unit: 'words', twists: true, shuffle: true, vote: true } }); await settle();
+  await h.start({ settings: { sceneMinutes: 2, unit: 'words', shuffles: 3, points: { 6: 10 } } }); await settle();
   h.close(); await settle();
   const cards = s.cards('wl'); const all = Object.values(cards); await settle();
   const first = s.state('wl');
@@ -154,6 +154,7 @@ test('WORD LIMIT THEATER: with the host page closed, the cards run a whole scene
     const view = c.view();
     assert.equal(view.playerNum, c.actor);
     assert.equal(view.wl.me.limit, first.round.limits[c.actor], 'each card shows its own limit');
+    assert.equal(view.wl.me.worth, first.round.limits[c.actor] === 6 ? 10 : first.round.limits[c.actor], 'and what a line is worth');
     assert.deepEqual([...view.wl.online].sort(), [1, 2, 3, 4]);
   }
   // Any card may start the scene early.
@@ -162,12 +163,17 @@ test('WORD LIMIT THEATER: with the host page closed, the cards run a whole scene
   const writes = s.db.writes;
   for (const c of all) c.pulse(); await settle();
   assert.equal(s.db.writes, writes, 'an idle tick writes nothing');
-  // A foul and a manual twist from the players' cards.
+  // Lines and a foul from the players' cards.
+  await cards[2].command('line'); await settle();
+  const worth2 = cards[2].view().wl.me.worth;
+  assert.equal(s.state('wl').round.gained[2], worth2);
+  await assert.rejects(cards[2].command('line'), /cooldown/, 'a double tap does not score twice');
+  await cards[4].command('line'); await settle();
   await cards[2].command('foul', { target: 1 }); await settle();
   assert.equal(s.state('wl').round.fouls[1], 1);
   await assert.rejects(cards[2].command('foul', { target: 1 }), /cooldown/, 'the same whistle waits a moment');
-  await cards[4].command('twist'); await settle();
-  assert.equal(s.state('wl').round.twists.at(-1).by, 4);
+  await assert.rejects(cards[4].command('twist'), /not_available/, 'no plot twists any more');
+  assert.equal(cards[1].view().wl.standings.find(row => row.playerNum === 2).score, worth2, 'every card sees the points at once');
   // Pause from one card, resume from another: the stopwatch loses nothing.
   s.now += 10000;
   await cards[1].command('pause'); await settle();
@@ -175,27 +181,16 @@ test('WORD LIMIT THEATER: with the host page closed, the cards run a whole scene
   s.now += 600000;
   await cards[3].command('resume'); await settle();
   assert.equal(cards[2].view().wl.sceneEndsAt, s.now + left);
-  // The scripted twist, the limit shuffle and the end of the scene all fire
-  // from the cards' own pulses.
+  // The three swaps and the end of the scene all fire from the cards' own pulses.
   const before = Object.assign({}, s.state('wl').round.limits);
-  for (let guard = 0; guard < 6 && s.state('wl').phase === 'scene'; guard++) await expire(s, 'wl', all);
+  for (let guard = 0; guard < 8 && s.state('wl').phase === 'scene'; guard++) await expire(s, 'wl', all);
   const round = s.state('wl').round;
-  assert.equal(s.state('wl').phase, 'vote');
-  assert.equal(round.shuffles, 1);
-  assert.ok(round.twists.some(item => item.by === 0), 'the script dropped its own twist');
-  for (const n of [1, 2, 3, 4]) assert.notEqual(round.limits[n], before[n], 'everyone got a different limit');
+  assert.equal(s.state('wl').phase, 'result', 'no vote: straight to the result');
+  assert.equal(round.shuffles, 3);
+  assert.notDeepEqual(round.limits, before);
   assert.equal(round.endReason, 'time');
-  // Secret ballots until everyone has voted.
-  await cards[1].command('vote', { target: 2 });
-  await cards[2].command('vote', { target: 3 });
-  await cards[3].command('vote', { target: 2 }); await settle();
-  assert.equal(JSON.stringify(cards[4].view().wl.ballots).includes('"votes"'), false);
-  assert.deepEqual(clone(cards[4].view().wl.ballots.voted), [1, 2, 3]);
-  await assert.rejects(cards[4].command('vote', { target: 4 }), /not_available/, 'no voting for yourself');
-  await cards[4].command('vote', { target: 0 }); await settle();
-  assert.equal(s.state('wl').phase, 'result');
-  assert.deepEqual(clone(cards[1].view().wl.result.mvp), [2]);
-  assert.deepEqual(s.state('wl').scores, { 2: 2, 3: 1 });
+  assert.deepEqual(s.state('wl').scores, Object.fromEntries(Object.entries(round.gained).filter(([, v]) => v > 0)));
+  assert.ok(cards[1].view().wl.result.best.length >= 1);
   await cards[4].command('next'); await settle();
   assert.equal(s.state('wl').phase, 'cast'); assert.equal(s.state('wl').roundNo, 2);
   assert.notEqual(s.state('wl').round.sceneId, first.round.sceneId, 'a new scene');
@@ -204,7 +199,7 @@ test('WORD LIMIT THEATER: with the host page closed, the cards run a whole scene
 
 test('ROOM SURVEY: with the host page closed, the cards write, sort, guess and score a whole round', async () => {
   const s = setup(4); const h = s.host('rs'); await settle();
-  await h.start({ settings: { answers: 2, turnSeconds: 20, guessMinutes: 4 } }); await settle();
+  await h.start({ settings: { answers: 2, turnSeconds: 15, guessMinutes: 4 } }); await settle();
   h.close(); await settle();
   const cards = s.cards('rs'); const all = Object.values(cards); await settle();
   const keeper = s.state('rs').round.keeper;
@@ -217,6 +212,7 @@ test('ROOM SURVEY: with the host page closed, the cards write, sort, guess and s
   assert.equal(cards[others[1]].view().rs.question.en, 'Something you always lose');
   // Everyone writes (the Keeper too); the last answer moves the table on.
   const answers = { 1: ['Keys zebra1', 'Socks'], 2: ['keys zebra1!', 'Umbrella zebra2'], 3: ['Socks', 'Phone zebra3'], 4: ['Patience zebra4', 'Phone zebra3'] };
+  await assert.rejects(cards[1].command('submit', { answers: ['Socks', 'socks!'] }), /duplicate/, 'the same answer in two boxes is refused');
   for (const n of [1, 2, 3]) await cards[n].command('submit', { answers: answers[n] });
   await settle();
   assert.equal(s.state('rs').phase, 'write');
@@ -237,20 +233,27 @@ test('ROOM SURVEY: with the host page closed, the cards write, sort, guess and s
   await cards[keeper].command('startGuess'); await settle();
   const state = s.state('rs');
   assert.equal(state.phase, 'guess');
-  assert.deepEqual(state.round.order, [...others.filter(n => n > keeper), ...others.filter(n => n < keeper)], 'turns go round from after the Keeper');
+  assert.equal(state.round.buzz, null, 'guessing opens with nobody holding the buzz');
   // Nobody but the Keeper sees a hidden answer; each card sees its own.
   for (const n of others) {
     const json = JSON.stringify(Object.assign({}, cards[n].view(), { rs: Object.assign({}, cards[n].view().rs, { me: null }) }));
     for (const word of ['zebra1', 'zebra2', 'zebra3', 'zebra4']) assert.equal(json.includes(word), false, `card ${n} never receives ${word}`);
   }
   assert.equal(JSON.stringify(cards[keeper].view().rs.me.board).includes('zebra'), true);
-  // A turn that times out passes on by itself.
-  const firstGuesser = s.state('rs').round.turn.playerNum;
-  s.now = s.state('rs').round.turn.endsAt + 200;
+  // Two cards buzz at once: exactly one gets it.
+  const race = await Promise.allSettled([cards[others[0]].command('buzz'), cards[others[1]].command('buzz')]);
+  assert.equal(race.filter(r => r.status === 'fulfilled').length, 1);
+  assert.match(race.find(r => r.status === 'rejected').reason.message, /taken|stale_turn/);
+  await settle();
+  // A buzzer who runs out of time misses by itself.
+  const firstBuzzer = s.state('rs').round.buzz.playerNum;
+  s.now = s.state('rs').round.buzz.endsAt + 200;
   for (const c of all) c.pulse(); await settle();
-  assert.notEqual(s.state('rs').round.turn.playerNum, firstGuesser);
+  assert.equal(s.state('rs').round.buzz, null);
   assert.equal(s.state('rs').round.log.at(-1).result, 'timeout');
-  // A hint, then the Keeper judges every guess until the board is clear.
+  assert.deepEqual(s.state('rs').round.locked, [firstBuzzer]);
+  await assert.rejects(cards[firstBuzzer].command('buzz'), /locked/);
+  // A hint, then whoever may buzz does, and the Keeper judges until the board is clear.
   const boardIds = s.state('rs').round.board;
   await cards[keeper].command('hint', { group: boardIds[0] }); await settle();
   assert.equal(cards[others[0]].view().rs.board[0].hint.length, 1);
@@ -258,10 +261,12 @@ test('ROOM SURVEY: with the host page closed, the cards write, sort, guess and s
   for (const id of boardIds) {
     const live = s.state('rs');
     if (live.phase !== 'guess') break;
-    const guesser = live.round.turn.playerNum, group = live.round.groups.find(item => item.id === id);
+    const buzzer = others.find(n => cards[n].view().rs.me.canBuzz);
+    await cards[buzzer].command('buzz'); await settle();
+    const group = live.round.groups.find(item => item.id === id);
     const writers = [...new Set(group.members.map(member => member.playerNum))];
-    if (!writers.includes(guesser)) expected[guesser] = (expected[guesser] || 0) + writers.length;
-    await cards[keeper].command('hit', { group: id, turn: cards[keeper].view().rs.turn.serial }); await settle();
+    if (!writers.includes(buzzer)) expected[buzzer] = (expected[buzzer] || 0) + writers.length;
+    await cards[keeper].command('hit', { group: id, buzz: cards[keeper].view().rs.buzz.serial }); await settle();
   }
   const done = s.state('rs');
   assert.equal(done.phase, 'result'); assert.equal(done.round.endReason, 'all');
@@ -319,11 +324,13 @@ test('cards manage the table: sit out, self-return, next-round settings, start o
   await assert.rejects(cards[4].command('pause'), /not_available/, 'someone sitting out cannot manage the table');
   await cards[4].command('exclude', { playerNum: 4, active: true }); await settle();
   assert.equal(s.state('wl').roster.find(p => p.playerNum === 4).active, true, 'they bring themselves back');
-  await cards[2].command('settings', { settings: { sceneMinutes: 5, unit: 'chars', vote: false } }); await settle();
+  await cards[2].command('settings', { settings: { sceneMinutes: 5, unit: 'chars', shuffles: 1, points: { 1: 4 } } }); await settle();
   assert.equal(s.state('wl').round.sceneMs, 180000, 'the scene in progress keeps its length');
+  await assert.rejects(cards[2].command('settings', { settings: { points: { 1: -2 } } }), /invalid_options/);
   await cards[2].command('void'); await settle();
   await cards[3].command('next'); await settle();
-  assert.equal(s.state('wl').round.sceneMs, 300000); assert.equal(s.state('wl').round.unit, 'chars'); assert.equal(s.state('wl').round.voteOn, false);
+  assert.equal(s.state('wl').round.sceneMs, 300000); assert.equal(s.state('wl').round.unit, 'chars'); assert.equal(s.state('wl').round.planned, 1);
+  assert.equal(s.state('wl').round.value[1], 4);
   await assert.rejects(cards[1].command('rename', { names: [{ playerNum: 1, name: 'Hacker' }] }), /not_available/);
   await cards[1].command('stop'); await settle();
   assert.equal(s.state('wl').phase, 'finished');

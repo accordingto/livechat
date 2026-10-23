@@ -41,6 +41,9 @@ var CARD_TABLE_UI = (() => {
     invalid_roster: ['房間名單有誤，請回主選單重新設定。', 'The room list is invalid. Set up the room again in the Hub.'],
     cooldown: ['等幾秒再按。', 'Wait a few seconds, then try again.'],
     empty: ['先寫一點內容。', 'Write something first.'],
+    duplicate: ['你有兩格寫了一樣的答案，請改掉其中一個。', 'Two of your answers are the same. Change one of them.'],
+    taken: ['有人比你快一步搶到了。', 'Someone else buzzed in first.'],
+    locked: ['你剛剛猜過了，等其他人也猜過一次再搶答。', 'You just had a go. Wait until everyone else has had one too.'],
     error: ['出了點問題，請再試一次。', 'Something went wrong. Try again.'],
     connecting: ['連線中…', 'Connecting…'],
     noFirebase: ['這個網站還沒設定連線，無法使用玩家卡。', 'This site isn’t connected yet, so player cards can’t be used.'],
@@ -92,7 +95,7 @@ var CARD_TABLE_UI = (() => {
   const obj = value => value && typeof value === 'object' ? value : {};
   const clock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const seatsOf = view => list(view?.roster).slice().sort((a, b) => a.playerNum - b.playerNum);
-  const errorKey = code => ['stale_turn', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster', 'offline', 'cooldown', 'empty'].includes(code) ? code : 'error';
+  const errorKey = code => ['stale_turn', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster', 'offline', 'cooldown', 'empty', 'duplicate', 'taken', 'locked'].includes(code) ? code : 'error';
   const uid = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
   // Pick the language half of a bilingual content item.
   const pick = item => item ? (lang() === 'zh' ? item.zh || item.en : item.en || item.zh) : '';
@@ -129,7 +132,8 @@ var CARD_TABLE_UI = (() => {
   // ── Table controls ────────────────────────────────────────────────────
   // spec: { t, timed:[...], confirmClose:[...], closeLabel(phase), extendLabel(phase)|null,
   //         nextPick: { label, chosen, auto(view), current(view) } | null,
-  //         settingsForm(settings, t) → html, readSettings(root) → settings, onSettingsInput?(root, field) }
+  //         settingsForm(settings, view) → html, readSettings(root) → settings,
+  //         settingsScope?(view) → what else the form depends on, onSettingsInput?(root, field) }
   class Controls {
     constructor(details, { spec, owner, title = 'controls' }) {
       this.element = details; this.spec = spec; this.owner = owner; this.t = spec.t; this.title = title;
@@ -152,7 +156,9 @@ var CARD_TABLE_UI = (() => {
         this.spec.onSettingsInput?.(this.parts.settings, field);
       };
       details.addEventListener('click', this.click);
+      // Typing in a number field counts as an edit before it ever fires change.
       details.addEventListener('change', this.change);
+      details.addEventListener('input', this.change);
     }
     arm(key) {
       this.armed = key; this.liveKey = ''; this.owner.refreshControls();
@@ -177,8 +183,9 @@ var CARD_TABLE_UI = (() => {
       if (sub.textContent !== t('controlsSummary')) sub.textContent = t('controlsSummary');
       const liveKey = JSON.stringify([lang(), view.sessionId, view.stage, view.turnId, view.phase, view.roster, view.online, this.spec.nextPick?.current(view), pending, this.armed, me]);
       if (liveKey !== this.liveKey) { this.parts.live.innerHTML = this.live(view, me, pending); this.liveKey = liveKey; }
-      const settingsKey = JSON.stringify([lang(), view.sessionId, view.settings]);
-      if (settingsKey !== this.settingsKey && !this.dirty) { this.parts.settings.innerHTML = this.settings(view.settings || {}); this.settingsKey = settingsKey; }
+      // settingsScope(view): anything else the form depends on (e.g. how many play).
+      const settingsKey = JSON.stringify([lang(), view.sessionId, view.settings, this.spec.settingsScope ? this.spec.settingsScope(view) : null]);
+      if (settingsKey !== this.settingsKey && !this.dirty) { this.parts.settings.innerHTML = this.settings(view.settings || {}, view); this.settingsKey = settingsKey; }
       for (const field of this.element.querySelectorAll('[data-ct-set], [data-ct-save-settings]')) field.disabled = pending;
       if (this.parts.note.textContent !== this.note) this.parts.note.textContent = this.note;
     }
@@ -220,10 +227,10 @@ var CARD_TABLE_UI = (() => {
       }
       return parts.join('');
     }
-    settings(settings) {
-      return `<section class="ct-tools"><h4 class="ct-tools-title">${esc(this.t('nextSettings'))}</h4>${this.spec.settingsForm(settings)}<button type="button" class="ct-button ct-small ct-primary" data-ct-save-settings>${esc(this.t('saveSettings'))}</button></section>`;
+    settings(settings, view) {
+      return `<section class="ct-tools"><h4 class="ct-tools-title">${esc(this.t('nextSettings'))}</h4>${this.spec.settingsForm(settings, view)}<button type="button" class="ct-button ct-small ct-primary" data-ct-save-settings>${esc(this.t('saveSettings'))}</button></section>`;
     }
-    destroy() { clearTimeout(this.armTimer); this.element.removeEventListener('click', this.click); this.element.removeEventListener('change', this.change); }
+    destroy() { clearTimeout(this.armTimer); this.element.removeEventListener('click', this.click); this.element.removeEventListener('change', this.change); this.element.removeEventListener('input', this.change); }
   }
   // Settings form helpers shared by both games.
   const field = (key, values, label, value, text) => `<label class="ct-field"><span>${esc(label)}</span><select data-ct-set="${esc(key)}">${values.map(v => `<option value="${esc(v)}"${String(v) === String(value) ? ' selected' : ''}>${esc(text(v))}</option>`).join('')}</select></label>`;

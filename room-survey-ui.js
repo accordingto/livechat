@@ -1,7 +1,8 @@
 /* ROOM SURVEY presentation: the shared board (host page) and every player
  * card. It only reads ROOM_SURVEY_ENGINE.view(): the shared screen never gets
  * the text of an answer before it is guessed; only the Keeper's own card (its
- * `me` block) carries the hidden answers, and never who wrote them. */
+ * `me` block) carries the hidden answers, and never who wrote them. Guessing
+ * is a buzz-in: one player at a time, from their own card. */
 var ROOM_SURVEY_UI = (() => {
   'use strict';
   const C = CARD_TABLE_UI;
@@ -9,7 +10,7 @@ var ROOM_SURVEY_UI = (() => {
   const dict = {
     brand: ['ROOM SURVEY', 'ROOM SURVEY'],
     subtitle: ['全場大調查：大家寫的答案就是調查結果，越多人寫的答案越值錢。', 'Your room is the survey. Answers more people wrote are worth more.'],
-    pitch: ['每一輪輪到一個人當關主並選題目，所有人（包括關主）偷偷寫答案。關主把意思一樣的答案合併，排出「最多人寫」的排行榜。其他人輪流用說的猜，猜中就拿到「寫這個答案的人數」那麼多分。猜到自己寫的答案不算，那一格直接自爆。', 'Each round one player is the Keeper and picks a prompt. Everyone, the Keeper too, secretly writes answers. The Keeper merges answers that mean the same thing, and the board ranks them by how many people wrote each. The others take turns guessing out loud. A hit scores one point per person who wrote it. Guess your own answer and it burns: nobody scores it.'],
+    pitch: ['每一輪輪到一個人當關主並選題目，所有人（包括關主）偷偷寫答案。關主把一樣的答案疊起來，疊越多人名次越高。其他人在自己的卡片上搶答、用說的猜，猜中就拿到「寫這個答案的人數」那麼多分：名次越高，分數越多。系統知道誰寫了什麼，猜到自己寫的答案不算，那一格直接自爆。', 'Each round one player is the Keeper and picks a prompt. Everyone, the Keeper too, secretly writes answers. The Keeper stacks answers that mean the same; the bigger the stack, the higher it ranks. The others buzz in on their own cards and guess out loud. A hit scores one point per person who wrote it, so higher answers score more. The game knows who wrote what: guess your own answer and it burns.'],
     hostNote: ['分享畫面不會出現還沒猜中的答案，只有關主的卡片看得到。', 'The shared screen never shows an answer before it’s guessed. Only the Keeper’s card does.'],
     start: ['開始第一輪', 'Start the first round'],
     sampleAnswer: ['零食', 'Snacks'],
@@ -26,26 +27,34 @@ var ROOM_SURVEY_UI = (() => {
     cat_mixed: ['綜合', 'Mixed'], cat_love: ['戀愛', 'Love & dating'], cat_life: ['生活', 'Everyday life'], cat_work: ['工作與學校', 'Work & school'],
     cat_food: ['吃喝', 'Food & drinks'], cat_phone: ['手機與網路', 'Phone & internet'], cat_secret: ['小秘密', 'Small secrets'], cat_whatif: ['如果…', 'What if'], cat_custom: ['自訂題', 'Custom'],
     writeTitle: ['寫下你的答案', 'Write your answers'],
-    writeHint: ['寫短短的就好。只有關主會看到答案，而且看不到是誰寫的。', 'Keep them short. Only the Keeper sees the answers, and never who wrote what.'],
+    writeHint: ['每一格寫不一樣的答案，短短的就好。只有關主會看到答案，而且看不到是誰寫的。', 'Write a different answer in each box. Short ones are best. Only the Keeper sees the answers, and never who wrote what.'],
+    dupNote: ['答案 {b} 和答案 {a} 一樣，請寫不同的答案。', 'Answer {b} is the same as answer {a}. Write something different.'],
     answerN: ['答案 {n}', 'Answer {n}'],
     send: ['送出答案', 'Send my answers'], resend: ['更新答案', 'Update my answers'],
     sent: ['已送出，時間到之前都能修改。', 'Sent. You can still edit until time is up.'],
     autoSend: ['時間到時，你打好的答案會自動送出。', 'When time is up, whatever you typed is sent for you.'],
     answeredCount: ['{n}/{total} 人寫好了', '{n} of {total} have answered'],
     writeLeft: ['作答時間', 'Time to write'],
-    sortTitle: ['整理答案', 'Tidy the answers'],
-    sortHint: ['意思一樣的答案要合併：先點一張，再點它的雙胞胎。', 'Merge answers that mean the same: tap one, then tap its twin.'],
-    sortSelected: ['再點一張就合併過去；點同一張取消。', 'Now tap the one to merge it into. Tap it again to cancel.'],
-    split: ['拆開', 'Split'], drop: ['拿掉', 'Remove'], restore: ['放回來', 'Restore'],
+    sortTitle: ['把一樣的答案疊起來', 'Stack the same answers'],
+    sortHint: ['意思一樣的答案疊在一起：先點一張，再點它的雙胞胎。疊越多人，名次越高，猜中的分數也越多。', 'Stack answers that mean the same: tap one, then its twin. The more people on a stack, the higher it ranks and the more a hit scores.'],
+    sortSelected: ['再點一張，把它疊上去；點同一張取消。', 'Now tap the slip to stack it on. Tap it again to cancel.'],
+    stackHere: ['疊到這裡', 'Stack here'],
+    split: ['拆開', 'Unstack'], drop: ['拿掉', 'Remove'], restore: ['放回來', 'Restore'],
     peopleOne: ['1 人', '1 person'], peopleN: ['{n} 人', '{n} people'],
     startGuess: ['開始猜', 'Start guessing'],
     keeperSorting: ['{name} 正在整理 {n} 個答案…', '{name} is tidying {n} answers…'],
     sortLeft: ['整理時間', 'Time to tidy'],
     yourAnswers: ['你寫的答案', 'Your answers'],
-    ownRule: ['猜到自己寫的答案不算分，那一格會自爆。', 'Guessing your own answer scores nothing and burns it.'],
-    turnOf: ['{name} 的回合', '{name}’s turn'],
-    yourTurn: ['輪到你了！', 'Your turn!'], yourTurnHint: ['說出一個你覺得大家會寫的答案。', 'Say one answer you think people wrote.'],
-    pass: ['跳過這回合', 'Pass'], passFor: ['跳過 {name}', 'Skip {name}'],
+    ownRule: ['別說自己寫的答案：系統會判自爆，不給分。', 'Don’t say your own answers: they burn and score nothing.'],
+    buzzButton: ['我知道一個！', 'I’ve got one!'],
+    buzzHint: ['搶到之後，大聲說出一個你覺得大家會寫的答案。', 'Buzz in, then say out loud one answer you think people wrote.'],
+    buzzOpen: ['搶答開放中', 'Buzzing is open'], stageBuzz: ['在自己的卡片上按「我知道一個！」搶答', 'Buzz in on your own card: “I’ve got one!”'],
+    buzzing: ['{name} 搶到了', '{name} buzzed in'], buzzingWait: ['{name} 正在回答…', '{name} is answering…'],
+    yourBuzz: ['你搶到了！', 'You buzzed in!'], yourBuzzHint: ['現在大聲說出你的答案。', 'Say your answer out loud now.'],
+    notYours: ['別說你自己寫的：{list}', 'Not your own: {list}'],
+    giveUp: ['算了，我放棄', 'Never mind'],
+    lockedTitle: ['你剛剛猜過了', 'You just had a go'], lockedHint: ['等其他人也猜過一次，或有人猜中，就能再搶答。', 'You can buzz again once everyone else has had a go, or someone finds an answer.'],
+    keeperWait: ['等有人搶答。這時也可以先給一個提示。', 'Wait for someone to buzz in. You can give a hint meanwhile.'],
     judgeHint: ['{name} 說的答案在榜上嗎？點那一格。', 'Is {name}’s answer on the board? Tap it.'],
     notOnBoard: ['榜上沒有', 'Not on the board'],
     confirmHit: ['{name} 說了「{text}」？', '{name} said “{text}”?'],
@@ -54,10 +63,10 @@ var ROOM_SURVEY_UI = (() => {
     hintLabel: ['提示 {c}', 'Starts with {c}'],
     lengthChars: ['{n} 個字', '{n} characters'], lengthCharsOne: ['1 個字', '1 character'],
     lengthWords: ['{n} 個英文字', '{n} words'], lengthWordsOne: ['1 個英文字', '1 word'],
-    rankLabel: ['第 {n} 名', 'Rank {n}'],
+    rankLabel: ['第 {n} 名', 'Rank {n}'], worthLabel: ['猜中 +{n}', 'Worth +{n}'],
     boardTitle: ['調查結果', 'The board'],
     hitBy: ['{name} 猜中', '{name} got it'], ownBy: ['{name} 自爆', 'Burned by {name}'], leftOver: ['沒人猜到', 'Nobody got it'],
-    guessLeft: ['猜題時間', 'Guessing time'], turnLeft: ['這回合', 'This turn'],
+    guessLeft: ['猜題時間', 'Guessing time'],
     over_all: ['全部猜完了！', 'Board cleared!'], over_time: ['時間到！', 'Time’s up!'], over_host: ['這一輪結束', 'Round over'], over_nobody: ['沒有人可以猜了', 'Nobody is left to guess'],
     voided_few_answers: ['答案太少，這一輪不算。', 'Too few answers. This round doesn’t count.'],
     voided_keeper_left: ['關主離開了，這一輪不算。', 'The Keeper left. This round doesn’t count.'],
@@ -66,7 +75,7 @@ var ROOM_SURVEY_UI = (() => {
     writtenBy: ['寫的人：{names}', 'Written by {names}'],
     lastResult: ['最近一次', 'Last guess'],
     log_hit: ['{name} 猜中「{text}」+{n}', '{name} found “{text}” +{n}'], log_own: ['{name} 猜到自己的答案「{text}」，自爆', '{name} guessed their own “{text}”: burned'],
-    log_miss: ['{name} 沒猜中', '{name} missed'], log_pass: ['{name} 跳過', '{name} passed'], log_timeout: ['{name} 時間到', '{name} ran out of time'], log_skip: ['{name} 離開了，跳過', '{name} left, skipped'],
+    log_miss: ['{name} 沒猜中', '{name} missed'], log_pass: ['{name} 放棄了', '{name} gave up'], log_timeout: ['{name} 時間到', '{name} ran out of time'], log_skip: ['{name} 離開了', '{name} left'],
     nextKeeper: ['指定為下一位關主', 'Make next Keeper'], nextKeeperChosen: ['已指定為下一位關主', 'Next Keeper ✓'],
     nextKeeperLine: ['下一位關主：{name}', 'Next Keeper: {name}'], nextKeeperAuto: ['下一位關主：自動輪流', 'Next Keeper: automatic rotation'],
     close_write: ['結束作答', 'End writing'], close_sort: ['開始猜', 'Start guessing'], close_guess: ['結束這一輪', 'End the round'],
@@ -74,20 +83,32 @@ var ROOM_SURVEY_UI = (() => {
     answers: ['每人答案數', 'Answers per person'],
     writeSeconds: ['作答時間', 'Writing time'], secondsN: ['{n} 秒', '{n} s'],
     guessMinutes: ['猜題時間', 'Guessing time'], minutesN: ['{n} 分鐘', '{n} min'],
-    turnSeconds: ['每回合時間', 'Time per turn'], turnOff: ['不限時', 'No limit'],
+    turnSeconds: ['搶到後的作答時間', 'Time to answer after buzzing'], turnOff: ['不限時', 'No limit'],
     category: ['題目類型', 'Prompt pack'],
     showAuthors: ['回合結束時，公開每個答案是誰寫的', 'When a round ends, show who wrote each answer'],
     showAuthorsHint: ['預設不公開，大家比較敢寫。', 'Off by default, so people write more freely.'],
     watching: ['這一輪你是觀眾', 'You’re watching this round'], watchingHint: ['下一輪就會加入。', 'You join from the next round.'],
     rules_1: ['每一輪輪流一個人當關主，選一個題目，例如「最不想被另一半看到的搜尋紀錄」。', 'Each round one player is the Keeper and picks a prompt, like “Something you’d hate your partner to see in your search history”.'],
-    rules_2: ['所有人（包括關主）在自己的卡片上偷偷寫答案。沒有人看得到誰寫了什麼。', 'Everyone, the Keeper too, secretly writes answers on their card. Nobody sees who wrote what.'],
-    rules_3: ['關主合併意思一樣的答案，榜單依「寫的人數」排名。', 'The Keeper merges answers that mean the same. The board ranks them by how many people wrote each.'],
-    rules_4: ['其他人輪流用說的猜。猜中就得到「寫這個答案的人數」那麼多分。', 'The others take turns guessing out loud. A hit scores one point for each person who wrote it.'],
-    rules_5: ['猜到自己寫的答案不算分，那一格自爆，誰都拿不到。', 'Guess your own answer and it burns: nobody scores it.'],
+    rules_2: ['所有人（包括關主）在自己的卡片上偷偷寫答案，每一格要寫不一樣的。沒有人看得到誰寫了什麼。', 'Everyone, the Keeper too, secretly writes answers on their card, a different one in each box. Nobody sees who wrote what.'],
+    rules_3: ['關主把意思一樣的答案疊起來，疊越多人名次越高。', 'The Keeper stacks answers that mean the same. The more people on a stack, the higher it ranks.'],
+    rules_4: ['其他人在自己的卡片上搶答，一次一人，用說的猜。猜中就得到「寫這個答案的人數」那麼多分，名次越高分數越多。猜錯的人要等其他人也猜過一次才能再搶。', 'The others buzz in on their own cards, one at a time, and guess out loud. A hit scores one point per person who wrote it, so higher answers score more. After a miss, wait until everyone else has had a go.'],
+    rules_5: ['系統知道誰寫了什麼：猜到自己寫的答案不算分，那一格直接自爆，誰都拿不到。', 'The game knows who wrote what: guess your own answer and it burns. Nobody scores it.'],
   };
   const t = C.translator('roomsurvey', dict);
   const lang = C.lang;
-  const RULES = () => typeof ROOM_SURVEY_ENGINE !== 'undefined' ? ROOM_SURVEY_ENGINE.CONFIG : { answerCounts: [1, 2, 3], writeSeconds: [60, 90, 120, 180], guessMinutes: [3, 4, 5, 6, 8], turnSeconds: [0, 15, 20, 30], categories: ['mixed'] };
+  const RULES = () => typeof ROOM_SURVEY_ENGINE !== 'undefined' ? ROOM_SURVEY_ENGINE.CONFIG : { answerCounts: [1, 2, 3], writeSeconds: [60, 90, 120, 180], guessMinutes: [3, 4, 5, 6, 8], turnSeconds: [0, 10, 15, 20, 30], categories: ['mixed'] };
+  const normKey = text => typeof ROOM_SURVEY_ENGINE !== 'undefined' ? ROOM_SURVEY_ENGINE.normKey(text) : String(text || '').toLowerCase().trim();
+  // The first pair of drafts that are the same answer ("Keys" and "keys!"), as 1-based numbers.
+  function duplicatePair(drafts) {
+    const seen = new Map();
+    for (const [index, text] of drafts.entries()) {
+      if (!text.trim()) continue;
+      const key = normKey(text) || text.trim();
+      if (seen.has(key)) return { a: seen.get(key) + 1, b: index + 1 };
+      seen.set(key, index);
+    }
+    return null;
+  }
   const vibrate = pattern => { try { navigator.vibrate?.(pattern); } catch (_) {} };
   const nameOf = (view, n) => C.seatsOf(view).find(p => p.playerNum === n)?.name || t('player', { n });
   const names = (view, nums) => list(nums).map(n => nameOf(view, n)).join(lang() === 'zh' ? '、' : ', ');
@@ -127,7 +148,7 @@ var ROOM_SURVEY_UI = (() => {
   // ── settings ──────────────────────────────────────────────────────────
   function settingsForm(settings) {
     const rules = RULES();
-    return `<div class="ct-settings">${C.field('category', rules.categories, t('category'), settings.category || 'mixed', c => t('cat_' + c))}${C.field('answers', rules.answerCounts, t('answers'), settings.answers ?? 2, n => String(n))}${C.field('writeSeconds', rules.writeSeconds, t('writeSeconds'), settings.writeSeconds ?? 90, n => t('secondsN', { n }))}${C.field('guessMinutes', rules.guessMinutes, t('guessMinutes'), settings.guessMinutes ?? 4, n => t('minutesN', { n }))}${C.field('turnSeconds', rules.turnSeconds, t('turnSeconds'), settings.turnSeconds ?? 20, n => Number(n) ? t('secondsN', { n }) : t('turnOff'))}</div>${C.check('showAuthors', !!settings.showAuthors, t('showAuthors'), t('showAuthorsHint'))}`;
+    return `<div class="ct-settings">${C.field('category', rules.categories, t('category'), settings.category || 'mixed', c => t('cat_' + c))}${C.field('answers', rules.answerCounts, t('answers'), settings.answers ?? 2, n => String(n))}${C.field('writeSeconds', rules.writeSeconds, t('writeSeconds'), settings.writeSeconds ?? 90, n => t('secondsN', { n }))}${C.field('guessMinutes', rules.guessMinutes, t('guessMinutes'), settings.guessMinutes ?? 4, n => t('minutesN', { n }))}${C.field('turnSeconds', rules.turnSeconds, t('turnSeconds'), settings.turnSeconds ?? 15, n => Number(n) ? t('secondsN', { n }) : t('turnOff'))}</div>${C.check('showAuthors', !!settings.showAuthors, t('showAuthors'), t('showAuthorsHint'))}`;
   }
   function readSettings(root) {
     const get = key => C.readField(root, key);
@@ -160,7 +181,7 @@ var ROOM_SURVEY_UI = (() => {
     const revealed = item.revealed, hasText = item.text != null, show = !!revealed || (view.phase === 'result' || view.phase === 'finished');
     const classes = ['rs-tile', revealed ? 'is-' + revealed.how : 'is-hidden', keeper && !revealed ? 'is-keeper' : '', selected === item.id ? 'is-selected' : ''].filter(Boolean).join(' ');
     const rank = `<span class="rs-rank" aria-label="${esc(t('rankLabel', { n: item.rank }))}">${Number(item.rank)}</span>`;
-    const meta = `<span class="rs-tile-meta">${tally(item.count)}<small>${esc(people(item.count))}</small></span>`;
+    const meta = `<span class="rs-tile-meta">${tally(item.count)}<small>${esc(people(item.count))}</small>${revealed ? '' : `<b class="rs-worth">${esc(t('worthLabel', { n: item.points ?? item.count }))}</b>`}</span>`;
     let body;
     if (show || (keeper && hasText)) {
       const stamp = revealed ? (revealed.how === 'hit' ? `<span class="rs-stamp is-hit">${ART.stamp}<span>${esc(t('hitBy', { name: nameOf(view, revealed.by) }))} +${Number(revealed.points)}</span></span>`
@@ -172,30 +193,35 @@ var ROOM_SURVEY_UI = (() => {
       body = `<span class="rs-tile-hidden">${item.hint ? `<b class="rs-hint">${esc(t('hintLabel', { c: item.hint }))}</b>` : ''}<span class="rs-length">${esc(lengthText(item.length))}</span></span>`;
     }
     const inner = `${rank}<span class="rs-tile-body">${body}</span>${meta}`;
-    if (keeper && !revealed && view.phase === 'guess') return `<li><button type="button" class="${classes}${hintMode ? ' is-hinting' : ''}" data-ct-ui="tile" data-tile="${esc(item.id)}"${busy ? ' disabled' : ''}>${inner}${item.hint ? `<span class="rs-hinted">${ART.bulb}${esc(item.hint)}</span>` : ''}</button></li>`;
+    // The Keeper taps a tile to judge a buzz, or to give a hint.
+    if (keeper && !revealed && view.phase === 'guess' && (hintMode || view.buzz)) return `<li><button type="button" class="${classes}${hintMode ? ' is-hinting' : ''}" data-ct-ui="tile" data-tile="${esc(item.id)}"${busy ? ' disabled' : ''}>${inner}${item.hint ? `<span class="rs-hinted">${ART.bulb}${esc(item.hint)}</span>` : ''}</button></li>`;
     return `<li class="${classes}${big ? ' is-big' : ''}">${inner}</li>`;
   }
   function board(view, items, options = {}) {
     if (!list(items).length) return '';
     return `<ol class="rs-board${options.big ? ' is-big' : ''}" aria-label="${esc(t('boardTitle'))}">${list(items).map(item => tile(view, item, options)).join('')}</ol>`;
   }
-  function turnBanner(view, me = 0) {
-    const turn = view.turn; if (!turn) return '';
-    const mine = turn.playerNum === me;
-    const clock = view.phase === 'paused' ? (turn.leftMs ? pausedClock(turn.leftMs) : '') : clockAt(turn.endsAt, { low: 5000 });
-    return `<div class="rs-turn${mine ? ' is-mine' : ''}"><span class="rs-turn-name">${esc(mine ? t('yourTurn') : t('turnOf', { name: nameOf(view, turn.playerNum) }))}</span>${clock ? `<span class="rs-turn-clock">${clock}</span>` : ''}</div>`;
+  // Who holds the buzz right now (or that buzzing is open), with their answer clock.
+  function buzzBanner(view, me = 0) {
+    const buzz = view.buzz;
+    if (!buzz) return `<div class="rs-turn is-open"><span class="rs-turn-name">${esc(me ? t('buzzOpen') : t('stageBuzz'))}</span></div>`;
+    const mine = buzz.playerNum === me;
+    const clock = view.phase === 'paused' ? (buzz.leftMs ? pausedClock(buzz.leftMs) : '') : clockAt(buzz.endsAt, { low: 5000 });
+    return `<div class="rs-turn${mine ? ' is-mine' : ''}"><span class="rs-turn-name">${esc(mine ? t('yourBuzz') : t('buzzing', { name: nameOf(view, buzz.playerNum) }))}</span>${clock ? `<span class="rs-turn-clock">${clock}</span>` : ''}</div>`;
   }
-  function order(view) {
-    const turn = view.turn?.playerNum;
-    return `<ol class="rs-order">${list(view.order).map(n => {
-      const seat = C.seatsOf(view).find(p => p.playerNum === n), points = obj(view.roundPoints)[n];
-      return `<li class="${n === turn ? 'is-now' : ''}${seat?.active === false ? ' is-out' : ''}"><span>${esc(nameOf(view, n))}</span>${points ? `<b>+${Number(points)}</b>` : ''}</li>`;
+  // Every guesser with their points this round; a locked one waits for the others.
+  function guessersList(view) {
+    const keeper = view.keeper, buzzing = view.buzz?.playerNum, locked = new Set(list(view.locked));
+    const seats = C.seatsOf(view).filter(p => p.inRound && p.playerNum !== keeper);
+    return `<ol class="rs-order">${seats.map(p => {
+      const n = p.playerNum, points = obj(view.roundPoints)[n];
+      return `<li class="${n === buzzing ? 'is-now' : ''}${locked.has(n) ? ' is-locked' : ''}${p.active === false ? ' is-out' : ''}"><span>${esc(nameOf(view, n))}</span>${points ? `<b>+${Number(points)}</b>` : ''}</li>`;
     }).join('')}</ol>`;
   }
   function lastLog(view) {
     const entry = list(view.log).slice(-1)[0];
     if (!entry || !['guess', 'paused'].includes(view.phase)) return '';
-    const text = t('log_' + entry.result, { name: nameOf(view, entry.playerNum), text: entry.text || '', n: (list(view.board).find(item => item.text === entry.text)?.revealed?.points) ?? '' });
+    const text = t('log_' + entry.result, { name: nameOf(view, entry.playerNum), text: entry.text || '', n: entry.points ?? (list(view.board).find(item => item.text === entry.text)?.revealed?.points) ?? '' });
     return `<p class="rs-log is-${esc(entry.result)}" data-ct-until="${Number(entry.ts) + 6000}">${esc(text)}</p>`;
   }
   function overTitle(view) {
@@ -233,7 +259,7 @@ var ROOM_SURVEY_UI = (() => {
       body = `${prompt(view, { big: true })}<div class="rs-stage-wait"><div class="rs-shuffle-slips" aria-hidden="true"><i></i><i></i><i></i></div><p class="rs-wait-line">${esc(t('keeperSorting', { name: nameOf(view, view.keeper), n: view.sorting?.answers || 0 }))}</p>${clock}</div>`;
     } else if (live === 'guess') {
       const clock = view.phase === 'paused' ? pausedClock(view.guessLeftMs) : clockAt(view.guessEndsAt, { low: 30000 });
-      body = `${prompt(view)}<div class="rs-stage-bar">${turnBanner(view)}<span class="rs-stage-clock"><small>${esc(t('guessLeft'))}</small>${clock}</span></div>${lastLog(view)}${board(view, view.board, { big: true })}${order(view)}`;
+      body = `${prompt(view)}<div class="rs-stage-bar">${buzzBanner(view)}<span class="rs-stage-clock"><small>${esc(t('guessLeft'))}</small>${clock}</span></div>${lastLog(view)}${board(view, view.board, { big: true })}${guessersList(view)}`;
     } else if (view.phase === 'result') {
       const over = overTitle(view);
       body = `${prompt(view)}<div class="rs-over"><h2>${esc(over.title)}</h2>${over.sub ? `<p>${esc(over.sub)}</p>` : ''}</div>${board(view, view.board, { big: true })}${roundPoints(view)}`;
@@ -250,7 +276,7 @@ var ROOM_SURVEY_UI = (() => {
     }
     // Inputs live outside the re-rendered regions, so typing is never interrupted.
     mount(extra) {
-      extra.innerHTML = `<form class="rs-compose" data-rs-answers hidden novalidate><div class="rs-compose-head"><h3 data-rs-title></h3><p data-rs-hint></p></div><div class="rs-compose-fields" data-rs-fields></div><button type="submit" class="ct-button ct-primary ct-wide" data-rs-send></button><p class="rs-compose-note" data-rs-note></p></form><form class="rs-custom" data-rs-custom hidden novalidate><label><span data-rs-custom-label></span><input type="text" maxlength="100" autocomplete="off" enterkeyhint="done" data-rs-custom-input></label><button type="submit" class="ct-button ct-primary" data-rs-custom-use></button></form>`;
+      extra.innerHTML = `<form class="rs-compose" data-rs-answers hidden novalidate><div class="rs-compose-head"><h3 data-rs-title></h3><p data-rs-hint></p></div><div class="rs-compose-fields" data-rs-fields></div><p class="rs-compose-dup" data-rs-dup role="alert" hidden></p><button type="submit" class="ct-button ct-primary ct-wide" data-rs-send></button><p class="rs-compose-note" data-rs-note></p></form><form class="rs-custom" data-rs-custom hidden novalidate><label><span data-rs-custom-label></span><input type="text" maxlength="100" autocomplete="off" enterkeyhint="done" data-rs-custom-input></label><button type="submit" class="ct-button ct-primary" data-rs-custom-use></button></form>`;
       this.answersForm = extra.querySelector('[data-rs-answers]');
       this.fields = extra.querySelector('[data-rs-fields]');
       this.customForm = extra.querySelector('[data-rs-custom]');
@@ -271,15 +297,23 @@ var ROOM_SURVEY_UI = (() => {
     }
     get count() { return Math.max(1, Math.min(3, Number(this.view?.answersPer) || 2)); }
     currentDrafts() { return this.drafts.slice(0, this.count).map(text => text.trim()).filter(Boolean); }
-    sendAnswers() {
-      const answers = this.currentDrafts();
+    // Two boxes with the same answer ("Keys" and "keys!") are not allowed.
+    duplicate() { return duplicatePair(this.drafts.slice(0, this.count)); }
+    sendAnswers({ auto = false } = {}) {
+      let answers = this.currentDrafts();
       if (!answers.length) { this.error = this.t('empty'); this.keys = {}; this.render(); return Promise.resolve(false); }
+      if (this.duplicate()) {
+        // When time runs out, the repeat is left out rather than losing every answer.
+        if (!auto) { this.sync(); return Promise.resolve(false); }
+        const seen = new Set();
+        answers = answers.filter(text => { const key = normKey(text) || text; if (seen.has(key)) return false; seen.add(key); return true; });
+      }
       return this.action('submit', { answers }).then(ok => { if (ok) this.sentDrafts = answers.join('\n'); this.sync(); return ok; });
     }
     localKey() { return JSON.stringify([this.selectedGroup, this.selectedTile, this.hintMode, this.customOpen]); }
     theme(view) {
       const me = view.me || {}, live = view.phase === 'paused' ? view.pausedFrom : view.phase;
-      if (live === 'guess' && me.myTurn) return 'is-turn';
+      if (live === 'guess' && me.myBuzz) return 'is-turn';
       if (me.isKeeper && ['choose', 'sort', 'guess'].includes(live)) return 'is-keeper';
       return '';
     }
@@ -298,10 +332,10 @@ var ROOM_SURVEY_UI = (() => {
         }
       }
       if (previous && previous.stage !== view.stage) { this.autoSent = false; this.selectedTile = ''; this.hintMode = false; }
-      if (previous?.turn?.serial !== view.turn?.serial) this.selectedTile = '';
-      const myTurn = view.phase === 'guess' && view.turn?.playerNum === this.data.playerNum;
-      const wasMine = previous?.phase === 'guess' && previous?.turn?.playerNum === this.data.playerNum && previous?.turn?.serial === view.turn?.serial;
-      if (myTurn && !wasMine) vibrate([90, 40, 90]);
+      if (previous?.buzz?.serial !== view.buzz?.serial) this.selectedTile = '';
+      // The Keeper's phone buzzes when someone buzzes in; the buzzer's when it is theirs.
+      const fresh = view.phase === 'guess' && view.buzz && previous?.buzz?.serial !== view.buzz.serial;
+      if (fresh && (view.buzz.playerNum === this.data.playerNum || me.isKeeper)) vibrate([90, 40, 90]);
       if (previous && previous.roundNo !== view.roundNo && me.isKeeper) vibrate([60]);
     }
     ui(name, element) {
@@ -314,6 +348,7 @@ var ROOM_SURVEY_UI = (() => {
       } else if (name === 'tile') {
         const id = element.dataset.tile;
         if (this.hintMode) { this.hintMode = false; this.action('hint', { group: id }); return; }
+        if (!view.buzz) return;
         this.selectedTile = this.selectedTile === id ? '' : id;
       } else if (name === 'unselect') this.selectedTile = '';
       else if (name === 'hint') { this.hintMode = !this.hintMode; this.selectedTile = ''; }
@@ -340,8 +375,17 @@ var ROOM_SURVEY_UI = (() => {
         });
         const send = this.answersForm.querySelector('[data-rs-send]');
         const current = this.currentDrafts().join('\n'), sent = me.submitted && this.sentDrafts != null;
+        const dup = this.duplicate(), warning = this.answersForm.querySelector('[data-rs-dup]');
+        const dupText = dup ? t('dupNote', dup) : '';
+        if (warning.textContent !== dupText) warning.textContent = dupText;
+        warning.hidden = !dup;
+        this.inputs.forEach((input, i) => {
+          const bad = !!dup && i + 1 === dup.b;
+          input.classList.toggle('is-dup', bad);
+          if (bad) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid');
+        });
         send.textContent = me.submitted ? t('resend') : t('send');
-        send.disabled = !!this.pending || !current || (sent && current === this.sentDrafts);
+        send.disabled = !!this.pending || !current || !!dup || (sent && current === this.sentDrafts);
         const note = this.answersForm.querySelector('[data-rs-note]');
         const noteText = me.submitted ? t('sent') : t('autoSend');
         if (note.textContent !== noteText) note.textContent = noteText;
@@ -364,7 +408,7 @@ var ROOM_SURVEY_UI = (() => {
       const current = this.currentDrafts().join('\n');
       if (!current || (me.submitted && current === this.sentDrafts)) return;
       this.autoSent = true;
-      this.sendAnswers();
+      this.sendAnswers({ auto: true });
     }
     head(data) {
       const view = data.rs;
@@ -401,24 +445,34 @@ var ROOM_SURVEY_UI = (() => {
           const slips = groups.map(group => {
             const selected = this.selectedGroup === group.id, target = this.selectedGroup && !selected && !group.dropped;
             const variants = list(group.variants);
-            return `<li class="rs-sort-row${group.dropped ? ' is-dropped' : ''}"><button type="button" class="rs-slip${selected ? ' is-selected' : ''}${target ? ' is-target' : ''}" data-ct-ui="slip" data-group="${esc(group.id)}"${busy || group.dropped ? ' disabled' : ''}><span class="rs-slip-text" lang="${slipLang(group.text)}">${esc(group.text)}</span>${variants.length ? `<span class="rs-slip-variants">${variants.map(text => `<span lang="${slipLang(text)}">${esc(text)}</span>`).join('')}</span>` : ''}<span class="rs-slip-count">${tally(group.count, { size: 18 })}<small>${esc(people(group.count))}</small></span></button><span class="rs-sort-tools">${variants.length ? `<button type="button" class="ct-button ct-small" data-ct-action="split" data-ct-arg-group="${esc(group.id)}"${busy ? ' disabled' : ''}>${esc(t('split'))}</button>` : ''}<button type="button" class="ct-button ct-small" data-ct-action="drop" data-ct-arg-group="${esc(group.id)}" data-ct-arg-dropped="${!group.dropped}"${busy ? ' disabled' : ''}>${esc(t(group.dropped ? 'restore' : 'drop'))}</button></span></li>`;
+            const place = group.dropped ? '<span class="rs-slip-rank is-empty" aria-hidden="true"></span>' : `<span class="rs-slip-rank" aria-label="${esc(t('rankLabel', { n: group.rank }))}">${Number(group.rank)}</span>`;
+            return `<li class="rs-sort-row${group.dropped ? ' is-dropped' : ''}"><button type="button" class="rs-slip${selected ? ' is-selected' : ''}${target ? ' is-target' : ''}" data-ct-ui="slip" data-group="${esc(group.id)}"${busy || group.dropped ? ' disabled' : ''}>${place}<span class="rs-slip-body"><span class="rs-slip-text" lang="${slipLang(group.text)}">${esc(group.text)}</span>${variants.length ? `<span class="rs-slip-variants">${variants.map(text => `<span lang="${slipLang(text)}">${esc(text)}</span>`).join('')}</span>` : ''}${target ? `<span class="rs-stack-here">${esc(t('stackHere'))}</span>` : ''}</span><span class="rs-slip-count">${tally(group.count, { size: 18 })}<small>${esc(people(group.count))}</small>${group.dropped ? '' : `<b class="rs-worth">${esc(t('worthLabel', { n: group.points }))}</b>`}</span></button><span class="rs-sort-tools">${variants.length ? `<button type="button" class="ct-button ct-small" data-ct-action="split" data-ct-arg-group="${esc(group.id)}"${busy ? ' disabled' : ''}>${esc(t('split'))}</button>` : ''}<button type="button" class="ct-button ct-small" data-ct-action="drop" data-ct-arg-group="${esc(group.id)}" data-ct-arg-dropped="${!group.dropped}"${busy ? ' disabled' : ''}>${esc(t(group.dropped ? 'restore' : 'drop'))}</button></span></li>`;
           }).join('');
           return `${paused}${role}${prompt(view)}<section class="rs-zone is-sort"><div class="rs-zone-top"><h3>${esc(t('sortTitle'))}</h3>${clock}</div><p class="rs-sort-hint${this.selectedGroup ? ' is-active' : ''}">${esc(this.selectedGroup ? t('sortSelected') : t('sortHint'))}</p><ol class="rs-sort">${slips}</ol><button type="button" class="ct-button ct-primary ct-wide" data-ct-action="startGuess"${busy ? ' disabled' : ''}>${esc(t('startGuess'))}</button></section>`;
         }
         return `${paused}${prompt(view)}<div class="rs-zone"><div class="rs-shuffle-slips" aria-hidden="true"><i></i><i></i><i></i></div><p class="rs-wait-line">${esc(t('keeperSorting', { name: nameOf(view, view.keeper), n: view.sorting?.answers || 0 }))}</p>${clock}</div>${myAnswers(me, { open: true })}`;
       }
       if (live === 'guess') {
-        const turn = view.turn, guessClock = view.phase === 'paused' ? '' : clockAt(view.guessEndsAt, { low: 30000 });
-        const top = `<div class="rs-status">${turnBanner(view, n)}${guessClock ? `<span class="rs-status-clock"><small>${esc(t('guessLeft'))}</small>${guessClock}</span>` : ''}</div>`;
+        const buzz = view.buzz, guessClock = view.phase === 'paused' ? '' : clockAt(view.guessEndsAt, { low: 30000 });
+        const top = `<div class="rs-status">${buzzBanner(view, n)}${guessClock ? `<span class="rs-status-clock"><small>${esc(t('guessLeft'))}</small>${guessClock}</span>` : ''}</div>`;
+        const open = view.phase === 'guess';
         if (me.isKeeper && me.board) {
           const selected = list(me.board).find(item => item.id === this.selectedTile && !item.revealed);
-          const guesser = turn ? nameOf(view, turn.playerNum) : '';
-          const confirm = selected && turn ? `<div class="rs-confirm"><p>${esc(t('confirmHit', { name: guesser, text: selected.text }))}</p><div class="rs-zone-row"><button type="button" class="ct-button ct-primary" data-ct-action="hit" data-ct-arg-group="${esc(selected.id)}" data-ct-arg-turn="${Number(turn.serial)}"${busy ? ' disabled' : ''}>${esc(t('confirmYes'))}</button><button type="button" class="ct-button" data-ct-ui="unselect">${esc(t('cancel'))}</button></div></div>` : '';
-          const tools = turn && view.phase === 'guess' ? `<div class="rs-judge"><button type="button" class="ct-button rs-miss" data-ct-action="miss" data-ct-arg-turn="${Number(turn.serial)}"${busy ? ' disabled' : ''}>${ART.cross}<span>${esc(t('notOnBoard'))}</span></button><button type="button" class="ct-button ct-small${this.hintMode ? ' is-on' : ''}" data-ct-ui="hint" aria-pressed="${this.hintMode}">${ART.bulb}<span>${esc(this.hintMode ? t('hintOn') : t('hint'))}</span></button><button type="button" class="ct-button ct-small" data-ct-action="pass" data-ct-arg-turn="${Number(turn.serial)}"${busy ? ' disabled' : ''}>${esc(t('passFor', { name: guesser }))}</button></div>` : '';
-          return `${paused}${top}${lastLog(view)}${turn && view.phase === 'guess' ? `<p class="rs-judge-hint">${esc(t('judgeHint', { name: guesser }))}</p>` : ''}${confirm}${board(view, me.board, { keeper: true, selected: this.selectedTile, hintMode: this.hintMode, busy })}${tools}${prompt(view)}`;
+          const buzzer = buzz ? nameOf(view, buzz.playerNum) : '';
+          const confirm = selected && buzz && open ? `<div class="rs-confirm"><p>${esc(t('confirmHit', { name: buzzer, text: selected.text }))}</p><div class="rs-zone-row"><button type="button" class="ct-button ct-primary" data-ct-action="hit" data-ct-arg-group="${esc(selected.id)}" data-ct-arg-buzz="${Number(buzz.serial)}"${busy ? ' disabled' : ''}>${esc(t('confirmYes'))}</button><button type="button" class="ct-button" data-ct-ui="unselect">${esc(t('cancel'))}</button></div></div>` : '';
+          const miss = buzz && open ? `<button type="button" class="ct-button rs-miss" data-ct-action="miss" data-ct-arg-buzz="${Number(buzz.serial)}"${busy ? ' disabled' : ''}>${ART.cross}<span>${esc(t('notOnBoard'))}</span></button>` : '';
+          const tools = open ? `<div class="rs-judge">${miss}<button type="button" class="ct-button ct-small${this.hintMode ? ' is-on' : ''}" data-ct-ui="hint" aria-pressed="${this.hintMode}">${ART.bulb}<span>${esc(this.hintMode ? t('hintOn') : t('hint'))}</span></button></div>` : '';
+          const guide = open ? `<p class="rs-judge-hint">${esc(buzz ? t('judgeHint', { name: buzzer }) : t('keeperWait'))}</p>` : '';
+          return `${paused}${top}${lastLog(view)}${guide}${confirm}${board(view, me.board, { keeper: true, selected: this.selectedTile, hintMode: this.hintMode, busy })}${tools}${prompt(view)}`;
         }
-        const yours = me.myTurn && view.phase === 'guess' ? `<div class="rs-zone is-turn"><h3>${esc(t('yourTurn'))}</h3><p>${esc(t('yourTurnHint'))}</p><button type="button" class="ct-button ct-small" data-ct-action="pass" data-ct-arg-turn="${Number(turn.serial)}"${busy ? ' disabled' : ''}>${esc(t('pass'))}</button></div>` : '';
-        return `${paused}${top}${yours}${lastLog(view)}${prompt(view)}${board(view, view.board)}${myAnswers(me)}`;
+        let zone = '';
+        if (open && me.myBuzz) {
+          const mine = list(me.myAnswers);
+          zone = `<div class="rs-zone is-turn"><h3>${esc(t('yourBuzz'))}</h3><p>${esc(t('yourBuzzHint'))}</p>${mine.length ? `<p class="rs-not-yours">${esc(t('notYours', { list: mine.join(lang() === 'zh' ? '、' : ', ') }))}</p>` : ''}<button type="button" class="ct-button ct-small" data-ct-action="pass" data-ct-arg-buzz="${Number(buzz.serial)}"${busy ? ' disabled' : ''}>${esc(t('giveUp'))}</button></div>`;
+        } else if (open && buzz) zone = `<div class="rs-zone is-waiting"><p class="rs-wait-line">${esc(t('buzzingWait', { name: nameOf(view, buzz.playerNum) }))}</p></div>`;
+        else if (open && me.locked) zone = `<div class="rs-zone is-locked"><h3>${esc(t('lockedTitle'))}</h3><p>${esc(t('lockedHint'))}</p></div>`;
+        else if (open && me.isGuesser) zone = `<div class="rs-zone is-buzz"><button type="button" class="rs-buzz" data-ct-action="buzz"${busy || !me.canBuzz ? ' disabled' : ''}><span class="rs-buzz-icon" aria-hidden="true">🙋</span><span>${esc(t('buzzButton'))}</span></button><p>${esc(t('buzzHint'))}</p></div>`;
+        return `${paused}${top}${zone}${lastLog(view)}${prompt(view)}${board(view, view.board)}${myAnswers(me)}`;
       }
       return paused;
     }
@@ -444,7 +498,7 @@ var ROOM_SURVEY_UI = (() => {
 
   const SYNC = typeof CARD_TABLE !== 'undefined'
     ? CARD_TABLE.define({ game: 'roomsurvey', key: 'rs', engine: () => ROOM_SURVEY_ENGINE, extra: 'roomSurveyControlToken',
-      fields: ['questionId', 'text', 'answers', 'from', 'into', 'group', 'dropped', 'turn', 'settings', 'names', 'playerNum', 'active'] })
+      fields: ['questionId', 'text', 'answers', 'from', 'into', 'group', 'dropped', 'buzz', 'settings', 'names', 'playerNum', 'active'] })
     : null;
   return { t, dict, ART, Card, stage, SYNC, controlsSpec, settingsForm, readSettings, tally, lengthText };
 })();

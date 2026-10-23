@@ -7,6 +7,13 @@ ranked by how many gave them, and players try to name the top answers. Here the
 room writes the answers itself, so every guess is about the people in the call.
 Prompts and wording are original.
 
+2026-10-24 revision (user request): guessing is a buzz-in like Say It Without
+Saying It instead of fixed turns; the same answer may not be written in two of
+one player's boxes; merging is called stacking, and the Keeper's table shows the
+rank and worth each stack would get; every tile shows what a hit is worth.
+Scoring stays one point per writer, which already rises with the rank (the
+board is ranked by the number of writers); it is now shown on each tile.
+
 ## Entry and files
 
 `index.html` lists ROOM SURVEY last, after WORD LIMIT THEATER (👥 3–9).
@@ -26,7 +33,7 @@ whose card-table branch follows the game's table (see card-table-mode.md).
   page through `body.rs-card-page`).
 - `assets/room-survey/` — Hub/header mark and a self-hosted Latin subset of
   Patrick Hand with its SIL OFL licence.
-- Cache tag `rs-1` (game) and `ct-1` (shared table) in both entry pages.
+- Cache tag `rs-2` (game) and `ct-2` (shared table) in both entry pages.
 
 ## Round flow
 
@@ -35,29 +42,41 @@ whose card-table branch follows the game's table (see card-table-mode.md).
    Keeper's card shows three prompts from the chosen pack (5 rerolls) or lets
    them write their own (≤100 characters, markup removed).
 2. **Write** (60/90/120/180 s, default 90). Everyone, the Keeper included,
-   privately writes 1–3 short answers (default 2, ≤40 characters each) and can
-   edit until time is up. Typed answers go in by themselves just before the end;
-   when everyone has sent, the table moves on.
+   privately writes 1–3 short answers (default 2, ≤40 characters each), a
+   different one in each box: two boxes that are the same answer ignoring case,
+   width and punctuation (“Keys” / “keys!”) are flagged on the card while
+   typing, Send waits, and the rules refuse them (`duplicate`). Answers can be
+   edited until time is up. Typed answers go in by themselves just before the
+   end (a repeat is left out then rather than losing them all); when everyone
+   has sent, the table moves on.
 3. **Sort** (2 min, Keeper only). Answers that differ only in case, width or
-   punctuation are already merged. The Keeper merges slips that mean the same
-   thing (tap one, then its twin), splits a merge back, and can remove or restore
-   a slip. Fewer than two different answers cancels the round.
-4. **Guess** (3/4/5/6/8 min, default 4; optional turn clock 15/20/30 s, default
-   20). The board is ranked by how many people wrote each answer (ties share a
-   rank) and shows only the length of each hidden answer. Turns go round from
-   after the Keeper. The guesser says an answer out loud; the Keeper taps the
-   tile and confirms. A hit scores **one point per person who wrote it**;
-   guessing an answer you wrote yourself **burns** it (revealed, no points). “Not
-   on the board”, skip (Keeper or guesser) and running out of turn time pass the
-   turn. The Keeper can reveal a first letter as a hint. The round ends when the
-   board is clear, the clock runs out or a player ends it.
+   punctuation are already stacked. The Keeper stacks slips that mean the same
+   thing (tap one, then its twin; the others show “Stack here”), unstacks, and
+   can remove or restore a slip. The table lists the biggest stacks first with
+   the rank and worth each would have on the board. Fewer than two different
+   answers cancels the round.
+4. **Guess** (3/4/5/6/8 min, default 4). The board is ranked by how many people
+   wrote each answer (ties share a rank); each hidden tile shows its length and
+   what a hit is worth. Any guesser buzzes in from their own card (“I've got
+   one!”); the first one holds the buzz (others get `taken`) and says an answer
+   out loud, with 0/10/15/20/30 s to answer (default 15). The Keeper taps the
+   tile and confirms, or taps “Not on the board”; the buzzer may give up. A hit
+   scores **one point per person who wrote it** (higher on the board = more) and
+   opens buzzing to everyone again. A miss, giving up or running out of time
+   locks that buzzer until every other guesser has missed once too, then
+   everyone is open again. The rules know the writers: an answer the buzzer
+   wrote themselves **burns** (revealed, no points, buzzer locked), so nobody
+   can repeat it for points. The Keeper can reveal a first letter as a hint at
+   any time. The round ends when the board is clear, the clock runs out, no
+   guesser is left, or a player ends it.
 5. **Result**: every answer is revealed with the points; round points are added
    to the scores now. Who wrote what stays hidden unless the room turns on “show
    who wrote each answer” (off by default so people write freely).
 
-The Keeper judges and does not guess. The Keeper leaving cancels the round; the
-current guesser leaving passes their turn. Prompts used at the table are not
-offered again soon (60 remembered, also across Restart).
+The Keeper judges and does not guess. The Keeper leaving cancels the round; a
+buzzer leaving frees the buzz. Prompts used at the table are not offered again
+soon (60 remembered, also across Restart). A table saved by the earlier version
+in the middle of guessing drops its fixed turn and carries on with buzzing.
 
 ## Privacy
 
@@ -68,9 +87,11 @@ no-server trade-off in card-table-mode.md applies.
 
 ## Validation
 
-`node --test tests/room-survey-engine.test.cjs` (12): content, Keeper rotation,
-choosing/reroll/custom, writing and auto-advance, auto-merge/merge/split/remove,
-ranking, turn order, points per writer, burned own answers, turn and round
-clocks, people leaving, privacy of the shared screen and guessers, table
-controls and fencing, Chinese/English normalisation and hints. The shared table,
+`node --test tests/room-survey-engine.test.cjs` (13): content, Keeper rotation,
+choosing/reroll/custom, writing (repeated answers refused) and auto-advance,
+auto-stacking/stack/unstack/remove with rank preview, ranking and worth,
+buzz-in (one holder, `taken`, locks and reopening, hits, burned own answers,
+give-up), answer and round clocks with pause, people leaving, privacy of the
+shared screen and guessers, table controls and fencing, Chinese/English
+normalisation and hints, tables saved by the earlier version. The shared table,
 page wiring and browser checks are in card-table-mode.md.

@@ -15,10 +15,14 @@ to stay open.
   namespace), live countdowns/rings/cool-downs (`paintTimers`), the folded
   **Table controls** panel (`Controls`), the player `Card` base class, final
   standings and the optional host page controller (`host(spec)`, including the
-  one-device `?demo=1`).
+  one-device `?demo=1`). A game's settings form receives the view
+  (`settingsForm(settings, view)`) and may name what else it depends on
+  (`settingsScope(view)`, e.g. how many players are in), so WORD LIMIT
+  THEATER's points boxes follow the room size. Shared error strings include
+  `duplicate`, `taken` and `locked` for ROOM SURVEY's writing and buzzing.
 - `card-table.css` — structure shared by both games; each game styles itself
   through `--ct-*` tokens on its own page and card class.
-- Cache tag `ct-1` on these three files in both host pages and `play.html`.
+- Cache tag `ct-2` on these three files in both host pages and `play.html`.
 
 ## Authority
 
@@ -48,7 +52,7 @@ to stay open.
 ## Table controls (every active card, and the host page)
 
 Pause/Resume, add time, end the current phase (two taps where it would cut a
-writing phase, a scene, a vote or a guessing round short), sit a player out (two
+writing phase, a scene or a guessing round short), sit a player out (two
 taps) or back in, next-round settings, cancel this round, restart with scores at
 0 and end the game (two taps each). ROOM SURVEY adds “Make next Keeper”. A
 paused card shows Resume, a card sitting out shows “I'm back”, the final
@@ -79,3 +83,4 @@ This is the same trade-off as WHO KNOWS?.
   overflow, clipped-text, tap-target (≥44 px), occlusion and rendered text
   contrast (glyph pixels against what is really behind them; 4.5:1, 3:1 for
   large text) checks; findings are collected and fail the run at the end.
+  Text under a transient fixed toast, including its drop shadow, is not judged.

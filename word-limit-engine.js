@@ -3,18 +3,21 @@
  * Everyone improvises one scene together, out loud. Each player is dealt a
  * role and a line limit: every line they say must be exactly that many words
  * (or Chinese characters). The limits differ, so one actor can only say "No!"
- * while another has to fill eight words. Part-way through, a plot twist lands
- * and the limits shuffle. When the scene ends, everyone votes for an MVP.
- * Anyone can call a foul on a line that broke its limit.
+ * while another has to fill eight words. During the scene the limits swap a
+ * few times. After each line, the actor taps a button on their own card and
+ * scores the points of their current limit (by default one point per word, so
+ * long limits score more; the table can set every limit's points). Anyone can
+ * call a foul on a line that broke its limit; it only counts.
  *
- * The exercise is a classic improv game ("limited words"); every scene, role,
- * twist and word of copy here is original.
+ * The exercise is a classic improv game ("limited words"); every scene, role
+ * and word of copy here is original. (The bilingual twist cards in the content
+ * file are not used by these rules for now.)
  *
  * Same table model as WHO KNOWS?: the canonical state lives in one table node,
  * any active player may run the table from their card (pause, add time, sit
  * someone out, change settings, start over), and every command carries its own
  * captured time and seed, so a retried transaction gives the same result.
- * Nothing in this game is secret: roles and limits are public on purpose.
+ * Nothing in this game is secret: roles, limits and points are public.
  */
 var WORD_LIMIT_ENGINE = (() => {
   'use strict';
@@ -23,10 +26,12 @@ var WORD_LIMIT_ENGINE = (() => {
     minPlayers: 2, maxPlayers: 9,
     sceneMinutes: Object.freeze([2, 3, 4, 5]), defaultSceneMinutes: 3,
     units: Object.freeze(['words', 'chars']),
-    castMs: 20000, voteMs: 30000,
-    // When the automatic twist and the limit shuffle land, as a share of the scene.
-    twistAt: 0.35, shuffleAt: 0.65,
-    twistCooldownMs: 15000, foulCooldownMs: 2500,
+    // How many times the limits swap during a scene, spread evenly over it.
+    shuffleCounts: Object.freeze([0, 1, 2, 3, 4]), defaultShuffles: 3,
+    // Every limit a ladder can deal; each one has its own points per line.
+    limitValues: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), pointsMax: 50,
+    castMs: 20000,
+    lineCooldownMs: 3000, foulCooldownMs: 2500,
     maxRerolls: 5,
     extendSceneMs: 60000, extendOtherMs: 15000, resumeFloorMs: 3000,
     // One limit per player in the scene: mostly short, one long line for contrast.
@@ -35,11 +40,15 @@ var WORD_LIMIT_ENGINE = (() => {
       5: Object.freeze([1, 2, 3, 4, 7]), 6: Object.freeze([1, 2, 3, 4, 5, 8]), 7: Object.freeze([1, 2, 3, 4, 5, 6, 9]),
       8: Object.freeze([1, 2, 3, 4, 5, 6, 7, 10]), 9: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 10]),
     }),
-    historyMax: 30, seenMax: 16, foulLogMax: 80, sceneMemory: 30, twistMemory: 30,
+    historyMax: 30, seenMax: 16, foulLogMax: 80, sceneMemory: 30,
   });
-  const TIMED = Object.freeze(['cast', 'scene', 'vote']);
+  const TIMED = Object.freeze(['cast', 'scene']);
+  // A table saved by the earlier version may still be in its 30-second MVP
+  // vote; its clock still runs out into the result.
+  const TICKED = Object.freeze([...TIMED, 'vote']);
   const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
+  const own = (object, key) => !!object && Object.prototype.hasOwnProperty.call(object, key);
   const roster = state => list(state.roster);
   const seat = (state, n) => roster(state).find(player => player.playerNum === n) || null;
   const isActive = (state, n) => seat(state, n)?.active === true;
@@ -62,10 +71,14 @@ var WORD_LIMIT_ENGINE = (() => {
   }
 
   // ── settings ───────────────────────────────────────────────────────────
+  // By default a line scores one point per word: a 6-word line is worth 6.
+  const defaultPoints = () => Object.fromEntries(CONFIG.limitValues.map(n => [n, n]));
+  const validPoints = value => Number.isInteger(value) && value >= 0 && value <= CONFIG.pointsMax;
   function defaultSettings(unit = 'words') {
-    return { sceneMinutes: CONFIG.defaultSceneMinutes, unit: CONFIG.units.includes(unit) ? unit : 'words', twists: true, shuffle: true, vote: true };
+    return { sceneMinutes: CONFIG.defaultSceneMinutes, unit: CONFIG.units.includes(unit) ? unit : 'words', shuffles: CONFIG.defaultShuffles, points: defaultPoints() };
   }
-  // Omitted fields keep the current choice. Invalid values throw.
+  // Omitted fields keep the current choice. Invalid values throw. `points` may
+  // name only some limits; the others keep their points.
   function parseSettings(input = {}, current = null) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('invalid_options');
     const base = Object.assign(defaultSettings(), current || {});
@@ -73,10 +86,34 @@ var WORD_LIMIT_ENGINE = (() => {
     if (!CONFIG.sceneMinutes.includes(minutes)) throw new Error('invalid_options');
     const unit = input.unit === undefined ? base.unit : input.unit;
     if (!CONFIG.units.includes(unit)) throw new Error('invalid_options');
-    for (const key of ['twists', 'shuffle', 'vote']) if (input[key] !== undefined && typeof input[key] !== 'boolean') throw new Error('invalid_options');
-    return { sceneMinutes: minutes, unit, twists: input.twists ?? base.twists !== false, shuffle: input.shuffle ?? base.shuffle !== false, vote: input.vote ?? base.vote !== false };
+    // Tables saved by the earlier version had a single on/off `shuffle`.
+    const legacy = flag => flag === false ? 0 : CONFIG.defaultShuffles;
+    let shuffles;
+    if (input.shuffles !== undefined) shuffles = Number(input.shuffles);
+    else if (typeof input.shuffle === 'boolean') shuffles = legacy(input.shuffle);
+    else if (current && current.shuffles === undefined && typeof current.shuffle === 'boolean') shuffles = legacy(current.shuffle);
+    else shuffles = Number(base.shuffles);
+    if (!CONFIG.shuffleCounts.includes(shuffles)) throw new Error('invalid_options');
+    const points = defaultPoints();
+    for (const [key, value] of Object.entries(base.points && typeof base.points === 'object' ? base.points : {})) {
+      if (CONFIG.limitValues.includes(Number(key)) && validPoints(Number(value))) points[Number(key)] = Number(value);
+    }
+    if (input.points !== undefined) {
+      if (!input.points || typeof input.points !== 'object' || Array.isArray(input.points)) throw new Error('invalid_options');
+      for (const [key, value] of Object.entries(input.points)) {
+        const limit = Number(key), worth = typeof value === 'string' && value.trim() === '' ? NaN : Number(value);
+        if (!CONFIG.limitValues.includes(limit) || !validPoints(worth)) throw new Error('invalid_options');
+        points[limit] = worth;
+      }
+    }
+    return { sceneMinutes: minutes, unit, shuffles, points };
   }
   const ladder = count => CONFIG.ladders[Math.max(1, Math.min(CONFIG.maxPlayers, count))].slice();
+  // The points one line at this limit scores in this scene.
+  function pointsFor(round, limit) {
+    const value = Number(round?.value?.[limit]);
+    return validPoints(value) ? value : Math.max(0, Number(limit) || 0);
+  }
 
   // ── stage helpers ──────────────────────────────────────────────────────
   function bump(state, now) { state.turnId++; state.lastChangeAt = now; }
@@ -85,7 +122,7 @@ var WORD_LIMIT_ENGINE = (() => {
     state.deadline = Number.isFinite(ms) ? now + ms : null;
     state.pausedFrom = null; state.remainingMs = null;
   }
-  // The scene clock is a stopwatch, so a pause never loses time or events.
+  // The scene clock is a stopwatch, so a pause never loses time or swaps.
   const elapsed = (round, now) => round.runBase + (round.runSince != null ? Math.max(0, now - round.runSince) : 0);
   function sceneDeadline(round) {
     const target = round.pending.length ? Math.min(round.pending[0].at, round.sceneMs) : round.sceneMs;
@@ -98,8 +135,8 @@ var WORD_LIMIT_ENGINE = (() => {
   }
   const inRound = (state, n) => !!state.round && list(state.round.players).includes(n);
   const livePlayers = state => list(state.round?.players).filter(n => isActive(state, n));
-  const voters = state => livePlayers(state);
-  const targets = (state, voter) => livePlayers(state).filter(n => n !== voter);
+  // A round that has not been settled yet (its points are still running).
+  const liveRound = state => !!state.round && !state.round.outcome;
 
   // ── dealing ────────────────────────────────────────────────────────────
   function pickScene(state, round, random) {
@@ -137,11 +174,11 @@ var WORD_LIMIT_ENGINE = (() => {
     state.roundNo++;
     const round = {
       no: state.roundNo, sceneId: null, unit: s.unit, sceneMs: s.sceneMinutes * 60000,
-      twistsOn: s.twists, shuffleOn: s.shuffle, voteOn: s.vote,
+      planned: s.shuffles, value: copy(s.points),
       players, roles: {}, limits: {}, prevLimits: {}, rerolls: 0,
       runBase: 0, runSince: null, startedAt: null, endedAt: null, endReason: null,
-      pending: [], twists: [], lastTwistAt: null, shuffles: 0, event: null,
-      fouls: {}, foulLog: [], votes: {}, points: {}, mvp: [], outcome: null,
+      pending: [], shuffles: 0, event: null,
+      fouls: {}, foulLog: [], lines: {}, gained: {}, lastLine: {}, best: [], outcome: null,
     };
     pickScene(state, round, random);
     dealRoles(round, random);
@@ -152,19 +189,6 @@ var WORD_LIMIT_ENGINE = (() => {
 
   // ── the scene ──────────────────────────────────────────────────────────
   const nextSerial = round => (round.event?.serial || 0) + 1;
-  function addTwist(state, now, random, by) {
-    const round = state.round;
-    const used = new Set(state.used.twists), seenHere = new Set(round.twists.map(item => item.id));
-    let pool = CONTENT.TWISTS.filter(item => !used.has(item.id) && !seenHere.has(item.id));
-    if (!pool.length) pool = CONTENT.TWISTS.filter(item => !seenHere.has(item.id));
-    if (!pool.length) return false;
-    const pick = pool[Math.floor(random() * pool.length)];
-    round.twists.push({ id: pick.id, by, at: elapsed(round, now) });
-    round.lastTwistAt = now;
-    state.used.twists = [...state.used.twists.filter(id => id !== pick.id), pick.id].slice(-CONFIG.twistMemory);
-    round.event = { kind: 'twist', id: pick.id, by, ts: now, serial: nextSerial(round) };
-    return true;
-  }
   // Everyone still playing gets a different limit than the one they had.
   function shuffleLimits(state, now, random) {
     const round = state.round, live = livePlayers(state);
@@ -181,21 +205,19 @@ var WORD_LIMIT_ENGINE = (() => {
     round.shuffles++;
     round.event = { kind: 'shuffle', ts: now, serial: nextSerial(round) };
   }
+  // The swaps are spread evenly: with three in a 3-minute scene, at 0:45, 1:30 and 2:15.
   function beginScene(state, now) {
-    const round = state.round;
+    const round = state.round, count = Number(round.planned) || 0;
     round.runBase = 0; round.runSince = now; round.startedAt = now;
     round.pending = [];
-    if (round.twistsOn) round.pending.push({ type: 'twist', at: Math.round(round.sceneMs * CONFIG.twistAt) });
-    if (round.shuffleOn && livePlayers(state).length >= 2) round.pending.push({ type: 'shuffle', at: Math.round(round.sceneMs * CONFIG.shuffleAt) });
-    round.pending.sort((a, b) => a.at - b.at);
+    if (livePlayers(state).length >= 2) for (let k = 1; k <= count; k++) round.pending.push({ type: 'shuffle', at: Math.round(round.sceneMs * k / (count + 1)) });
     enterScene(state);
   }
   function tickScene(state, now, random) {
     const round = state.round, at = elapsed(round, now);
     while (round.pending.length && round.pending[0].at <= at) {
       const event = round.pending.shift();
-      if (event.type === 'twist') addTwist(state, now, random, 0);
-      else if (event.type === 'shuffle') shuffleLimits(state, now, random);
+      if (event.type === 'shuffle' && at < round.sceneMs) shuffleLimits(state, now, random);
     }
     if (at >= round.sceneMs) endScene(state, now, 'time');
     else state.deadline = sceneDeadline(round);
@@ -204,29 +226,29 @@ var WORD_LIMIT_ENGINE = (() => {
     const round = state.round;
     round.runBase = Math.min(round.sceneMs, elapsed(round, now)); round.runSince = null; round.pending = [];
     round.endReason = reason; round.endedAt = now;
-    if (round.voteOn && voters(state).length >= 2) enter(state, 'vote', now, CONFIG.voteMs);
-    else finishRound(state, now);
+    finishRound(state, now);
   }
-  const allVoted = state => voters(state).every(n => Object.prototype.hasOwnProperty.call(state.round.votes, n));
-  function finishRound(state, now, { voided = false, reason = null } = {}) {
+  // Adds the scene's points to the scores (unless cancelled) and closes it.
+  function settle(state, now, { voided = false, reason = null } = {}) {
     const round = state.round;
-    const counts = {};
-    if (!voided) for (const target of Object.values(round.votes)) if (Number.isInteger(target) && target > 0) counts[target] = (counts[target] || 0) + 1;
-    const top = Object.values(counts).length ? Math.max(...Object.values(counts)) : 0;
-    round.points = counts;
-    for (const [n, value] of Object.entries(counts)) state.scores[n] = (state.scores[n] || 0) + value;
-    round.mvp = top > 0 ? Object.keys(counts).map(Number).filter(n => counts[n] === top).sort((a, b) => a - b) : [];
     if (round.runSince != null) { round.runBase = Math.min(round.sceneMs, elapsed(round, now)); round.runSince = null; }
     round.pending = [];
     if (voided) { round.endReason = reason || 'host'; round.endedAt = round.endedAt || now; }
-    round.outcome = { voided, reason: voided ? round.endReason : null, mvp: round.mvp, top };
-    state.history = [...list(state.history), { no: round.no, sceneId: round.sceneId, mvp: round.mvp, voided }].slice(-CONFIG.historyMax);
+    else for (const [n, value] of Object.entries(round.gained)) if (value) state.scores[n] = (state.scores[n] || 0) + value;
+    const values = voided ? [] : Object.values(round.gained).map(Number);
+    const top = values.length ? Math.max(...values) : 0;
+    round.best = top > 0 ? Object.keys(round.gained).map(Number).filter(n => Number(round.gained[n]) === top).sort((a, b) => a - b) : [];
+    round.outcome = { voided, reason: voided ? round.endReason : null, best: round.best, top };
+    state.history = [...list(state.history), { no: round.no, sceneId: round.sceneId, best: round.best, top, voided }].slice(-CONFIG.historyMax);
+  }
+  function finishRound(state, now, options = {}) {
+    settle(state, now, options);
     enter(state, 'result', now);
   }
 
   // ── create / apply ─────────────────────────────────────────────────────
-  // `previous` (an earlier game at this table) only carries which scenes and
-  // twists were already used, so a restart doesn't repeat them.
+  // `previous` (an earlier game at this table) only carries which scenes were
+  // already used, so a restart doesn't repeat them.
   function create({ id, roster: seats, settings, now, seed, previous } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(seats) || seats.length < 1 || seats.length > CONFIG.maxPlayers) throw new Error('invalid_roster');
     if (seats.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1 || player.playerNum > CONFIG.maxPlayers)
@@ -238,10 +260,7 @@ var WORD_LIMIT_ENGINE = (() => {
       roster: seats.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false }))
         .sort((a, b) => a.playerNum - b.playerNum),
       scores: {},
-      used: {
-        scenes: list(previous?.used?.scenes).filter(item => typeof item === 'string' && CONTENT.scene(item)).slice(-CONFIG.sceneMemory),
-        twists: list(previous?.used?.twists).filter(item => typeof item === 'string' && CONTENT.twist(item)).slice(-CONFIG.twistMemory),
-      },
+      used: { scenes: list(previous?.used?.scenes).filter(item => typeof item === 'string' && CONTENT.scene(item)).slice(-CONFIG.sceneMemory) },
       roundNo: 0, round: null, history: [],
       phase: 'cast', deadline: null, pausedFrom: null, remainingMs: null, stopped: false,
       seen: {}, replies: {},
@@ -253,19 +272,23 @@ var WORD_LIMIT_ENGINE = (() => {
   function normalize(state) {
     state.roster = roster(state); state.history = list(state.history);
     state.scores = state.scores || {}; state.seen = state.seen || {}; state.replies = state.replies || {};
-    state.used = { scenes: list(state.used?.scenes), twists: list(state.used?.twists) };
+    state.used = { scenes: list(state.used?.scenes) };
+    // An earlier version's settings (twists, an on/off shuffle, a vote) read as today's.
+    try { state.settings = parseSettings({}, state.settings); } catch (_) { state.settings = defaultSettings(state.settings?.unit); }
     const round = state.round;
     if (round) {
-      for (const key of ['players', 'pending', 'twists', 'foulLog', 'mvp']) round[key] = list(round[key]);
-      for (const key of ['roles', 'limits', 'prevLimits', 'fouls', 'votes', 'points']) round[key] = round[key] || {};
+      for (const key of ['players', 'pending', 'foulLog', 'best']) round[key] = list(round[key]);
+      for (const key of ['roles', 'limits', 'prevLimits', 'fouls', 'lines', 'gained', 'lastLine']) round[key] = round[key] || {};
+      if (!round.value || typeof round.value !== 'object') round.value = defaultPoints();
     }
   }
-  const PLAYER_COMMANDS = new Set(['reroll', 'twist', 'foul', 'vote', 'next']);
+  const PLAYER_COMMANDS = new Set(['reroll', 'line', 'foul', 'next']);
   const TABLE_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'exclude', 'restart', 'settings', 'stop']);
-  const HOST_COMMANDS = new Set([...TABLE_COMMANDS, 'reroll', 'twist', 'foul', 'next', 'rename']);
+  const HOST_COMMANDS = new Set([...TABLE_COMMANDS, 'reroll', 'foul', 'next', 'rename']);
   // The table runs without a host page: any active player may use the table
   // commands from their own card, and anyone seated may tick an expired clock.
-  // Only the Hub's rename stays with the host page.
+  // A line is scored only by the actor who said it. Only the Hub's rename
+  // stays with the host page.
   function allowed(state, actor, type, input) {
     if (actor === 0) return HOST_COMMANDS.has(type);
     if (PLAYER_COMMANDS.has(type)) return isActive(state, actor);
@@ -285,7 +308,7 @@ var WORD_LIMIT_ENGINE = (() => {
     const type = String(input.type || '');
     if (type === 'tick') {
       // Idle ticks never write.
-      if (input.stage !== current.stage || !TIMED.includes(current.phase) || !(current.deadline > 0) || now < current.deadline) return current;
+      if (input.stage !== current.stage || !TICKED.includes(current.phase) || !(current.deadline > 0) || now < current.deadline) return current;
     }
     const state = copy(current);
     normalize(state);
@@ -301,7 +324,7 @@ var WORD_LIMIT_ENGINE = (() => {
     else switch (type) {
       case 'tick':
       case 'close': {
-        if (!TIMED.includes(state.phase)) { fail('not_available'); break; }
+        if (!TICKED.includes(state.phase)) { fail('not_available'); break; }
         if (state.phase === 'cast') beginScene(state, now);
         else if (state.phase === 'scene') { if (type === 'tick') tickScene(state, now, random); else endScene(state, now, 'host'); }
         else finishRound(state, now);
@@ -316,10 +339,15 @@ var WORD_LIMIT_ENGINE = (() => {
         state.deadline = now + CONFIG.castMs;
         break;
       }
-      case 'twist': {
-        if (state.phase !== 'scene') { fail('not_available'); break; }
-        if (round.lastTwistAt != null && now - round.lastTwistAt < CONFIG.twistCooldownMs) { fail('cooldown'); break; }
-        if (!addTwist(state, now, random, actor)) fail('not_available');
+      case 'line': {
+        // "I said a line": scores the points of the limit this actor has now.
+        if (state.phase !== 'scene' || !inRound(state, actor) || !isActive(state, actor)) { fail('not_available'); break; }
+        const last = round.lastLine[actor];
+        if (last && now - Number(last.ts) < CONFIG.lineCooldownMs) { fail('cooldown'); break; }
+        const limit = round.limits[actor], worth = pointsFor(round, limit);
+        round.lines[actor] = (Number(round.lines[actor]) || 0) + 1;
+        round.gained[actor] = (Number(round.gained[actor]) || 0) + worth;
+        round.lastLine[actor] = { ts: now, points: worth, limit };
         break;
       }
       case 'foul': {
@@ -332,20 +360,13 @@ var WORD_LIMIT_ENGINE = (() => {
         round.event = { kind: 'foul', target, by: actor, ts: now, serial: nextSerial(round) };
         break;
       }
-      case 'vote': {
-        const target = Number(input.target);
-        if (state.phase !== 'vote' || !voters(state).includes(actor) || !(target === 0 || targets(state, actor).includes(target))) { fail('not_available'); break; }
-        round.votes[actor] = target;
-        if (allVoted(state)) finishRound(state, now);
-        break;
-      }
       case 'next': {
         if (state.phase !== 'result') { fail('not_available'); break; }
         try { startRound(state, now, random); } catch (e) { fail(e.message); }
         break;
       }
       case 'pause': {
-        if (!TIMED.includes(state.phase)) { fail('not_available'); break; }
+        if (!TICKED.includes(state.phase)) { fail('not_available'); break; }
         const from = state.phase;
         let remaining;
         if (from === 'scene') {
@@ -363,14 +384,11 @@ var WORD_LIMIT_ENGINE = (() => {
           if (round.sceneMs - round.runBase < CONFIG.resumeFloorMs) round.sceneMs = round.runBase + CONFIG.resumeFloorMs;
           round.runSince = now;
           enterScene(state);
-        } else {
-          enter(state, from, now, Math.max(CONFIG.resumeFloorMs, state.remainingMs || 0));
-          if (from === 'vote' && allVoted(state)) finishRound(state, now);
-        }
+        } else enter(state, from, now, Math.max(CONFIG.resumeFloorMs, state.remainingMs || 0));
         break;
       }
       case 'extend': {
-        if (!TIMED.includes(state.phase)) { fail('not_available'); break; }
+        if (!TICKED.includes(state.phase)) { fail('not_available'); break; }
         if (state.phase === 'scene') { round.sceneMs += CONFIG.extendSceneMs; state.deadline = sceneDeadline(round); }
         else state.deadline = Math.max(state.deadline || now, now) + CONFIG.extendOtherMs;
         break;
@@ -383,12 +401,8 @@ var WORD_LIMIT_ENGINE = (() => {
       case 'exclude': {
         const number = Number(input.playerNum), want = input.active === true, player = seat(state, number);
         if (!player || player.active === want) { fail('not_available'); break; }
+        // Points already scored in this scene stay with the player.
         player.active = want;
-        if (!want && round && !['result', 'finished'].includes(state.phase)) {
-          delete round.votes[number];
-          for (const [voter, target] of Object.entries(round.votes)) if (target === number) delete round.votes[voter];
-          if (state.phase === 'vote' && allVoted(state)) finishRound(state, now);
-        }
         break;
       }
       case 'settings': {
@@ -415,7 +429,8 @@ var WORD_LIMIT_ENGINE = (() => {
       }
       case 'stop': {
         if (state.phase === 'finished') { fail('not_available'); break; }
-        if (round && round.runSince != null) { round.runBase = Math.min(round.sceneMs, elapsed(round, now)); round.runSince = null; }
+        // Lines already said in the scene still count when the game ends early.
+        if (round && !round.outcome) settle(state, now);
         state.stopped = true;
         enter(state, 'finished', now);
         break;
@@ -429,8 +444,11 @@ var WORD_LIMIT_ENGINE = (() => {
   }
 
   // ── projections ────────────────────────────────────────────────────────
+  // While a scene runs, its points already count in the totals people see.
   function standings(state) {
-    const rows = roster(state).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active, score: state.scores?.[player.playerNum] || 0 }));
+    const live = liveRound(state) ? state.round.gained || {} : {};
+    const rows = roster(state).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active,
+      score: (state.scores?.[player.playerNum] || 0) + (Number(live[player.playerNum]) || 0) }));
     const best = rows.length ? Math.max(...rows.map(row => row.score)) : 0;
     return rows.map(row => Object.assign(row, { leading: best > 0 && row.score === best }))
       .sort((a, b) => b.score - a.score || a.playerNum - b.playerNum);
@@ -442,65 +460,77 @@ var WORD_LIMIT_ENGINE = (() => {
     return round.players.map(n => ({
       playerNum: n, name: seat(state, n)?.name || '', active: isActive(state, n),
       role: roleView(scene?.roles[round.roles[n]]), limit: round.limits[n] ?? null,
-      prev: Object.prototype.hasOwnProperty.call(round.prevLimits, n) ? round.prevLimits[n] : null,
-      fouls: round.fouls[n] || 0,
+      prev: own(round.prevLimits, n) ? round.prevLimits[n] : null,
+      worth: round.limits[n] != null ? pointsFor(round, round.limits[n]) : 0,
+      fouls: round.fouls[n] || 0, lines: Number(round.lines?.[n]) || 0, gained: Number(round.gained?.[n]) || 0,
+      lastLine: round.lastLine?.[n] ? { ts: Number(round.lastLine[n].ts), points: Number(round.lastLine[n].points) || 0 } : null,
     }));
   }
+  // The points of each limit dealt in this scene, lowest limit first.
+  function valuesView(round) {
+    if (!round) return [];
+    return [...new Set(Object.values(round.limits).map(Number))].sort((a, b) => a - b).map(limit => ({ limit, points: pointsFor(round, limit) }));
+  }
+  const viewSettings = settings => { try { return parseSettings({}, settings); } catch (_) { return defaultSettings(settings?.unit); } };
   function view(state, actor) {
-    const n = Number(actor), round = state.round, phase = state.phase;
-    const live = phase === 'paused' ? state.pausedFrom : phase;
+    const n = Number(actor), round = state.round, phase = state.phase, settings = viewSettings(state.settings);
     const scene = round ? CONTENT.scene(round.sceneId) : null;
     const running = phase === 'scene' && round?.runSince != null;
     const reveal = phase === 'result' || phase === 'finished';
-    const who = live === 'vote' ? voters(state) : [];
+    // (A table saved by the earlier version may still hold a scripted twist; it is skipped.)
+    const swap = round ? list(round.pending).find(event => event.type === 'shuffle') : null;
+    const nextAt = swap && round.runSince == null && phase === 'paused' && state.pausedFrom === 'scene' ? Math.max(0, swap.at - round.runBase) : null;
     const wl = {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, stage: state.stage, phase,
       pausedFrom: phase === 'paused' ? state.pausedFrom : null,
-      settings: copy(state.settings), roundNo: state.roundNo,
-      unit: round?.unit || state.settings.unit,
+      settings, roundNo: state.roundNo,
+      unit: round?.unit || settings.unit,
       scene: scene ? { id: scene.id, slug: copy(scene.slug), title: copy(scene.title), line: copy(scene.line) } : null,
       cast: castView(state),
-      deadline: TIMED.includes(phase) ? state.deadline : null,
+      values: valuesView(round),
+      deadline: TICKED.includes(phase) ? state.deadline : null,
       remainingMs: phase === 'paused' ? state.remainingMs : null,
       sceneMs: round?.sceneMs ?? null,
       sceneEndsAt: running ? round.runSince + (round.sceneMs - round.runBase) : null,
       sceneLeftMs: round && !running ? Math.max(0, round.sceneMs - round.runBase) : null,
-      twists: round ? round.twists.map(item => { const card = CONTENT.twist(item.id); return { id: item.id, en: card?.en || '', zh: card?.zh || '', by: item.by, at: item.at }; }) : [],
+      // When the limits swap next (a time while the scene runs, a duration while paused).
+      nextShuffleAt: running && swap ? round.runSince + (swap.at - round.runBase) : null,
+      nextShuffleInMs: nextAt,
+      shuffles: round?.shuffles || 0, planned: round ? Number(round.planned) || 0 : settings.shuffles,
       event: round?.event ? copy(round.event) : null,
-      twistReadyAt: round?.lastTwistAt != null ? round.lastTwistAt + CONFIG.twistCooldownMs : 0,
-      shuffles: round?.shuffles || 0,
       rerollsLeft: round ? Math.max(0, CONFIG.maxRerolls - round.rerolls) : 0,
-      ballots: live === 'vote' ? { cast: who.filter(voter => Object.prototype.hasOwnProperty.call(round.votes, voter)).length, total: who.length, voted: who.filter(voter => Object.prototype.hasOwnProperty.call(round.votes, voter)) } : null,
-      result: reveal && round?.outcome ? { outcome: copy(round.outcome), votes: copy(round.votes), points: copy(round.points), mvp: copy(round.mvp), endReason: round.endReason } : null,
+      lineCooldownMs: CONFIG.lineCooldownMs,
+      result: reveal && round?.outcome ? { outcome: copy(round.outcome), best: list(round.best), endReason: round.endReason } : null,
       standings: standings(state),
-      history: list(state.history).slice(-12).map(entry => { const item = CONTENT.scene(entry.sceneId); return { no: entry.no, title: item ? copy(item.title) : null, mvp: list(entry.mvp), voided: !!entry.voided }; }),
-      roster: roster(state).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active, score: state.scores?.[player.playerNum] || 0, inRound: inRound(state, player.playerNum) })),
+      history: list(state.history).slice(-12).map(entry => { const item = CONTENT.scene(entry.sceneId); return { no: entry.no, title: item ? copy(item.title) : null, best: list(entry.best), voided: !!entry.voided }; }),
+      roster: standings(state).map(row => ({ playerNum: row.playerNum, name: row.name, active: row.active, score: row.score, inRound: inRound(state, row.playerNum) }))
+        .sort((a, b) => a.playerNum - b.playerNum),
       stopped: phase === 'finished' && state.stopped === true,
       reply: (state.replies || {})[n] || null,
     };
     if (n > 0) {
       const mine = seat(state, n), active = mine?.active === true, here = inRound(state, n);
-      const me = {
+      const limit = here ? round.limits[n] ?? null : null, last = here ? round.lastLine?.[n] : null;
+      wl.me = {
         active, inRound: here,
         role: here ? roleView(scene?.roles[round.roles[n]]) : null,
-        limit: here ? round.limits[n] ?? null : null,
-        prev: here && Object.prototype.hasOwnProperty.call(round.prevLimits, n) ? round.prevLimits[n] : null,
+        limit, worth: limit != null ? pointsFor(round, limit) : 0,
+        prev: here && own(round.prevLimits, n) ? round.prevLimits[n] : null,
         fouls: here ? round.fouls[n] || 0 : 0,
+        lines: here ? Number(round.lines?.[n]) || 0 : 0, gained: here ? Number(round.gained?.[n]) || 0 : 0,
+        lineReadyAt: last ? Number(last.ts) + CONFIG.lineCooldownMs : 0,
         canBegin: phase === 'cast' && active,
         canReroll: phase === 'cast' && active && round.rerolls < CONFIG.maxRerolls,
-        canTwist: phase === 'scene' && active,
+        canLine: phase === 'scene' && active && here,
         canFoul: phase === 'scene' && active,
-        canVote: phase === 'vote' && active && voters(state).includes(n),
-        vote: round && Object.prototype.hasOwnProperty.call(round.votes, n) ? round.votes[n] : null,
-        voteTargets: phase === 'vote' && voters(state).includes(n) ? targets(state, n) : [],
         canNext: phase === 'result' && active,
+        canEndVote: phase === 'vote' && active,
         canControl: active,
       };
-      wl.me = me;
     }
     return { game: 'wordlimit', playerNum: n, name: seat(state, n)?.name || null, wl };
   }
 
-  return { CONFIG, CONTENT, TIMED, create, apply, view, standings, parseSettings, defaultSettings, ladder, rng, list, elapsed, voters, targets };
+  return { CONFIG, CONTENT, TIMED, create, apply, view, standings, parseSettings, defaultSettings, defaultPoints, pointsFor, ladder, rng, list, elapsed };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = WORD_LIMIT_ENGINE;

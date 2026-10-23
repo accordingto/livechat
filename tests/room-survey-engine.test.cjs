@@ -1,8 +1,9 @@
 'use strict';
-// ROOM SURVEY rules: Keeper rotation and prompts, writing, merging, the ranked
-// board, turns, hits worth the number of writers, burned own answers, clocks,
-// table controls and — above all — that hidden answers and authors never reach
-// a screen that shouldn't have them. Run: node --test tests/room-survey-engine.test.cjs
+// ROOM SURVEY rules: Keeper rotation and prompts, writing (no repeated answer
+// in one player's boxes), stacking, the ranked board, buzz-in guessing with
+// locks, hits worth the number of writers, burned own answers, clocks, table
+// controls and — above all — that hidden answers and authors never reach a
+// screen that shouldn't have them. Run: node --test tests/room-survey-engine.test.cjs
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const CONTENT = require('../room-survey-content.js');
@@ -80,12 +81,15 @@ test('choosing: only the Keeper sees and picks the options, may reroll or write 
   assert.equal(state.deadline, state.lastChangeAt + 90000);
 });
 
-test('writing: answers are cleaned, de-duplicated and capped; the round moves on when everyone has sent', () => {
+test('writing: answers are cleaned and capped; one player may not write the same answer twice; the round moves on when everyone has sent', () => {
   let state = make(4, { answers: 2 });
   state = ok(run(state, keeperOf(state), 'pick', { questionId: state.round.options[1] }));
   assert.equal(run(state, 1, 'submit', { answers: ['', '   '] }).error, 'empty');
-  state = ok(run(state, 1, 'submit', { answers: ['Snacks', 'snacks!', 'My ex', 'third one'] }));
-  assert.deepEqual(state.round.answers[1].map(a => a.text), ['Snacks', 'My ex'], 'same-word duplicates collapse; extra answers are dropped');
+  assert.equal(run(state, 1, 'submit', { answers: ['Snacks', 'snacks!'] }).error, 'duplicate', '“Snacks” and “snacks!” in two boxes are refused');
+  assert.equal(run(state, 1, 'submit', { answers: ['零食', ' 零食。'] }).error, 'duplicate', 'also in Chinese');
+  assert.equal(state.round.submitted[1], undefined, 'nothing was saved');
+  state = ok(run(state, 1, 'submit', { answers: ['Snacks', '', 'My ex', 'third one'] }));
+  assert.deepEqual(state.round.answers[1].map(a => a.text), ['Snacks', 'My ex'], 'blank boxes are skipped; extra answers are dropped');
   state = ok(run(state, 1, 'submit', { answers: ['x'.repeat(80)] }), 'answers can be edited until time is up');
   assert.equal(state.round.answers[1][0].text.length, E.CONFIG.answerMax);
   state = ok(run(state, 2, 'submit', { answers: ['A'] }));
@@ -108,7 +112,7 @@ test('writing: answers are cleaned, de-duplicated and capped; the round moves on
   assert.equal(thin.phase, 'result'); assert.equal(thin.round.outcome.voided, true); assert.equal(thin.round.outcome.reason, 'few_answers');
 });
 
-test('sorting: same words merge on their own; the Keeper merges, splits and removes the rest', () => {
+test('sorting: same words stack on their own; the Keeper stacks, unstacks and removes the rest, seeing the rank each stack would get', () => {
   let state = written(5, { 1: ['Snacks', 'My ex'], 2: ['snacks!', 'Weird symptoms'], 3: ['ＳＮＡＣＫＳ', 'ex IG'], 4: ['Dating apps', 'weird symptoms'], 5: ['Flights', 'Taxes'] });
   assert.equal(state.phase, 'sort');
   const keeper = keeperOf(state);
@@ -121,6 +125,8 @@ test('sorting: same words merge on their own; the Keeper merges, splits and remo
   const keeperGroups = E.view(state, keeper).rs.me.groups;
   assert.deepEqual(keeperGroups.find(group => group.id === myEx.id).variants, ['ex IG']);
   assert.equal(JSON.stringify(keeperGroups).includes('playerNum'), false, 'the Keeper never sees who wrote what');
+  assert.deepEqual(keeperGroups.map(group => group.count), [...keeperGroups.map(group => group.count)].sort((a, b) => b - a), 'biggest stacks first');
+  assert.deepEqual(keeperGroups.slice(0, 3).map(group => [group.count, group.rank, group.points]), [[3, 1, 3], [2, 2, 2], [2, 2, 2]], 'each stack shows its rank and worth');
   state = ok(run(state, keeper, 'split', { group: myEx.id }));
   assert.ok(groupByText(state, 'My ex') && groupByText(state, 'ex IG'), 'split undoes the merge');
   assert.equal(run(state, keeper, 'split', { group: groupByText(state, 'snacks').id }).error, 'not_available', 'same words stay together');
@@ -130,17 +136,18 @@ test('sorting: same words merge on their own; the Keeper merges, splits and remo
   assert.equal(state.round.board.some(id => state.round.groups.find(group => group.id === id).text === 'Taxes'), false, 'removed answers are not on the board');
 });
 
-test('the board ranks answers by how many people wrote them (ties share a rank)', () => {
+test('the board ranks answers by how many people wrote them (ties share a rank); every tile says what a hit is worth', () => {
   let state = written(5, { 1: ['Snacks', 'Ex'], 2: ['snacks', 'Symptoms'], 3: ['snacks', 'ex'], 4: ['Symptoms', 'Apps'], 5: ['Flights', 'Taxes'] });
   state = ok(run(state, keeperOf(state), 'startGuess'));
   const board = E.view(state, 0).rs.board;
   assert.deepEqual(board.map(tile => tile.count), [3, 2, 2, 1, 1, 1]);
   assert.deepEqual(board.map(tile => tile.rank), [1, 2, 2, 4, 4, 4]);
+  assert.deepEqual(board.map(tile => tile.points), [3, 2, 2, 1, 1, 1], 'higher on the board, more points');
   assert.deepEqual(board[0].length, { n: 1, unit: 'words' });
 });
 
-test('turns go round from after the Keeper; a hit scores one point per writer; your own answer burns', () => {
-  // Seat 1 is made the Keeper so the order is predictable: 2, 3, 4, 5.
+test('buzz-in: one buzzer at a time; a hit scores one point per writer; your own answer burns; a miss waits for the others', () => {
+  // Seat 1 is made the Keeper so the guessers are 2, 3, 4 and 5.
   let state = make(5);
   state = ok(run(state, 2, 'setNext', { playerNum: 1 }));
   state = ok(run(state, 2, 'void')); state = ok(run(state, 2, 'next'));
@@ -149,80 +156,124 @@ test('turns go round from after the Keeper; a hit scores one point per writer; y
   const answers = { 1: ['Snacks', 'Ex'], 2: ['snacks', 'Symptoms'], 3: ['snacks', 'ex'], 4: ['Symptoms', 'Apps'], 5: ['Flights', 'Taxes'] };
   for (const [seat, list] of Object.entries(answers)) state = ok(run(state, Number(seat), 'submit', { answers: list }));
   state = ok(run(state, 1, 'startGuess'));
-  assert.deepEqual(state.round.order, [2, 3, 4, 5]);
-  assert.equal(state.round.turn.playerNum, 2);
+  assert.equal(state.round.buzz, null, 'nobody holds the buzz yet');
+  assert.deepEqual(E.view(state, 0).rs.guessers, [2, 3, 4, 5]);
+  assert.equal(E.view(state, 3).rs.me.canBuzz, true);
+  assert.equal(run(state, 1, 'buzz').error, 'not_available', 'the Keeper judges and does not buzz');
   const snacks = groupByText(state, 'snacks').id, apps = groupByText(state, 'apps').id, symptoms = groupByText(state, 'symptoms').id;
-  // Seat 2 guesses "Apps" (written by 4 only): +1.
-  state = ok(run(state, 1, 'hit', { group: apps, turn: state.round.turn.serial }));
-  assert.deepEqual(state.round.revealed[apps], { how: 'hit', by: 2, points: 1 });
-  assert.equal(state.round.turn.playerNum, 3);
-  assert.equal(run(state, 2, 'pass', { turn: state.round.turn.serial }).error, 'not_available', 'only the Keeper or the guesser passes');
-  // Seat 3 guesses "Snacks", which seat 3 wrote: burned, nobody scores it.
-  state = ok(run(state, 1, 'hit', { group: snacks, turn: state.round.turn.serial }));
-  assert.deepEqual(state.round.revealed[snacks], { how: 'own', by: 3, points: 0 });
-  assert.equal(state.round.turn.playerNum, 4);
-  // Seat 4 misses; seat 5 finds "Symptoms" (written by 2 and 4): +2.
-  state = ok(run(state, 1, 'miss', { turn: state.round.turn.serial }));
-  assert.equal(state.round.turn.playerNum, 5);
-  assert.equal(run(state, 1, 'hit', { group: symptoms, turn: state.round.turn.serial - 1 }).error, 'stale_turn', 'a tap for an earlier turn is refused');
-  state = ok(run(state, 1, 'hit', { group: symptoms, turn: state.round.turn.serial }));
-  assert.equal(state.round.revealed[symptoms].points, 2);
-  assert.equal(run(state, 1, 'hit', { group: symptoms, turn: state.round.turn.serial }).error, 'stale_turn', 'an answer is found once');
-  assert.equal(state.round.turn.playerNum, 2, 'back to the first guesser');
+  assert.equal(run(state, 1, 'hit', { group: apps, buzz: 1 }).error, 'stale_turn', 'no judging before someone buzzes');
+  // Seat 3 buzzes first; seat 2 is a moment too late.
+  state = ok(run(state, 3, 'buzz'));
+  assert.equal(state.round.buzz.playerNum, 3);
+  assert.equal(run(state, 2, 'buzz').error, 'taken');
+  assert.equal(E.view(state, 2).rs.me.canBuzz, false);
+  assert.equal(E.view(state, 3).rs.me.myBuzz, true);
+  // Seat 3 says "Apps" (written by 4 only): +1, and nobody is locked.
+  state = ok(run(state, 1, 'hit', { group: apps, buzz: state.round.buzz.serial }));
+  assert.deepEqual(state.round.revealed[apps], { how: 'hit', by: 3, points: 1 });
+  assert.equal(state.round.buzz, null);
+  // Seat 2 buzzes and says "Snacks", which seat 2 wrote: the rules burn it.
+  state = ok(run(state, 2, 'buzz'));
+  state = ok(run(state, 1, 'hit', { group: snacks, buzz: state.round.buzz.serial }));
+  assert.deepEqual(state.round.revealed[snacks], { how: 'own', by: 2, points: 0 });
+  assert.deepEqual(state.round.locked, [2], 'guessing your own answer counts as a miss');
+  assert.equal(run(state, 2, 'buzz').error, 'locked');
+  // Seat 4 misses, seat 5 gives up: now 2, 4 and 5 wait; 3 may still buzz.
+  state = ok(run(state, 4, 'buzz'));
+  const stale = state.round.buzz.serial;
+  state = ok(run(state, 1, 'miss', { buzz: stale }));
+  state = ok(run(state, 5, 'buzz'));
+  assert.equal(run(state, 3, 'pass', { buzz: state.round.buzz.serial }).error, 'not_available', 'only the buzzer or the Keeper lets a buzz go');
+  state = ok(run(state, 5, 'pass', { buzz: state.round.buzz.serial }));
+  assert.deepEqual(state.round.locked, [2, 4, 5]);
+  assert.equal(run(state, 1, 'miss', { buzz: stale }).error, 'stale_turn', 'a tap for an earlier buzz is refused');
+  // Seat 3 misses too: everyone has had a go, so everyone may buzz again.
+  state = ok(run(state, 3, 'buzz'));
+  state = ok(run(state, 1, 'miss', { buzz: state.round.buzz.serial }));
+  assert.deepEqual(state.round.locked, [], 'once everyone missed, all buzzers open again');
+  // A wrong buzzer is locked; a hit by someone else opens everyone again.
+  state = ok(run(state, 4, 'buzz'));
+  state = ok(run(state, 1, 'miss', { buzz: state.round.buzz.serial }));
+  assert.deepEqual(state.round.locked, [4]);
+  state = ok(run(state, 5, 'buzz'));
+  state = ok(run(state, 1, 'hit', { group: symptoms, buzz: state.round.buzz.serial }));
+  assert.equal(state.round.revealed[symptoms].points, 2, '“Symptoms” was written by two people');
+  assert.deepEqual(state.round.locked, [], 'the board changed: everyone may buzz again');
+  assert.equal(run(state, 1, 'hit', { group: symptoms, buzz: state.round.buzz?.serial ?? 99 }).error, 'stale_turn', 'an answer is found once');
   assert.deepEqual(state.scores, {}, 'points are added when the round ends');
-  assert.deepEqual(E.view(state, 0).rs.roundPoints, { 2: 1, 5: 2 });
+  assert.deepEqual(E.view(state, 0).rs.roundPoints, { 3: 1, 5: 2 });
+  assert.deepEqual(state.round.log.map(entry => entry.result), ['hit', 'own', 'miss', 'pass', 'miss', 'miss', 'hit']);
   state = ok(run(state, 3, 'close'));
   assert.equal(state.phase, 'result');
-  assert.deepEqual(state.scores, { 2: 1, 5: 2 });
+  assert.deepEqual(state.scores, { 3: 1, 5: 2 });
   assert.deepEqual(state.round.outcome.best, [5]);
   for (const id of state.round.board) assert.ok(state.round.revealed[id], 'everything is revealed at the end');
   assert.equal(state.round.revealed[groupByText(state, 'flights').id].how, 'left');
 });
 
-test('turn and round clocks: a turn times out, the board clearing or the clock ends the round', () => {
+test('clocks: a buzzer who runs out of time misses; the board clearing or the round clock ends the round; pause keeps both clocks', () => {
   let state = written(3, { 1: ['a1'], 2: ['b1'], 3: ['c1'] }, { answers: 1, turnSeconds: 15, guessMinutes: 3 });
-  const keeper = keeperOf(state);
+  const keeper = keeperOf(state), [g1, g2] = others(state);
   state = ok(run(state, keeper, 'startGuess'));
-  const first = state.round.turn.playerNum, start = state.lastChangeAt;
-  assert.equal(state.deadline, start + 15000, 'the turn clock comes first');
+  const start = state.lastChangeAt;
+  assert.equal(state.deadline, start + 180000, 'with nobody buzzing, only the round clock runs');
   state = ok(run(state, keeper, 'hint', { group: state.round.board[0] }));
   assert.equal(E.view(state, 0).rs.board[0].hint.length, 1, 'a hint shows the first letter');
-  state = ok(run(state, 1, 'tick', {}, start + 15200));
-  assert.notEqual(state.round.turn.playerNum, first);
+  state = ok(run(state, g1, 'buzz', {}, start + 1000));
+  assert.equal(state.deadline, start + 16000, 'the buzzer has 15 s to answer');
+  state = ok(run(state, g2, 'tick', {}, start + 16200));
+  assert.equal(state.round.buzz, null);
   assert.equal(state.round.log.at(-1).result, 'timeout');
+  assert.deepEqual(state.round.locked, [g1]);
   // Pause keeps both clocks.
-  state = ok(run(state, 2, 'pause', {}, start + 20000));
+  state = ok(run(state, g2, 'buzz', {}, start + 20000));
+  state = ok(run(state, g2, 'pause', {}, start + 25000));
   const paused = E.view(state, 0).rs;
-  assert.equal(paused.guessLeftMs, 180000 - 20000); assert.equal(paused.turn.leftMs, 15000 - (20000 - 15200));
-  state = ok(run(state, 2, 'resume', {}, start + 900000));
-  assert.equal(state.round.guessEndsAt, start + 900000 + 160000);
-  assert.equal(state.round.turn.endsAt, start + 900000 + 10200);
+  assert.equal(paused.guessLeftMs, 180000 - 25000); assert.equal(paused.buzz.leftMs, 10000);
+  assert.equal(E.view(state, g2).rs.me.canBuzz, false);
+  state = ok(run(state, g2, 'resume', {}, start + 900000));
+  assert.equal(state.round.guessEndsAt, start + 900000 + 155000);
+  assert.equal(state.round.buzz.endsAt, start + 900000 + 10000);
   // The board clears.
-  for (const id of state.round.board) if (!state.round.revealed[id]) {
-    const turn = state.round.turn;
-    state = ok(run(state, keeper, 'hit', { group: id, turn: turn.serial }));
+  const ids = state.round.board.filter(id => !state.round.revealed[id]);
+  for (const id of ids) {
     if (state.phase !== 'guess') break;
+    if (!state.round.buzz) state = ok(run(state, others(state).find(n => !state.round.locked.includes(n)), 'buzz'));
+    state = ok(run(state, keeper, 'hit', { group: id, buzz: state.round.buzz.serial }));
   }
   assert.equal(state.phase, 'result'); assert.equal(state.round.endReason, 'all');
-  // The round clock.
+  // The round clock, with no limit on answering.
   let clock = written(3, { 1: ['a1'], 2: ['b1'], 3: ['c1'] }, { answers: 1, turnSeconds: 0, guessMinutes: 3 });
   clock = ok(run(clock, keeperOf(clock), 'startGuess'));
-  assert.equal(clock.round.turn.endsAt, null, 'no turn limit');
+  clock = ok(run(clock, others(clock)[0], 'buzz'));
+  assert.equal(clock.round.buzz.endsAt, null, 'no answer limit');
   clock = ok(run(clock, 1, 'tick', {}, clock.round.guessEndsAt + 200));
   assert.equal(clock.phase, 'result'); assert.equal(clock.round.endReason, 'time');
 });
 
-test('people leaving: the Keeper leaving cancels the round; the current guesser leaving passes the turn', () => {
+test('people leaving: the Keeper leaving cancels the round; a buzzer leaving frees the buzz; nobody left to guess ends it', () => {
   let state = written(4, { 1: ['a'], 2: ['b'], 3: ['c'], 4: ['d'] }, { answers: 1 });
-  const keeper = keeperOf(state);
+  const keeper = keeperOf(state), [g1, g2, g3] = others(state);
   state = ok(run(state, keeper, 'startGuess'));
-  const guesser = state.round.turn.playerNum;
-  state = ok(run(state, keeper, 'exclude', { playerNum: guesser, active: false }));
-  assert.notEqual(state.round.turn.playerNum, guesser);
+  state = ok(run(state, g1, 'buzz'));
+  state = ok(run(state, keeper, 'exclude', { playerNum: g1, active: false }));
+  assert.equal(state.round.buzz, null);
   assert.equal(state.round.log.at(-1).result, 'skip');
-  state = ok(run(state, state.round.turn.playerNum, 'exclude', { playerNum: keeper, active: false }));
+  // g2 misses; with g1 gone, g2 and g3 are the guessers left.
+  state = ok(run(state, g2, 'buzz')); state = ok(run(state, keeper, 'miss', { buzz: state.round.buzz.serial }));
+  assert.deepEqual(state.round.locked, [g2]);
+  // g3 sits out: g2 is the only guesser, so g2 may buzz again.
+  state = ok(run(state, keeper, 'exclude', { playerNum: g3, active: false }));
+  assert.deepEqual(state.round.locked, []);
+  state = ok(run(state, g2, 'exclude', { playerNum: keeper, active: false }));
   assert.equal(state.phase, 'result'); assert.equal(state.round.outcome.reason, 'keeper_left');
   assert.deepEqual(state.scores, {}, 'a cancelled round scores nothing');
+  let alone = written(3, { 1: ['a'], 2: ['b'], 3: ['c'] }, { answers: 1 });
+  const k = keeperOf(alone), [x, y] = others(alone);
+  alone = ok(run(alone, k, 'startGuess'));
+  alone = ok(run(alone, k, 'exclude', { playerNum: x, active: false }));
+  alone = ok(run(alone, k, 'exclude', { playerNum: y, active: false }));
+  assert.equal(alone.phase, 'result'); assert.equal(alone.round.endReason, 'nobody');
   // While writing, a seat that leaves no longer holds up the round.
   let writing = make(4);
   writing = ok(run(writing, keeperOf(writing), 'pick', { questionId: writing.round.options[0] }));
@@ -245,6 +296,8 @@ test('privacy: the shared screen and the guessers never receive a hidden answer 
   assert.equal(shared.includes('"authors"'), false);
   const keeperBoard = E.view(state, keeper).rs.me.board;
   assert.ok(keeperBoard.some(tile => tile.text === secret), 'the Keeper sees the answers to judge them');
+  state = ok(run(state, guesser, 'buzz'));
+  assert.equal(JSON.stringify(E.view(state, 0)).includes(secret), false, 'buzzing reveals nothing');
   assert.equal(JSON.stringify(keeperBoard).includes('authors'), false, 'but never who wrote them');
   assert.ok(E.view(state, 1).rs.me.myAnswers.includes(secret), 'each writer sees their own answers');
   state = ok(run(state, keeper, 'close'));
@@ -294,4 +347,20 @@ test('normalizing and hints work for Chinese and English answers', () => {
   assert.deepEqual(E.lengthHint('my ex’s Instagram'), { n: 3, unit: 'words' });
   assert.equal(E.firstChar('  ex IG'), 'E');
   assert.equal(E.firstChar('「前任」'), '前');
+});
+
+test('a table saved by the earlier version (fixed turns) carries on with buzzing', () => {
+  let state = written(4, { 1: ['a'], 2: ['b'], 3: ['c'], 4: ['d'] }, { answers: 1 });
+  const keeper = keeperOf(state);
+  state = ok(run(state, keeper, 'startGuess'));
+  // The earlier shape: a turn order and the current turn, no buzz, no values.
+  state.round.turn = { serial: 3, playerNum: others(state)[0], endsAt: state.lastChangeAt + 20000 };
+  state.round.order = others(state); delete state.round.buzz; delete state.round.locked; delete state.round.values;
+  state.deadline = state.round.turn.endsAt;
+  state = ok(run(state, others(state)[1], 'tick', {}, state.deadline + 10));
+  assert.equal(state.round.turn, undefined, 'the old turn is gone');
+  assert.equal(state.deadline, state.round.guessEndsAt);
+  state = ok(run(state, others(state)[1], 'buzz'));
+  state = ok(run(state, keeper, 'hit', { group: state.round.board.find(id => !E.authorsOf(state.round.groups.find(g => g.id === id)).includes(others(state)[1])), buzz: state.round.buzz.serial }));
+  assert.equal(Object.values(state.round.points)[0], 1, 'an old board scores one point per writer');
 });

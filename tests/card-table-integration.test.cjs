@@ -20,8 +20,8 @@ function load(lang = 'en') {
   return { C: get('CARD_TABLE_UI'), WL: get('WORD_LIMIT_UI'), WE: get('WORD_LIMIT_ENGINE'), RS: get('ROOM_SURVEY_UI'), RE: get('ROOM_SURVEY_ENGINE'), dicts };
 }
 const GAMES = [
-  { page: 'word-limit-theater.html', title: 'WORD LIMIT THEATER', prefix: 'wl', tag: 'wl-1', files: ['word-limit-content.js', 'word-limit-engine.js', 'word-limit-ui.js'], host: 'word-limit-host.js', css: 'word-limit-theater.css', mark: 'assets/word-limit-theater/mark.svg', ns: 'wordlimit' },
-  { page: 'room-survey.html', title: 'ROOM SURVEY', prefix: 'rs', tag: 'rs-1', files: ['room-survey-content.js', 'room-survey-engine.js', 'room-survey-ui.js'], host: 'room-survey-host.js', css: 'room-survey.css', mark: 'assets/room-survey/mark.svg', ns: 'roomsurvey' },
+  { page: 'word-limit-theater.html', title: 'WORD LIMIT THEATER', prefix: 'wl', tag: 'wl-2', files: ['word-limit-content.js', 'word-limit-engine.js', 'word-limit-ui.js'], host: 'word-limit-host.js', css: 'word-limit-theater.css', mark: 'assets/word-limit-theater/mark.svg', ns: 'wordlimit' },
+  { page: 'room-survey.html', title: 'ROOM SURVEY', prefix: 'rs', tag: 'rs-2', files: ['room-survey-content.js', 'room-survey-engine.js', 'room-survey-ui.js'], host: 'room-survey-host.js', css: 'room-survey.css', mark: 'assets/room-survey/mark.svg', ns: 'roomsurvey' },
 ];
 const slug = title => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -32,11 +32,11 @@ test('each host page loads the shared table, then its own modules, in order, wit
     assert.match(html, new RegExp(`<h1>${game.title}</h1>`));
     const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(match => match[1]);
     const local = scripts.filter(src => !src.startsWith('http'));
-    assert.deepEqual(local.slice(local.indexOf('room.js?v=life-story-1')), ['room.js?v=life-story-1', 'card-table.js?v=ct-1', 'card-table-ui.js?v=ct-1',
+    assert.deepEqual(local.slice(local.indexOf('room.js?v=life-story-1')), ['room.js?v=life-story-1', 'card-table.js?v=ct-2', 'card-table-ui.js?v=ct-2',
       ...game.files.map(file => `${file}?v=${game.tag}`), `${game.host}?v=${game.tag}`]);
     assert.ok(scripts.indexOf('firebase-config.js') < scripts.indexOf('room.js?v=life-story-1'));
     assert.ok(html.indexOf('src="i18n.js"') < html.indexOf('</head>'), 'i18n loads first');
-    assert.match(html, /href="card-table\.css\?v=ct-1"/);
+    assert.match(html, /href="card-table\.css\?v=ct-2"/);
     assert.match(html, new RegExp(`href="${game.css.replace('.', '\\.')}\\?v=${game.tag}"`));
     assert.match(html, /href="index\.html\?step=2"/);
     for (const id of ['setup', 'setup-needed', 'switched', 'continue', 'start', 'game', 'scene', 'actions', 'controls', 'status', 'error', 'demo-bar', 'demo-view', 'demo-link', 'count-note', 'room-label'])
@@ -51,10 +51,10 @@ test('each host page loads the shared table, then its own modules, in order, wit
 test('original player links follow either table: play.html loads the rules and the table client, never a host page', () => {
   const play = read('play.html');
   const ct = [...play.matchAll(/<script src="((?:card-table|word-limit|room-survey)[^"?]*\.js)\?v=([a-z0-9-]+)"><\/script>/g)].map(match => `${match[1]}?v=${match[2]}`);
-  assert.deepEqual(ct, ['card-table.js?v=ct-1', 'card-table-ui.js?v=ct-1', 'word-limit-content.js?v=wl-1', 'word-limit-engine.js?v=wl-1', 'word-limit-ui.js?v=wl-1',
-    'room-survey-content.js?v=rs-1', 'room-survey-engine.js?v=rs-1', 'room-survey-ui.js?v=rs-1']);
+  assert.deepEqual(ct, ['card-table.js?v=ct-2', 'card-table-ui.js?v=ct-2', 'word-limit-content.js?v=wl-2', 'word-limit-engine.js?v=wl-2', 'word-limit-ui.js?v=wl-2',
+    'room-survey-content.js?v=rs-2', 'room-survey-engine.js?v=rs-2', 'room-survey-ui.js?v=rs-2']);
   assert.ok(!/word-limit-host\.js|room-survey-host\.js/.test(play), 'cards never load a host page');
-  for (const css of ['card-table.css?v=ct-1', 'word-limit-theater.css?v=wl-1', 'room-survey.css?v=rs-1']) assert.ok(play.includes(`<link rel="stylesheet" href="${css}">`), css);
+  for (const css of ['card-table.css?v=ct-2', 'word-limit-theater.css?v=wl-2', 'room-survey.css?v=rs-2']) assert.ok(play.includes(`<link rel="stylesheet" href="${css}">`), css);
   assert.match(play, /wordlimit: \{ key: 'wl', page: 'wl-card-page', title: 'WORD LIMIT THEATER', ui: \(\) => WORD_LIMIT_UI \}/);
   assert.match(play, /roomsurvey: \{ key: 'rs', page: 'rs-card-page', title: 'ROOM SURVEY', ui: \(\) => ROOM_SURVEY_UI \}/);
   assert.match(play, /data\[spec\.key\]\?\.version === 1 && \/\^\[a-f0-9\]\{32\}\$\/\.test\(data\[spec\.key\]\.table \|\| ''\)/, 'only a well-formed table token is followed');
@@ -115,12 +115,12 @@ test('every interface string exists in English and Traditional Chinese', () => {
   check(all.roomsurvey, [...keysUsed(read('room-survey-ui.js')), ...keysUsed(read('room-survey-host.js'))], 'roomsurvey');
   for (const dict of Object.values(all)) check(dict, keysUsed(read('card-table-ui.js')), 'card-table-ui');
   check(all.wordlimit, [...WE.CONFIG.units.flatMap(unit => [`unit_${unit}_one`, `unit_${unit}_many`, `unitOption_${unit}`]),
-    ...WE.TIMED.flatMap(phase => ['close_' + phase, 'extend_' + phase])], 'wordlimit dynamic');
+    ...WE.TIMED.flatMap(phase => ['close_' + phase, 'extend_' + phase]), 'shufflesOff', 'shufflesOne', 'shufflesN', 'linesOne', 'linesN'], 'wordlimit dynamic');
   check(all.roomsurvey, RE.TIMED.flatMap(phase => ['close_' + phase, 'extend_' + phase]), 'roomsurvey clock labels');
   check(all.roomsurvey, [...RE.CONFIG.categories.map(cat => 'cat_' + cat), 'cat_custom', ...['all', 'time', 'host', 'nobody'].map(r => 'over_' + r),
     ...['few_answers', 'keeper_left', 'host'].map(r => 'voided_' + r),
     ...[...read('room-survey-engine.js').matchAll(/logEntry\(round, [\w.]+, '([a-z]+)'/g)].map(m => 'log_' + m[1])], 'roomsurvey dynamic');
-  for (const dict of Object.values(all)) check(dict, ['stale_turn', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster', 'offline', 'cooldown', 'empty', 'error',
+  for (const dict of Object.values(all)) check(dict, ['stale_turn', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster', 'offline', 'cooldown', 'empty', 'duplicate', 'taken', 'locked', 'error',
     'connecting', 'switched', 'rosterChanged', 'roomChanged', 'noFirebase', 'tableEmpty'], 'status and errors');
   for (const game of GAMES) {
     const html = read(game.page);
@@ -179,8 +179,13 @@ test('ROOM SURVEY: the shared screen never shows a hidden answer, and typed text
     assert.deepEqual(hidden(stage(g)), [], 'sorting: nothing visible');
     g.cmd(keeper, 'startGuess');
     assert.deepEqual(hidden(stage(g)), [], 'guessing: tiles stay face down');
+    assert.match(stage(g), /rs-turn is-open/, 'buzzing is open');
     const first = g.state.round.board[0], firstText = g.state.round.groups.find(group => group.id === first).text;
-    g.cmd(keeper, 'hit', { group: first, turn: g.state.round.turn.serial });
+    const buzzer = g.state.round.players.find(n => n !== keeper);
+    g.cmd(buzzer, 'buzz');
+    assert.ok(stage(g).includes(['Amy', 'Kevin', 'Jason', 'Willy'][buzzer - 1]), 'the shared screen names the buzzer');
+    assert.equal(hidden(stage(g)).length, 0, 'buzzing reveals nothing');
+    g.cmd(keeper, 'hit', { group: first, buzz: g.state.round.buzz.serial });
     assert.ok(stage(g).includes(firstText), 'a found answer flips over');
     assert.equal(hidden(stage(g)).length, 1);
     g.cmd(1, 'pause'); assert.match(stage(g), /rs-paused/); assert.equal(hidden(stage(g)).length, 1);
@@ -194,12 +199,12 @@ test('ROOM SURVEY: the shared screen never shows a hidden answer, and typed text
   }
 });
 
-test('WORD LIMIT THEATER: the shared screen shows the scene, every role and limit, and renders each phase', () => {
+test('WORD LIMIT THEATER: the shared screen shows the scene, every role, limit and line value, and renders each phase', () => {
   for (const lang of ['en', 'zh']) {
     const { WL, WE } = load(lang);
     let clock = 4_000_000, serial = 0;
     const roster = [1, 2, 3, 4, 5].map(n => ({ playerNum: n, name: ['Amy', 'Kevin', 'Jason', 'Willy', 'Mia'][n - 1] }));
-    let state = WE.create({ id: 'wl-ui', roster, settings: { sceneMinutes: 2, unit: lang === 'zh' ? 'chars' : 'words' }, now: clock, seed: 7 });
+    let state = WE.create({ id: 'wl-ui', roster, settings: { sceneMinutes: 2, unit: lang === 'zh' ? 'chars' : 'words', points: { 7: 9 } }, now: clock, seed: 7 });
     const cmd = (actor, type, extra = {}) => {
       const next = WE.apply(state, Object.assign({ id: `w-${++serial}-xxxxxxxx`, type, actor, sessionId: state.sessionId, stage: state.stage, now: clock, seed: serial }, extra));
       assert.equal(next !== state && !next.replies?.[actor]?.error, true, `${type}: ${next.replies?.[actor]?.error || 'unchanged'}`); state = next;
@@ -213,18 +218,19 @@ test('WORD LIMIT THEATER: the shared screen shows the scene, every role and limi
       assert.ok(html.includes(pick(scene.roles[state.round.roles[n]])), `role of seat ${n} is public`);
       assert.match(html, new RegExp(`>${state.round.limits[n]}<`), `limit of seat ${n} is public`);
     }
+    assert.match(stage(), /wl-values[\s\S]*\+9/, 'the legend shows what each limit scores');
     cmd(2, 'close');
     assert.match(stage(), /wl-phase-scene|data-ct-ring/);
+    assert.match(stage(), /class="wl-swap"/, 'the next swap is counted down');
+    assert.doesNotMatch(stage(), /wl-cue|twist/i, 'no plot twists');
     cmd(3, 'foul', { target: 1 });
-    cmd(4, 'twist');
-    assert.match(stage(), /wl-cue/);
+    cmd(4, 'line');
+    assert.match(stage(), /wl-pop/, 'a line pops its points');
     cmd(1, 'pause'); assert.match(stage(), /wl-paused/); cmd(1, 'resume');
     cmd(5, 'close');
-    assert.equal(state.phase, 'vote');
-    assert.ok(stage().length > 0);
-    for (const [voter, target] of [[1, 2], [2, 1], [3, 2], [4, 2], [5, 0]]) cmd(voter, 'vote', { target });
     assert.equal(state.phase, 'result');
-    assert.ok(stage().includes('Kevin'), 'the MVP is named');
+    assert.ok(stage().includes('Willy'), 'the top scorer is named');
+    assert.match(stage(), /wl-tally/);
     cmd(1, 'stop');
     assert.match(stage(), /wl-phase-finished/);
   }

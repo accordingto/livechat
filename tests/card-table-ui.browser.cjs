@@ -245,8 +245,10 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
       const scope = '.ct-card, .wl-stage, .rs-stage, .ct-panel, .ct-controls, .ct-bottom, .ct-actions, .topbar, .header, .ct-feedback, .ct-shell';
       const shown = element => !element.checkVisibility || element.checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true });
       // A transient toast (fixed on screen) may cover text for a few seconds; covered text is not judged.
+      // Its drop shadow (up to 12px + 30px blur) darkens what is under it too.
+      const SHADOW = 44;
       const toasts = [...document.querySelectorAll('body *')].filter(element => element.id !== 'i18n-toggle' && getComputedStyle(element).position === 'fixed' && element.getClientRects().length && shown(element))
-        .map(element => { const r = element.getBoundingClientRect(); return { element, box: [r.left + scrollX, r.top + scrollY, r.right + scrollX, r.bottom + scrollY] }; });
+        .map(element => { const r = element.getBoundingClientRect(); return { element, box: [r.left + scrollX - SHADOW, r.top + scrollY - SHADOW, r.right + scrollX + SHADOW, r.bottom + scrollY + SHADOW] }; });
       const covered = (element, [x, y, w, h]) => toasts.some(({ element: toast, box: [l, t, r, b] }) => !toast.contains(element) && x < r && x + w > l && y < b && y + h > t);
       const items = [];
       for (const element of document.querySelectorAll(scope.split(', ').map(item => `${item}, ${item} *`).join(', '))) {
@@ -403,12 +405,25 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
 
   // ═════════════════════════ WORD LIMIT THEATER ═════════════════════════
   async function wordLimit() {
+    const E = require('../word-limit-engine.js');
+    const longest = Math.max(...E.ladder(playerCount));
     await opening(async () => {
       assert.equal(await host.locator('input[name="wl-unit"][value="words"]').isChecked(), true, 'an English host starts with words');
+      assert.equal(await host.locator('#wl-shuffles').inputValue(), '3', 'three limit swaps by default');
+      assert.equal(await host.locator('#wl-points [data-ct-set^="pt-"]').count(), new Set(E.ladder(playerCount)).size, 'one points box per limit this room is dealt');
       await host.selectOption('#wl-minutes', '2');
+      await host.fill(`#wl-points [data-ct-set="pt-${longest}"]`, '15');
+      for (const width of [320, 1280]) {
+        await host.setViewportSize({ width, height: 800 });
+        const boxes = await host.locator('#wl-points [data-ct-set^="pt-"]').evaluateAll(items => items.map(item => item.getBoundingClientRect().width));
+        for (const w of boxes) assert.ok(w >= 44, `setup points box ${Math.round(w)}px wide at ${width}px`);
+      }
+      await host.setViewportSize({ width: 1280, height: 900 });
     });
     let s = await state();
     assert.equal(s.round.sceneMs, 120000); assert.equal(s.round.unit, 'words');
+    assert.equal(s.round.planned, 3); assert.equal(s.round.value[longest], 15);
+    check(`the host sets the scene length and the points of the ${longest}-word line (15) before Start`);
     for (const n of s.round.players) {
       await wait(async () => (await card(n).locator('[data-ct-main] .wl-board-num b').count()) === 1, 'board ' + n);
       assert.equal(await card(n).locator('[data-ct-main] .wl-board-num b').innerText(), String(s.round.limits[n]), `card ${n} shows its own limit`);
@@ -417,7 +432,8 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     }
     const hostText = await text(host);
     for (const n of s.round.players) assert.ok(hostText.includes(String(CONTENT.scene(s.round.sceneId).roles[s.round.roles[n]].en)), 'the shared screen lists every role');
-    check('every card shows its own role and limit on the letterboard; the whole cast with limits is public');
+    assert.match(await host.locator('.wl-values').innerText(), /\+15/, 'the shared screen shows what each limit scores');
+    check('every card shows its own role and limit on the letterboard; the whole cast and the points per limit are public');
     await views(host, 'host-cast', '[data-host-action="close"]', HOSTS);
     await views(card(1), 'card-cast', '[data-ct-main] [data-ct-action="close"]', PHONES);
     await host.close(); host = null;
@@ -434,27 +450,39 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await phase('scene');
     check('one card draws a different scene, another raises the curtain early');
 
-    // ── scene: a foul and a twist ──
-    await views(card(1), 'card-scene', '[data-ct-main] .wl-foul-btn', PHONES);
+    // ── scene: lines score from each actor's own card ──
+    s = await state();
+    const worth = n => s.round.value[s.round.limits[n]] ?? s.round.limits[n];
+    const star = s.round.players.find(n => s.round.limits[n] === longest), a = star === 1 ? 2 : 1;
+    await views(card(a), 'card-scene', '[data-ct-main] .wl-line-btn', PHONES);
+    assert.match(await card(a).locator('[data-ct-main] .wl-line-btn b').innerText(), new RegExp(`\\+${worth(a)}$`));
+    await tap(card(a), '[data-ct-main] .wl-line-btn');
+    await wait(async () => (await state()).round.gained?.[a] === worth(a), 'line 1');
+    await settle();
+    await card(star).locator(`[data-ct-main] .wl-cast-row .wl-pop.is-live`).first().waitFor({ state: 'visible' });
+    await wait(async () => (await card(a).locator('[data-ct-main] .wl-line-btn.is-cooling').count()) === 1, 'cooling');
+    assert.equal(await card(a).locator('[data-ct-main] .wl-line-btn').getAttribute('aria-disabled'), 'true');
+    await card(a).locator('[data-ct-main] .wl-line-btn').click({ force: true });
+    await pause(150); await delivery;
+    assert.equal((await state()).round.lines[a], 1, 'a cooling line button does nothing');
+    await advance(E.CONFIG.lineCooldownMs);
+    await tap(card(a), '[data-ct-main] .wl-line-btn');
+    await wait(async () => (await state()).round.lines?.[a] === 2, 'line 2');
+    await tap(card(star), '[data-ct-main] .wl-line-btn');
+    await wait(async () => (await state()).round.gained?.[star] === 15, 'long line');
+    await settle();
+    assert.match(await card(star).locator('[data-ct-main] .wl-score-line').innerText(), /15/);
+    await views(card(star), 'card-line-scored', '[data-ct-main] .wl-line-btn', [[390, 844], [320, 568]]);
+    check(`each actor taps “I said a line” on their own card: +${worth(a)} per line at their limit, +15 for the ${longest}-word line; a double tap is ignored`);
+
+    // ── a foul ──
     await tap(card(1), '[data-ct-main] .wl-foul-btn[data-ct-arg-target="2"]');
     await wait(async () => (await state()).round.fouls[2] === 1, 'foul');
     await card(2).locator('.wl-flash.is-foul.is-mine.is-live').waitFor({ state: 'visible' });
     await card(3).locator('.wl-flash.is-foul.is-live').waitFor({ state: 'visible' });
     await wait(async () => (await card(4).locator('[data-ct-main] .wl-cast-row .wl-fouls').count()) === 1, 'foul count on cards');
-    await views(card(2), 'card-foul-on-you', '[data-ct-main] .wl-twist-btn', [[390, 844], [320, 568]]);
+    await views(card(2), 'card-foul-on-you', '[data-ct-main] .wl-line-btn', [[390, 844], [320, 568]]);
     check('anyone calls a foul from their card; the fouled player sees “Foul on you!”, everyone sees the count');
-    await tap(card(4), '[data-ct-main] .wl-twist-btn');
-    await wait(async () => (await state()).round.twists.length === 1, 'twist');
-    assert.equal((await state()).round.twists[0].by, 4);
-    await settle();
-    for (const n of [1, 2, 3]) await card(n).locator('[data-ct-main] .wl-cue').waitFor({ state: 'visible' });
-    await wait(async () => (await card(1).locator('[data-ct-main] .wl-twist-btn.is-cooling').count()) === 1, 'cooling');
-    assert.equal(await card(1).locator('[data-ct-main] .wl-twist-btn').getAttribute('aria-disabled'), 'true');
-    await card(1).locator('[data-ct-main] .wl-twist-btn').click({ force: true });
-    await pause(150); await delivery;
-    assert.equal((await state()).round.twists.length, 1, 'a cooling twist button does nothing');
-    await views(card(1), 'card-twist', null, [[390, 844]]);
-    check('a player drops a plot twist; it shows on every card and the twist button cools down for everyone');
 
     // ── Table controls: pause, resume, add time ──
     s = await state();
@@ -472,57 +500,46 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await wait(async () => (await state()).round.sceneMs === 180000, 'extended');
     check('one player pauses from Table controls, another resumes from their card (nothing lost), a third adds a minute');
 
-    // ── the scripted twist, the limit shuffle and the end of the scene, from the cards' own clocks ──
-    const limits = clone((await state()).round.limits);
-    let shuffled = false;
-    for (let guard = 0; guard < 8 && (await state()).phase === 'scene'; guard++) {
+    // ── three limit swaps and the end of the scene, from the cards' own clocks ──
+    let shuffled = 0;
+    for (let guard = 0; guard < 10 && (await state()).phase === 'scene'; guard++) {
       s = await state();
-      const turnId = s.turnId;
+      const turnId = s.turnId, limits = clone(s.round.limits);
       await advance(Math.max(0, s.deadline - (epoch + offset)) + 400);
       await wait(async () => (await state()).turnId !== turnId, 'scene tick');
       s = await state();
-      if (!shuffled && s.round.shuffles === 1) {
-        shuffled = true; await settle();
-        await card(1).locator('[data-ct-main] .wl-board-was.is-live').waitFor({ state: 'visible' });
-        await card(1).locator('.wl-flash.is-shuffle.is-live').waitFor({ state: 'visible' });
-        await views(card(1), 'card-shuffle', null, [[390, 844], [320, 568]]);
-      }
-    }
-    await phase('vote');
-    s = await state();
-    assert.equal(shuffled, true);
-    assert.ok(s.round.twists.some(item => item.by === 0), 'the script dropped its own twist');
-    for (const n of s.round.players) assert.notEqual(s.round.limits[n], limits[n], `seat ${n} got a different limit`);
-    assert.equal(s.round.endReason, 'time');
-    check('with no host page, the cards fire the scripted twist, swap every limit (“was N” shown) and end the scene on time');
-
-    // ── MVP vote: secret ballots, no self-vote ──
-    await views(card(1), 'card-vote', '[data-ct-main] .wl-target', PHONES);
-    assert.equal(await card(1).locator('[data-ct-main] .wl-target[data-ct-arg-target="1"]').count(), 0, 'no button to vote for yourself');
-    const ballots = { 1: 2, 2: 1 };
-    for (let n = 3; n < playerCount; n++) ballots[n] = 2;
-    ballots[playerCount] = 0;
-    for (const [voter, target] of Object.entries(ballots)) {
-      const selector = target ? `[data-ct-main] .wl-target[data-ct-arg-target="${target}"]` : '[data-ct-main] .wl-skip';
-      await tap(card(Number(voter)), selector);
-      await wait(async () => (await state()).phase === 'result' || Object.hasOwn((await state()).round.votes, voter), 'vote ' + voter);
-      if ((await state()).phase === 'vote') {
-        for (const item of await cards()) assert.equal(JSON.stringify(item.wl.result), 'null', 'no ballot is public before everyone has voted');
+      if (s.round.shuffles > shuffled) {
+        shuffled = s.round.shuffles;
+        for (const n of s.round.players) assert.notEqual(s.round.limits[n], limits[n], `swap ${shuffled}: seat ${n} got a different limit`);
+        if (shuffled === 1) {
+          await settle();
+          await card(1).locator('[data-ct-main] .wl-board-was.is-live').waitFor({ state: 'visible' });
+          await card(1).locator('.wl-flash.is-shuffle.is-live').waitFor({ state: 'visible' });
+          await views(card(1), 'card-shuffle', null, [[390, 844], [320, 568]]);
+        }
       }
     }
     await phase('result');
     s = await state();
-    assert.deepEqual(s.round.mvp, [2]);
-    assert.equal(s.scores[2], playerCount - 2); assert.equal(s.scores[1], 1);
-    await wait(async () => (await card(2).locator('.secret-card.is-mvp').count()) === 1, 'mvp card');
-    assert.match(await card(5 <= playerCount ? 5 : 3).locator('[data-ct-main] .wl-mvp-name').innerText(), /Kevin/);
-    await views(card(2), 'card-result-mvp', '[data-ct-main] .wl-next', PHONES);
-    check('everyone votes on their own card (skip allowed, no self-vote); the MVP card lights up and each vote is a point');
+    assert.equal(shuffled, 3);
+    assert.equal(s.round.endReason, 'time');
+    check('with no host page, the cards swap every limit three times (“was N” shown) and end the scene on time');
+
+    // ── result: the points are added; no vote ──
+    const gained = Object.fromEntries(Object.entries(s.round.gained).filter(([, v]) => v > 0));
+    assert.deepEqual(s.scores, gained, 'every line counts once');
+    const top = Math.max(...Object.values(gained)), best = Object.keys(gained).map(Number).filter(n => gained[n] === top);
+    assert.deepEqual(s.round.outcome.best, best);
+    await wait(async () => (await card(best[0]).locator('.secret-card.is-top').count()) === 1, 'top card');
+    assert.equal(await card(1).locator('[data-ct-main] .wl-tally li').count(), playerCount);
+    for (const item of await cards()) assert.equal(item.wl.me.canEndVote, false);
+    await views(card(best[0]), 'card-result-top', '[data-ct-main] .wl-next', PHONES);
+    check('the scene ends straight on its result: points per actor and lines said; no MVP vote; the top scorer’s card lights up');
 
     // The shared screen is optional: reopening it just shows the game.
     host = await open(PAGE);
     await wait(async () => (await status()) === 'ready', 'host reopened');
-    await host.locator('.wl-phase-result').waitFor({ state: 'visible' });
+    await host.locator('.wl-phase-result .wl-tally').waitFor({ state: 'visible' });
     await views(host, 'host-result', '[data-host-action="next"]', HOSTS);
     await host.close(); host = null;
     check('reopening the host page shows the same result; closing it again changes nothing');
@@ -555,14 +572,23 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await wait(async () => (await state()).roster.find(p => p.playerNum === out).active === true, 'back');
     check('a player sits someone out (two taps) and cancels a round; the scene goes on without them; they return with “I’m back”');
 
-    // ── next-scene settings from a card, then a scene with no vote ──
+    // ── next-scene settings from a card: length, unit, swaps and the points of a limit ──
     await controls(card(4));
+    assert.equal(await card(4).locator('[data-ct-controls] [data-ct-set^="pt-"]').count(), new Set(E.ladder(playerCount)).size);
     await card(4).selectOption('[data-ct-controls] [data-ct-set="sceneMinutes"]', '3');
     await card(4).selectOption('[data-ct-controls] [data-ct-set="unit"]', 'chars');
-    await card(4).locator('[data-ct-controls] [data-ct-set="vote"]').uncheck();
+    await card(4).selectOption('[data-ct-controls] [data-ct-set="shuffles"]', '1');
+    await card(4).fill('[data-ct-controls] [data-ct-set="pt-1"]', '3');
     await views(card(4), 'card-controls-settings', '[data-ct-controls] [data-ct-save-settings]', [[390, 844], [320, 568]]);
+    // Every points box is wide enough to read and tap, even on the narrowest phone.
+    for (const width of [320, 390]) {
+      await card(4).setViewportSize({ width, height: 800 });
+      const boxes = await card(4).locator('[data-ct-controls] [data-ct-set^="pt-"]').evaluateAll(items => items.map(item => { const r = item.getBoundingClientRect(); return [r.width, r.height]; }));
+      for (const [w, h] of boxes) assert.ok(w >= 44 && h >= 44, `points box ${Math.round(w)}x${Math.round(h)} at ${width}px`);
+    }
+    await card(4).setViewportSize({ width: 390, height: 900 });
     await tap(card(4), '[data-ct-controls] [data-ct-save-settings]');
-    await wait(async () => (await state()).settings.unit === 'chars' && (await state()).settings.vote === false && (await state()).settings.sceneMinutes === 3, 'settings saved');
+    await wait(async () => { const v = (await state()).settings; return v.unit === 'chars' && v.shuffles === 1 && v.sceneMinutes === 3 && v.points[1] === 3 && v.points[longest] === 15; }, 'settings saved');
     assert.match(await card(4).locator('[data-ct-controls] [data-ct-note]').innerText(), /next round/);
     assert.equal((await state()).round.unit, 'words', 'the scene in progress keeps its unit');
     await twice(card(4), '[data-ct-action="void"]');
@@ -570,14 +596,17 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await tap(card(2), '[data-ct-main] .wl-next');
     await phase('cast');
     s = await state();
-    assert.equal(s.round.sceneMs, 180000); assert.equal(s.round.unit, 'chars'); assert.equal(s.round.voteOn, false);
+    assert.equal(s.round.sceneMs, 180000); assert.equal(s.round.unit, 'chars'); assert.equal(s.round.planned, 1); assert.equal(s.round.value[1], 3);
     assert.match(await card(1).locator('[data-ct-main] .wl-board-unit').innerText(), /Chinese character/);
     await tap(card(2), '[data-ct-main] [data-ct-action="close"]');
     await phase('scene');
+    s = await state();
+    const one = s.round.players.find(n => s.round.limits[n] === 1);
+    await tap(card(one), '[data-ct-main] .wl-line-btn');
+    await wait(async () => (await state()).round.gained?.[one] === 3, 'a one-character line is worth 3 now');
     await twice(card(2), '[data-ct-action="close"]');
     await phase('result');
-    assert.deepEqual(list((await state()).round.mvp), []);
-    check('a player changes length, unit and vote for the next scene from their card; with the vote off, ending the scene goes straight to the result');
+    check('a player changes length, unit, swaps and the points of a limit for the next scene from their card; the next scene uses them');
 
     await closing('cast');
   }
@@ -628,6 +657,16 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     const writers = s.round.players;
     const last = writers[writers.length - 1];
     await views(card(1), 'card-write', '[data-rs-send]', PHONES);
+    // The same answer in two boxes is caught while typing.
+    await card(1).locator('[data-rs-input="0"]').fill('Keys');
+    await card(1).locator('[data-rs-input="1"]').fill('keys!');
+    await card(1).locator('[data-rs-dup]').waitFor({ state: 'visible' });
+    assert.equal(await card(1).locator('[data-rs-send]').isDisabled(), true, 'Send waits until the boxes differ');
+    assert.equal(await card(1).locator('[data-rs-input="1"]').getAttribute('aria-invalid'), 'true');
+    await views(card(1), 'card-write-duplicate', '[data-rs-input="1"]', PHONES);
+    await card(1).locator('[data-rs-input="1"]').fill('');
+    await card(1).locator('[data-rs-dup]').waitFor({ state: 'hidden' });
+    check('a player who types the same answer in two boxes sees a warning and cannot send until they differ');
     // A slow typist keeps the same field, text and focus while others send theirs.
     const slow = card(last).locator('[data-rs-input="0"]');
     await slow.click(); await slow.pressSequentially('Pho');
@@ -670,10 +709,16 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     }
     await views(card(keeper), 'card-sort-keeper', '[data-ct-main] .rs-slip', PHONES);
     const myKeys = groupOf(s, 'my keys').id, keys = groupOf(s, 'keys').id;
+    const firstSlip = await card(keeper).locator('[data-ct-main] .rs-slip').first().getAttribute('data-group');
+    assert.equal(firstSlip, keys, 'the biggest stack is listed first');
     await tap(card(keeper), `[data-ct-main] .rs-slip[data-group="${myKeys}"]`);
     await card(keeper).locator(`[data-ct-main] .rs-slip[data-group="${myKeys}"].is-selected`).waitFor();
+    await card(keeper).locator(`[data-ct-main] .rs-slip[data-group="${keys}"] .rs-stack-here`).waitFor({ state: 'visible' });
+    await views(card(keeper), 'card-sort-stacking', `[data-ct-main] .rs-slip[data-group="${keys}"]`, [[390, 844], [320, 568]]);
     await tap(card(keeper), `[data-ct-main] .rs-slip[data-group="${keys}"]`);
     await wait(async () => !(await state()).round.groups.some(group => group.id === myKeys), 'merged');
+    const stacked = (await state()).round.groups.find(group => group.id === keys);
+    await wait(async () => (await card(keeper).locator(`[data-ct-main] .rs-slip[data-group="${keys}"] .rs-worth`).innerText()).includes(String(new Set(stacked.members.map(m => m.playerNum)).size)), 'stack worth');
     await card(keeper).locator(`[data-ct-main] .rs-slip[data-group="${keys}"] .rs-slip-variants`).waitFor({ state: 'visible' });
     await views(card(keeper), 'card-sort-merged', `[data-ct-main] [data-ct-action="split"]`, [[390, 844]]);
     await tap(card(keeper), `[data-ct-main] [data-ct-action="split"][data-ct-arg-group="${keys}"]`);
@@ -688,79 +733,106 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await wait(async () => groupOf(await state(), 'umbrella').dropped === true, 'dropped');
     await tap(card(keeper), `[data-ct-main] [data-ct-action="drop"][data-ct-arg-group="${umbrella}"]`);
     await wait(async () => groupOf(await state(), 'umbrella').dropped === false, 'restored');
-    check('the Keeper merges two slips by tapping both, splits them back, removes and restores one');
+    check('the Keeper stacks two slips by tapping both (biggest stack first, “Stack here” shown, worth updated), unstacks them, removes and restores one');
     await tap(card(keeper), '[data-ct-main] [data-ct-action="startGuess"]');
     await phase('guess');
     s = await state();
-    const order = s.round.order;
-    assert.deepEqual(order, [...others().filter(n => n > keeper), ...others().filter(n => n < keeper)]);
+    assert.equal(s.round.buzz, null, 'guessing opens with nobody holding the buzz');
 
-    // ── guessing ──
+    // ── buzz-in guessing ──
     const hiddenTexts = () => s.round.groups.filter(group => !group.dropped && !s.round.revealed[group.id]).map(group => group.text);
     const authors = group => [...new Set(group.members.map(member => member.playerNum))];
+    const free = () => others().filter(n => !list(s.round.locked).includes(n));
     for (const n of others()) {
       const shown = await text(card(n));
       for (const hidden of hiddenTexts()) if (!plan[n].map(normKey).includes(normKey(hidden))) assert.equal(shown.includes(hidden), false, `card ${n} board stays face down: ${hidden}`);
+      await card(n).locator('[data-ct-main] .rs-buzz').waitFor({ state: 'visible' });
     }
-    await wait(async () => (await card(keeper).locator('[data-ct-main] [data-ct-ui="tile"]').count()) === s.round.board.length, 'keeper tiles');
-    await wait(async () => (await card(order[0]).locator('.secret-card.is-turn').count()) === 1, 'turn card');
-    await views(card(keeper), 'card-guess-keeper', '[data-ct-main] [data-ct-ui="tile"]', PHONES);
-    await views(card(order[0]), 'card-guess-turn', '[data-ct-main] .rs-zone.is-turn [data-ct-action="pass"]', PHONES);
-    if (order[1]) await views(card(order[1]), 'card-guess-waiting', null, [[390, 844]]);
-    check('the Keeper judges from a board of every answer; the guesser’s card says it is their turn; the other boards stay face down');
+    await wait(async () => (await card(keeper).locator('[data-ct-main] .rs-tile').count()) === s.round.board.length, 'keeper tiles');
+    assert.equal(await card(keeper).locator('[data-ct-main] [data-ct-ui="tile"]').count(), 0, 'nothing to judge before someone buzzes');
+    await views(card(keeper), 'card-guess-keeper-waiting', '[data-ct-main] [data-ct-ui="hint"]', PHONES);
+    await views(card(others()[0]), 'card-guess-open', '[data-ct-main] .rs-buzz', PHONES);
+    check('every guesser’s card shows the buzz button; the Keeper sees every answer and waits; the other boards stay face down');
     const tileFor = id => `[data-ct-main] [data-ct-ui="tile"][data-tile="${id}"]`;
+    const buzzIn = async n => {
+      await tap(card(n), '[data-ct-main] .rs-buzz');
+      await wait(async () => (await state()).round.buzz?.playerNum === n, 'buzz ' + n);
+      s = await state(); await settle();
+    };
     const judgeHit = async id => {
-      const serial = (await state()).round.turn.serial;
+      await wait(async () => (await card(keeper).locator(tileFor(id)).count()) === 1, 'tile button');
       await tap(card(keeper), tileFor(id));
       await card(keeper).locator('[data-ct-main] .rs-confirm').waitFor({ state: 'visible' });
       await tap(card(keeper), '[data-ct-main] .rs-confirm [data-ct-action="hit"]');
       await wait(async () => (await state()).round.revealed[id] != null, 'revealed ' + id);
-      assert.notEqual((await state()).round.turn?.serial, serial);
+      s = await state(); await settle();
     };
-    // A hit someone else wrote: +1 per writer.
-    let guesser = s.round.turn.playerNum;
+    // Two cards press at once: one gets it.
+    let guesser = others()[0];
+    // (Clicked inside the pages, so neither waits for the other's buzz to land.)
+    await Promise.all(others().slice(0, 2).map(n => card(n).evaluate(() => document.querySelector('[data-ct-main] .rs-buzz')?.click())));
+    await wait(async () => (await state()).round.buzz != null, 'someone buzzed');
+    s = await state(); await settle();
+    guesser = s.round.buzz.playerNum;
+    await wait(async () => (await card(guesser).locator('.secret-card.is-turn').count()) === 1, 'buzzer card');
+    const watcher = others().find(n => n !== guesser);
+    if (watcher) await card(watcher).locator('[data-ct-main] .rs-zone.is-waiting').waitFor({ state: 'visible' });
+    await wait(async () => (await card(keeper).locator('[data-ct-main] [data-ct-ui="tile"]').count()) === s.round.board.length, 'judging tiles');
+    await views(card(guesser), 'card-guess-buzzed', '[data-ct-main] .rs-zone.is-turn [data-ct-action="pass"]', PHONES);
+    await views(card(keeper), 'card-guess-keeper-judging', '[data-ct-main] [data-ct-ui="tile"]', PHONES);
+    if (watcher) await views(card(watcher), 'card-guess-waiting', null, [[390, 844]]);
+    check('two cards buzz at once and exactly one gets it; their card glows, the others wait, the Keeper’s tiles become buttons');
+    // A hit someone else wrote: one point per writer.
     let target = s.round.board.map(id => s.round.groups.find(group => group.id === id)).find(group => !authors(group).includes(guesser));
     await judgeHit(target.id);
-    s = await state();
     assert.deepEqual(s.round.revealed[target.id], { how: 'hit', by: guesser, points: authors(target).length });
-    await settle();
+    assert.equal(s.round.buzz, null);
     for (const n of s.round.players) assert.ok((await text(card(n))).includes(target.text), `card ${n} shows the found answer`);
     check(`a found answer flips over on every card and scores one point per writer (+${authors(target).length})`);
-    // Your own answer burns.
-    guesser = s.round.turn.playerNum;
-    const own = s.round.board.map(id => s.round.groups.find(group => group.id === id)).find(group => !s.round.revealed[group.id] && authors(group).includes(guesser));
-    if (own) {
+    // Your own answer burns, and you wait for the others.
+    const ownBy = free().find(n => s.round.board.some(id => !s.round.revealed[id] && authors(s.round.groups.find(group => group.id === id)).includes(n)));
+    if (ownBy) {
+      const own = s.round.board.map(id => s.round.groups.find(group => group.id === id)).find(group => !s.round.revealed[group.id] && authors(group).includes(ownBy));
+      await buzzIn(ownBy);
       await judgeHit(own.id);
-      s = await state();
-      assert.deepEqual(s.round.revealed[own.id], { how: 'own', by: guesser, points: 0 });
-      await card(guesser).locator('.rs-tile.is-own').first().waitFor({ state: 'visible' });
-      check('guessing your own answer burns it: revealed, no points');
+      assert.deepEqual(s.round.revealed[own.id], { how: 'own', by: ownBy, points: 0 });
+      await card(ownBy).locator('.rs-tile.is-own').first().waitFor({ state: 'visible' });
+      if (others().length > 1) {
+        assert.deepEqual(s.round.locked, [ownBy]);
+        await card(ownBy).locator('[data-ct-main] .rs-zone.is-locked').waitFor({ state: 'visible' });
+        await views(card(ownBy), 'card-guess-locked', null, [[390, 844], [320, 568]]);
+      }
+      check('the rules know who wrote what: guessing your own answer burns it (revealed, no points) and that player waits for the others');
     }
     // A miss and a hint.
-    const missTurn = (await state()).round.turn.serial;
+    let next = free()[0];
+    await buzzIn(next);
     await tap(card(keeper), '[data-ct-main] .rs-miss');
-    await wait(async () => (await state()).round.turn.serial !== missTurn && (await state()).round.log.at(-1).result === 'miss', 'miss');
+    await wait(async () => (await state()).round.buzz == null && (await state()).round.log.at(-1).result === 'miss', 'miss');
     s = await state();
     const hintTile = s.round.board.find(id => !s.round.revealed[id]);
     await tap(card(keeper), '[data-ct-main] [data-ct-ui="hint"]');
     await card(keeper).locator('[data-ct-main] [data-ct-ui="tile"].is-hinting').first().waitFor({ state: 'visible' });
     await tap(card(keeper), tileFor(hintTile));
     await wait(async () => (await state()).round.hints[hintTile] === true, 'hint');
-    await settle();
+    s = await state(); await settle();
     for (const n of others()) await card(n).locator('[data-ct-main] .rs-hint').first().waitFor({ state: 'visible' });
-    check('“Not on the board” passes the turn; a hint shows the first letter on every card');
-    // The guesser passes from their own card.
-    guesser = (await state()).round.turn.playerNum;
-    await tap(card(guesser), '[data-ct-main] .rs-zone.is-turn [data-ct-action="pass"]');
+    check('“Not on the board” ends that buzz; a hint shows the first letter on every card');
+    // A buzzer gives up from their own card; another one runs out of time.
+    next = free()[0];
+    await buzzIn(next);
+    await tap(card(next), '[data-ct-main] .rs-zone.is-turn [data-ct-action="pass"]');
     await wait(async () => (await state()).round.log.at(-1).result === 'pass', 'pass');
-    // The turn clock runs out with no host page.
     s = await state();
-    guesser = s.round.turn.playerNum;
-    await advance(s.round.turn.endsAt - (epoch + offset) + 400);
+    next = free()[0];
+    await buzzIn(next);
+    await advance(s.round.buzz.endsAt - (epoch + offset) + 400);
     await wait(async () => (await state()).round.log.at(-1).result === 'timeout', 'timeout');
-    assert.notEqual((await state()).round.turn.playerNum === guesser && order.length > 1, true);
-    check('the guesser passes from their card; a turn that runs out passes by itself');
-    // The shared board, reopened mid-round, keeps every hidden answer hidden.
+    s = await state();
+    check('a buzzer gives up from their card (“Never mind”); a buzz that runs out of time ends by itself');
+    // The shared board, reopened mid-round with someone buzzing, keeps every hidden answer hidden.
+    next = free()[0];
+    await buzzIn(next);
     host = await open(PAGE);
     await wait(async () => (await status()) === 'ready', 'host reopened');
     await host.locator('.rs-phase-guess').waitFor({ state: 'visible' });
@@ -768,22 +840,24 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     const shared = await text(host);
     for (const hidden of hiddenTexts()) assert.equal(shared.includes(hidden), false, 'the shared board never shows ' + hidden);
     assert.ok(shared.includes(target.text));
+    assert.ok(shared.includes(names[next - 1]), 'the shared screen names the buzzer');
     await views(host, 'host-guess', '[data-host-action="pause"]', HOSTS);
     await host.close(); host = null;
-    check('the reopened shared screen shows found answers only; closing it again changes nothing');
-    // Pause from Table controls keeps both clocks.
+    check('the reopened shared screen shows found answers and who is answering; closing it again changes nothing');
+    // Pause from Table controls keeps the round clock and the buzzer's clock.
     s = await state();
-    const guessLeft = s.round.guessEndsAt - (epoch + offset), turnLeft = s.round.turn.endsAt - (epoch + offset);
+    const guessLeft = s.round.guessEndsAt - (epoch + offset), buzzLeft = s.round.buzz.endsAt - (epoch + offset);
     await tool(card(keeper), '[data-ct-action="pause"]');
     await phase('paused');
-    await views(card(order[0]), 'card-paused', '[data-ct-main] [data-ct-action="resume"]', [[390, 844]]);
+    await views(card(next), 'card-paused', '[data-ct-main] [data-ct-action="resume"]', [[390, 844]]);
     await advance(45000);
-    await tap(card(order[0]), '[data-ct-main] [data-ct-action="resume"]');
+    await tap(card(next), '[data-ct-main] [data-ct-action="resume"]');
     await phase('guess');
     s = await state();
     assert.equal(s.round.guessEndsAt - (epoch + offset), guessLeft);
-    assert.equal(s.round.turn.endsAt - (epoch + offset), turnLeft);
-    check('pausing keeps the round clock and the turn clock');
+    assert.equal(s.round.buzz.endsAt - (epoch + offset), buzzLeft);
+    check('pausing keeps the round clock and the buzzer’s answer clock');
+    const order = others();
     // End the round early (two taps); everything is revealed.
     await twice(card(order[0]), '[data-ct-action="close"]');
     await phase('result');
