@@ -24,6 +24,13 @@ Validation: Bluff tests 157 (new bluff-packs 7, UI pack test, host-snapshot
 service gate, bank counts/gentleness); full Hub 2290/2290, zero failures/skips;
 bundle --check passes. Local Chromium with a stubbed transport: lobby/topic/
 reveal × EN/ZH × 1280/390/320, no overflow or clipped pack text, zero page errors.
+Frontend f2d7d28 is pushed to main; Vercel deployment 8KU247wM9aB9cghXiBk1yY1d3wpo
+reports success. Read back from production: bluff-king-ui.js (setDeck, pack
+strings, packs-1/v=2 loads), bluff-king-engine.js (setDeck, deckSummary, deck
+in create/publicQuestion), bluff-king-sync.js (deckService gate) and
+bluff-king-topics.js (44 Halloween cards). The independent service was NOT
+redeployed: the user's computer was not connected to this session, so normal
+service-run Hub tables keep Classic (no picker) until that deployment.
 
 ## CURRENT: WORD LIMIT THEATER random 1–6, ROOM SURVEY buzz line — 2026-10-24
 
