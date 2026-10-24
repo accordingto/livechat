@@ -84,9 +84,6 @@ button.once-card { cursor:pointer; }
 .once-card--full .once-interrupt-mark { top:51px; font-size:.75rem; left:10px; right:10px; }
 .once-hand-panel { margin-top:0; }
 .once-hand-actions { position:sticky; bottom:max(0px,env(safe-area-inset-bottom)); padding:12px 0 0; background:linear-gradient(transparent,#182334 8px); z-index:4; }
-.once-first { display:flex; align-items:center; justify-content:space-between; gap:30px; }
-.once-first > div { max-width:600px; }
-.once-first label { display:grid; gap:7px; margin-top:16px; max-width:330px; }
 .once-first select,.once-demo-bar select { min-height:46px; border-radius:8px; padding:8px 12px; border:1px solid #61708b; color:#eff4fa; background:#24344a; font-size:1rem; width:100%; }
 .once-private-note { text-align:center; }
 .once-private-note img { height:225px; max-width:100%; margin:auto auto 12px; display:block; }
@@ -138,8 +135,6 @@ button.once-card { cursor:pointer; }
   .once-card--ending .once-card-title { grid-column:2; font-size:1rem; padding:8px; min-height:67px; line-height:1.35; }
   .once-ending-panel > .once-button { margin-top:10px; }.once-private-note { display:none; }
   .once-hand-actions { gap:8px; }.once-hand-actions .once-button { flex:1 1 auto; padding:11px; font-size:.9rem; }
-  .once-first { align-items:flex-start; flex-direction:column; gap:16px; }.once-first > .once-card { align-self:center; }
-  .once-first .once-actions .once-button { width:100%; }
   .once-game h2 { font-size:1rem; }.once-modal { padding:28px 15px 18px; }
   .once-card--full { height:400px; }.once-card--full .once-card-title { font-size:1.35rem; }
   .once-card--full.once-cat-ending .once-card-title { font-size:1.18rem; }
@@ -262,6 +257,64 @@ button.once-card { cursor:pointer; }
 .once-game--reference .once-help summary { font-size:.8rem; color:#d8e0ee; }
 .once-game--reference .once-notice,.once-game--reference .once-opportunity,.once-game--reference .once-decision { margin-bottom:12px; }
 .once-game--reference .once-first,.once-game--reference .once-winner { margin-bottom:12px; }
+/* Opening story (replaces the old "who looks most like this card" starter).
+   The page is a warm paper sheet that matches the card name plates. */
+.once-visually-hidden { position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.once-opening { min-width:0; color:#3c3128; background:linear-gradient(135deg,#fff8ea,#eee2ca); border:1px solid #e3d4b8; border-radius:10px; box-shadow:inset 0 0 0 3px #fffaf1,inset 0 0 0 4px #d7c6a6,0 8px 18px #050b1d59; padding:22px 26px; text-align:left; }
+.once-opening-kicker { display:flex; align-items:center; gap:8px; margin:0 0 10px !important; color:#7a5f3d; font:750 .72rem/1.2 'Segoe UI',system-ui,sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+.once-opening-kicker svg { width:22px; height:18px; flex:none; fill:none; stroke:currentColor; stroke-width:1.8; }
+.once-game .once-opening-text { margin:0; color:#33291f; font:400 1.2rem/1.6 Georgia,'Times New Roman',serif; overflow-wrap:break-word; }
+.once-game .once-opening-zh { margin:10px 0 0; padding-top:10px; border-top:1px dashed #cbb894; color:#5e4d3c; font-size:.9rem; line-height:1.7; }
+.once-opening-tools { display:flex; justify-content:flex-end; margin-top:14px; }
+.once-game--reference .once-opening .once-button--secondary { background:transparent; border-color:#b99d70; color:#5a4430; font-weight:650; }
+.once-game--reference .once-opening .once-button--secondary:hover:not(:disabled) { background:#f5ead6; filter:none; }
+.once-game--reference .once-opening .once-button:focus-visible { outline-color:#5a4430; }
+.once-game--reference .once-first { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr); gap:24px; align-items:stretch; margin-bottom:12px; }
+.once-first .once-opening--feature { display:flex; flex-direction:column; justify-content:center; }
+.once-first .once-opening--feature .once-opening-text { font-size:clamp(1.15rem,1.6vw,1.45rem); }
+.once-first-choice { display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.once-first-choice h2 { margin-bottom:6px !important; }
+.once-first-choice > .once-muted { margin:0 0 16px; }
+.once-first-options { display:flex; flex-direction:column; gap:10px; }
+.once-first-options > .once-button { width:100%; }
+.once-game--reference .once-first-options .once-button[data-once-icon="dice"]::before { content:'🎲'; margin-right:8px; }
+.once-first-or { display:flex; align-items:center; gap:10px; margin:4px 0 0 !important; color:#c6cfe2; font-size:.76rem; }
+.once-first-or::before,.once-first-or::after { content:''; flex:1; height:1px; background:#a7bad44d; }
+.once-first-pick { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; }
+.once-first-pick label { min-width:0; margin:0; }
+.once-first-pick select { min-height:44px; }
+.once-first-waiting { margin:0; color:#e7ecf6; }
+.once-story-opening--told { align-items:stretch; justify-content:center; min-height:0; padding:4px 0; }
+.once-story-opening--told .once-opening--page { max-width:760px; margin:0 auto; width:100%; }
+.once-game--reference .once-story-opening--told .once-opening-text { font-size:1.15rem; max-width:none; color:#33291f; }
+.once-game--reference .once-story-opening--told .once-opening-zh { max-width:none; color:#5e4d3c; font-size:.88rem; }
+.once-game--reference .once-story-opening .once-opening-hint { margin:14px 0 0; max-width:none; color:#6b5a48; font-size:.82rem; font-style:italic; }
+.once-opening--prologue { padding:12px 16px; margin:0 0 14px; box-shadow:inset 0 0 0 2px #fffaf1,inset 0 0 0 3px #d7c6a6; }
+.once-opening-toggle { display:none; margin-left:auto; min-height:32px; padding:4px 10px; border:1px solid #b99d70; border-radius:6px; background:transparent; color:#5a4430; font:650 .72rem/1.2 'Segoe UI',system-ui,sans-serif; letter-spacing:0; text-transform:none; cursor:pointer; }
+.once-opening-toggle:focus-visible { outline:3px solid #5a4430; outline-offset:2px; }
+.once-opening--prologue .once-opening-kicker { margin-bottom:6px !important; font-size:.66rem; }
+.once-game .once-opening--prologue .once-opening-text { font-size:.95rem; line-height:1.55; }
+.once-game .once-opening--prologue .once-opening-zh { margin-top:6px; padding-top:6px; font-size:.8rem; }
+/* The shared host table is screen-shared: give the latest four cards the room
+   instead of leaving most of the panel empty. Player cards keep their sizes. */
+@media(min-width:761px){
+  .once-game--host .once-history-latest { grid-template-columns:repeat(4,minmax(0,200px)); justify-content:center; gap:20px; }
+  .once-game--host .once-history-board.has-pile { grid-template-columns:76px minmax(0,auto); justify-content:center; gap:28px; }
+  .once-game--host .once-history-latest .once-card--history { width:100%; height:auto; aspect-ratio:9/14; }
+  .once-game--host .once-history-latest .once-card-category { min-height:30px; font-size:.68rem; }
+  .once-game--host .once-history-latest .once-card-title { min-height:58px; font-size:1.2rem; }
+  .once-game--host .once-history-latest .once-interrupt-mark { top:40px; font-size:.62rem; }
+  .once-game--host .once-history-number { font-size:.8rem; }
+  .once-game--host .once-opening--prologue { padding:14px 20px; }
+  .once-game.once-game--host .once-opening--prologue .once-opening-text { font-size:1.08rem; }
+  .once-game--host .once-story-opening--told .once-opening--page { max-width:880px; }
+  .once-game.once-game--host .once-story-opening--told .once-opening-text { font-size:1.35rem; }
+}
+@media(max-width:900px){
+  .once-game--reference .once-first { grid-template-columns:minmax(0,1fr); gap:16px; }
+}
+.once-game--reference .once-story-opening .once-opening-kicker { color:#7a5f3d; font-size:.72rem; max-width:none; }
+.once-game--reference .once-story-opening--waiting { min-height:140px; padding:12px; }
 @media(max-width:1000px){
   .once-game--reference .once-table-grid.has-ending { grid-template-columns:minmax(0,1fr); }
   .once-game--reference .once-ending-dock { grid-column:1; grid-row:3; padding:0 12px; border:1px solid #a7bad43d; border-radius:8px; }
@@ -312,7 +365,22 @@ button.once-card { cursor:pointer; }
   .once-hand-title { gap:4px 9px; }
   .once-hand-meta { gap:8px; }
   .once-ending-jump { font-size:.7rem; }
+  /* Opening story on phones: same reading order, smaller type. */
+  .once-opening { padding:16px; }
+  .once-game .once-opening-text,.once-first .once-opening--feature .once-opening-text { font-size:1.05rem; line-height:1.55; }
+  .once-game--reference .once-story-opening--told .once-opening-text { font-size:1rem; }
+  .once-game--reference .once-story-opening--waiting { min-height:90px; }
+  .once-opening--prologue { padding:10px 12px; margin-bottom:10px; }
+  .once-game .once-opening--prologue .once-opening-text { font-size:.86rem; }
+  .once-opening-toggle { display:inline-flex; align-items:center; min-height:44px; margin-right:-6px; }
+  .once-opening--prologue { padding-top:0; }
+  .once-opening--prologue .once-opening-kicker { margin-bottom:0 !important; }
+  .once-opening--prologue.is-clamped .once-opening-text { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; }
+  .once-opening--prologue.is-clamped .once-opening-zh { display:none; }
+  .once-first-pick { grid-template-columns:minmax(0,1fr); }
+  .once-first-pick .once-button { width:100%; }
 }
 @media(prefers-reduced-motion:reduce){
   .once-pile-visual::before,.once-pile-visual::after,.once-pile-visual > img { transition:none; }
 }
+

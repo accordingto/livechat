@@ -7,9 +7,9 @@ const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
 const root = path.resolve(__dirname, '..');
-const files = new Set(['once-upon-a-time.css', 'once-upon-a-time-modern-future-deck.js', 'once-upon-a-time-halloween-deck.js', 'once-upon-a-time-deck.js', 'once-upon-a-time-engine.js', 'once-upon-a-time-ui.js']);
+const files = new Set(['once-upon-a-time.css', 'once-upon-a-time-modern-future-deck.js', 'once-upon-a-time-halloween-deck.js', 'once-upon-a-time-deck.js', 'once-upon-a-time-openings.js', 'once-upon-a-time-engine.js', 'once-upon-a-time-ui.js']);
 const html = '<!doctype html><html lang="en"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/once-upon-a-time.css"><body class="once-card-page"><main id="content"></main>' +
-  ['once-upon-a-time-modern-future-deck.js', 'once-upon-a-time-halloween-deck.js', 'once-upon-a-time-deck.js', 'once-upon-a-time-engine.js', 'once-upon-a-time-ui.js'].map(file => '<script src="/' + file + '"></script>').join('') + '</body></html>';
+  ['once-upon-a-time-modern-future-deck.js', 'once-upon-a-time-halloween-deck.js', 'once-upon-a-time-deck.js', 'once-upon-a-time-openings.js', 'once-upon-a-time-engine.js', 'once-upon-a-time-ui.js'].map(file => '<script src="/' + file + '"></script>').join('') + '</body></html>';
 const server = http.createServer((request, response) => {
   const name = new URL(request.url, 'http://localhost').pathname.slice(1);
   if (!name) { response.setHeader('Content-Type', 'text/html'); response.end(html); return; }

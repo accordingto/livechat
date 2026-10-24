@@ -39,7 +39,7 @@ async function prepareWorld(page){
       await page.route(roomEndpoint,route=>route.abort());
       await page.goto(base+'once-upon-a-time.html?demo=1',{waitUntil:'domcontentloaded'});
       await prepareWorld(page);
-      await page.getByRole('button',{name:'Choose first Storyteller',exact:true}).click();
+      await page.getByRole('button',{name:'Start with this player',exact:true}).click();
       await page.locator('#once-demo-view').selectOption('1');
       assert.equal(await page.locator('.once-hand [data-once-card]').count(),7,'original automatic hands remain unchanged');
       assert.equal(await page.locator('.once-world-tag').innerText(),selectedPool.title);
@@ -58,7 +58,8 @@ async function prepareWorld(page){
         const box=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height,width:r.width,left:r.left};};
         const latest=document.querySelector('.once-history-latest');
         const storyCards=[...latest.querySelectorAll('.once-card')].map(el=>{const r=el.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width,height:r.height};});
-        return {story:box('.once-history-panel'),hand:box('.once-hand-panel'),ending:box('.once-ending-dock'),endingCard:box('.once-ending-dock .once-card'),handCard:box('.once-hand .once-card'),storyCards,storyNumbers:[...latest.querySelectorAll('.once-history-number')].map(el=>parseInt(el.textContent,10)),overflow:document.documentElement.scrollWidth>innerWidth,tableOverflow:latest.scrollWidth>latest.clientWidth+1,titlesFit:[...latest.querySelectorAll('.once-card-title')].every(el=>el.scrollHeight<=el.clientHeight+1),fourVisible:[...latest.querySelectorAll('.once-card')].every(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;})};
+        const prologue=document.querySelector('.once-opening--prologue'),prologueBox=prologue?prologue.getBoundingClientRect():null;
+        return {prologue:prologueBox?{height:prologueBox.height+parseFloat(getComputedStyle(prologue).marginBottom),clamped:prologue.classList.contains('is-clamped'),fits:prologueBox.right<=innerWidth}:null,story:box('.once-history-panel'),hand:box('.once-hand-panel'),ending:box('.once-ending-dock'),endingCard:box('.once-ending-dock .once-card'),handCard:box('.once-hand .once-card'),storyCards,storyNumbers:[...latest.querySelectorAll('.once-history-number')].map(el=>parseInt(el.textContent,10)),overflow:document.documentElement.scrollWidth>innerWidth,tableOverflow:latest.scrollWidth>latest.clientWidth+1,titlesFit:[...latest.querySelectorAll('.once-card-title')].every(el=>el.scrollHeight<=el.clientHeight+1),fourVisible:[...latest.querySelectorAll('.once-card')].every(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;})};
       });
       assert.equal(geometry.overflow,false);assert.equal(geometry.tableOverflow,false);
       assert.equal(geometry.titlesFit,true);assert.equal(geometry.fourVisible,true);
@@ -70,7 +71,9 @@ async function prepareWorld(page){
         const [a,b,c,d]=geometry.storyCards;
         assert.ok(geometry.storyCards.every(card=>card.height>card.width&&Math.round(card.height)===200),'all phone Story cards are upright 200px portraits');
         assert.ok(Math.abs(a.top-b.top)<=1&&a.left<b.left&&c.top>a.top&&Math.abs(c.top-d.top)<=1&&c.left<d.left,'phone portraits appear left-to-right, then top-to-bottom');
-        assert.ok(geometry.story.height<640,'phone latest four use compact portrait rows');
+        // The opening story reminder sits above the cards, clamped to its start.
+        assert.ok(geometry.prologue&&geometry.prologue.clamped&&geometry.prologue.fits&&geometry.prologue.height<=125,'phone opening reminder stays a compact two-line strip');
+        assert.ok(geometry.story.height-geometry.prologue.height<640,'phone latest four use compact portrait rows');
       }
       if(width<=1000)assert.ok(geometry.ending.top>=geometry.hand.bottom,'Ending does not separate Story and hand');
       else assert.ok(geometry.ending.left>geometry.story.left,'desktop Ending remains beside Story');

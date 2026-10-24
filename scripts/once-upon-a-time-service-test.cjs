@@ -3,6 +3,7 @@
 'use strict';
 const { randomBytes } = require('node:crypto');
 const ENGINE = require('../once-upon-a-time-engine.js');
+const OPENINGS = require('../once-upon-a-time-openings.js');
 const DECK = require('../once-upon-a-time-deck.js');
 const DATABASE = 'https://livechat-92f66-default-rtdb.asia-southeast1.firebasedatabase.app';
 const SERVICE = 'https://icebreaker-youtube-search.vercel.app/api/hub-executor';
@@ -107,14 +108,19 @@ async function run({ env = process.env, fetchImpl = fetch } = {}) {
     report.stage = 'server-deal';
     const dealt = await command(1, 'deal');
     check(dealt.once.phase === 'CHOOSING_FIRST');
-    check(dealt.once.deckCounts.story === pool.storyCards.length - 6 * count - 1);
+    // An opening story replaces the old discarded starter card.
+    check(dealt.once.deckCounts.story === pool.storyCards.length - 6 * count && dealt.once.deckCounts.storyDiscard === 0, 'no-starter-card');
     check(dealt.once.deckCounts.ending === pool.endingCards.length - 6);
     const views = await Promise.all(seats.map(s => card(s.playerNum)));
     const allIds = views.flatMap(v => handOf(v).map(c => c.id));
     check(allIds.length === 6 * count && new Set(allIds).size === 6 * count);
     check(new Set(views.map(v => v.once.ending.id)).size === 6);
     const storyIds = new Set(pool.storyCards.map(card => card.id)), endingIds = new Set(pool.endingCards.map(card => card.id));
-    check(storyIds.has(dealt.once.starterCard.id) && !allIds.includes(dealt.once.starterCard.id));
+    check(dealt.once.starterCard == null && dealt.once.opening?.world === world && OPENINGS.byId[dealt.once.opening.id]?.en === dealt.once.opening.en && !!dealt.once.opening.zh, 'opening-story');
+    check(dealt.once.actions.newOpening === true, 'manager-may-redraw-opening');
+    const redrawn = await command(1, 'newOpening');
+    check(redrawn.once.phase === 'CHOOSING_FIRST' && redrawn.once.opening.world === world && redrawn.once.opening.id !== dealt.once.opening.id, 'opening-redrawn');
+    check(redrawn.once.deckCounts.story === dealt.once.deckCounts.story, 'redraw-keeps-cards');
     for (const value of views) {
       check(value.once.world === world && value.once.resolvedHandSize === count);
       check(handOf(value).length === count, 'own-hand-size');
@@ -129,7 +135,8 @@ async function run({ env = process.env, fetchImpl = fetch } = {}) {
     const active = await card(3), played = handOf(active)[0].id;
     const next = await command(3, 'play', { cardId: played });
     check(handOf(next).length === count - 1 && ENGINE.list(next.once.history).at(-1).cardId === played, 'normal-play-consumed-once');
-    check(next.once.deckCounts.story === pool.storyCards.length - 6 * count - 1);
+    check(next.once.deckCounts.story === pool.storyCards.length - 6 * count);
+    check(next.once.opening?.id === redrawn.once.opening.id && next.once.actions.newOpening === false, 'opening-kept-after-start');
     const unchanged = (await card(4)).once;
     await api({ operation: 'execute', capsule: (await card(4)).hubExecutor.capsule, token: seats[3].token });
     const reconnected = (await card(4)).once;

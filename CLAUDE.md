@@ -1,3 +1,21 @@
+## CURRENT: Once opening stories + host proportions — 2026-10-25
+
+Read once-upon-a-time-mode.md "Opening stories replace the starter card". User
+request: the starter card ("who looks most like this card") becomes an opening
+story from a bank; fix the host page proportions; keep random start and the
+player picker. New once-upon-a-time-openings.js: 100 original openings (Classic
+40 / Modern & Future 30 / Halloween 30), simple English + zh reading aid, stable
+IDs. Engine: deal picks `opening` (no starter draw), avoids room recentOpenings
+across Restart, manager `newOpening` redraw in CHOOSING_FIRST; chooseFirst /
+randomFirst unchanged; old starterCard saves still start. UI: opening sheet +
+"Who begins the story?" (random or picker), opening fills the empty table then
+stays above the cards (phones: 2-line clamp, local Show all). Host fix: the
+start-panel card no longer stretches past the page; shared table cards up to
+200px. Projections without `opening` (older service, saved games) show a
+session-derived opening on every client, no redraw. Cache once-opening-1,
+launcher hub-launch-6. ENGINE CHANGE: service tables get the canonical opening
+and redraw only after the independent executor is redeployed.
+
 ## CURRENT: BLUFF PARTY "Everyone votes" mode — 2026-10-25
 
 User request: an added mode with no Thinker; everyone takes a turn in random

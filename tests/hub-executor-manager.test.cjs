@@ -57,7 +57,7 @@ function fixture(t, game, { readiness = null } = {}) {
     letstalk: ['talk-crazy.js', 'talk-vnext.js', 'talk-engine.js', 'talk-sync.js'],
     cut: ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-jump-topics.js', 'cut-engine.js', 'cut-sync.js'],
     dixit: ['dixit-deck.js', 'dixit-engine.js', 'talk-sync.js', 'dixit-sync.js'],
-    onceupon: ['once-upon-a-time-deck.js', 'once-upon-a-time-engine.js', 'talk-sync.js', 'once-upon-a-time-sync.js'],
+    onceupon: ['once-upon-a-time-deck.js', 'once-upon-a-time-openings.js', 'once-upon-a-time-engine.js', 'talk-sync.js', 'once-upon-a-time-sync.js'],
   })[game];
   for (const file of [...scripts, 'hub-executor.js']) vm.runInContext(fs.readFileSync(require.resolve('../' + file), 'utf8'), context);
   context.HUB_EXECUTOR.install();

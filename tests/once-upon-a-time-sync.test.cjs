@@ -249,7 +249,8 @@ test('simultaneous interrupts use one atomic winner and impose no penalty on a l
   assert.equal(h.doc.state.hands[loser].length, counts[loser]);
   assert.equal(f.card(2).once.reply.id, second.id); assert.equal(f.card(3).once.reply.id, third.id);
   assert.equal(f.card(winner).once.reply.error, ''); assert.ok(f.card(loser).once.reply.error);
-  assert.equal(h.doc.state.storyDeck.length, D.storyCards.length - 6 * 5 - 2);
+  // Six hands of five, then the old Storyteller's one interrupt draw. No starter card.
+  assert.equal(h.doc.state.storyDeck.length, D.storyCards.length - 6 * 5 - 1);
 });
 
 test('projections preserve a mailbox submitted concurrently with another state update', async t => {

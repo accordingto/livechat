@@ -555,3 +555,56 @@ Executed verification:
 - Only the two changed Once deck/engine files were also patched into the
   independent source project after verifying its released baseline, so later
   service deployments retain this update. Credentials/settings were untouched.
+
+## Opening stories replace the starter card (2026-10-25)
+
+User request: replace the "who looks most like this card" starter with an
+opening story, build a bank of openings, fix the host page proportions, and
+keep both ways to pick the first Storyteller (random, or the player picker).
+
+- **Bank:** `once-upon-a-time-openings.js` (UMD `ONCE_OPENINGS`) holds 100
+  original openings with stable IDs: Classic 40 (`once-open-classic-001…040`,
+  all begin "Once upon a time,"), Modern & Future 30, Spooky Halloween 30
+  (light, not gory). Each is 2–3 simple English sentences (20–44 words) that
+  set a scene and a problem, then stop. Each has a Traditional Chinese reading
+  aid shown only in the zh interface. The game remains English material.
+- **Engine:** `deal` no longer draws/discards a starter card (Story deck keeps
+  that card). It picks `s.opening` from the table's world, avoiding the room's
+  `recentOpenings` (≤60 IDs, carried across Restart), so a room hears every
+  opening of a world before a repeat. Manager command `newOpening` (CHOOSING_FIRST
+  only, turn-fenced, deterministic retry) redraws it without touching cards.
+  `chooseFirst` and `randomFirst` are unchanged. View adds `opening {id, world,
+  en, zh}` and `actions.newOpening`. Saved games with `starterCard` keep it and
+  start normally; their next deal uses an opening.
+- **Older service / saved games:** a projection without `opening` gets one
+  derived from `ONCE_OPENINGS.fallback(sessionId, world)`; every client agrees.
+  No redraw button in that case (it needs the canonical opening).
+- **UI:** the start panel shows the opening on a paper sheet beside "Who begins
+  the story?": **Pick someone at random** or choose a player and **Start with
+  this player** (active players only). Before the first card the opening fills
+  the empty Story table with "{name} reads the opening aloud"; afterwards it
+  stays above the cards. Phones clamp that reminder to two lines with a local
+  Show all toggle. Rules gain one line: words in the opening do not count for
+  interrupts until a Storyteller brings them up again. "1 card" is singular.
+- **Host proportions:** the old start panel put a `width:100%` history card in
+  a flex row, stretching it into a banner wider than the page (1280px overflowed
+  to 1376px). That layout is gone. The shared table (`.once-game--host`, ≥761px)
+  shows the latest four cards up to 200px wide (9:14) centred with the earlier
+  pile, instead of 144px cards against an empty panel. Player cards keep sizes.
+- **Loading:** host page and `play.html` load the bank (`once-opening-1` tags);
+  `hub-launcher.js` lists it before the engine (`hub-launch-6`). The service
+  bundle picks it up through the engine's `require`.
+
+Validation: Once tests 200/200 (engine 60 incl. bank, redraw, no-repeat across
+Restart, old starter saves; UI 49 incl. fallback and host layout); full Hub
+2312/2312 after rebasing onto the BLUFF "Everyone votes" release. Browser (local Chromium, demo + real `play.html` shell with engine
+projections, room traffic blocked): host/player EN/ZH at 1920/1280/1024/390/320
+with no overflow or page errors; `once-upon-a-time-mobile-test.cjs` passes for
+all three worlds (phone check now measures the cards apart from the clamped
+opening strip); `once-upon-a-time-settings-test.cjs` passes.
+**Service:** this is an engine change. Until the independent executor is
+redeployed (`scripts/hub-executor-package-service.cjs` from the Windows service
+workspace), service-run tables keep dealing a starter card; the new UI shows a
+session-derived opening instead and hides the redraw button. After deployment,
+`ONCE_UPON_SERVICE_TEST=1 node scripts/once-upon-a-time-service-test.cjs`
+checks the opening, redraw and no-starter deal on the real service.

@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const E = require('../once-upon-a-time-engine.js');
 const D = require('../once-upon-a-time-deck.js');
+const O = require('../once-upon-a-time-openings.js');
 let serial = 0;
 const roster = count => Array.from({ length: count }, (_, i) => ({ playerNum: i + 1, name: 'Person ' + (i + 1) }));
 const create = (count = 4, seed = 731) => E.create({ id: 'once-test', roster: roster(count), seed, now: 1000 });
@@ -65,7 +66,7 @@ test('setup accepts fixed 2–6 seat rosters and rejects malformed or duplicate 
   assert.throws(() => E.create({ roster: roster(2) }), /invalid_setup/);
 });
 
-test('2, 4, and 6 players receive correct private hands/endings and one public discarded starter', () => {
+test('2, 4, and 6 players receive correct private hands/endings and one public opening story, with no starter card', () => {
   for (const count of [2, 4, 6]) {
     const s = dealt(count), handSize = Math.max(5, 11 - count);
     assert.equal(s.phase, 'CHOOSING_FIRST'); assert.equal(s.storyteller, null);
@@ -74,10 +75,12 @@ test('2, 4, and 6 players receive correct private hands/endings and one public d
       assert.equal(E.view(s, p.playerNum, 0).once.hand.length, handSize);
       assert.equal(E.view(s, p.playerNum, 0).once.ending.id, s.endings[p.playerNum]);
     }
-    assert.deepEqual(s.storyDiscard, [s.starterCard]); assert.deepEqual(s.history, []);
-    assert.equal(s.storyDeck.length, D.storyCards.length - count * handSize - 1);
+    assert.deepEqual(s.storyDiscard, []); assert.deepEqual(s.history, []); assert.equal(s.starterCard, null);
+    assert.equal(s.storyDeck.length, D.storyCards.length - count * handSize);
     assert.equal(s.endingDeck.length, D.endingCards.length - count);
-    assert.equal(E.view(s, 0, 0).once.starterCard.id, s.starterCard); conservation(s);
+    assert.equal(O.byId[s.opening].world, 'classic');
+    for (const viewer of [0, 1]) assert.deepEqual(E.view(s, viewer, 0).once.opening, { id: s.opening, world: 'classic', en: O.byId[s.opening].en, zh: O.byId[s.opening].zh });
+    assert.equal(E.view(s, 0, 0).once.starterCard, null); conservation(s);
   }
 });
 
@@ -153,9 +156,8 @@ test('soft-balanced opening hands keep original counts, category variety and all
       assert.equal(hand.length, handSize);
       assert.ok(Object.keys(counts).length >= (handSize >= 7 ? 4 : 3), 'several narrative categories to use');
       assert.ok(Math.max(...Object.values(counts)) <= Math.ceil(handSize * 0.4), 'one category never dominates the opening hand');
-      assert.equal(hand.includes(after.starterCard), false, 'discarded starter is not in a hand');
     }
-    assert.deepEqual(after.storyDiscard, [after.starterCard]);
+    assert.deepEqual(after.storyDiscard, []); assert.equal(after.starterCard, null);
     conservation(after);
   }
 });
@@ -166,9 +168,9 @@ test('opening safeguards retain the random remainder, retry determinism and late
     assert.deepEqual(E.apply(frozen, cmd), after, 'transaction replay is the same complete deal');
     assert.deepEqual(frozen, before, 'no input mutation');
     assert.equal(E.apply(after, cmd), after, 'acknowledged retry never deals again');
-    const original = openingShuffle(before, cmd), used = new Set(Object.values(after.hands).flat().concat(after.starterCard));
+    const original = openingShuffle(before, cmd), used = new Set(Object.values(after.hands).flat());
     assert.deepEqual(after.storyDeck, original.filter(id => !used.has(id)), 'remaining shuffled deck is not category-sorted or reshuffled');
-    assert.equal(after.starterCard, original.find(id => !Object.values(after.hands).flat().includes(id)), 'same normal top-card starter rule');
+    assert.ok(O.byId[after.opening], 'an opening story replaces the drawn starter card');
     let next = act(after, 'chooseFirst', 0, { playerNum: 1 });
     const topCard = next.storyDeck[0], originalHand = clone(next.hands[1]);
     next = act(next, 'pass', 1);
@@ -556,7 +558,7 @@ test('Firebase omission/numeric object arrays and JSON reconnect preserve hands 
 });
 
 test('Story Deck exhaustion reshuffles physical discard, preserves chronological history, and reuses event ids safely', () => {
-  let s = started(2); const initialStarter = s.starterCard;
+  let s = started(2); const initialOpening = s.opening;
   // Long tabletop session: pass, draw, discard, with occasional narrative plays.
   for (let i = 0; i < 180; i++) {
     const actor = s.storyteller;
@@ -564,7 +566,7 @@ test('Story Deck exhaustion reshuffles physical discard, preserves chronological
     if (played) s = act(s, 'play', actor, { cardId: s.hands[actor][0] });
     s = act(s, 'pass', actor); s = act(s, played ? 'keepAll' : 'discard', actor, { cardId: s.hands[actor][0] }); conservation(s);
   }
-  assert.ok(s.history.length > 30); assert.equal(s.starterCard, initialStarter);
+  assert.ok(s.history.length > 30); assert.equal(s.opening, initialOpening);
   assert.equal(new Set(s.history.map(event => event.eventId)).size, s.history.length);
   assert.ok(s.history.every((event, i) => i === 0 || event.at >= s.history[i - 1].at));
 });
@@ -632,6 +634,7 @@ test('browser global builds use the same deck and engine without CommonJS or ext
   const context = vm.createContext({});
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-modern-future-deck.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-deck.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-openings.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-engine.js'), 'utf8'), context);
   assert.equal(typeof context.ONCE_ENGINE.create, 'function'); assert.equal(context.ONCE_DECK.storyCards.length, D.storyCards.length);
   const s = context.ONCE_ENGINE.create({ id: 'browser', roster: roster(2), seed: 1 });
@@ -640,6 +643,7 @@ test('browser global builds use the same deck and engine without CommonJS or ext
   const dealtModern = context.ONCE_ENGINE.apply(modern, { id: 'd', type: 'deal', actor: 0, sessionId: modern.sessionId, turnId: modern.turnId, seed: 500 });
   assert.equal(dealtModern.phase, 'CHOOSING_FIRST'); assert.equal(dealtModern.hands[1].length, 3);
   assert.ok(D.getWorld('modern-future').endingCards.some(card => card.id === context.ONCE_ENGINE.view(dealtModern, 1).once.ending.id));
+  assert.equal(context.ONCE_ENGINE.view(dealtModern, 1).once.opening.world, 'modern-future');
 });
 
 test('disputing the newest of successive normal interrupts preserves the older accepted event and exact draws', () => {
@@ -893,4 +897,70 @@ test('saved classic sessions with missing setting metadata neither re-deal nor r
   const continued = act(saved, 'continueStory', 1);
   assert.deepEqual(continued.hands, hands); assert.deepEqual(continued.endings, endingIds); assert.deepEqual(continued.storyDeck, order);
   assert.equal(saved.world, undefined); conservation(continued);
+});
+
+test('the opening story bank is original, bilingual, per world and has stable unique ids', () => {
+  assert.deepEqual(Object.keys(O.worlds).sort(), ['classic', 'halloween', 'modern-future']);
+  assert.equal(O.worlds.classic.length, 40); assert.equal(O.worlds['modern-future'].length, 30); assert.equal(O.worlds.halloween.length, 30);
+  const all = Object.values(O.byId);
+  assert.equal(all.length, 100); assert.equal(new Set(all.map(o => o.en)).size, 100); assert.equal(new Set(all.map(o => o.zh)).size, 100);
+  for (const item of all) {
+    assert.match(item.id, /^once-open-(classic|modern|halloween)-\d{3}$/);
+    const words = item.en.split(/\s+/).length;
+    assert.ok(words >= 20 && words <= 50, item.id + ' stays a short spoken opening');
+    assert.ok(/[.?!"]$/.test(item.en) && /[。？！」]$/.test(item.zh), item.id + ' has complete sentences');
+    assert.ok(/[\u4e00-\u9fff]/.test(item.zh) && !/[\u4e00-\u9fff]/.test(item.en));
+  }
+  for (const item of O.worlds.classic) assert.match(item.en, /^Once upon a time,/);
+  for (const item of O.worlds.halloween) assert.doesNotMatch(item.en, /\b(blood|bloody|kill|killed|dead body|corpse|gore|murder)\b/i, 'Halloween stays light, not gory');
+  assert.equal(O.fallback('same-session', 'halloween'), O.fallback('same-session', 'halloween'));
+  assert.equal(O.fallback('same-session', 'halloween').world, 'halloween');
+  assert.equal(O.forWorld('unknown'), O.worlds.classic);
+});
+
+test('deal uses an opening from the chosen world; managers can redraw it before the first Storyteller only', () => {
+  for (const world of ['classic', 'modern-future', 'halloween']) {
+    let s = E.create({ id: 'open-' + world, roster: roster(4), seed: 11, now: 1, world, handSize: world === 'classic' ? null : 5 });
+    s = act(s, 'deal'); const first = s.opening;
+    assert.equal(O.byId[first].world, world); assert.deepEqual(s.recentOpenings, [first]);
+    assert.equal(E.view(s, 0).once.actions.newOpening, true); assert.equal(E.view(s, 2).once.actions.newOpening, false);
+    const refused = act(s, 'newOpening', 2); assert.equal(refused.replies[2].error, 'not_available'); assert.equal(refused.opening, first);
+    const before = clone(s.hands), turn = s.turnId, cmd = command(s, 'newOpening');
+    const again = E.apply(s, cmd);
+    assert.equal(again.replies[0].error, ''); assert.notEqual(again.opening, first); assert.equal(O.byId[again.opening].world, world);
+    assert.deepEqual(again.hands, before, 'redrawing the opening never touches cards'); assert.equal(again.turnId, turn + 1);
+    assert.deepEqual(E.apply(again, cmd), again, 'retried redraw is not applied twice');
+    assert.deepEqual(E.apply(s, cmd), again, 'transaction replay chooses the same opening');
+    const stale = E.apply(again, { ...command(again, 'chooseFirst', 0, { playerNum: 1 }), turnId: turn });
+    assert.equal(stale.replies[0].error, 'stale_turn', 'a start captured before the redraw is fenced');
+    let started = act(again, 'randomFirst');
+    assert.equal(started.phase, 'STORYTELLING'); assert.equal(started.opening, again.opening);
+    assert.equal(E.view(started, 0).once.actions.newOpening, false);
+    started = act(started, 'newOpening'); assert.equal(started.replies[0].error, 'not_available'); conservation(started);
+  }
+});
+
+test('openings avoid recent ones across Restart until the world pool is used up', () => {
+  let s = create(3); const seen = [];
+  for (let game = 0; game < O.worlds.classic.length; game++) {
+    s = act(s, 'deal'); seen.push(s.opening); s = act(s, 'restart');
+    assert.equal(s.phase, 'LOBBY'); assert.equal(s.opening, null);
+  }
+  assert.equal(new Set(seen).size, O.worlds.classic.length, 'every classic opening before any repeat');
+  s = act(s, 'deal'); assert.ok(O.byId[s.opening]); assert.ok(s.recentOpenings.length <= 60);
+  let r = act(s, 'newOpening'); for (let i = 0; i < 50; i++) r = act(r, 'newOpening');
+  assert.ok(O.byId[r.opening]); assert.equal(r.recentOpenings.length, new Set(r.recentOpenings).size);
+});
+
+test('saved games with the old starter card keep it and start normally without an opening story', () => {
+  let s = dealt(4);
+  // Shape of a game dealt by the previous release: one discarded starter card.
+  s.opening = null; delete s.recentOpenings; s.starterCard = s.storyDeck.shift(); s.storyDiscard.push(s.starterCard);
+  const saved = wire(s), view = E.view(saved, 0).once;
+  assert.equal(view.opening, null); assert.equal(view.starterCard.id, s.starterCard); assert.equal(view.actions.newOpening, false);
+  assert.equal(act(saved, 'newOpening').replies[0].error, 'not_available');
+  const next = act(saved, 'chooseFirst', 0, { playerNum: 2 });
+  assert.equal(next.storyteller, 2); assert.equal(next.starterCard, s.starterCard); conservation(next);
+  const fresh = act(act(next, 'restart'), 'deal');
+  assert.equal(fresh.starterCard, null); assert.ok(O.byId[fresh.opening]); conservation(fresh);
 });

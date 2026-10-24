@@ -6,6 +6,8 @@
 var ONCE_ENGINE = (() => {
   'use strict';
   const deck = typeof ONCE_DECK !== 'undefined' ? ONCE_DECK : require('./once-upon-a-time-deck.js');
+  // Browsers load the opening bank before the engine; the service bundles it.
+  const openings = typeof ONCE_OPENINGS !== 'undefined' ? ONCE_OPENINGS : typeof require === 'function' ? require('./once-upon-a-time-openings.js') : null;
   // Firebase drops empty containers and sometimes returns numeric-key objects.
   const list = value => Array.isArray(value) ? value.filter(x => x != null) :
     Object.keys(value || {}).sort((a, b) => /^\d+$/.test(a) && /^\d+$/.test(b) ? Number(a) - Number(b) : 0)
@@ -26,7 +28,10 @@ var ONCE_ENGINE = (() => {
   const projectedStoryCard = (s, id) => storyById[id] ? { ...copy(storyById[id]), isInterrupt: isInterrupt(s, storyById[id]) } : null;
   const validHandSize = value => value === null || Number.isInteger(value) && value >= 3 && value <= 9;
   const resolvedHandSize = s => s.handSize == null ? Math.max(5, 11 - activeRoster(s).length) : s.handSize;
-  const HOST_TYPES = ['configure', 'deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
+  const HOST_TYPES = ['configure', 'deal', 'newOpening', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
+  // Remember recent openings for the room, across Restart, so a table rarely
+  // hears the same opening twice. Bounded so saved state stays small.
+  const RECENT_OPENINGS = 60;
   const TURN_FREE = ['ready', 'vote', 'finishVote', 'resolveSocial'];
   function seedValue(value) {
     if (typeof value === 'number' && Number.isFinite(value)) return (value >>> 0) || 1;
@@ -57,7 +62,7 @@ var ONCE_ENGINE = (() => {
       roster: players.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80) })),
       readiness: {}, hands: {}, endings: {}, storyteller: null, winner: null,
       storyDeck: [], storyDiscard: [], storyHeld: [], endingDeck: [], endingDiscard: [],
-      starterCard: null, history: [], log: [], lastAction: null, categoryOpportunity: null,
+      starterCard: null, opening: null, recentOpenings: [], history: [], log: [], lastAction: null, categoryOpportunity: null,
       latestPlay: null, interrupt: null, vote: null, passPlayer: null, endingPlayed: null,
       rngState: seedValue(seed), createdAt: Number(now) || 0, replies: {}, seen: {},
       ...(sharedControls === true ? { sharedControls: true } : {}),
@@ -70,7 +75,8 @@ var ONCE_ENGINE = (() => {
     if (s.world == null) s.world = 'classic';
     if (s.interruptProfile == null) s.interruptProfile = 1;
     if (s.handSize == null) s.handSize = null;
-    for (const key of ['roster', 'storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history', 'log']) s[key] = list(s[key]);
+    for (const key of ['roster', 'storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history', 'log', 'recentOpenings']) s[key] = list(s[key]);
+    if (s.opening == null) s.opening = null;
     for (const key of ['readiness', 'hands', 'endings', 'replies', 'seen']) s[key] = s[key] || {};
     for (const player of s.roster) s.hands[player.playerNum] = list(s.hands[player.playerNum]);
     if (s.resolvedHandSize == null || s.phase === 'LOBBY') s.resolvedHandSize = resolvedHandSize(s);
@@ -165,6 +171,22 @@ var ONCE_ENGINE = (() => {
       kinds[category] = (kinds[category] || 0) + 1;
     }
   }
+  // An opening story replaces the old "who looks most like this card" starter.
+  // It is chosen from the table's own world and avoids recent openings.
+  function pickOpening(s, cmd, salt) {
+    const pool = openings ? list(openings.forWorld(s.world)).map(item => item.id) : [];
+    const recent = new Set(list(s.recentOpenings));
+    let candidates = pool.filter(id => id !== s.opening && !recent.has(id));
+    if (!candidates.length) candidates = pool.filter(id => id !== s.opening);
+    if (!candidates.length) candidates = pool;
+    const id = randomize(s, candidates, cmd, salt)[0] || null;
+    if (id) s.recentOpenings = [...list(s.recentOpenings).filter(old => old !== id), id].slice(-RECENT_OPENINGS);
+    return id;
+  }
+  const projectedOpening = id => {
+    const item = id && openings && openings.byId[id];
+    return item ? { id: item.id, world: item.world, en: item.en, zh: item.zh } : null;
+  };
   function releaseHeld(s) { s.storyDiscard.push(...s.storyHeld); s.storyHeld = []; }
   function closeOpportunities(s, keepLatest = false) {
     s.categoryOpportunity = null; s.interrupt = null;
@@ -291,7 +313,7 @@ var ONCE_ENGINE = (() => {
         const pool = worldPool(s.world), count = resolvedHandSize(s);
         if (!pool) { reject('invalid_world'); break; }
         if (!validHandSize(s.handSize)) { reject('invalid_hand_size'); break; }
-        if (list(pool.storyCards).length < activeRoster(s).length * count + 1 || list(pool.endingCards).length < activeRoster(s).length) { reject('insufficient_cards'); break; }
+        if (list(pool.storyCards).length < activeRoster(s).length * count || list(pool.endingCards).length < activeRoster(s).length) { reject('insufficient_cards'); break; }
         s.interruptProfile = INTERRUPT_PROFILE;
         s.storyDeck = randomize(s, list(pool.storyCards).map(card => card.id), cmd, 'story-deal');
         s.endingDeck = randomize(s, list(pool.endingCards).map(card => card.id), cmd, 'ending-deal');
@@ -300,9 +322,16 @@ var ONCE_ENGINE = (() => {
         for (const player of activeRoster(s)) {
           s.endings[player.playerNum] = draw(s, 'ending', 1, cmd)[0] || null;
         }
-        s.starterCard = draw(s, 'story', 1, cmd)[0]; s.storyDiscard.push(s.starterCard);
+        // No starter card is drawn: the opening story sets the scene instead.
+        s.starterCard = null; s.opening = pickOpening(s, cmd, 'opening');
         s.phase = 'CHOOSING_FIRST'; advance(s);
-        log(s, cmd, 'deal', 'Cards dealt. Choose the player who looks most like ' + storyById[s.starterCard].title + '.');
+        log(s, cmd, 'deal', 'Cards dealt. Read the opening story, then choose who begins.');
+        break;
+      }
+      case 'newOpening': {
+        if (s.phase !== 'CHOOSING_FIRST' || !s.opening) { reject('not_available'); break; }
+        s.opening = pickOpening(s, cmd, 'opening-again'); advance(s);
+        log(s, cmd, 'newOpening', 'A different opening story was drawn.');
         break;
       }
       case 'chooseFirst':
@@ -444,6 +473,7 @@ var ONCE_ENGINE = (() => {
         const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, sharedControls: s.sharedControls, world: s.world, handSize: s.handSize });
         fresh.roster = fresh.roster.map(p => ({ ...p, ...(s.roster.find(old => old.playerNum === p.playerNum)?.active === false ? { active: false } : {}) }));
         fresh.resolvedHandSize = resolvedHandSize(fresh);
+        fresh.recentOpenings = list(s.recentOpenings).slice(-RECENT_OPENINGS);
         Object.assign(s, fresh); advance(s);
         log(s, cmd, 'restart', 'A new game is ready for the host to deal.');
         break;
@@ -470,6 +500,7 @@ var ONCE_ENGINE = (() => {
     const actions = {
       ready: eligible && s.phase === 'LOBBY', configure: enough && manager && s.phase === 'LOBBY', deal: manager && s.phase === 'LOBBY',
       chooseFirst: manager && s.phase === 'CHOOSING_FIRST', randomFirst: manager && s.phase === 'CHOOSING_FIRST',
+      newOpening: enough && manager && s.phase === 'CHOOSING_FIRST' && !!s.opening,
       play: story && speaking && hand.length > 0, interrupt: story && eligible && !speaking && hand.length > 0,
       categoryInterrupt: story && eligible && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),
       dispute: story && eligible && !!pending && actor !== pending.interrupter,
@@ -489,6 +520,7 @@ var ONCE_ENGINE = (() => {
       roster: s.roster.map(p => ({ playerNum: p.playerNum, name: p.name, active: p.active !== false, pending: p.pending === true, memberStatus: p.active === false ? 'away' : p.pending === true ? 'next_turn' : 'active', handCount: s.hands[p.playerNum].length, ready: s.readiness[p.playerNum] === true })),
       membership: { enabled: s.sharedControls === true, minPlayers: 2, maxPlayers: 6, activeCount: activeRoster(s).length, pendingCount: s.roster.filter(p => p.active !== false && p.pending === true).length },
       starterCard: s.starterCard ? projectedStoryCard(s, s.starterCard) : null,
+      opening: projectedOpening(s.opening),
       history: s.history.map(event => ({ ...event, card: projectedStoryCard(s, event.cardId) })),
       categoryOpportunity: s.categoryOpportunity ? copy(s.categoryOpportunity) : null,
       interrupt: pending ? { id: pending.id, eventId: pending.eventId, cardId: pending.cardId, oldStoryteller: pending.oldStoryteller, interrupter: pending.interrupter } : null,

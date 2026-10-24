@@ -5,6 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const D = require('../once-upon-a-time-deck.js');
+const O = require('../once-upon-a-time-openings.js');
+const mineOpening = html => elementHTML(html, 'once-opening--feature');
 const E = require('../once-upon-a-time-engine.js');
 const UI = require('../once-upon-a-time-ui.js');
 const root = path.join(__dirname, '..');
@@ -105,11 +107,14 @@ test('2, 4 and 6 seat lobby has optional readiness and direct host deal with cla
     const dealtHost = htmlFor(s), mine = htmlFor(s, 1);
     assert.ok(action(dealtHost, 'chooseFirst'));
     assert.ok(action(dealtHost, 'randomFirst'));
-    assert.match(dealtHost, /Who looks most like this card\?/);
-    assert.match(dealtHost, new RegExp(UI.esc(D.storyById[s.starterCard].title)));
+    assert.match(dealtHost, /Who begins the story\?/);
+    assert.ok(dealtHost.includes(UI.esc(O.byId[s.opening].en)), 'the opening story replaces the starter card');
+    assert.ok(action(dealtHost, 'newOpening'));
+    assert.ok(mineOpening(htmlFor(s, 1)).includes(UI.esc(O.byId[s.opening].en)), 'players read the same opening');
     assert.equal((dealtHost.match(/<option value=/g) || []).length, count);
     assert.equal((mine.match(/data-once-card=/g) || []).length, Math.max(5, 11 - count) + 1);
-    assert.match(mine, /Waiting for the host to choose/);
+    assert.match(mine, /Waiting for the host to choose who begins/);
+    noActions(mine, ['newOpening']);
     noActions(mine, ['chooseFirst', 'randomFirst', 'play', 'interrupt', 'pass', 'challenge', 'ending']);
   }
 });
@@ -243,20 +248,23 @@ test('reference table keeps the Story hand and its existing actions in separate 
   }
 });
 
-test('an empty reference story table gives an English opening prompt until the first actual card play', () => {
+test('an empty reference story table shows the opening story until the first actual card play, then keeps it above the cards', () => {
   let s = started(2);
+  const text = UI.esc(O.byId[s.opening].en);
   for (const seat of [0, 1, 2]) {
     const html = htmlFor(s, seat), latest = elementHTML(html, 'once-history-latest');
     const opening = elementHTML(latest, 'once-story-opening');
     assert.ok(opening);
-    assert.match(elementHTML(opening, 'once-opening-title'), /Once upon a time…/);
-    assert.match(opening, /The first card will open the story\. Speak freely, then play an element from your hand\./);
+    assert.ok(opening.includes(text), 'the opening fills the empty table');
+    assert.match(opening, /Seat 1 reads the opening aloud, then continues the story\./);
     assert.doesNotMatch(latest, /class="once-history-item"|data-once-card=/);
+    assert.equal(elementHTML(html, 'once-opening--prologue'), '', 'no duplicate prologue before the first card');
   }
   const cardId = s.hands[1][0]; s = act(s, 'play', 1, { cardId });
   for (const seat of [0, 1, 2]) {
     const latest = elementHTML(htmlFor(s, seat), 'once-history-latest');
     assert.equal(elementHTML(latest, 'once-story-opening'), '');
+    assert.ok(elementHTML(htmlFor(s, seat), 'once-opening--prologue').includes(text), 'the opening stays above the cards');
     assert.equal(historyTags(latest).length, 1);
     assert.ok(latest.includes(UI.esc(D.storyById[cardId].title)));
   }
@@ -1361,4 +1369,31 @@ test('actual shared I18N accepts the Once dictionary, preserves Hub labels and k
   assert.match(context.ONCE_UI.rulesHTML(), /玩法／繁中說明/);
   assert.ok(context.ONCE_UI.cardHTML(D.storyCards[0]).includes('>' + D.storyCards[0].title + '</span>'));
   assert.ok(context.ONCE_UI.cardHTML(D.endingCards[0], 'ending').includes(UI.esc(D.endingCards[0].text)));
+});
+
+test('an older service or saved game without an opening still shows one agreed opening instead of the starter card', () => {
+  let s = dealt(4);
+  s.opening = null; s.starterCard = s.storyDeck.shift(); s.storyDiscard.push(s.starterCard);
+  const expected = O.fallback(s.sessionId, 'classic');
+  for (const seat of [0, 1, 3]) {
+    const html = htmlFor(s, seat), feature = elementHTML(html, 'once-opening--feature');
+    assert.ok(feature.includes(UI.esc(expected.en)), 'every client derives the same opening from the session');
+    assert.doesNotMatch(html, /data-once-action="newOpening"/, 'redraw needs the canonical opening');
+    assert.equal(elementHTML(elementHTML(html, 'once-first'), 'once-card'), '', 'the old starter card is no longer shown');
+  }
+  s = act(s, 'chooseFirst', 0, { playerNum: 2 });
+  assert.ok(elementHTML(htmlFor(s), 'once-story-opening').includes(UI.esc(expected.en)));
+});
+
+test('shared table is marked for its larger screen layout and counts one card in the singular', () => {
+  let s = started(2); s.hands[1] = s.hands[1].slice(0, 1);
+  const host = htmlFor(s), mine = htmlFor(s, 1);
+  assert.match(host, /^<div class="once-game once-game--reference once-game--host">/);
+  assert.match(mine, /^<div class="once-game once-game--reference">/);
+  assert.match(host, /<strong>Seat 1<\/strong><span>1 card<\/span>/);
+  assert.match(elementHTML(mine, 'once-hand-meta'), />1 card</);
+  const css = fs.readFileSync(path.join(root, 'once-upon-a-time.css'), 'utf8');
+  assert.match(css, /@media\(min-width:761px\)\{\s*\.once-game--host \.once-history-latest \{[^}]*repeat\(4,minmax\(0,200px\)\)/);
+  assert.match(css, /\.once-game--host \.once-history-latest \.once-card--history \{[^}]*aspect-ratio:9\/14/);
+  assert.doesNotMatch(css, /\.once-first\s*\{\s*display:flex/, 'the start panel no longer stretches a card across the screen');
 });
