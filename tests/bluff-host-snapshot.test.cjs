@@ -162,3 +162,10 @@ test('topic packs appear on the manager only after the room service itself proje
  view=await f.client._readHostSnapshot(f.raw);
  assert.equal(view.decks,undefined,'an older service never receives a pack choice it would reject');assert.equal(view.deck,'classic');assert.equal(view.phase,'lobby');
 });
+test('the everyone-votes mode appears on the manager only after the room service itself projects it',async()=>{
+ const f=fixture('lobby');
+ let view=await f.client._readHostSnapshot(f.raw);assert.deepEqual(view.modes,['thinker','vote'],'a current service lists both modes');assert.equal(view.mode,'thinker');
+ for(const entry of f.entries){const node=f.values.get(f.privatePath(entry)),privateView=JSON.parse(node.viewJson);delete privateView.modes;node.viewJson=JSON.stringify(privateView);}
+ view=await f.client._readHostSnapshot(f.raw);
+ assert.equal(view.modes,undefined,'an older service never receives a mode choice it would reject');assert.equal(view.mode,'thinker');assert.ok(Array.isArray(view.decks),'the pack gate is independent');
+});

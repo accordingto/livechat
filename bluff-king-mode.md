@@ -190,6 +190,59 @@ source on 2026-10-24. Brocken spectre stays in Classic only.
 Runtime note: the independent service runs this engine and bundle, so the
 service must be redeployed for service-run (normal Hub) tables to offer packs.
 
+## Everyone votes mode (2026-10-25)
+
+User request: an added mode with no Thinker — everyone takes a turn in random
+order, then all players vote for the Truth Teller, never for themselves. The
+user may make it the main mode later; for now **Classic · Thinker stays the
+default** and the Thinker rules above are unchanged.
+
+- Room state `mode`: `thinker` (default; saved rooms without it) or `vote`.
+  `setMode {mode}` is a lobby-only manager command like `setDeck`; the mode is
+  fixed once the game starts and survives Play another game. Each round
+  snapshots `round.mode`; vote rounds have `thinkerId: null`.
+- Rounds = number of formal players (`thinkerOrder` only counts rounds; offline
+  players do not skip vote rounds). Each round deals one secret Truth Teller
+  uniformly among connected players; everyone else is a Bluffer.
+- Discussion: `beginDiscussion` fully shuffles every connected player
+  (Truth Teller included) into `spotlightOrder`. `nextSpotlight` is allowed for
+  the current speaker (“I’m done →”) or a lead (host; any formal player on a
+  service table, who must confirm “Next player” on a card). `challenge` and
+  `identify` return `wrong_mode`.
+- `openVote` (lead, after everyone has spoken, confirmed) → phase `vote`.
+  `castVote {targetId}`: formal current players only, not yourself
+  (`self_vote`), changeable; the vote finishes automatically when every
+  connected eligible voter has voted. `closeVote` (lead, ≥1 vote, confirmed)
+  reveals with the votes so far. `recover` in the vote phase finishes a vote
+  that only waits for offline players; an offline Truth Teller still needs
+  recovery and replaces the round without scoring. Membership drops a leaver's
+  ballot and any ballot for them.
+- Scoring (`scoreVoteRound`): a vote for the Truth Teller +2; the Truth Teller
+  +1 per player who found them; a Bluffer +1 per vote received (the Truth
+  Teller's own ballot counts for a Bluffer). Reasons `vote_found_truthful`,
+  `truthful_found`, `bluff_votes` (with `count`). RULES gains
+  `voteFindPoints 2`, `truthFoundPoints 1`, `bluffVotePoints 1`.
+- Privacy: during the vote only `votedIds` and `voterCount` are public;
+  `myVoteId` is in the owner's private projection only. After the reveal,
+  `round.reveal.votes` and history `votes` show who voted for whom.
+- `projectView` adds `mode` and `modes: ['thinker','vote']`. Like packs, the
+  manager's fast host snapshot drops `modes` unless the service's private
+  projections list them, so an older service never receives `setMode`.
+  `recovery.available` includes the `vote` phase in the engine, sync snapshot
+  and runtime executor.
+- UI: waiting-room mode picker in the pack style (“Everyone votes” + New tag)
+  shown only when `modes` lists both; vote-mode lobby copy and rules dialog;
+  phase bar shows “🗳️ Everyone votes” instead of the Thinker; the speaker's card
+  gets “I’m done →”; a “Start the vote” bar replaces the Thinker actions; the
+  vote panel lists every other player as candidates with “Your vote” marked,
+  “N / M voted” progress and roster Voted/Voting statuses; the Truth Teller is
+  told to vote for the most convincing Bluffer; the reveal lists votes per
+  player (Truth Teller first) with the round points. Vote confirmations close
+  automatically if the last vote reveals the truth first.
+
+Runtime note: this is an engine change, so normal Hub tables (service-run)
+offer the mode only after the independent service is redeployed.
+
 ## Topic content and maintenance
 
 **104 verified, enabled English cards; 0 unverified playable cards.** Classic has

@@ -1,3 +1,40 @@
+## CURRENT: BLUFF PARTY "Everyone votes" mode — 2026-10-25
+
+User request: an added mode with no Thinker; everyone takes a turn in random
+order, then all players vote for the Truth Teller, never for themselves; the
+user may make it the main mode later, so Classic · Thinker stays the default;
+UI must match the original. Read bluff-king-mode.md "Everyone votes mode".
+Engine: room `mode` thinker (default, also saved rooms) / vote; lobby-only
+manager command `setMode`; mode fixed after Start, kept by Play another game;
+`round.mode`, vote rounds have `thinkerId: null`; rounds = formal players; one
+random Truth Teller among connected players; random full speaking order incl.
+the Truth Teller; `nextSpotlight` by the speaker or a lead; `openVote` after
+everyone spoke; `castVote` (no self, changeable, auto-finishes when every
+connected voter has voted); `closeVote` (lead, >=1 vote); recover finishes a
+vote waiting only for offline voters; membership drops a leaver's ballot and
+ballots for them; challenge/identify -> wrong_mode. Scoring: vote for the Truth
+Teller +2; Truth Teller +1 per finder; Bluffer +1 per vote received. Ballots are
+secret until the reveal (`votedIds`/`voterCount` public, `myVoteId` private).
+`projectView` adds `mode` + `modes`; the host fast snapshot drops `modes`
+unless the service's own private projections list them (an older service never
+receives `setMode`); `recovery.available` includes `vote` in the engine, sync
+and runtime executor. UI: pack-style mode picker with a New tag, vote rules and
+lobby copy, "🗳️ Everyone votes" phase bar, "I'm done →" for the speaker,
+confirmed "Next player" on other cards, "Start the vote" bar, vote panel with
+candidates and progress, Voted/Voting statuses, vote-tally reveal. Hub card copy
+mentions the mode. Cache tags: bluff-king-ui/sync/engine vote-1, css v=8,
+topics v=2 unchanged. ENGINE CHANGE: normal Hub tables run on the independent
+service, so the mode (and the still-pending Halloween packs) appear there only
+after the service is redeployed (scripts/hub-executor-package-service.cjs from
+the Windows service workspace).
+
+Validation: new tests/bluff-vote-mode.test.cjs 13/13, UI vote test, executor
+vote test, host-snapshot mode gate; Bluff + hub-executor-bluff 165/165; full Hub
+2306/2306, zero failures/skips. Local Chromium with a stubbed transport: lobby/
+discussion/vote/reveal × speaker card, Truth Teller card, host table × EN/ZH ×
+1280/390/320 (66 pages), no overflow or clipped text, no Thinker labels, zero
+page errors; Thinker-mode Halloween screens unchanged.
+
 ## CURRENT: BLUFF PARTY 🎃 Halloween topic pack — 2026-10-24
 
 User request: a Halloween version with old (medieval) or modern ghost stories,

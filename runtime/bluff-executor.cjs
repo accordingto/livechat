@@ -147,7 +147,7 @@ const bluffking = {
       const view = E.projectView(state, room.hostIdentityId, room.code, ctx.bank || topics, { private: false, now: ctx.now ?? Date.now() });
       const online = new Set(connectedIds(state, ctx));
       for (const player of view.players) if (room.roster.includes(player.id) || player.seated) player.connected = player.active !== false && player.pending !== true && online.has(player.id);
-      view.recovery.available = ['topic_check', 'prepare', 'discussion'].includes(room.phase) && (room.round?.playerIds || room.roster).some(id => room.members.find(p => p.id === id)?.active !== false && !online.has(id));
+      view.recovery.available = ['topic_check', 'prepare', 'discussion', 'vote'].includes(room.phase) && (room.round?.playerIds || room.roster).some(id => room.members.find(p => p.id === id)?.active !== false && !online.has(id));
       return { view: null, viewJson: JSON.stringify(view), ack: state.transport.acknowledgements[room.hostIdentityId] || null, publicationRevision: state.transport.publicationRevision || 0 };
     }
     const binding = bindSeat(state, seat, ctx);
@@ -157,7 +157,7 @@ const bluffking = {
     // authorize recovery, and never reveals which offline player was truthful.
     const online = new Set(connectedIds(state, ctx));
     for (const player of view.players) if (room.roster.includes(player.id) || player.seated) player.connected = player.active !== false && player.pending !== true && online.has(player.id);
-    view.recovery.available = ['topic_check', 'prepare', 'discussion'].includes(room.phase) && (room.round?.playerIds || room.roster).some(id => room.members.find(p => p.id === id)?.active !== false && !online.has(id));
+    view.recovery.available = ['topic_check', 'prepare', 'discussion', 'vote'].includes(room.phase) && (room.round?.playerIds || room.roster).some(id => room.members.find(p => p.id === id)?.active !== false && !online.has(id));
     return {
       view: null, viewJson: JSON.stringify(view),
       ack: state.transport.acknowledgements[binding.identityId] || null,

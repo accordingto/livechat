@@ -68,6 +68,25 @@ test('offline Bluffer Spotlight is skipped, while active Thinker decision remain
   assert.ok(f.room().round.skippedIds.includes(f.room().members[3].id)); assert.equal(f.room().round.id, roundId); assert.equal(f.room().phase, 'discussion');
   assert.ok(f.act('nextSpotlight', 1).ack.ok); assert.ok(f.act('identify', 1, { targetId: f.room().round.truthfulId }).ack.ok);
 });
+test('everyone-votes mode runs on the service: player cards choose the mode, speak, vote in secret and recover offline voters', () => {
+  const f = fixture(); const room = f.room(); const seatOf = id => f.seats.findIndex(s => room.members.find(m => m.id === id)?.identityId === s.identityId) + 1;
+  const lobby = JSON.parse(A.project(f.state, f.seats[1], f.ctx(f.seats[1])).viewJson); assert.deepEqual(lobby.modes, ['thinker', 'vote']);
+  assert.ok(f.act('setMode', 2, { mode: 'vote' }).ack.ok); assert.ok(f.act('start', 3).ack.ok); assert.ok(f.act('confirmTopic', 4).ack.ok); assert.ok(f.act('beginDiscussion', 1).ack.ok);
+  const r = room.round; assert.equal(r.thinkerId, null); assert.equal(r.spotlightOrder.length, 4);
+  while (!r.allCovered) assert.ok(f.act('nextSpotlight', seatOf(r.spotlightOrder[r.spotlightIndex])).ack.ok);
+  assert.ok(f.act('openVote', 2).ack.ok); assert.equal(room.phase, 'vote');
+  const truthNum = seatOf(r.truthfulId), others = [1, 2, 3, 4].filter(n => n !== truthNum);
+  assert.equal(f.act('castVote', others[0], { targetId: room.members.find(m => m.identityId === f.seats[others[0] - 1].identityId).id }).ack.error.code, 'self_vote');
+  assert.ok(f.act('castVote', others[0], { targetId: r.truthfulId }).ack.ok);
+  for (const seat of f.seats) { const view = JSON.parse(A.project(f.state, seat, f.ctx(seat)).viewJson); assert.ok(!('votes' in view.round)); assert.equal(view.round.votedIds.length, 1); assert.equal(view.round.myVoteId, seat.playerNum === others[0] ? r.truthfulId : null); }
+  const host = JSON.parse(A.project(f.state, { playerNum: 0 }, f.ctx()).viewJson); assert.equal(host.round.myVoteId, null);
+  assert.ok(f.act('castVote', truthNum, { targetId: room.members.find(m => m.identityId === f.seats[others[1] - 1].identityId).id }).ack.ok);
+  assert.ok(f.act('castVote', others[1], { targetId: r.truthfulId }).ack.ok);
+  f.setOnline([1, 2, 3, 4].filter(n => n !== others[2]));
+  const recovery = JSON.parse(A.project(f.state, f.seats[truthNum - 1], f.ctx(f.seats[truthNum - 1])).viewJson); assert.equal(recovery.recovery.available, true);
+  assert.ok(f.act('recover', truthNum).ack.ok); assert.equal(room.phase, 'reveal'); assert.equal(r.result.voteCount, 3);
+  assert.equal(room.scores[r.truthfulId], 2);
+});
 test('brief reconnect preserves roles; fewer than three online cannot manufacture scores or a random identification', () => {
   const f = fixture(); f.discussion(); const prior = structuredClone(f.room().round), score = structuredClone(f.room().scores);
   f.setOnline([1, 2, 3, 4], 40000); assert.equal(f.act('recover', 3).ack.error.code, 'no_offline_player'); assert.deepEqual(f.room().round, prior);
