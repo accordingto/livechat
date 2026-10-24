@@ -34,6 +34,15 @@ vote test, host-snapshot mode gate; Bluff + hub-executor-bluff 165/165; full Hub
 discussion/vote/reveal × speaker card, Truth Teller card, host table × EN/ZH ×
 1280/390/320 (66 pages), no overflow or clipped text, no Thinker labels, zero
 page errors; Thinker-mode Halloween screens unchanged.
+Frontend 230b009 is pushed to main; Vercel deployment
+ECu5VvKZoSHQ2JJCWSk6F4n5WR5Q reports success. Read back from production:
+bluff-king-ui.js (setMode/castVote/openVote/closeVote/skipSpeaker, vote-1 loads),
+bluff-king-engine.js (MODES, four vote cases, new RULES keys, scoreVoteRound
+export), bluff-king-sync.js (modeService gate, vote recovery) and bluff-king.css
+(mode/tally rules). The fetcher strips the HTML head, so its v=8/vote-1 tags were
+not read back. The independent service was NOT redeployed: the user's computer
+was not connected, so service-run Hub tables still play Thinker mode with no
+mode or pack picker until that deployment.
 
 ## CURRENT: BLUFF PARTY 🎃 Halloween topic pack — 2026-10-24
 
