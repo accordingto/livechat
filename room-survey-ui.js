@@ -53,6 +53,12 @@ var ROOM_SURVEY_UI = (() => {
     yourBuzz: ['你搶到了！', 'You buzzed in!'], yourBuzzHint: ['現在大聲說出你的答案。', 'Say your answer out loud now.'],
     notYours: ['別說你自己寫的：{list}', 'Not your own: {list}'],
     giveUp: ['算了，我放棄', 'Never mind'],
+    queueButton: ['我也知道，排隊', 'Get in line'],
+    queueHint: ['不用急，排進隊伍裡，輪到你時卡片會震動、開始計時。', 'No rush: join the line. When it’s your turn your card buzzes and your clock starts.'],
+    inLineTitle: ['你排第 {n} 個', 'You’re #{n} in line'], inLineNext: ['下一個就是你', 'You’re next'],
+    inLineHint: ['先想好答案。輪到你時卡片會震動、開始計時。', 'Get your answer ready. When it’s your turn your card buzzes and your clock starts.'],
+    leaveLine: ['不排了', 'Leave the line'],
+    queueLine: ['排隊中：{names}', 'In line: {names}'],
     lockedTitle: ['你剛剛猜過了', 'You just had a go'], lockedHint: ['等其他人也猜過一次，或有人猜中，就能再搶答。', 'You can buzz again once everyone else has had a go, or someone finds an answer.'],
     keeperWait: ['等有人搶答。這時也可以先給一個提示。', 'Wait for someone to buzz in. You can give a hint meanwhile.'],
     judgeHint: ['{name} 說的答案在榜上嗎？點那一格。', 'Is {name}’s answer on the board? Tap it.'],
@@ -91,7 +97,7 @@ var ROOM_SURVEY_UI = (() => {
     rules_1: ['每一輪輪流一個人當關主，選一個題目，例如「最不想被另一半看到的搜尋紀錄」。', 'Each round one player is the Keeper and picks a prompt, like “Something you’d hate your partner to see in your search history”.'],
     rules_2: ['所有人（包括關主）在自己的卡片上偷偷寫答案，每一格要寫不一樣的。沒有人看得到誰寫了什麼。', 'Everyone, the Keeper too, secretly writes answers on their card, a different one in each box. Nobody sees who wrote what.'],
     rules_3: ['關主把意思一樣的答案疊起來，疊越多人名次越高。', 'The Keeper stacks answers that mean the same. The more people on a stack, the higher it ranks.'],
-    rules_4: ['其他人在自己的卡片上搶答，一次一人，用說的猜。猜中就得到「寫這個答案的人數」那麼多分，名次越高分數越多。猜錯的人要等其他人也猜過一次才能再搶。', 'The others buzz in on their own cards, one at a time, and guess out loud. A hit scores one point per person who wrote it, so higher answers score more. After a miss, wait until everyone else has had a go.'],
+    rules_4: ['其他人在自己的卡片上搶答，一次一人，用說的猜。別人在回答時也能按，會依序排隊，不用急。猜中就得到「寫這個答案的人數」那麼多分，名次越高分數越多。猜錯的人要等其他人也猜過一次才能再搶。', 'The others buzz in on their own cards and guess out loud, one at a time. Buzzing while someone is answering puts you in line, so there’s no rush. A hit scores one point per person who wrote it, so higher answers score more. After a miss, wait until everyone else has had a go.'],
     rules_5: ['系統知道誰寫了什麼：猜到自己寫的答案不算分，那一格直接自爆，誰都拿不到。', 'The game knows who wrote what: guess your own answer and it burns. Nobody scores it.'],
   };
   const t = C.translator('roomsurvey', dict);
@@ -207,15 +213,18 @@ var ROOM_SURVEY_UI = (() => {
     if (!buzz) return `<div class="rs-turn is-open"><span class="rs-turn-name">${esc(me ? t('buzzOpen') : t('stageBuzz'))}</span></div>`;
     const mine = buzz.playerNum === me;
     const clock = view.phase === 'paused' ? (buzz.leftMs ? pausedClock(buzz.leftMs) : '') : clockAt(buzz.endsAt, { low: 5000 });
-    return `<div class="rs-turn${mine ? ' is-mine' : ''}"><span class="rs-turn-name">${esc(mine ? t('yourBuzz') : t('buzzing', { name: nameOf(view, buzz.playerNum) }))}</span>${clock ? `<span class="rs-turn-clock">${clock}</span>` : ''}</div>`;
+    const queue = list(view.queue);
+    const line = queue.length ? `<span class="rs-turn-queue">${esc(t('queueLine', { names: names(view, queue) }))}</span>` : '';
+    return `<div class="rs-turn${mine ? ' is-mine' : ''}${line ? ' has-queue' : ''}"><span class="rs-turn-name">${esc(mine ? t('yourBuzz') : t('buzzing', { name: nameOf(view, buzz.playerNum) }))}</span>${clock ? `<span class="rs-turn-clock">${clock}</span>` : ''}${line}</div>`;
   }
   // Every guesser with their points this round; a locked one waits for the others.
   function guessersList(view) {
-    const keeper = view.keeper, buzzing = view.buzz?.playerNum, locked = new Set(list(view.locked));
+    const keeper = view.keeper, buzzing = view.buzz?.playerNum, locked = new Set(list(view.locked)), queue = list(view.queue);
     const seats = C.seatsOf(view).filter(p => p.inRound && p.playerNum !== keeper);
     return `<ol class="rs-order">${seats.map(p => {
       const n = p.playerNum, points = obj(view.roundPoints)[n];
-      return `<li class="${n === buzzing ? 'is-now' : ''}${locked.has(n) ? ' is-locked' : ''}${p.active === false ? ' is-out' : ''}"><span>${esc(nameOf(view, n))}</span>${points ? `<b>+${Number(points)}</b>` : ''}</li>`;
+      const place = queue.indexOf(n) + 1;
+      return `<li class="${n === buzzing ? 'is-now' : ''}${place ? ' is-queued' : ''}${locked.has(n) ? ' is-locked' : ''}${p.active === false ? ' is-out' : ''}">${place ? `<i class="rs-place" aria-hidden="true">${place}</i>` : ''}<span>${esc(nameOf(view, n))}</span>${points ? `<b>+${Number(points)}</b>` : ''}</li>`;
     }).join('')}</ol>`;
   }
   function lastLog(view) {
@@ -469,9 +478,14 @@ var ROOM_SURVEY_UI = (() => {
         if (open && me.myBuzz) {
           const mine = list(me.myAnswers);
           zone = `<div class="rs-zone is-turn"><h3>${esc(t('yourBuzz'))}</h3><p>${esc(t('yourBuzzHint'))}</p>${mine.length ? `<p class="rs-not-yours">${esc(t('notYours', { list: mine.join(lang() === 'zh' ? '、' : ', ') }))}</p>` : ''}<button type="button" class="ct-button ct-small" data-ct-action="pass" data-ct-arg-buzz="${Number(buzz.serial)}"${busy ? ' disabled' : ''}>${esc(t('giveUp'))}</button></div>`;
+        } else if (open && me.queuePos) {
+          const answering = buzz ? `<p class="rs-wait-line">${esc(t('buzzingWait', { name: nameOf(view, buzz.playerNum) }))}</p>` : '';
+          zone = `<div class="rs-zone is-queued"><h3>${esc(me.queuePos === 1 ? t('inLineNext') : t('inLineTitle', { n: me.queuePos }))}</h3>${answering}<p>${esc(t('inLineHint'))}</p><button type="button" class="ct-button ct-small" data-ct-action="unqueue"${busy ? ' disabled' : ''}>${esc(t('leaveLine'))}</button></div>`;
+        } else if (open && me.locked) zone = `<div class="rs-zone is-locked"><h3>${esc(t('lockedTitle'))}</h3><p>${esc(t('lockedHint'))}</p></div>`;
+        else if (open && me.isGuesser) {
+          const answering = buzz ? `<p class="rs-wait-line">${esc(t('buzzingWait', { name: nameOf(view, buzz.playerNum) }))}</p>` : '';
+          zone = `<div class="rs-zone is-buzz${buzz ? ' is-line' : ''}">${answering}<button type="button" class="rs-buzz" data-ct-action="buzz"${busy || !me.canBuzz ? ' disabled' : ''}><span class="rs-buzz-icon" aria-hidden="true">🙋</span><span>${esc(t(buzz ? 'queueButton' : 'buzzButton'))}</span></button><p>${esc(t(buzz ? 'queueHint' : 'buzzHint'))}</p></div>`;
         } else if (open && buzz) zone = `<div class="rs-zone is-waiting"><p class="rs-wait-line">${esc(t('buzzingWait', { name: nameOf(view, buzz.playerNum) }))}</p></div>`;
-        else if (open && me.locked) zone = `<div class="rs-zone is-locked"><h3>${esc(t('lockedTitle'))}</h3><p>${esc(t('lockedHint'))}</p></div>`;
-        else if (open && me.isGuesser) zone = `<div class="rs-zone is-buzz"><button type="button" class="rs-buzz" data-ct-action="buzz"${busy || !me.canBuzz ? ' disabled' : ''}><span class="rs-buzz-icon" aria-hidden="true">🙋</span><span>${esc(t('buzzButton'))}</span></button><p>${esc(t('buzzHint'))}</p></div>`;
         return `${paused}${top}${zone}${lastLog(view)}${prompt(view)}${board(view, view.board)}${myAnswers(me)}`;
       }
       return paused;

@@ -1,10 +1,10 @@
 /* WORD LIMIT THEATER — pure authoritative rules. No DOM, Firebase or timers.
  *
  * Everyone improvises one scene together, out loud. Each player is dealt a
- * role and a line limit: every line they say must be exactly that many words
- * (or Chinese characters). The limits differ, so one actor can only say "No!"
- * while another has to fill eight words. During the scene the limits swap a
- * few times. After each line, the actor taps a button on their own card and
+ * role and a random line limit from 1 to 6: every line they say must be
+ * exactly that many words (or Chinese characters). One actor may only say
+ * "No!" while another has to fill six words. During the scene everyone draws a
+ * new random limit a few times. After each line, the actor taps a button on their own card and
  * scores the points of their current limit (by default one point per word, so
  * long limits score more; the table can set every limit's points). Anyone can
  * call a foul on a line that broke its limit; it only counts.
@@ -28,18 +28,14 @@ var WORD_LIMIT_ENGINE = (() => {
     units: Object.freeze(['words', 'chars']),
     // How many times the limits swap during a scene, spread evenly over it.
     shuffleCounts: Object.freeze([0, 1, 2, 3, 4]), defaultShuffles: 3,
-    // Every limit a ladder can deal; each one has its own points per line.
+    // Points can be set for 1–10 (tables saved by the earlier ladder version
+    // may still hold 7–10); every scene deals and swaps limits in 1–6.
     limitValues: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), pointsMax: 50,
+    dealValues: Object.freeze([1, 2, 3, 4, 5, 6]),
     castMs: 20000,
     lineCooldownMs: 3000, foulCooldownMs: 2500,
     maxRerolls: 5,
     extendSceneMs: 60000, extendOtherMs: 15000, resumeFloorMs: 3000,
-    // One limit per player in the scene: mostly short, one long line for contrast.
-    ladders: Object.freeze({
-      1: Object.freeze([3]), 2: Object.freeze([1, 4]), 3: Object.freeze([1, 2, 5]), 4: Object.freeze([1, 2, 3, 6]),
-      5: Object.freeze([1, 2, 3, 4, 7]), 6: Object.freeze([1, 2, 3, 4, 5, 8]), 7: Object.freeze([1, 2, 3, 4, 5, 6, 9]),
-      8: Object.freeze([1, 2, 3, 4, 5, 6, 7, 10]), 9: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 10]),
-    }),
     historyMax: 30, seenMax: 16, foulLogMax: 80, sceneMemory: 30,
   });
   const TIMED = Object.freeze(['cast', 'scene']);
@@ -108,7 +104,13 @@ var WORD_LIMIT_ENGINE = (() => {
     }
     return { sceneMinutes: minutes, unit, shuffles, points };
   }
-  const ladder = count => CONFIG.ladders[Math.max(1, Math.min(CONFIG.maxPlayers, count))].slice();
+  // Random limits from 1–6, drawn like cards from a bag: up to six players
+  // never share a limit, and a bigger cast starts a second bag.
+  function drawLimits(count, random) {
+    const out = [];
+    while (out.length < count) out.push(...shuffle(CONFIG.dealValues, random));
+    return out.slice(0, Math.max(0, count));
+  }
   // The points one line at this limit scores in this scene.
   function pointsFor(round, limit) {
     const value = Number(round?.value?.[limit]);
@@ -153,13 +155,12 @@ var WORD_LIMIT_ENGINE = (() => {
     round.roles = {};
     round.players.forEach((n, index) => { round.roles[n] = order[index]; });
   }
-  // Fresh limits that avoid repeating last scene's limit where possible.
+  // Fresh random limits that avoid repeating last scene's limit where possible.
   function dealLimits(round, previous, random) {
-    const values = ladder(round.players.length);
     const before = previous?.limits || {};
     let best = null;
     for (let attempt = 0; attempt < 16; attempt++) {
-      const perm = shuffle(values, random);
+      const perm = drawLimits(round.players.length, random);
       const repeats = round.players.filter((n, index) => before[n] === perm[index]).length;
       if (!best || repeats < best.repeats) best = { perm, repeats };
       if (!repeats) break;
@@ -189,17 +190,19 @@ var WORD_LIMIT_ENGINE = (() => {
 
   // ── the scene ──────────────────────────────────────────────────────────
   const nextSerial = round => (round.event?.serial || 0) + 1;
-  // Everyone still playing gets a different limit than the one they had.
+  // Everyone still playing draws a new random limit, never the one they had.
   function shuffleLimits(state, now, random) {
     const round = state.round, live = livePlayers(state);
-    if (live.length < 2) return;
-    const values = live.map(n => round.limits[n]);
+    if (!live.length) return;
     let perm = null;
     for (let attempt = 0; attempt < 24 && !perm; attempt++) {
-      const candidate = shuffle(values, random);
+      const candidate = drawLimits(live.length, random);
       if (live.every((n, index) => candidate[index] !== round.limits[n])) perm = candidate;
     }
-    if (!perm) perm = values.slice(1).concat(values[0]);
+    if (!perm) perm = live.map(n => {
+      const options = CONFIG.dealValues.filter(value => value !== round.limits[n]);
+      return options[Math.floor(random() * options.length)];
+    });
     round.prevLimits = {};
     live.forEach((n, index) => { round.prevLimits[n] = round.limits[n]; round.limits[n] = perm[index]; });
     round.shuffles++;
@@ -210,7 +213,7 @@ var WORD_LIMIT_ENGINE = (() => {
     const round = state.round, count = Number(round.planned) || 0;
     round.runBase = 0; round.runSince = now; round.startedAt = now;
     round.pending = [];
-    if (livePlayers(state).length >= 2) for (let k = 1; k <= count; k++) round.pending.push({ type: 'shuffle', at: Math.round(round.sceneMs * k / (count + 1)) });
+    if (livePlayers(state).length >= 1) for (let k = 1; k <= count; k++) round.pending.push({ type: 'shuffle', at: Math.round(round.sceneMs * k / (count + 1)) });
     enterScene(state);
   }
   function tickScene(state, now, random) {
@@ -466,10 +469,12 @@ var WORD_LIMIT_ENGINE = (() => {
       lastLine: round.lastLine?.[n] ? { ts: Number(round.lastLine[n].ts), points: Number(round.lastLine[n].points) || 0 } : null,
     }));
   }
-  // The points of each limit dealt in this scene, lowest limit first.
+  // The points of every limit a scene can deal (1–6, plus a 7–10 an older
+  // table may still hold), lowest limit first; `held` marks the ones in play.
   function valuesView(round) {
     if (!round) return [];
-    return [...new Set(Object.values(round.limits).map(Number))].sort((a, b) => a - b).map(limit => ({ limit, points: pointsFor(round, limit) }));
+    const held = new Set(Object.values(round.limits).map(Number));
+    return [...new Set([...CONFIG.dealValues, ...held])].sort((a, b) => a - b).map(limit => ({ limit, points: pointsFor(round, limit), held: held.has(limit) }));
   }
   const viewSettings = settings => { try { return parseSettings({}, settings); } catch (_) { return defaultSettings(settings?.unit); } };
   function view(state, actor) {
@@ -531,6 +536,6 @@ var WORD_LIMIT_ENGINE = (() => {
     return { game: 'wordlimit', playerNum: n, name: seat(state, n)?.name || null, wl };
   }
 
-  return { CONFIG, CONTENT, TIMED, create, apply, view, standings, parseSettings, defaultSettings, defaultPoints, pointsFor, ladder, rng, list, elapsed };
+  return { CONFIG, CONTENT, TIMED, create, apply, view, standings, parseSettings, defaultSettings, defaultPoints, pointsFor, drawLimits, rng, list, elapsed };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = WORD_LIMIT_ENGINE;

@@ -146,7 +146,7 @@ test('the board ranks answers by how many people wrote them (ties share a rank);
   assert.deepEqual(board[0].length, { n: 1, unit: 'words' });
 });
 
-test('buzz-in: one buzzer at a time; a hit scores one point per writer; your own answer burns; a miss waits for the others', () => {
+test('buzz-in: one answers at a time; a hit scores one point per writer; your own answer burns; a miss waits for the others', () => {
   // Seat 1 is made the Keeper so the guessers are 2, 3, 4 and 5.
   let state = make(5);
   state = ok(run(state, 2, 'setNext', { playerNum: 1 }));
@@ -162,12 +162,22 @@ test('buzz-in: one buzzer at a time; a hit scores one point per writer; your own
   assert.equal(run(state, 1, 'buzz').error, 'not_available', 'the Keeper judges and does not buzz');
   const snacks = groupByText(state, 'snacks').id, apps = groupByText(state, 'apps').id, symptoms = groupByText(state, 'symptoms').id;
   assert.equal(run(state, 1, 'hit', { group: apps, buzz: 1 }).error, 'stale_turn', 'no judging before someone buzzes');
-  // Seat 3 buzzes first; seat 2 is a moment too late.
+  // Seat 3 buzzes first; seat 2 is a moment too late and joins the line.
   state = ok(run(state, 3, 'buzz'));
   assert.equal(state.round.buzz.playerNum, 3);
-  assert.equal(run(state, 2, 'buzz').error, 'taken');
+  assert.equal(E.view(state, 2).rs.me.canBuzz, true, 'you can buzz while someone answers: it puts you in line');
+  state = ok(run(state, 2, 'buzz'));
+  assert.equal(state.round.buzz.playerNum, 3, 'joining the line does not take the buzz');
+  assert.deepEqual(state.round.queue, [2]);
+  assert.equal(E.view(state, 2).rs.me.queuePos, 1);
   assert.equal(E.view(state, 2).rs.me.canBuzz, false);
+  assert.equal(run(state, 2, 'buzz').error, 'not_available', 'once in line is enough');
+  assert.equal(run(state, 3, 'buzz').error, 'not_available', 'the buzzer cannot queue behind themselves');
   assert.equal(E.view(state, 3).rs.me.myBuzz, true);
+  // Seat 2 changes their mind and leaves the line.
+  state = ok(run(state, 2, 'unqueue'));
+  assert.deepEqual(state.round.queue, []);
+  assert.equal(run(state, 2, 'unqueue').error, 'not_available');
   // Seat 3 says "Apps" (written by 4 only): +1, and nobody is locked.
   state = ok(run(state, 1, 'hit', { group: apps, buzz: state.round.buzz.serial }));
   assert.deepEqual(state.round.revealed[apps], { how: 'hit', by: 3, points: 1 });
@@ -209,6 +219,62 @@ test('buzz-in: one buzzer at a time; a hit scores one point per writer; your own
   assert.deepEqual(state.round.outcome.best, [5]);
   for (const id of state.round.board) assert.ok(state.round.revealed[id], 'everything is revealed at the end');
   assert.equal(state.round.revealed[groupByText(state, 'flights').id].how, 'left');
+});
+
+test('the line: buzzing while someone answers queues you; the next in line answers with a fresh clock after any hit, miss, give-up or timeout', () => {
+  let state = written(5, { 1: ['a1', 'a2'], 2: ['b1', 'b2'], 3: ['c1', 'c2'], 4: ['d1', 'd2'], 5: ['e1', 'e2'] }, { answers: 2, turnSeconds: 15 });
+  const keeper = keeperOf(state), [g1, g2, g3, g4] = others(state);
+  state = ok(run(state, keeper, 'startGuess'));
+  const start = state.lastChangeAt;
+  state = ok(run(state, g1, 'buzz', {}, start + 1000));
+  state = ok(run(state, g2, 'buzz', {}, start + 2000));
+  state = ok(run(state, g3, 'buzz', {}, start + 3000));
+  assert.deepEqual(state.round.queue, [g2, g3], 'the line keeps buzz order');
+  const shared = E.view(state, 0).rs;
+  assert.deepEqual(shared.queue, [g2, g3], 'everyone sees the line');
+  assert.equal(E.view(state, g3).rs.me.queuePos, 2);
+  assert.equal(state.deadline, start + 16000, 'only the one answering has a clock');
+  // A miss: g1 is locked and g2 answers at once, with a fresh 15 s and a new buzz number.
+  const first = state.round.buzz.serial;
+  state = ok(run(state, keeper, 'miss', { buzz: first }, start + 5000));
+  assert.equal(state.round.buzz.playerNum, g2);
+  assert.notEqual(state.round.buzz.serial, first);
+  assert.equal(state.round.buzz.endsAt, start + 5000 + 15000);
+  assert.deepEqual(state.round.queue, [g3]);
+  assert.equal(run(state, keeper, 'miss', { buzz: first }).error, 'stale_turn', 'a double tap cannot miss the next player');
+  assert.equal(run(state, g1, 'buzz').error, 'locked', 'a locked player cannot queue');
+  // A hit (g2 did not write it): points, locks reopen, and g3 answers next.
+  const target = state.round.board.find(id => !E.authorsOf(state.round.groups.find(g => g.id === id)).includes(g2) && !E.authorsOf(state.round.groups.find(g => g.id === id)).includes(g3));
+  state = ok(run(state, keeper, 'hit', { group: target, buzz: state.round.buzz.serial }, start + 7000));
+  assert.equal(state.round.points[g2], 1);
+  assert.deepEqual(state.round.locked, []);
+  assert.equal(state.round.buzz.playerNum, g3);
+  assert.deepEqual(state.round.queue, []);
+  // g1 (open again) and g4 queue; g3 runs out of time and g1 takes over.
+  state = ok(run(state, g1, 'buzz', {}, start + 8000));
+  state = ok(run(state, g4, 'buzz', {}, start + 9000));
+  state = ok(run(state, g2, 'tick', {}, start + 7000 + 15000 + 100));
+  assert.equal(state.round.log.at(-1).result, 'timeout');
+  assert.equal(state.round.buzz.playerNum, g1);
+  assert.deepEqual(state.round.locked, [g3]);
+  // g1 gives up; g4 is next. Pause keeps the line; a queued player who leaves is dropped.
+  state = ok(run(state, g1, 'pass', { buzz: state.round.buzz.serial }));
+  assert.equal(state.round.buzz.playerNum, g4);
+  state = ok(run(state, g2, 'buzz'));
+  state = ok(run(state, keeper, 'pause'));
+  assert.deepEqual(E.view(state, 0).rs.queue, [g2], 'a pause keeps the line');
+  state = ok(run(state, keeper, 'exclude', { playerNum: g4, active: false }));
+  assert.equal(state.round.log.at(-1).result, 'skip');
+  assert.equal(state.round.buzz.playerNum, g2, 'the answering player left: the next in line holds the buzz');
+  assert.equal(state.round.buzz.endsAt, null, 'during a pause the new clock waits');
+  const resumeAt = state.lastChangeAt + 60000;
+  state = ok(run(state, keeper, 'resume', {}, resumeAt));
+  assert.equal(state.round.buzz.endsAt, resumeAt + 15000, 'Resume starts a full answer time');
+  // Leaving the round while in line removes you from it.
+  state = ok(run(state, g3, 'exclude', { playerNum: g3, active: false }));
+  state = ok(run(state, keeper, 'close'));
+  assert.equal(state.phase, 'result');
+  assert.deepEqual(state.round.queue, [], 'the line is cleared when the round ends');
 });
 
 test('clocks: a buzzer who runs out of time misses; the board clearing or the round clock ends the round; pause keeps both clocks', () => {

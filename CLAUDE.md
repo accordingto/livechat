@@ -1,3 +1,29 @@
+## CURRENT: WORD LIMIT THEATER random 1–6, ROOM SURVEY buzz line — 2026-10-24
+
+User follow-up. WORD LIMIT THEATER: the ladder's single long outlier (4p
+1/2/3/6, 9p up to 10) felt unfair, so every scene deals each actor a random
+limit 1–6 from a shuffled bag (distinct up to six players, a second bag for
+7–9; avoids repeating last scene's limit), and each swap gives everyone a new
+random 1–6 different from the one held. CONFIG.dealValues [1..6]; limitValues
+1–10 and saved 7–10 points stay for old tables; `ladder` export replaced by
+`drawLimits`. Points boxes and the shared legend always show 1–6 (legend rows
+carry `held`). ROOM SURVEY: buzzing while someone answers joins `round.queue`
+(buzz order) instead of `taken`; hit/miss/give-up/timeout/buzzer leaving pass
+the buzz to the first in line with a fresh clock and new serial (late Keeper
+taps refused); locked players can't queue; `unqueue` leaves the line; pause
+keeps it (a buzz handed over during pause waits for Resume's full time); round
+end clears it. Cards: "Get in line", "You're next"/"#N in line", "Leave the
+line"; stage/cards show "In line: …" and numbered guesser chips. Scoring is
+unchanged (one point per writer; the board ranks by writer count, so when
+every answer differs they all tie at rank 1). Cache tags wl-3 / rs-3 (ct-2
+unchanged) in both host pages and play.html. Frontend-only.
+
+Validation: WL engine 14/14, RS engine 14/14 (new line test), card-table 9/9,
+integration 7/7; full Hub 2280/2280, zero failures/skips. Browser checks on the
+isolated fixture, host page closed after Start: WL 4/9 players 19 checks/66
+captures each; RS 3 players 24 checks/94 captures, RS 9 24 checks/96 captures,
+EN/ZH 1280/390/320, zero layout/contrast findings, zero page errors.
+
 ## CURRENT: WHO KNOWS? speaking turns before three endings — 2026-10-24
 
 The previously completed Claude change was never pushed and its complete patch

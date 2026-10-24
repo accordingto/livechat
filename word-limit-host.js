@@ -6,14 +6,11 @@
   const UI = WORD_LIMIT_UI, E = WORD_LIMIT_ENGINE, C = CARD_TABLE_UI;
   const { t } = UI;
   const byId = id => document.getElementById('wl-' + id);
-  const demo = new URLSearchParams(location.search).get('demo') === '1';
-  // The points grid lists the limits a room this size is dealt.
-  const seats = () => demo ? 5 : (typeof ROOM !== 'undefined' && ROOM.enabled && ROOM.count) || 5;
   function readSetup() {
     const unit = document.querySelector('input[name="wl-unit"]:checked')?.value || 'words';
     return { unit, sceneMinutes: Number(byId('minutes').value), shuffles: Number(byId('shuffles').value), points: UI.readPoints(byId('points')) };
   }
-  function drawPoints(points) { byId('points').innerHTML = UI.pointsFields({ points }, seats()); }
+  function drawPoints(points) { byId('points').innerHTML = UI.pointsFields({ points }); }
   // No saved game yet: lines default to the language the host is reading.
   function writeSetup(settings) {
     let s; try { s = E.parseSettings({}, settings || null); } catch (_) { s = E.defaultSettings(); }

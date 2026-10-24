@@ -47,17 +47,23 @@ test('the content is complete: 36 scenes with nine bilingual roles each, unique 
   assert.equal(JSON.stringify(CONTENT).includes('<'), false);
 });
 
-test('every player gets one of the first N roles and a distinct limit from the ladder', () => {
+test('every player gets one of the first N roles and a random limit from 1 to 6', () => {
   for (let n = 2; n <= 9; n++) {
     const state = make(n);
-    const round = state.round;
+    const round = state.round, limits = Object.values(round.limits);
     assert.equal(state.phase, 'cast');
     assert.deepEqual(Object.values(round.roles).sort((a, b) => a - b), Array.from({ length: n }, (_, i) => i), `${n} players use roles 0..${n - 1}`);
-    assert.deepEqual(Object.values(round.limits).sort((a, b) => a - b), E.ladder(n).sort((a, b) => a - b));
-    assert.equal(Math.min(...Object.values(round.limits)), 1, 'someone always gets a one-word limit');
-    for (const limit of E.ladder(n)) assert.ok(E.CONFIG.limitValues.includes(limit), 'every dealt limit has its own points');
+    assert.equal(limits.length, n);
+    for (const limit of limits) assert.ok(E.CONFIG.dealValues.includes(limit), `${n} players: ${limit} is within 1–6`);
+    // Drawn like cards from a bag: up to six players never share a limit.
+    assert.equal(new Set(limits).size, Math.min(n, 6), `${n} players: as many different limits as possible`);
   }
-  assert.deepEqual(E.ladder(4), [1, 2, 3, 6], 'four players: mostly short, one long line');
+  assert.deepEqual(E.CONFIG.dealValues, [1, 2, 3, 4, 5, 6]);
+  // Over many tables every limit from 1 to 6 comes up, and nothing above 6.
+  const seen = new Set();
+  for (let i = 0; i < 60; i++) for (const limit of Object.values(make(4).round.limits)) seen.add(limit);
+  assert.deepEqual([...seen].sort((a, b) => a - b), [1, 2, 3, 4, 5, 6]);
+  assert.equal(E.drawLimits(9, E.rng(4)).length, 9);
   assert.throws(() => make(1), /not_enough_players/);
   assert.throws(() => E.create({ id: 'x', roster: [{ playerNum: 1 }, { playerNum: 1 }], now: 1, seed: 1 }), /invalid_roster/);
 });
@@ -105,7 +111,7 @@ test('the limits swap three times by default, spread over the scene; pause keeps
       assert.notEqual(state.round.limits[n], before[n], `swap ${swap}: player ${n} has a new limit`);
       assert.equal(state.round.prevLimits[n], before[n]);
     }
-    assert.deepEqual(Object.values(state.round.limits).sort(), Object.values(before).sort(), 'the same limits, swapped');
+    for (const limit of Object.values(state.round.limits)) assert.ok(E.CONFIG.dealValues.includes(limit), 'a new random limit from 1 to 6');
   }
   assert.equal(E.view(state, 0).wl.nextShuffleAt, null, 'no more swaps in this scene');
   const end = state.deadline;
@@ -176,11 +182,12 @@ test('the points of every limit are a setting: partial changes keep the rest; th
   assert.equal(custom.points[1], 2); assert.equal(custom.points[6], 12); assert.equal(custom.points[3], 3);
   assert.equal(E.parseSettings({ points: { 3: 5 } }, custom).points[6], 12, 'other limits keep their points');
   for (const bad of [{ 11: 3 }, { 2: -1 }, { 2: 1.5 }, { 2: 51 }, { 2: '' }, []]) assert.throws(() => E.parseSettings({ points: bad }), /invalid_options/, JSON.stringify(bad));
-  let state = make(4, { points: { 1: 5, 2: 5, 3: 5, 6: 5 }, shuffles: 0 });
+  let state = make(4, { points: { 1: 5, 2: 5, 3: 5, 4: 5, 5: 5, 6: 5 }, shuffles: 0 });
   state = toScene(state);
   state = ok(run(state, 1, 'line'));
   assert.equal(state.round.gained[1], 5, 'a flat table: every line is worth 5');
-  assert.deepEqual(E.view(state, 0).wl.values, [{ limit: 1, points: 5 }, { limit: 2, points: 5 }, { limit: 3, points: 5 }, { limit: 6, points: 5 }]);
+  assert.deepEqual(E.view(state, 0).wl.values.map(item => [item.limit, item.points]), [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5]], 'the legend lists every limit from 1 to 6');
+  assert.deepEqual(E.view(state, 0).wl.values.filter(item => item.held).map(item => item.limit), [...new Set(Object.values(state.round.limits))].sort((a, b) => a - b));
   state = ok(run(state, 2, 'settings', { settings: { points: { 1: 0 } } }));
   state = ok(run(state, 1, 'line', {}, state.lastChangeAt + COOL));
   assert.equal(state.round.gained[1], 10, 'the scene keeps the points it started with');

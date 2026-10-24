@@ -9,7 +9,7 @@ var WORD_LIMIT_UI = (() => {
   const dict = {
     brand: ['WORD LIMIT THEATER', 'WORD LIMIT THEATER'],
     subtitle: ['字數限定小劇場：每個人的台詞都有固定字數，一起把一場戲演完。', 'Every actor gets a word limit. Act out one scene together.'],
-    pitch: ['每個人抽一個角色和一個字數。你說的每一句台詞都要剛好那麼多字：有人只能說一個字，有人得說滿八個。每說完一句，就在自己的卡片上按一下得分，字數越多分數越高。演出中字數會大風吹好幾次。', 'Everyone draws a role and a word limit. Every line you say must be exactly that long: one actor gets one word, another has to fill eight. After each line, tap the button on your card to score. Longer limits score more. The limits swap a few times during the scene.'],
+    pitch: ['每個人抽一個角色和一個 1 到 6 的隨機字數。你說的每一句台詞都要剛好那麼多字：有人只能說一個字，有人得說滿六個。每說完一句，就在自己的卡片上按一下得分，字數越多分數越高。演出中大家會重新抽字數好幾次。', 'Everyone draws a role and a random word limit from 1 to 6. Every line you say must be exactly that long: one actor gets one word, another has to fill six. After each line, tap the button on your card to score. Longer limits score more. Everyone draws new limits a few times during the scene.'],
     hostNote: ['角色、字數和分數都是公開的，大家才能一起抓犯規。', 'Roles, limits and points are public, so everyone can catch a foul.'],
     start: ['開始第一場', 'Start the first scene'],
     sceneN: ['第 {n} 場', 'Scene {n}'],
@@ -32,7 +32,7 @@ var WORD_LIMIT_UI = (() => {
     linesOne: ['1 句', '1 line'], linesN: ['{n} 句', '{n} lines'],
     nextSwap: ['下次換字數', 'Limits swap in'], noMoreSwaps: ['這場不會再換字數了', 'No more swaps in this scene'],
     valuesTitle: ['每句得分', 'Points per line'],
-    shuffleTitle: ['字數大風吹！', 'Limits shuffled!'], shuffleHint: ['每個人的字數都換了，看一下你的新字數。', 'Everyone has a new limit. Check yours.'],
+    shuffleTitle: ['字數大風吹！', 'Limits shuffled!'], shuffleHint: ['每個人都抽到新字數了，看一下你的新字數。', 'Everyone has a new limit. Check yours.'],
     wasLimit: ['原本 {n}', 'was {n}'],
     foul: ['犯規', 'Foul'], foulCall: ['{name} 犯規！', 'Foul on {name}!'], foulBy: ['{by} 吹哨', 'called by {by}'],
     foulOnYou: ['你被吹犯規了！', 'Foul on you!'],
@@ -57,10 +57,10 @@ var WORD_LIMIT_UI = (() => {
     pointsFor: ['{n} 字台詞每句得分', 'Points for a line with a limit of {n}'],
     pointsUnit: ['分', 'pts'],
     setupTitle: ['開演前的設定', 'Before the curtain'],
-    rules_1: ['每一場抽一個場景，每個人分到一個角色和一個字數。', 'Each scene deals everyone a role and a word limit.'],
+    rules_1: ['每一場抽一個場景，每個人分到一個角色和一個 1 到 6 的隨機字數。', 'Each scene deals everyone a role and a random word limit from 1 to 6.'],
     rules_2: ['開演後用說的即興演出。你說的每一句台詞，都要剛好是你的字數。', 'Improvise out loud. Every line you say must be exactly your limit.'],
     rules_3: ['每說完一句，就在自己的卡片上按「我說完一句了」，得到你現在字數的分數。預設幾個字就幾分，分數可以在設定裡改。', 'After each line, tap “I said a line” on your card to score your limit’s points: by default one point per word. The points can be changed in the settings.'],
-    rules_4: ['演出中所有人的字數會大風吹好幾次（預設 3 次），換完記得看自己的新字數。', 'The limits swap a few times during the scene (3 by default). Check your new limit each time.'],
+    rules_4: ['演出中每個人會重新抽字數好幾次（預設 3 次），一定會換到不一樣的數字，換完記得看自己的新字數。', 'Everyone draws a new limit a few times during the scene (3 by default), always a different number. Check your new limit each time.'],
     rules_5: ['有人說錯字數，任何人都能在卡片上按他的「犯規」，只記次數不扣分。時間到就殺青，這場的分數加進總分。', 'If someone breaks their limit, anyone can tap Foul for them; it only counts. When time is up, the scene’s points go on the scoreboard.'],
     nobodyCast: ['等下一場開始…', 'Waiting for the next scene…'],
   };
@@ -88,16 +88,15 @@ var WORD_LIMIT_UI = (() => {
   };
 
   // ── settings (Table controls on cards, setup and host controls) ───────
-  // The points grid shows the limits a room this size is dealt (4 players:
-  // 1, 2, 3 and 6); the other limits keep their points.
-  const activeCount = view => list(view?.roster).filter(p => p.active).length;
-  function limitsFor(count) {
-    const engine = ENGINE(), n = Math.max(2, Math.min(9, Number(count) || 5));
-    return engine ? [...new Set(engine.ladder(n))].sort((a, b) => a - b) : RULES().limitValues.slice();
+  // The points grid shows the limits a scene deals (1–6); points saved for
+  // 7–10 by the earlier ladder version are kept but no longer shown.
+  function limitsFor() {
+    const engine = ENGINE();
+    return (engine?.CONFIG.dealValues || [1, 2, 3, 4, 5, 6]).slice();
   }
-  function pointsFields(settings, count) {
+  function pointsFields(settings) {
     const rules = RULES(), points = settings?.points || {};
-    const cells = limitsFor(count).map(n => {
+    const cells = limitsFor().map(n => {
       const value = points[n] ?? n;
       return `<label class="wl-point"><span class="wl-point-limit" aria-hidden="true">${n}</span><input type="number" inputmode="numeric" min="0" max="${rules.pointsMax}" step="1" data-ct-set="pt-${n}" value="${esc(value)}" aria-label="${esc(t('pointsFor', { n }))}"><small aria-hidden="true">${esc(t('pointsUnit'))}</small></label>`;
     }).join('');
@@ -111,9 +110,9 @@ var WORD_LIMIT_UI = (() => {
     }
     return points;
   }
-  function settingsForm(settings, view) {
+  function settingsForm(settings) {
     const rules = RULES();
-    return `<div class="ct-settings">${C.field('sceneMinutes', rules.sceneMinutes, t('sceneMinutes'), settings.sceneMinutes ?? 3, n => t('minutesN', { n }))}${C.field('unit', rules.units, t('unit'), settings.unit || 'words', u => t('unitOption_' + u))}${C.field('shuffles', rules.shuffleCounts, t('shuffles'), settings.shuffles ?? 3, shufflesText)}</div>${pointsFields(settings, activeCount(view) || 5)}`;
+    return `<div class="ct-settings">${C.field('sceneMinutes', rules.sceneMinutes, t('sceneMinutes'), settings.sceneMinutes ?? 3, n => t('minutesN', { n }))}${C.field('unit', rules.units, t('unit'), settings.unit || 'words', u => t('unitOption_' + u))}${C.field('shuffles', rules.shuffleCounts, t('shuffles'), settings.shuffles ?? 3, shufflesText)}</div>${pointsFields(settings)}`;
   }
   function readSettings(root) {
     const get = key => C.readField(root, key);
@@ -122,7 +121,7 @@ var WORD_LIMIT_UI = (() => {
   const controlsSpec = {
     t, timed: ['cast', 'scene'], confirmClose: ['scene'],
     closeLabel: phase => t('close_' + phase), extendLabel: phase => t('extend_' + phase),
-    nextPick: null, settingsForm, readSettings, settingsScope: activeCount,
+    nextPick: null, settingsForm, readSettings,
   };
 
   // ── building blocks ───────────────────────────────────────────────────

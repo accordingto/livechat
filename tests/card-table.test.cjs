@@ -240,18 +240,20 @@ test('ROOM SURVEY: with the host page closed, the cards write, sort, guess and s
     for (const word of ['zebra1', 'zebra2', 'zebra3', 'zebra4']) assert.equal(json.includes(word), false, `card ${n} never receives ${word}`);
   }
   assert.equal(JSON.stringify(cards[keeper].view().rs.me.board).includes('zebra'), true);
-  // Two cards buzz at once: exactly one gets it.
+  // Two cards buzz at once: one answers, the other waits in line.
   const race = await Promise.allSettled([cards[others[0]].command('buzz'), cards[others[1]].command('buzz')]);
-  assert.equal(race.filter(r => r.status === 'fulfilled').length, 1);
-  assert.match(race.find(r => r.status === 'rejected').reason.message, /taken|stale_turn/);
+  assert.equal(race.filter(r => r.status === 'fulfilled').length, 2, 'both buzzes count');
   await settle();
-  // A buzzer who runs out of time misses by itself.
-  const firstBuzzer = s.state('rs').round.buzz.playerNum;
+  const firstBuzzer = s.state('rs').round.buzz.playerNum, waiting = others.slice(0, 2).find(n => n !== firstBuzzer);
+  assert.deepEqual(s.state('rs').round.queue, [waiting]);
+  assert.equal(cards[waiting].view().rs.me.queuePos, 1);
+  // A buzzer who runs out of time misses by itself; the next in line answers.
   s.now = s.state('rs').round.buzz.endsAt + 200;
   for (const c of all) c.pulse(); await settle();
-  assert.equal(s.state('rs').round.buzz, null);
   assert.equal(s.state('rs').round.log.at(-1).result, 'timeout');
   assert.deepEqual(s.state('rs').round.locked, [firstBuzzer]);
+  assert.equal(s.state('rs').round.buzz.playerNum, waiting, 'the buzz passes down the line');
+  assert.deepEqual(s.state('rs').round.queue, []);
   await assert.rejects(cards[firstBuzzer].command('buzz'), /locked/);
   // A hint, then whoever may buzz does, and the Keeper judges until the board is clear.
   const boardIds = s.state('rs').round.board;
@@ -261,8 +263,8 @@ test('ROOM SURVEY: with the host page closed, the cards write, sort, guess and s
   for (const id of boardIds) {
     const live = s.state('rs');
     if (live.phase !== 'guess') break;
-    const buzzer = others.find(n => cards[n].view().rs.me.canBuzz);
-    await cards[buzzer].command('buzz'); await settle();
+    let buzzer = live.round.buzz?.playerNum;
+    if (!buzzer) { buzzer = others.find(n => cards[n].view().rs.me.canBuzz); await cards[buzzer].command('buzz'); await settle(); }
     const group = live.round.groups.find(item => item.id === id);
     const writers = [...new Set(group.members.map(member => member.playerNum))];
     if (!writers.includes(buzzer)) expected[buzzer] = (expected[buzzer] || 0) + writers.length;

@@ -17,12 +17,14 @@ to stay open.
   standings and the optional host page controller (`host(spec)`, including the
   one-device `?demo=1`). A game's settings form receives the view
   (`settingsForm(settings, view)`) and may name what else it depends on
-  (`settingsScope(view)`, e.g. how many players are in), so WORD LIMIT
-  THEATER's points boxes follow the room size. Shared error strings include
-  `duplicate`, `taken` and `locked` for ROOM SURVEY's writing and buzzing.
+  (`settingsScope(view)`; WORD LIMIT THEATER no longer needs it since its
+  points boxes are always 1–6). Shared error strings include `duplicate`,
+  `taken` (kept for older tables; buzzing now queues) and `locked` for ROOM
+  SURVEY's writing and buzzing.
 - `card-table.css` — structure shared by both games; each game styles itself
   through `--ct-*` tokens on its own page and card class.
-- Cache tag `ct-2` on these three files in both host pages and `play.html`.
+- Cache tag `ct-2` on these three files in both host pages and `play.html`;
+  the games' own files use `wl-3` and `rs-3`.
 
 ## Authority
 

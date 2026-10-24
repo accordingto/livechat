@@ -14,6 +14,12 @@ rank and worth each stack would get; every tile shows what a hit is worth.
 Scoring stays one point per writer, which already rises with the rank (the
 board is ranked by the number of writers); it is now shown on each tile.
 
+Second 2026-10-24 revision (user request): buzzing while someone else is
+answering joins a line instead of being refused, so nobody has to rush. When
+the answer ends (hit, miss, give-up, timeout, or the buzzer leaving) the first
+in line answers at once with a fresh answer clock. A locked player cannot join
+the line; a player can leave it; a pause keeps it.
+
 ## Entry and files
 
 `index.html` lists ROOM SURVEY last, after WORD LIMIT THEATER (👥 3–9).
@@ -58,8 +64,13 @@ whose card-table branch follows the game's table (see card-table-mode.md).
 4. **Guess** (3/4/5/6/8 min, default 4). The board is ranked by how many people
    wrote each answer (ties share a rank); each hidden tile shows its length and
    what a hit is worth. Any guesser buzzes in from their own card (“I've got
-   one!”); the first one holds the buzz (others get `taken`) and says an answer
-   out loud, with 0/10/15/20/30 s to answer (default 15). The Keeper taps the
+   one!”); the first one holds the buzz and says an answer out loud, with
+   0/10/15/20/30 s to answer (default 15). Others who buzz meanwhile (“Get in
+   line”) wait in buzz order; cards show “You're next” / “You're #N in line” with
+   “Leave the line”, and every screen shows who is in line. When an answer ends,
+   the first in line holds the buzz with a fresh clock (a new buzz number, so a
+   late Keeper tap can't judge them); during a pause their clock waits for
+   Resume. The Keeper taps the
    tile and confirms, or taps “Not on the board”; the buzzer may give up. A hit
    scores **one point per person who wrote it** (higher on the board = more) and
    opens buzzing to everyone again. A miss, giving up or running out of time
@@ -74,7 +85,7 @@ whose card-table branch follows the game's table (see card-table-mode.md).
    who wrote each answer” (off by default so people write freely).
 
 The Keeper judges and does not guess. The Keeper leaving cancels the round; a
-buzzer leaving frees the buzz. Prompts used at the table are not offered again
+buzzer leaving passes the buzz down the line; leaving drops a player from it. Prompts used at the table are not offered again
 soon (60 remembered, also across Restart). A table saved by the earlier version
 in the middle of guessing drops its fixed turn and carries on with buzzing.
 
@@ -87,11 +98,11 @@ no-server trade-off in card-table-mode.md applies.
 
 ## Validation
 
-`node --test tests/room-survey-engine.test.cjs` (13): content, Keeper rotation,
+`node --test tests/room-survey-engine.test.cjs` (14): content, Keeper rotation,
 choosing/reroll/custom, writing (repeated answers refused) and auto-advance,
 auto-stacking/stack/unstack/remove with rank preview, ranking and worth,
-buzz-in (one holder, `taken`, locks and reopening, hits, burned own answers,
-give-up), answer and round clocks with pause, people leaving, privacy of the
+buzz-in (one holder, the line in buzz order with leave/locked/pause/leaving
+and fresh clocks, locks and reopening, hits, burned own answers, give-up), answer and round clocks with pause, people leaving, privacy of the
 shared screen and guessers, table controls and fencing, Chinese/English
 normalisation and hints, tables saved by the earlier version. The shared table,
 page wiring and browser checks are in card-table-mode.md.

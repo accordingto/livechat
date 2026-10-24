@@ -184,6 +184,9 @@ button.rs-tile { cursor: pointer; transition: transform .1s, border-color .12s; 
 .rs-turn.is-open { border-style: dashed; }
 .rs-turn.is-open .rs-turn-name { color: var(--ct-text-2); font-weight: 700; }
 .rs-turn .rs-clock { font-size: 1.1rem; }
+.rs-turn.has-queue { flex-wrap: wrap; border-radius: 16px; }
+.rs-turn-queue { flex-basis: 100%; color: var(--ct-text-2); font-size: .88rem; font-weight: 650; }
+.rs-turn.is-mine .rs-turn-queue { color: var(--ct-accent-ink); }
 .rs-judge-hint { margin: 0; color: var(--ct-text-2); font-size: .92rem; text-align: center; }
 .rs-judge { display: flex; flex-wrap: wrap; gap: 8px; }
 .rs-judge .ct-button { flex: 1 1 auto; }
@@ -198,7 +201,9 @@ button.rs-tile { cursor: pointer; transition: transform .1s, border-color .12s; 
 .rs-buzz:focus-visible { outline: 3px solid var(--ct-focus); outline-offset: 3px; }
 .rs-zone.is-locked { border-style: dashed; border-color: var(--ct-border-2); }
 .rs-zone.is-locked h3 { color: var(--ct-text-2); font-size: 1.05rem; }
-.rs-zone.is-waiting .rs-wait-line { color: var(--rs-chalk-yellow); }
+.rs-zone.is-waiting .rs-wait-line, .rs-zone.is-buzz .rs-wait-line, .rs-zone.is-queued .rs-wait-line { color: var(--rs-chalk-yellow); }
+.rs-zone.is-queued { border-color: #6fa98a; }
+.rs-zone.is-queued h3 { color: #c9f2dc; font-size: 1.3rem; }
 .rs-not-yours { padding: 6px 10px; border-radius: 8px; background: #12291f; color: #ffd7cf !important; font-size: .88rem !important; font-weight: 650; }
 .rs-confirm { display: grid; gap: 10px; padding: 12px; border-radius: 14px; background: #2a1d17; border: 1px solid #a2463a; text-align: center; animation: rs-pop .2s ease both; }
 .rs-confirm p { margin: 0; color: #ffe6df; font-weight: 700; font-size: 1.02rem; overflow-wrap: anywhere; }
@@ -268,6 +273,8 @@ button.rs-tile { cursor: pointer; transition: transform .1s, border-color .12s; 
 .rs-order li.is-locked { border-style: dashed; color: var(--ct-muted); }
 .rs-order li.is-locked::after { content: '⏳'; font-size: .8rem; }
 .rs-order li b { color: #ffb4a8; font-size: .82rem; }
+.rs-order li.is-queued { border-color: #6fa98a; color: var(--ct-text-hi); }
+.rs-place { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 99px; background: #c9f2dc; color: #0d2218; font-style: normal; font-size: .78rem; font-weight: 900; }
 .rs-stage .rs-log { font-size: 1.05rem; }
 .rs-paused { position: absolute; inset: 0; z-index: 7; display: grid; place-content: center; gap: 6px; text-align: center; background: #0f241ed9; backdrop-filter: blur(3px); }
 .rs-paused strong { color: var(--rs-chalk); font-size: 2.2rem; font-weight: 900; letter-spacing: .1em; }
@@ -298,3 +305,4 @@ button.rs-tile { cursor: pointer; transition: transform .1s, border-color .12s; 
   .rs-slip { gap: 2px 8px; padding: 9px 10px; }
   .rs-buzz { font-size: 1.2rem; min-height: 70px; }
 }
+.rs-stage-bar .rs-turn-queue { font-size: 1.05rem; }

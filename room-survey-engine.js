@@ -5,8 +5,9 @@
  * in your search history" — and everyone, the Keeper included, secretly writes
  * short answers. The Keeper merges answers that mean the same thing, and the
  * board ranks them by how many people wrote each one, so a bigger stack ranks
- * higher. Then the others buzz in from their own cards, one at a time, and say
- * a guess out loud; the Keeper taps the matching answer. A hit scores one point
+ * higher. Then the others buzz in from their own cards and say a guess out
+ * loud, one at a time; buzzing while someone else answers joins a line, so
+ * nobody has to rush; the Keeper taps the matching answer. A hit scores one point
  * for every person who wrote it (higher on the board = more points). A wrong
  * buzzer waits until everyone else has missed once too. The rules know who
  * wrote what, so guessing an answer you wrote yourself never scores: the answer
@@ -146,7 +147,7 @@ var ROOM_SURVEY_ENGINE = (() => {
       no: state.roundNo, keeper: null, players, category: s.category, options: [], rerolls: 0, question: null,
       answersPer: s.answers, writeMs: s.writeSeconds * 1000, guessMs: s.guessMinutes * 60000, turnMs: s.turnSeconds * 1000, showAuthors: s.showAuthors,
       answers: {}, submitted: {}, groups: [], board: [], ranks: {}, values: {}, revealed: {}, hints: {},
-      buzz: null, buzzSerial: 0, locked: [], guessEndsAt: null, pausedGuessMs: null, pausedBuzzMs: null,
+      buzz: null, buzzSerial: 0, queue: [], locked: [], guessEndsAt: null, pausedGuessMs: null, pausedBuzzMs: null,
       log: [], points: {}, outcome: null, endReason: null, groupSerial: 0,
     };
     round.keeper = drawKeeper(state, random);
@@ -199,7 +200,7 @@ var ROOM_SURVEY_ENGINE = (() => {
     round.board = sorted.map(group => group.id);
     round.ranks = rankGroups(sorted);
     round.values = Object.fromEntries(sorted.map(group => [group.id, authorsOf(group).length]));
-    round.buzz = null; round.locked = [];
+    round.buzz = null; round.queue = []; round.locked = [];
     round.guessEndsAt = now + round.guessMs;
     state.phase = 'guess'; state.stage++; state.pausedFrom = null; state.remainingMs = null;
     state.deadline = guessDeadline(round);
@@ -216,11 +217,23 @@ var ROOM_SURVEY_ENGINE = (() => {
     const round = state.round, live = guessers(state);
     round.locked = round.locked.filter(n => live.includes(n));
     if (live.length && live.every(n => round.locked.includes(n))) round.locked = [];
+    round.queue = round.queue.filter(n => live.includes(n) && !round.locked.includes(n));
   }
-  function clearBuzz(state) {
+  // The buzz passes to the first player waiting in line, with a fresh answer clock.
+  function giveBuzz(state, playerNum, now) {
+    const round = state.round;
+    round.buzzSerial++;
+    // During a pause the clock waits; Resume starts a full answer time.
+    const running = state.phase === 'guess' && round.turnMs > 0;
+    round.buzz = { serial: round.buzzSerial, playerNum, at: now, endsAt: running ? now + round.turnMs : null };
+    if (state.phase === 'guess') state.deadline = guessDeadline(round);
+  }
+  function clearBuzz(state, now) {
     const round = state.round;
     round.buzz = null; round.pausedBuzzMs = null;
-    if (state.phase === 'guess') state.deadline = guessDeadline(round);
+    reopen(state);
+    if (round.queue.length && round.board.some(id => !round.revealed[id])) giveBuzz(state, round.queue.shift(), now);
+    else if (state.phase === 'guess') state.deadline = guessDeadline(round);
   }
   function logEntry(round, playerNum, result, now, group = null, points = 0) {
     round.log = [...round.log, { playerNum, result, group, points, ts: now }].slice(-CONFIG.logMax);
@@ -228,12 +241,12 @@ var ROOM_SURVEY_ENGINE = (() => {
   function endGuess(state, now, reason) {
     const round = state.round;
     for (const id of round.board) if (!round.revealed[id]) round.revealed[id] = { how: 'left', by: null, points: 0 };
-    round.endReason = reason; round.buzz = null;
+    round.endReason = reason; round.buzz = null; round.queue = [];
     finishRound(state, now);
   }
   function finishRound(state, now, { voided = false, reason = null } = {}) {
     const round = state.round;
-    if (voided) { round.endReason = reason || 'host'; round.buzz = null; }
+    if (voided) { round.endReason = reason || 'host'; round.buzz = null; round.queue = []; }
     else for (const [n, value] of Object.entries(round.points)) state.scores[n] = (state.scores[n] || 0) + value;
     const values = Object.values(round.points), top = values.length ? Math.max(...values) : 0;
     const best = !voided && top > 0 ? Object.keys(round.points).map(Number).filter(n => round.points[n] === top).sort((a, b) => a - b) : [];
@@ -274,7 +287,7 @@ var ROOM_SURVEY_ENGINE = (() => {
     state.used = { questions: list(state.used?.questions) };
     const round = state.round;
     if (round) {
-      for (const key of ['players', 'options', 'groups', 'board', 'log', 'locked']) round[key] = list(round[key]);
+      for (const key of ['players', 'options', 'groups', 'board', 'log', 'locked', 'queue']) round[key] = list(round[key]);
       for (const key of ['answers', 'submitted', 'ranks', 'values', 'revealed', 'hints', 'points']) round[key] = round[key] || {};
       for (const key of Object.keys(round.answers)) round.answers[key] = list(round.answers[key]);
       round.groups.forEach(group => { group.members = list(group.members); group.dropped = group.dropped === true; });
@@ -283,7 +296,7 @@ var ROOM_SURVEY_ENGINE = (() => {
       delete round.turn; delete round.order; delete round.pausedTurnMs;
     }
   }
-  const PLAYER_COMMANDS = new Set(['pick', 'custom', 'reroll', 'submit', 'merge', 'split', 'drop', 'startGuess', 'buzz', 'hit', 'miss', 'pass', 'hint', 'next']);
+  const PLAYER_COMMANDS = new Set(['pick', 'custom', 'reroll', 'submit', 'merge', 'split', 'drop', 'startGuess', 'buzz', 'unqueue', 'hit', 'miss', 'pass', 'hint', 'next']);
   const TABLE_COMMANDS = new Set(['tick', 'pause', 'resume', 'close', 'extend', 'void', 'setNext', 'exclude', 'restart', 'settings', 'stop']);
   const HOST_COMMANDS = new Set([...TABLE_COMMANDS, 'next', 'rename']);
   // Any active player may run the table from their card; the Keeper's tools
@@ -327,7 +340,7 @@ var ROOM_SURVEY_ENGINE = (() => {
         else if (state.phase === 'sort') beginGuess(state, now, random);
         else if (type === 'close') endGuess(state, now, 'host');
         else if (now >= round.guessEndsAt) endGuess(state, now, 'time');
-        else if (round.buzz?.endsAt && now >= round.buzz.endsAt) { const late = round.buzz.playerNum; logEntry(round, late, 'timeout', now); clearBuzz(state); lockOut(state, late); }
+        else if (round.buzz?.endsAt && now >= round.buzz.endsAt) { const late = round.buzz.playerNum; logEntry(round, late, 'timeout', now); lockOut(state, late); clearBuzz(state, now); }
         else state.deadline = guessDeadline(round);
         break;
       }
@@ -397,21 +410,27 @@ var ROOM_SURVEY_ENGINE = (() => {
         break;
       }
       case 'buzz': {
-        // First come, first served: one buzzer at a time.
+        // First come, first served. While someone is answering, a buzz joins
+        // the line and the next in line answers when the buzz is free.
         if (state.phase !== 'guess' || !guessers(state).includes(actor)) { fail('not_available'); break; }
-        if (round.buzz) { fail('taken'); break; }
         if (round.locked.includes(actor)) { fail('locked'); break; }
+        if (round.buzz?.playerNum === actor || round.queue.includes(actor)) { fail('not_available'); break; }
         if (round.board.every(id => round.revealed[id])) { fail('not_available'); break; }
-        round.buzzSerial++;
-        round.buzz = { serial: round.buzzSerial, playerNum: actor, at: now, endsAt: round.turnMs > 0 ? now + round.turnMs : null };
-        state.deadline = guessDeadline(round);
+        if (round.buzz) round.queue = [...round.queue, actor];
+        else giveBuzz(state, actor, now);
+        break;
+      }
+      case 'unqueue': {
+        // Leave the line (the buzz itself is given up with "Never mind").
+        if (!round || !round.queue.includes(actor)) { fail('not_available'); break; }
+        round.queue = round.queue.filter(n => n !== actor);
         break;
       }
       case 'hit': {
         const id = String(input.group || ''), group = groupOf(round, id);
         if (!round.buzz || input.buzz !== round.buzz.serial || !round.board.includes(id) || round.revealed[id] || !group) { fail('stale_turn'); break; }
         const guesser = round.buzz.playerNum, authors = authorsOf(group);
-        clearBuzz(state);
+        round.buzz = null; round.pausedBuzzMs = null;
         if (authors.includes(guesser)) {
           // The rules know the writers: your own answer never scores, and it
           // burns so nobody can repeat what you just said.
@@ -427,13 +446,14 @@ var ROOM_SURVEY_ENGINE = (() => {
           round.locked = [];
         }
         if (round.board.every(item => round.revealed[item])) endGuess(state, now, 'all');
+        else clearBuzz(state, now);
         break;
       }
       case 'miss': {
         if (!round.buzz || input.buzz !== round.buzz.serial) { fail('stale_turn'); break; }
         const missed = round.buzz.playerNum;
         logEntry(round, missed, 'miss', now);
-        clearBuzz(state); lockOut(state, missed);
+        round.buzz = null; lockOut(state, missed); clearBuzz(state, now);
         break;
       }
       case 'pass': {
@@ -441,7 +461,7 @@ var ROOM_SURVEY_ENGINE = (() => {
         if (state.phase !== 'guess' || !round.buzz || input.buzz !== round.buzz.serial || !(actor === round.keeper || actor === round.buzz.playerNum)) { fail('not_available'); break; }
         const passed = round.buzz.playerNum;
         logEntry(round, passed, 'pass', now);
-        clearBuzz(state); lockOut(state, passed);
+        round.buzz = null; lockOut(state, passed); clearBuzz(state, now);
         break;
       }
       case 'hint': {
@@ -512,7 +532,8 @@ var ROOM_SURVEY_ENGINE = (() => {
         if (number === round.keeper && ['choose', 'write', 'sort', 'guess'].includes(live)) { finishRound(state, now, { voided: true, reason: 'keeper_left' }); break; }
         if (live === 'write' && state.phase === 'write' && allSubmitted(state)) { beginSort(state, now, random); break; }
         if (live === 'guess') {
-          if (round.buzz?.playerNum === number) { logEntry(round, number, 'skip', now); clearBuzz(state); }
+          round.queue = round.queue.filter(n => n !== number);
+          if (round.buzz?.playerNum === number) { logEntry(round, number, 'skip', now); clearBuzz(state, now); }
           reopen(state);
           if (!guessers(state).length) endGuess(state, now, 'nobody');
         }
@@ -542,7 +563,7 @@ var ROOM_SURVEY_ENGINE = (() => {
       }
       case 'stop': {
         if (state.phase === 'finished') { fail('not_available'); break; }
-        if (round) round.buzz = null;
+        if (round) { round.buzz = null; round.queue = []; }
         state.stopped = true;
         enter(state, 'finished', now);
         break;
@@ -616,6 +637,8 @@ var ROOM_SURVEY_ENGINE = (() => {
       sorting: live === 'sort' ? { answers: round.groups.reduce((sum, group) => sum + group.members.length, 0), groups: round.groups.filter(group => !group.dropped).length } : null,
       board: round && (live === 'guess' || (reveal && round.board.length)) ? boardView(round, { reveal }) : [],
       buzz,
+      // Who is waiting in line to answer next, in buzz order.
+      queue: guessing ? list(round.queue) : [],
       guessers: guessing ? guessers(state) : [],
       locked: guessing ? list(round.locked) : [],
       guessEndsAt: phase === 'guess' ? round.guessEndsAt : null,
@@ -645,7 +668,9 @@ var ROOM_SURVEY_ENGINE = (() => {
         board: keeperView && guessing ? boardView(round, { keeper: true }) : null,
         locked,
         myBuzz: !!buzz && buzz.playerNum === n,
-        canBuzz: phase === 'guess' && guesser && !locked && !buzz && unrevealed,
+        // 1 = next to answer; 0 = not in line.
+        queuePos: guessing ? list(round.queue).indexOf(n) + 1 : 0,
+        canBuzz: phase === 'guess' && guesser && !locked && unrevealed && buzz?.playerNum !== n && !list(round.queue).includes(n),
         canPass: phase === 'guess' && !!buzz && (keeperView || buzz.playerNum === n),
         canNext: phase === 'result' && active,
         canControl: active,

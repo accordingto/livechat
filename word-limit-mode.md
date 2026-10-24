@@ -1,12 +1,13 @@
 # WORD LIMIT THEATER — act one scene, every line exactly your limit
 
 A spoken improv game for 2–9 players on the existing room and original player
-links. Everyone draws a role in one scene and a line limit: every line they say
-must be exactly that many English words (or Chinese characters). One actor can
-only say “No!”, another has to fill eight words. After each line the actor taps
+links. Everyone draws a role in one scene and a random line limit from 1 to 6:
+every line they say must be exactly that many English words (or Chinese
+characters). One actor can only say “No!”, another has to fill six words. After each line the actor taps
 **I said a line** on their own card and scores the points of their current
 limit (by default one point per word, so longer limits score more; every
-limit's points are a setting). The limits swap a few times during the scene.
+limit's points are a setting). Everyone draws a new limit a few times during
+the scene.
 
 The exercise is the classic improv game of limited words per line; the user's
 reference was a short video of it. Every scene, role and word of copy here is
@@ -17,6 +18,12 @@ anyone can catch a foul.
 (the vote added pressure; the twists were removed for now — the 40 twist cards
 stay in the content file, unused, so they can come back); limits swap 3 times
 per scene by default instead of once; scoring is the self-reported line.
+
+Second 2026-10-24 revision (user request): the ladder with one long outlier
+(4 players 1/2/3/6, 9 players up to 10) felt too hard on that one actor, so
+every limit is now random from 1 to 6, dealt like cards from a bag (up to six
+players never share a limit; 7–9 players start a second bag), and each swap
+gives everyone a new random 1–6 that differs from the limit they held.
 
 ## Entry and files
 
@@ -45,15 +52,14 @@ card-table-mode.md).
    every card and the shared screen list the whole cast with limits, and the
    shared screen shows what a line at each dealt limit scores. Any player can
    start early or draw a different scene (5 per round). The roles are the
-   scene's first N roles dealt at random; limits come from a ladder by the number
-   of players — 2: 1/4, 3: 1/2/5, 4: 1/2/3/6, 5: 1/2/3/4/7, 6: 1–5/8, 7: 1–6/9,
-   8: 1–7/10, 9: 1–8/10 (mostly short, one long line for contrast; the user
-   asked whether 4 players' jump to 6 was a bug — it is this ladder) — dealt so
-   nobody keeps last scene's limit if avoidable.
+   scene's first N roles dealt at random; limits are random 1–6 from a shuffled
+   bag (distinct for up to six players, a second bag for 7–9), dealt so nobody
+   keeps last scene's limit if avoidable.
 2. **Scene** (2/3/4/5 min, default 3) on a stopwatch, so a pause never loses
    time or swaps. The limits swap 0/1/2/3/4 times (default 3), spread evenly
    (3 in 3 minutes: at 0:45, 1:30, 2:15); each swap gives everyone still playing
-   a different limit from the same set (“was N” shows for a few seconds), and
+   a new random 1–6 limit, never the one they held (“was N” shows for a few
+   seconds), and
    cards and the shared screen count down to the next swap. After each line the
    actor taps **I said a line** (3 s cool-down, own seat only): it scores the
    points of the limit they hold at that moment, shows as “+N” on every card and
@@ -66,21 +72,21 @@ card-table-mode.md).
    already said. Any player starts the next scene.
 
 Settings (setup and Table controls, from the next scene): length, unit, swaps
-per scene and the points of each limit (0–50; the boxes show the limits a room
-this size is dealt, e.g. 1/2/3/6 for four players; the others keep their
-points). Units default to the host's reading language (English → words,
+per scene and the points of each limit 1–6 (0–50; points an earlier table
+saved for 7–10 are kept, unused). The shared screen's legend lists all six. Units default to the host's reading language (English → words,
 Chinese → characters). The table remembers up to 30 scenes, also across
 Restart, so they don't repeat soon.
 
 A table saved by the earlier version keeps working: old settings read as
 today's (an old “shuffle off” is no swaps; twist and vote options are dropped),
-an old scripted twist is skipped, and an old MVP vote just runs out into the
+an old scripted twist is skipped, a scene dealt from the old ladder keeps its
+limits (its next swap draws 1–6), and an old MVP vote just runs out into the
 result (votes no longer score).
 
 ## Validation
 
-`node --test tests/word-limit-engine.test.cjs` (14): content, dealing and
-ladders, reroll, three evenly spread swaps with pause, the swap setting and its
+`node --test tests/word-limit-engine.test.cjs` (14): content, random 1–6
+dealing, reroll, three evenly spread swaps with pause, the swap setting and its
 earlier on/off form, line scoring by the current limit with cool-down and live
 standings, the points table (partial changes, validation, next-scene effect),
 fouls, cancelled/stopped scenes, table controls, fencing and idempotency,
