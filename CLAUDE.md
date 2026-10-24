@@ -23,6 +23,15 @@ integration 7/7; full Hub 2280/2280, zero failures/skips. Browser checks on the
 isolated fixture, host page closed after Start: WL 4/9 players 19 checks/66
 captures each; RS 3 players 24 checks/94 captures, RS 9 24 checks/96 captures,
 EN/ZH 1280/390/320, zero layout/contrast findings, zero page errors.
+Gameplay source c396e31 is pushed to main; Vercel deployment
+GzhkcP21dnKS9XEeenjEqFwzFTFc reports success. Read back from production:
+word-limit-engine.js?v=wl-3 (dealValues 1–6, drawLimits, no ladders) and
+room-survey-engine.js?v=rs-3 (giveBuzz, round.queue, queuePos, `unqueue`);
+cache-busted room-survey.html shows "Time to answer after buzzing" (the old
+"Time per turn" read last release was the fetcher's cache) and
+word-limit-theater.html's sample board shows 1/4/6. The fetcher strips
+scripts, so play.html wiring was not read back; physical phones and a human
+voice playtest remain unverified.
 
 ## CURRENT: WHO KNOWS? speaking turns before three endings — 2026-10-24
 
