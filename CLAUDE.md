@@ -15,6 +15,11 @@ start-panel card no longer stretches past the page; shared table cards up to
 session-derived opening on every client, no redraw. Cache once-opening-1,
 launcher hub-launch-6. ENGINE CHANGE: service tables get the canonical opening
 and redraw only after the independent executor is redeployed.
+Published: frontend d0f6a29 on main; Vercel Production deployment
+58fXanZ1aNi1bsAuNMdGe4mh8Tk1 reports success. Not read back from production
+(the fetch permission went unanswered and the shell cannot reach the site).
+The independent service was NOT redeployed: the user's computer was not
+connected to this session. Full Hub 2312/2312 on the rebased tree.
 
 ## CURRENT: BLUFF PARTY "Everyone votes" mode — 2026-10-25
 
