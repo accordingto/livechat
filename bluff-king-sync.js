@@ -66,7 +66,7 @@
         ]);
         return { source: source.data, projection: projection.data };
       }));
-      let ready = true;
+      let ready = true, deckService = false;
       for (let i = 0; i < roster.length; i++) {
         const entry = roster[i], source = cards[i].source, binding = source?.bluff;
         if (members[i].active === false) continue;
@@ -75,12 +75,16 @@
         }
         const node = cards[i].projection, ticket = node?.hubExecutor, seat = node?.sessionBinding;
         let privateView; try { privateView = decodeView(node); } catch (_) {}
+        if (Array.isArray(privateView?.decks)) deckService = true;
         if (ticket?.v !== 1 || ticket.game !== 'bluffking' || ticket.capsule !== executor.capsule || ticket.sessionId !== executor.sessionId || seat?.room !== this.code || seat.identityId !== entry.identityId || seat.historyToken !== entry.historyToken || privateView?.sharedControls !== true || privateView.room !== this.code || privateView.self?.playerId !== members[i].id) ready = false;
       }
       if (!ready) return null;
       // projectView records exposure even for public views. Its clone stays
       // local: viewing the manager never writes history or private projections.
       const now = Date.now(), view = root.BLUFF_ENGINE.projectView(state, room.hostIdentityId, this.code, root.BLUFF_QUESTIONS, { private: false, now });
+      // Offer topic packs only after the room service itself reports them, so a
+      // newer page never sends a pack choice that an older service would reject.
+      if (!deckService) delete view.decks;
       for (const entry of roster) { const member = room.members.find(player => player.identityId === entry.identityId); const row = view.players.find(player => player.id === member?.id); if (row) row.playerNum = roster.indexOf(entry) + 1; if (view.self?.playerId === member?.id) view.self.playerNum = roster.indexOf(entry) + 1; }
       const onlinePlayers = new Set(roster.filter((_, i) => now - (executor.presence?.[i + 1] || executor.createdAt) < 60000).map(entry => room.members.find(player => player.identityId === entry.identityId).id));
       for (const player of view.players) if (room.roster.includes(player.id) || player.seated) player.connected = onlinePlayers.has(player.id);

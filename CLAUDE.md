@@ -1,3 +1,30 @@
+## CURRENT: BLUFF PARTY 🎃 Halloween topic pack — 2026-10-24
+
+User request: a Halloween version with old (medieval) or modern ghost stories,
+famous places and real stories; not gory or very scary; topics may be longer
+than one word. Read bluff-king-mode.md "Topic packs". New source file
+server/questions/halloween.json: 44 verified cards (`deck: "halloween"`,
+bk-halloween-001…044; 10 category / 21 choices / 13 no-hint), varied prompts
+(custom, place, legend, true story), simple English, each checked against its
+fetched source on 2026-10-24; a test rejects gore words. Brocken spectre stays
+Classic only. Engine: room `deck` classic (default, also for saved rooms) /
+halloween / mixed; lobby-only manager command `setDeck`; pack fixed after Start,
+kept by Play another game; `projectView` adds `deck` + `decks`, public topics
+carry `deck`; totals count the chosen pack. UI: waiting-room pack picker only
+when `decks` lists 2+ packs; the host fast snapshot drops `decks` unless the
+service's own private projections list them (an older service never receives
+`setDeck`). Halloween topics: pumpkin tag, warmer topic card, reveal heading
+"Here's the real story"; lobby welcome changes for the Halloween pack. Hub card
+copy mentions the pack. Cache tags: bluff-king-ui/sync/engine packs-1, topics
+v=2, css v=7. ENGINE + CONTENT CHANGE: normal Hub tables run on the independent
+service, so the packs appear there only after the service is redeployed
+(scripts/hub-executor-package-service.cjs from the Windows service workspace).
+
+Validation: Bluff tests 157 (new bluff-packs 7, UI pack test, host-snapshot
+service gate, bank counts/gentleness); full Hub 2290/2290, zero failures/skips;
+bundle --check passes. Local Chromium with a stubbed transport: lobby/topic/
+reveal × EN/ZH × 1280/390/320, no overflow or clipped pack text, zero page errors.
+
 ## CURRENT: WORD LIMIT THEATER random 1–6, ROOM SURVEY buzz line — 2026-10-24
 
 User follow-up. WORD LIMIT THEATER: the ladder's single long outlier (4p

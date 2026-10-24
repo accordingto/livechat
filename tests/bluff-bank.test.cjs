@@ -9,11 +9,15 @@ const E = require('../bluff-king-engine.js');
 const { loadBank, validateQuestions } = require('../server/bluff-bank.cjs');
 const bank = loadBank();
 
-test('the released English bank contains 60 distinct sourced and verified topics', () => {
-  assert.equal(bank.length, 60);
+test('the released English bank contains 60 classic and 44 Halloween distinct sourced and verified topics', () => {
+  assert.equal(bank.length, 104);
   assert.deepEqual(validateQuestions(bank), []);
-  assert.equal(new Set(bank.map(q => q.id)).size, 60);
-  assert.equal(new Set(bank.map(q => q.canonicalKnowledgeId)).size, 60);
+  assert.equal(new Set(bank.map(q => q.id)).size, 104);
+  assert.equal(new Set(bank.map(q => q.canonicalKnowledgeId)).size, 104);
+  assert.equal(bank.filter(q => (q.deck || 'classic') === 'classic').length, 60);
+  assert.equal(bank.filter(q => q.deck === 'halloween').length, 44);
+  assert.deepEqual(E.deckSummary(bank), [{ id: 'classic', count: 60 }, { id: 'halloween', count: 44 }, { id: 'mixed', count: 104 }]);
+  assert.equal(new Set(bank.map(q => q.term.toLowerCase())).size, 104, 'no term repeats across packs');
   for (const q of bank) {
     assert.equal(q.locale, 'en', q.id);
     assert.equal(q.enabled, true, q.id);
@@ -31,13 +35,27 @@ test('the released English bank contains 60 distinct sourced and verified topics
   }
 });
 
+test('the Halloween pack keeps every card gentle, varied and in all three hint styles', () => {
+  const spooky = bank.filter(q => q.deck === 'halloween');
+  assert.deepEqual([...new Set(spooky.map(q => q.hintMode))].sort(), ['category', 'choices', 'none']);
+  assert.ok(new Set(spooky.map(q => q.publicPrompt)).size >= 10, 'Halloween prompts ask about stories, places and customs, not only meanings');
+  for (const q of spooky) {
+    assert.match(q.id, /^bk-halloween-\d{3}$/);
+    assert.ok(q.tags.includes('halloween'), q.id);
+    const text = [q.term, q.publicPrompt, q.secretAnswer, q.revealExplanation, ...q.supportingFacts, ...q.publicHints].join(' ');
+    assert.doesNotMatch(text, /\b(?:blood|bloody|gore|gory|murder\w*|kill\w*|corpse\w*|torture\w*|suicide|behead\w*|execut\w*|impale\w*)\b/i, q.id);
+    if (q.hintMode === 'choices') assert.equal(new Set(q.publicHints).size, 3, q.id);
+  }
+});
+
 test('all three hint experiences are present and public topic projections omit answer evidence', () => {
   assert.deepEqual([...new Set(bank.map(q => q.hintMode))].sort(), ['category', 'choices', 'none']);
   for (const q of bank) {
     const projection = E.publicQuestion(q);
     assert.equal(projection.term, q.term);
     assert.equal(projection.publicHints.length, { category: 1, choices: 3, none: 0 }[q.hintMode]);
-    assert.deepEqual(Object.keys(projection).sort(), ['canonicalKnowledgeId', 'hintMode', 'id', 'locale', 'publicHints', 'publicPrompt', 'term']);
+    assert.deepEqual(Object.keys(projection).sort(), ['canonicalKnowledgeId', 'deck', 'hintMode', 'id', 'locale', 'publicHints', 'publicPrompt', 'term']);
+    assert.equal(projection.deck, q.deck || 'classic');
     assert.equal(JSON.stringify(projection).includes(q.secretAnswer), false, q.id);
     assert.equal(JSON.stringify(projection).includes(q.revealExplanation), false, q.id);
     for (const fact of q.supportingFacts) assert.equal(JSON.stringify(projection).includes(fact), false, q.id);
@@ -147,8 +165,8 @@ test('the Hub card and game page use the BLUFF PARTY name consistently', () => {
   const heading = page.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   assert.ok(card); assert.match(card, /BLUFF PARTY/i);
   assert.equal(title, 'BLUFF PARTY · IceBreak Hub'); assert.equal(heading, 'BLUFF PARTY');
-  assert.match(page, /href="bluff-king\.css\?v=6"/);
-  assert.match(page, /src="bluff-king-ui\.js\?v=membership-1"/);
+  assert.match(page, /href="bluff-king\.css\?v=7"/);
+  assert.match(page, /src="bluff-king-ui\.js\?v=packs-1"/);
   assert.doesNotMatch(title + heading + card, /Bluff King/);
   const icon = page.match(/<img\b[^>]*class="bk-brand-mark"[^>]*src="([^"]+)"/)?.[1];
   assert.ok(icon, 'the renamed game has its party mark');

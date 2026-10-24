@@ -1,0 +1,1482 @@
+[
+  {
+    "id": "bk-halloween-001",
+    "canonicalKnowledgeId": "bk-halloween-001",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Souling",
+    "publicPrompt": "What is this old Halloween custom?",
+    "hintMode": "category",
+    "publicHints": [
+      "Medieval custom"
+    ],
+    "secretAnswer": "Souling was a medieval custom: around All Souls’ Day, people went from house to house praying or singing for the dead, and got small “soul cakes” in return.",
+    "supportingFacts": [
+      "All Souls’ Day is on 2 November.",
+      "The prayers were for the people who gave the cakes and for their dead relatives."
+    ],
+    "revealExplanation": "Many historians see souling as an early form of trick-or-treating.",
+    "sources": [
+      {
+        "title": "English Heritage: No tricks, just treats – try a medieval soul cake",
+        "url": "https://www.english-heritage.org.uk/about/search-news/no-tricks-just-treats-try-a-medieval-soul-cake-as-english-heritage-castles-stay-open-after-dark/"
+      },
+      {
+        "title": "Smithsonian Magazine: How Trick-or-Treating Started",
+        "url": "https://www.smithsonianmag.com/arts-culture/how-trick-or-treating-started-71619242/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "medieval",
+      "england"
+    ]
+  },
+  {
+    "id": "bk-halloween-002",
+    "canonicalKnowledgeId": "bk-halloween-002",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Stingy Jack",
+    "publicPrompt": "Who is this, and why is he famous?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Irish folk tale",
+      "Pirate legend",
+      "Circus story"
+    ],
+    "secretAnswer": "Stingy Jack is a man in an Irish folk tale who tricked the Devil. Later neither heaven nor hell would take him, so he wanders in the dark with a coal inside a carved turnip.",
+    "supportingFacts": [
+      "He tricked the Devil twice: once into turning into a coin, and once into climbing a tree.",
+      "People called him “Jack of the Lantern”, which became “jack-o’-lantern”."
+    ],
+    "revealExplanation": "Irish and Scottish families carved scary faces into turnips to keep him away, and immigrants later brought the custom to America, the home of the pumpkin.",
+    "sources": [
+      {
+        "title": "HISTORY: History of the Jack O’Lantern – Irish Origins",
+        "url": "https://www.history.com/articles/history-of-the-jack-o-lantern-irish-origins"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "ireland",
+      "jack-o-lantern"
+    ]
+  },
+  {
+    "id": "bk-halloween-003",
+    "canonicalKnowledgeId": "bk-halloween-003",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Punkie Night",
+    "publicPrompt": "What is this English village tradition?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Punkie Night is a lantern walk in Hinton St George, Somerset. On the last Thursday of October, children carry candles inside carved root vegetables called mangel-wurzels.",
+    "supportingFacts": [
+      "A Punkie King and Queen lead the walk, and the children sing the Punkie Song.",
+      "One story says village women once made lanterns to look for husbands who got lost coming home from a fair."
+    ],
+    "revealExplanation": "Prizes go to the best punkies in each age group.",
+    "sources": [
+      {
+        "title": "Calendar Customs: Punkie Night, Hinton St George",
+        "url": "https://www.calendarcustoms.com/?p=1428"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "england",
+      "lanterns"
+    ]
+  },
+  {
+    "id": "bk-halloween-004",
+    "canonicalKnowledgeId": "bk-halloween-004",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Barmbrack",
+    "publicPrompt": "What is this, and why is it special at Halloween?",
+    "hintMode": "category",
+    "publicHints": [
+      "Irish food"
+    ],
+    "secretAnswer": "Barmbrack is an Irish fruit loaf baked for Halloween. Small objects are hidden inside, and the one you find tells your future, such as a ring for a wedding within a year.",
+    "supportingFacts": [
+      "Its Irish name, báirín breac, means “speckled loaf”.",
+      "A coin meant good fortune, while a pea meant you would not marry that year."
+    ],
+    "revealExplanation": "Today most Halloween bracks contain just a ring or a coin.",
+    "sources": [
+      {
+        "title": "Ireland.ie: Báirín Breac, a traditional Irish Halloween recipe",
+        "url": "https://api.ireland.ie/en/visit/halloween/bairin-breac-a-traditional-irish-halloween-recipe/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "ireland",
+      "food",
+      "fortune-telling"
+    ]
+  },
+  {
+    "id": "bk-halloween-005",
+    "canonicalKnowledgeId": "bk-halloween-005",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Snap-Apple Night",
+    "publicPrompt": "What is this, and where does the name come from?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Halloween party game",
+      "Cider festival",
+      "Harvest dance"
+    ],
+    "secretAnswer": "Snap-Apple Night was an old name for Halloween. It comes from a party game: players try to bite an apple hanging on a string without using their hands.",
+    "supportingFacts": [
+      "Irish painter Daniel Maclise painted the game after a Halloween party in Blarney in 1832.",
+      "People believed the game could show who would marry next."
+    ],
+    "revealExplanation": "The same painting also shows boys bobbing for apples in water.",
+    "sources": [
+      {
+        "title": "The Met: Snap Apple Night, or All-Hallow Eve (after Daniel Maclise)",
+        "url": "https://www.metmuseum.org/art/collection/search/644100"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "ireland",
+      "games",
+      "art"
+    ]
+  },
+  {
+    "id": "bk-halloween-006",
+    "canonicalKnowledgeId": "bk-halloween-006",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Burning nuts on Halloween",
+    "publicPrompt": "What was this old Scottish custom for?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "An engaged couple each put a nut on the fire. If the nuts burned quietly, their marriage would be happy; if they spat and hissed, it would be stormy.",
+    "supportingFacts": [
+      "Robert Burns wrote about Scottish Halloween customs in his 1785 poem “Halloween”.",
+      "In another custom, people pulled up kale stalks in the dark to guess the height and shape of a future partner."
+    ],
+    "revealExplanation": "Halloween in Scotland grew from the old Celtic festival of Samhain.",
+    "sources": [
+      {
+        "title": "Historic UK: Halloween in Scotland",
+        "url": "https://www.historic-uk.com/CultureUK/Halloween-in-Scotland/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "scotland",
+      "fortune-telling"
+    ]
+  },
+  {
+    "id": "bk-halloween-007",
+    "canonicalKnowledgeId": "bk-halloween-007",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Guising",
+    "publicPrompt": "What is this Scottish Halloween tradition?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Halloween custom",
+      "Sword dance",
+      "Wedding song"
+    ],
+    "secretAnswer": "Guising is the Scottish way of going door to door at Halloween in costume. Children dress up and usually do a small act, like a song or a joke, before they get a treat.",
+    "supportingFacts": [
+      "Children first dressed as spirits so they could mix in with the spirits thought to walk that night.",
+      "Scottish children went guising long before “trick or treat” became common."
+    ],
+    "revealExplanation": "Their lanterns were hollowed-out turnips called neep lanterns, not pumpkins.",
+    "sources": [
+      {
+        "title": "Historic UK: Halloween in Scotland",
+        "url": "https://www.historic-uk.com/CultureUK/Halloween-in-Scotland/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "scotland",
+      "costumes"
+    ]
+  },
+  {
+    "id": "bk-halloween-008",
+    "canonicalKnowledgeId": "bk-halloween-008",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Samhain",
+    "publicPrompt": "What was this?",
+    "hintMode": "category",
+    "publicHints": [
+      "Ancient festival"
+    ],
+    "secretAnswer": "Samhain was an old Celtic festival on 1 November and the evening before. It marked the end of summer, and people believed the line between the living and the dead grew thin.",
+    "supportingFacts": [
+      "Its Irish name is explained as “summer’s end”.",
+      "It partly shaped modern Halloween."
+    ],
+    "revealExplanation": "Some modern Pagans, including Wiccans, still celebrate Samhain.",
+    "sources": [
+      {
+        "title": "Britannica: Samhain",
+        "url": "https://www.britannica.com/topic/Samhain"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "celtic",
+      "festival"
+    ]
+  },
+  {
+    "id": "bk-halloween-009",
+    "canonicalKnowledgeId": "bk-halloween-009",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Calaveras literarias",
+    "publicPrompt": "What are these?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Calaveras literarias are funny rhyming poems written for Mexico’s Day of the Dead. They joke about living people, often politicians, as if death has come to take them.",
+    "supportingFacts": [
+      "The name roughly means “skull literature”.",
+      "A Mexican newspaper first published them in 1849.",
+      "Some were banned or destroyed because of their political jokes."
+    ],
+    "revealExplanation": "Today many people post them on social media before the holiday on 1–2 November.",
+    "sources": [
+      {
+        "title": "PBS NewsHour: These wicked Day of the Dead poems don’t spare anyone",
+        "url": "https://www.pbs.org/newshour/arts/poetry/these-wicked-day-of-the-dead-poems-dont-spare-anyone"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "mexico",
+      "poetry"
+    ]
+  },
+  {
+    "id": "bk-halloween-010",
+    "canonicalKnowledgeId": "bk-halloween-010",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "La Catrina",
+    "publicPrompt": "Who or what is this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Day of the Dead symbol",
+      "Spanish dance",
+      "Famous ship"
+    ],
+    "secretAnswer": "La Catrina is a skeleton lady in fancy clothes. Mexican artist José Guadalupe Posada first drew her in 1912 to tease people who copied European fashion. She is now a Day of the Dead symbol.",
+    "supportingFacts": [
+      "Her first name was “Calavera Garbancera”.",
+      "Diego Rivera painted her in the middle of his 1947 mural “Dream of a Sunday Afternoon in Alameda Park”."
+    ],
+    "revealExplanation": "The name “Catrina” first appeared in a 1930 book of Posada’s prints.",
+    "sources": [
+      {
+        "title": "PBS NewsHour: How La Catrina became the iconic symbol for the Day of the Dead",
+        "url": "https://www.pbs.org/newshour/amp/arts/how-la-catrina-became-the-iconic-symbol-for-the-day-of-the-dead"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "mexico",
+      "art"
+    ]
+  },
+  {
+    "id": "bk-halloween-011",
+    "canonicalKnowledgeId": "bk-halloween-011",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Hyakumonogatari Kaidankai",
+    "publicPrompt": "What is this Japanese tradition?",
+    "hintMode": "category",
+    "publicHints": [
+      "Storytelling game"
+    ],
+    "secretAnswer": "It is an old Japanese ghost-story game. People light 100 candles, and after each spooky story they blow one out, so the room gets darker and darker.",
+    "supportingFacts": [
+      "It was played in the Edo period, said to be a way for young samurai to show courage.",
+      "People believed a spirit might appear when the last candle went out."
+    ],
+    "revealExplanation": "A full modern game can take about four hours, and placing 100 candles safely is the hardest part.",
+    "sources": [
+      {
+        "title": "Horror Writers Association: Hyaku Monogatari Kaidankai – why not tell a hundred scary stories",
+        "url": "https://horror.org/hyaku-monogatari-kaidankai-or-this-halloween-why-not-tell-a-hundred-scary-stories-in-the-growing-dark-by-kevin-j-wetmore-jr/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "tradition",
+      "japan",
+      "storytelling"
+    ]
+  },
+  {
+    "id": "bk-halloween-012",
+    "canonicalKnowledgeId": "bk-halloween-012",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The ravens of the Tower of London",
+    "publicPrompt": "What is the old legend?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Legend says the kingdom and the Tower will fall if the ravens ever leave. King Charles II is said to have ordered that at least six ravens be kept there at all times.",
+    "supportingFacts": [
+      "A Ravenmaster looks after them, and they respond only to the Ravenmaster.",
+      "Charles II’s astronomer, John Flamsteed, complained that the birds got in the way of his work."
+    ],
+    "revealExplanation": "The story about Charles II is a tradition, not proven history.",
+    "sources": [
+      {
+        "title": "Historic Royal Palaces: The ravens of the Tower of London",
+        "url": "https://www.hrp.org.uk/tower-of-london/explore/the-ravens/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "london",
+      "legend"
+    ]
+  },
+  {
+    "id": "bk-halloween-013",
+    "canonicalKnowledgeId": "bk-halloween-013",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Whitby Abbey",
+    "publicPrompt": "Why is this place famous at Halloween?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Famous novel",
+      "Royal wedding",
+      "Sea battle"
+    ],
+    "secretAnswer": "The ruins of Whitby Abbey in England helped inspire Bram Stoker’s “Dracula”. He visited Whitby on holiday in 1890 and set part of the story there.",
+    "supportingFacts": [
+      "In Whitby’s library, Stoker read about Vlad Tepes, a ruler known as Dracula.",
+      "In the novel, Dracula arrives on a ship that runs aground, and a large dog runs up the 199 steps."
+    ],
+    "revealExplanation": "The book Stoker found said that “Dracula” in the Wallachian language means “devil”.",
+    "sources": [
+      {
+        "title": "English Heritage: Whitby Abbey and Dracula",
+        "url": "https://www.english-heritage.org.uk/visit/places/whitby-abbey/history-and-stories/dracula"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "england",
+      "literature"
+    ]
+  },
+  {
+    "id": "bk-halloween-014",
+    "canonicalKnowledgeId": "bk-halloween-014",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Bodie curse",
+    "publicPrompt": "What is this story?",
+    "hintMode": "category",
+    "publicHints": [
+      "Ghost town legend"
+    ],
+    "secretAnswer": "People say anyone who takes even a small rock from Bodie, a California ghost town, will get bad luck. About once a week, visitors mail items back with “sorry” letters.",
+    "supportingFacts": [
+      "The story was most likely started by a park ranger to stop people taking things.",
+      "Staff must file a report for every returned item, so they no longer promote the curse."
+    ],
+    "revealExplanation": "Bodie has been a state park since 1962, and staff say everything there should be left in place.",
+    "sources": [
+      {
+        "title": "KQED: How this ghost town’s curse backfired on park rangers",
+        "url": "https://kqed.org/news/11640709/how-this-ghost-towns-curse-backfired-on-park-rangers"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "usa",
+      "legend"
+    ]
+  },
+  {
+    "id": "bk-halloween-015",
+    "canonicalKnowledgeId": "bk-halloween-015",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Flying Dutchman",
+    "publicPrompt": "What is the legend?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Sailors’ legend",
+      "Circus act",
+      "Dutch painting"
+    ],
+    "secretAnswer": "The Flying Dutchman is a ghost ship from sailors’ legends, doomed to sail forever. In the best-known version, its captain made a reckless vow to sail around the Cape of Good Hope in a storm.",
+    "supportingFacts": [
+      "Sailors believed that seeing the ship meant disaster was coming.",
+      "Richard Wagner turned the legend into an opera in 1843."
+    ],
+    "revealExplanation": "In another version, a captain named Falkenberg sails the North Sea forever, playing dice with the devil.",
+    "sources": [
+      {
+        "title": "Britannica: Flying Dutchman",
+        "url": "https://www.britannica.com/topic/Flying-Dutchman"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "legend",
+      "sea",
+      "ghost-ship"
+    ]
+  },
+  {
+    "id": "bk-halloween-016",
+    "canonicalKnowledgeId": "bk-halloween-016",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Mary Celeste",
+    "publicPrompt": "What happened?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "In 1872 the ship Mary Celeste was found drifting in the Atlantic with nobody on board. It could still sail and had food and water, but its lifeboat and all 10 people were gone.",
+    "supportingFacts": [
+      "The captain had his wife and two-year-old daughter with him.",
+      "It carried 1,701 barrels of industrial alcohol, and most of the cargo was still there."
+    ],
+    "revealExplanation": "An 1884 story by Arthur Conan Doyle kept the mystery alive. The 10 people were never found.",
+    "sources": [
+      {
+        "title": "Smithsonian Magazine: Abandoned Ship – The Mary Celeste",
+        "url": "https://www.smithsonianmag.com/history/abandoned-ship-the-mary-celeste-174488104/"
+      },
+      {
+        "title": "Britannica: Mary Celeste",
+        "url": "https://www.britannica.com/topic/Mary-Celeste"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "true-story",
+      "sea",
+      "mystery"
+    ]
+  },
+  {
+    "id": "bk-halloween-017",
+    "canonicalKnowledgeId": "bk-halloween-017",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "CROATOAN",
+    "publicPrompt": "What is the story behind this word?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Colonial mystery",
+      "Pirate password",
+      "Magic spell"
+    ],
+    "secretAnswer": "CROATOAN was carved on a post at the English colony of Roanoke. When its governor returned in 1590, all the settlers had vanished, and that word was the only clue.",
+    "supportingFacts": [
+      "The colony was founded in 1587, and governor John White sailed back to England for supplies.",
+      "His return was delayed by the Spanish Armada.",
+      "The letters “CRO” were also carved on a tree."
+    ],
+    "revealExplanation": "The mystery of the “Lost Colony” has never been solved.",
+    "sources": [
+      {
+        "title": "Britannica: Lost Colony",
+        "url": "https://www.britannica.com/place/Lost-Colony"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "true-story",
+      "usa",
+      "mystery"
+    ]
+  },
+  {
+    "id": "bk-halloween-018",
+    "canonicalKnowledgeId": "bk-halloween-018",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Brown Lady of Raynham Hall",
+    "publicPrompt": "Why is she famous?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "The Brown Lady is a ghost said to haunt Raynham Hall in England. In 1936, photographers for Country Life magazine took a famous picture of a veiled figure on the main staircase.",
+    "supportingFacts": [
+      "People say she is Lady Dorothy Walpole, who lived there in the 1700s.",
+      "The picture has been called probably the most famous example of “spirit photography”."
+    ],
+    "revealExplanation": "The photo was taken on 19 September 1936 and printed that December.",
+    "sources": [
+      {
+        "title": "Country Life: The day a Country Life photographer captured an image of a ghost",
+        "url": "https://www.countrylife.co.uk/nature/the-day-a-country-life-photographer-captured-an-image-of-a-ghost-234642"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "england",
+      "photography"
+    ]
+  },
+  {
+    "id": "bk-halloween-019",
+    "canonicalKnowledgeId": "bk-halloween-019",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Borley Rectory",
+    "publicPrompt": "Why is this place famous?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Haunted house",
+      "Royal school",
+      "Shipwreck"
+    ],
+    "secretAnswer": "Borley Rectory was a house in Essex once called “the most haunted house in England”. Ghost hunter Harry Price made it famous with stories of a ghostly nun and strange events.",
+    "supportingFacts": [
+      "Price rented the house in 1937 and brought in 48 helpers to watch for ghosts.",
+      "The house was badly damaged by fire in 1939, when an oil lamp fell over."
+    ],
+    "revealExplanation": "In 1956 a Society for Psychical Research report argued that the events had ordinary explanations.",
+    "sources": [
+      {
+        "title": "Psi Encyclopedia (Society for Psychical Research): Borley Rectory",
+        "url": "https://psi-encyclopedia.spr.ac.uk/articles/borley-rectory"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "england",
+      "ghost-hunting"
+    ]
+  },
+  {
+    "id": "bk-halloween-020",
+    "canonicalKnowledgeId": "bk-halloween-020",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Winchester Mystery House",
+    "publicPrompt": "What is strange about this house?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Sarah Winchester, widow of a rifle maker, kept building this house in San Jose, California, for 38 years. It has stairs that end at the ceiling and doors that open onto nothing.",
+    "supportingFacts": [
+      "A legend says a psychic told her to keep building to keep away spirits connected to the family’s rifles.",
+      "The house has about 160 rooms."
+    ],
+    "revealExplanation": "Building stopped only when she died in 1922.",
+    "sources": [
+      {
+        "title": "NBC Bay Area: The Winchester Mystery House",
+        "url": "https://www.nbcbayarea.com/news/local/the-winchester-mystery-house/1910101/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "usa",
+      "architecture"
+    ]
+  },
+  {
+    "id": "bk-halloween-021",
+    "canonicalKnowledgeId": "bk-halloween-021",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Room 217 at the Stanley Hotel",
+    "publicPrompt": "Why is this hotel room famous?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Horror novel",
+      "Presidential visit",
+      "Music video"
+    ],
+    "secretAnswer": "Stephen King stayed in Room 217 of the Stanley Hotel in Colorado in 1974, when he and his wife were the only guests. A nightmare there gave him the idea for “The Shining”.",
+    "supportingFacts": [
+      "The hotel was closing for the winter the next day.",
+      "Stanley Kubrick’s 1980 film was not shot at the Stanley, but the 1997 TV miniseries was."
+    ],
+    "revealExplanation": "In the novel, the main character also stays in Room 217.",
+    "sources": [
+      {
+        "title": "Mental Floss: The real hotel that inspired The Shining",
+        "url": "https://www.mentalfloss.com/literature/books/real-hotel-that-inspired-the-shining"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "true-story",
+      "usa",
+      "literature"
+    ]
+  },
+  {
+    "id": "bk-halloween-022",
+    "canonicalKnowledgeId": "bk-halloween-022",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Annie’s room in Mary King’s Close",
+    "publicPrompt": "Why do visitors leave toys here?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "In 1992 a Japanese psychic visiting this old underground street in Edinburgh said she met the ghost of a little girl named Annie, and gave her a doll. Visitors now bring toys to Annie’s room.",
+    "supportingFacts": [
+      "The guides admit there is no actual record of a girl called Annie.",
+      "Money left in the room goes to a children’s hospital and has raised over £45,000."
+    ],
+    "revealExplanation": "The room now holds a pile of dolls, stuffed animals and other gifts.",
+    "sources": [
+      {
+        "title": "The Scotsman: Edinburgh’s most haunted – abandoned Annie",
+        "url": "https://www.scotsman.com/news/edinburghs-most-haunted-abandoned-annie-1522264"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "scotland",
+      "true-story"
+    ]
+  },
+  {
+    "id": "bk-halloween-023",
+    "canonicalKnowledgeId": "bk-halloween-023",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Bran Castle",
+    "publicPrompt": "Why do tourists call this castle by another name?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Vampire novel link",
+      "Royal wedding",
+      "Famous battle"
+    ],
+    "secretAnswer": "Bran Castle in Romania is popularly called “Dracula’s Castle” because it looks like the castle in Bram Stoker’s novel. But Stoker is not known to have visited, and Vlad Dracula never ruled it.",
+    "supportingFacts": [
+      "In 1920 the castle was given to Queen Marie of Romania, who made it a summer home.",
+      "It opened to the public as a museum in 1956."
+    ],
+    "revealExplanation": "Some sources say Vlad III was held prisoner there for two months.",
+    "sources": [
+      {
+        "title": "Britannica: Bran Castle",
+        "url": "https://www.britannica.com/topic/Bran-Castle"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "place",
+      "romania",
+      "literature"
+    ]
+  },
+  {
+    "id": "bk-halloween-024",
+    "canonicalKnowledgeId": "bk-halloween-024",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Púca",
+    "publicPrompt": "What is this creature?",
+    "hintMode": "category",
+    "publicHints": [
+      "Irish folklore"
+    ],
+    "secretAnswer": "A púca is a shape-shifting spirit in Irish folklore. It often appears as a black horse with flaming eyes and takes people on a wild ride through the night.",
+    "supportingFacts": [
+      "It can also become a goat, a cat, a dog, a fox or a hare.",
+      "When wild berries shrivelled after Samhain, people said the púca had spat on them."
+    ],
+    "revealExplanation": "November 1st is said to be the one day a year when the púca behaves politely.",
+    "sources": [
+      {
+        "title": "Wilderness Ireland: Irish folklore – the púca",
+        "url": "https://www.wildernessireland.com/blog/irish-folklore-puca/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "ireland",
+      "creatures"
+    ]
+  },
+  {
+    "id": "bk-halloween-025",
+    "canonicalKnowledgeId": "bk-halloween-025",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Ichabod Crane",
+    "publicPrompt": "Who is this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Ghost story character",
+      "American president",
+      "Dutch painter"
+    ],
+    "secretAnswer": "Ichabod Crane is the nervous schoolteacher in Washington Irving’s 1820 story “The Legend of Sleepy Hollow”. One night he is chased by the Headless Horseman, and then he disappears.",
+    "supportingFacts": [
+      "Locals say the Horseman is the ghost of a soldier who lost his head to a cannonball and rides at night looking for it.",
+      "The next morning, people find Ichabod’s hat with a smashed pumpkin beside it."
+    ],
+    "revealExplanation": "The story hints that his rival in love, Brom Bones, knew more than he admitted.",
+    "sources": [
+      {
+        "title": "Project Gutenberg: The Legend of Sleepy Hollow by Washington Irving",
+        "url": "https://www.gutenberg.org/cache/epub/41/pg41-images.html"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "literature",
+      "usa",
+      "ghost-story"
+    ]
+  },
+  {
+    "id": "bk-halloween-026",
+    "canonicalKnowledgeId": "bk-halloween-026",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Will-o’-the-wisp",
+    "publicPrompt": "What is this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Strange light",
+      "Bird call",
+      "Fishing trick"
+    ],
+    "secretAnswer": "A will-o’-the-wisp is a mysterious light seen flickering over marshes at night. When people walk toward it, it seems to move away and stay out of reach.",
+    "supportingFacts": [
+      "Its Latin name, ignis fatuus, means “foolish fire”.",
+      "Scientists usually explain it as marsh gas from rotting plants catching fire by itself."
+    ],
+    "revealExplanation": "One old legend says it is a soul shut out of hell, wandering with its own coal, much like Stingy Jack.",
+    "sources": [
+      {
+        "title": "Britannica: Will-o’-the-wisp",
+        "url": "https://www.britannica.com/print/article/298712"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "nature",
+      "lights"
+    ]
+  },
+  {
+    "id": "bk-halloween-027",
+    "canonicalKnowledgeId": "bk-halloween-027",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Zashiki-warashi",
+    "publicPrompt": "What is this?",
+    "hintMode": "category",
+    "publicHints": [
+      "Japanese folklore"
+    ],
+    "secretAnswer": "A zashiki-warashi is a child spirit from Japanese folk tales that lives inside a house. A family with one is said to grow rich, but if it leaves, their luck may fall.",
+    "supportingFacts": [
+      "The best-known stories come from Tōno, in Iwate in northern Japan.",
+      "People describe it as a boy, as two girls, or only as sounds like rustling paper."
+    ],
+    "revealExplanation": "The book “Tōno Monogatari” says a home where it lives “may enjoy wealth and distinction”.",
+    "sources": [
+      {
+        "title": "Yokai.jp: Zashiki-warashi",
+        "url": "https://yokai.jp/en/yokai/zashiki-warashi"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "japan",
+      "creatures"
+    ]
+  },
+  {
+    "id": "bk-halloween-028",
+    "canonicalKnowledgeId": "bk-halloween-028",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Tsukumogami",
+    "publicPrompt": "What are these?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "In Japanese folklore, tsukumogami are everyday objects, like umbrellas, sandals or lanterns, that come alive after 100 years, often because they were neglected or thrown away.",
+    "supportingFacts": [
+      "A sandal spirit called bakezōri wanders the house at night making noise and causing mischief.",
+      "The stories teach people to take care of their belongings."
+    ],
+    "revealExplanation": "Items that can no longer be repaired may be blessed at a shrine, to stop new tsukumogami from forming.",
+    "sources": [
+      {
+        "title": "Museum der Dinge: Tsukumogami – Bakezōri, spirit of a discarded sandal",
+        "url": "https://museumderdinge.org/thing-of-the-month/tsukumogami-bakezori-spirit-of-a-discarded-sandal/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "japan",
+      "objects"
+    ]
+  },
+  {
+    "id": "bk-halloween-029",
+    "canonicalKnowledgeId": "bk-halloween-029",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Golem of Prague",
+    "publicPrompt": "What is the legend?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Jewish legend",
+      "Clock tower story",
+      "Castle ghost"
+    ],
+    "secretAnswer": "Legend says Rabbi Loew made a giant figure from river clay to protect Prague’s Jewish community. A holy word called a shem, placed in its mouth, brought it to life.",
+    "supportingFacts": [
+      "When the rabbi forgot to remove the shem before the Sabbath, the Golem ran wild until he took it out.",
+      "Its remains are said to lie in the attic of the Old New Synagogue."
+    ],
+    "revealExplanation": "The clay was said to come from the Vltava River, and the Golem was called Yossele.",
+    "sources": [
+      {
+        "title": "Prague City Tourism: The legend of the Golem",
+        "url": "https://prague.eu/en/golem-of-prague/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "prague",
+      "legend"
+    ]
+  },
+  {
+    "id": "bk-halloween-030",
+    "canonicalKnowledgeId": "bk-halloween-030",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Baba Yaga",
+    "publicPrompt": "Who is she?",
+    "hintMode": "category",
+    "publicHints": [
+      "Slavic folklore"
+    ],
+    "secretAnswer": "Baba Yaga is a witch from Slavic folk tales. She lives in a forest hut that turns around on bird legs, and she flies through the air in a mortar, steering with a pestle.",
+    "supportingFacts": [
+      "She is said to live with two or three sisters who share her name.",
+      "She is also said to guard the springs of the water of life."
+    ],
+    "revealExplanation": "As she flies, she is said to stir up storms.",
+    "sources": [
+      {
+        "title": "Britannica: Baba Yaga",
+        "url": "https://www.britannica.com/print/article/47337"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "slavic",
+      "witches"
+    ]
+  },
+  {
+    "id": "bk-halloween-031",
+    "canonicalKnowledgeId": "bk-halloween-031",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Kelpie",
+    "publicPrompt": "What is this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Scottish folklore",
+      "Wool sweater",
+      "Sailing boat"
+    ],
+    "secretAnswer": "A kelpie is a shape-shifting water spirit in Scottish folklore. It often looks like a black horse and lives in lochs and rivers, where in many tales it tries to lure people into the water.",
+    "supportingFacts": [
+      "It can also take human form.",
+      "Two 30-metre horse-head sculptures called The Kelpies stand near Falkirk, Scotland."
+    ],
+    "revealExplanation": "Artist Andy Scott’s sculpture honours the working horses that once pulled boats along the canal.",
+    "sources": [
+      {
+        "title": "Art UK: Andy Scott’s The Kelpies",
+        "url": "https://artuk.org/discover/stories/andy-scotts-the-kelpies"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "folklore",
+      "scotland",
+      "creatures"
+    ]
+  },
+  {
+    "id": "bk-halloween-032",
+    "canonicalKnowledgeId": "bk-halloween-032",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "St. Elmo’s fire",
+    "publicPrompt": "What is this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Glowing electricity",
+      "Church festival",
+      "Sailors’ dance"
+    ],
+    "secretAnswer": "St. Elmo’s fire is a blue or violet glow that appears on pointed things, like ship masts, during storms. Strong electricity in the air makes the air itself glow.",
+    "supportingFacts": [
+      "It is named after St Erasmus, also called St Elmo, the protector of Mediterranean sailors.",
+      "Sailors saw it as a good sign that the saint was protecting them."
+    ],
+    "revealExplanation": "Pilots can see it on wingtips and windshields when flying near thunderstorms.",
+    "sources": [
+      {
+        "title": "Geographical: St Elmo’s fire explained",
+        "url": "https://geographical.co.uk/news/phenomena-st-elmos-fire-explained"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "science",
+      "sea",
+      "lights"
+    ]
+  },
+  {
+    "id": "bk-halloween-033",
+    "canonicalKnowledgeId": "bk-halloween-033",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Foxfire",
+    "publicPrompt": "What is this?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Foxfire is a cool blue-green glow made by fungi growing on rotting wood. In the dark, it can look as if the wood itself is gently shining.",
+    "supportingFacts": [
+      "It was once also called “fairy fire”.",
+      "In the late 1700s, foxfire lit the instruments of the Turtle, an early one-person submarine."
+    ],
+    "revealExplanation": "More than 75 kinds of glowing fungi are known today.",
+    "sources": [
+      {
+        "title": "Nature Stories: Burning with cold fire",
+        "url": "https://naturestories.org/burning-with-cold-fire"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "science",
+      "nature",
+      "lights"
+    ]
+  },
+  {
+    "id": "bk-halloween-034",
+    "canonicalKnowledgeId": "bk-halloween-034",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Vic Tandy’s laboratory ghost",
+    "publicPrompt": "What was the real cause?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "Researcher Vic Tandy felt a ghostly presence in his lab. He traced it to a faulty fan making a very low sound, about 19 hertz, too low to hear. With the fan off, the “ghost” was gone.",
+    "supportingFacts": [
+      "He later measured the same 19-hertz sound in a “haunted” 14th-century cellar in Coventry.",
+      "With the fan off, the room changed from “enclosed, muggy” to pleasant."
+    ],
+    "revealExplanation": "Tandy suggested that this kind of sound might explain some ghost sightings.",
+    "sources": [
+      {
+        "title": "Times Higher Education: report on Vic Tandy’s infrasound ghost research",
+        "url": "https://www.timeshighereducation.com/node/27482"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "science",
+      "sound",
+      "true-story"
+    ]
+  },
+  {
+    "id": "bk-halloween-035",
+    "canonicalKnowledgeId": "bk-halloween-035",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Pepper’s ghost",
+    "publicPrompt": "What is this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Stage illusion",
+      "Cooking story",
+      "Pirate legend"
+    ],
+    "secretAnswer": "Pepper’s ghost is a stage trick that makes a see-through “ghost” appear. A hidden, brightly lit actor is reflected in a sheet of glass that the audience does not notice.",
+    "supportingFacts": [
+      "John Henry Pepper showed it at Christmas 1862 in a play based on a Charles Dickens story.",
+      "It needs only an actor, a light and a sheet of glass."
+    ],
+    "revealExplanation": "Museums and theme parks around the world still use it.",
+    "sources": [
+      {
+        "title": "Indiana Public Media, A Moment of Science: How to see ghosts with Pepper’s ghost illusion",
+        "url": "https://www.ipm.org/show/amomentofscience/2023-04-11/how-to-see-ghosts-with-peppers-ghost-illusion"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "history",
+      "theatre",
+      "illusion"
+    ]
+  },
+  {
+    "id": "bk-halloween-036",
+    "canonicalKnowledgeId": "bk-halloween-036",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Phantasmagoria",
+    "publicPrompt": "What was this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Ghost show",
+      "Garden maze",
+      "Sweet pastry"
+    ],
+    "secretAnswer": "Phantasmagoria was a ghost show in Paris in the 1790s. Showman Étienne-Gaspard Robertson used a magic lantern on wheels to make ghosts seem to rush toward the audience through smoke.",
+    "supportingFacts": [
+      "The shows took place in an old, empty convent near Place Vendôme.",
+      "Some people believed the ghosts were real, and the authorities first shut the show down."
+    ],
+    "revealExplanation": "These shows helped shape horror theatre and, later, the cinema.",
+    "sources": [
+      {
+        "title": "Atlas Obscura: Robertson’s Fantastic Phantasmagoria",
+        "url": "https://www.atlasobscura.com/articles/robertsons-fantastic-phantasmagoria"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "history",
+      "paris",
+      "illusion"
+    ]
+  },
+  {
+    "id": "bk-halloween-037",
+    "canonicalKnowledgeId": "bk-halloween-037",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Fox sisters",
+    "publicPrompt": "Why are they famous?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "In 1848 two young sisters in Hydesville, New York, said a spirit was talking to them through rapping sounds. Their story helped start Spiritualism, a movement about contacting the dead.",
+    "supportingFacts": [
+      "The sisters, Maggie and Kate, were 14 and 11.",
+      "In 1888 Maggie showed how she made the raps by cracking her toe joints."
+    ],
+    "revealExplanation": "Maggie said the rapping was “simply the result of perfect control of the muscles of the leg below the knee”.",
+    "sources": [
+      {
+        "title": "Girl Museum: The curious Fox sisters",
+        "url": "https://www.girlmuseum.org/the-curious-fox-sisters/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "history",
+      "usa",
+      "true-story"
+    ]
+  },
+  {
+    "id": "bk-halloween-038",
+    "canonicalKnowledgeId": "bk-halloween-038",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Houdini séance",
+    "publicPrompt": "What was this?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Halloween promise",
+      "Magic contest",
+      "Prison escape"
+    ],
+    "secretAnswer": "Harry Houdini died on Halloween in 1926. He and his wife Bess had agreed on a secret code, so she held a séance every Halloween to see if he would send it. After ten years, she stopped.",
+    "supportingFacts": [
+      "Their secret code began with the word “Rosabelle”.",
+      "The last séance, in 1936, was held on a Hollywood hotel roof and broadcast on radio."
+    ],
+    "revealExplanation": "Bess later said, “10 years is long enough to wait for any man.”",
+    "sources": [
+      {
+        "title": "Library of Congress Blog: Hollywood, Houdini and the Halloween séance of 1936",
+        "url": "https://blogs.loc.gov/loc/2020/10/hollywood-houdini-and-the-halloween-seance-of-1936/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "history",
+      "usa",
+      "true-story"
+    ]
+  },
+  {
+    "id": "bk-halloween-039",
+    "canonicalKnowledgeId": "bk-halloween-039",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Ghost Club",
+    "publicPrompt": "What is this?",
+    "hintMode": "category",
+    "publicHints": [
+      "London society"
+    ],
+    "secretAnswer": "The Ghost Club is a society started in London in 1862 to study ghosts and strange events. Charles Dickens was one of its early members.",
+    "supportingFacts": [
+      "It calls itself the oldest group in the world linked to psychical research.",
+      "Members hold overnight investigations, and Ouija boards are not allowed."
+    ],
+    "revealExplanation": "Its roots go back to Trinity College, Cambridge, where fellows began discussing ghosts in 1855.",
+    "sources": [
+      {
+        "title": "The Ghost Club: History",
+        "url": "https://ghostclub.org.uk/history.html"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "history",
+      "london",
+      "ghost-hunting"
+    ]
+  },
+  {
+    "id": "bk-halloween-040",
+    "canonicalKnowledgeId": "bk-halloween-040",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Surgeon’s Photograph",
+    "publicPrompt": "What is the story behind this picture?",
+    "hintMode": "none",
+    "publicHints": [],
+    "secretAnswer": "The Surgeon’s Photograph, from 1934, seemed to show the Loch Ness Monster. Sixty years later, a man confessed it was really a toy submarine with a model sea-serpent head.",
+    "supportingFacts": [
+      "A respected surgeon, Colonel Robert Wilson, was used as the photographer to make it believable.",
+      "The plan came from Marmaduke Wetherell, who wanted revenge after his fake “monster” footprints were exposed."
+    ],
+    "revealExplanation": "Christian Spurling, who built the model, confessed in 1994 at the age of 90.",
+    "sources": [
+      {
+        "title": "The Museum of Hoaxes: The Surgeon’s Photo",
+        "url": "https://hoaxes.org/photo_database/image/the_surgeons_photo/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "history",
+      "scotland",
+      "hoax"
+    ]
+  },
+  {
+    "id": "bk-halloween-041",
+    "canonicalKnowledgeId": "bk-halloween-041",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Villa Diodati ghost-story contest",
+    "publicPrompt": "What happened here?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Writers’ challenge",
+      "Chess match",
+      "Royal ball"
+    ],
+    "secretAnswer": "In 1816, bad weather kept Lord Byron, Mary Shelley and friends inside a villa near Lake Geneva. Byron challenged everyone to write a scary story, and Mary Shelley’s became “Frankenstein”.",
+    "supportingFacts": [
+      "1816 is called the “Year Without a Summer” because a volcanic eruption in 1815 cooled the world.",
+      "Byron’s doctor, John Polidori, wrote “The Vampyre” for the same challenge."
+    ],
+    "revealExplanation": "Byron gave up on his own story, which was later published without his permission.",
+    "sources": [
+      {
+        "title": "JSTOR: Frankenstein, The Vampyre, and echoes from the summer of 1816",
+        "url": "https://about.jstor.org/blog/frankenstein-the-vampyre-and-the-spirit-of-the-humanities-echoes-from-the-summer-of-1816"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "literature",
+      "switzerland",
+      "true-story"
+    ]
+  },
+  {
+    "id": "bk-halloween-042",
+    "canonicalKnowledgeId": "bk-halloween-042",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Canterville Ghost",
+    "publicPrompt": "What is this story about?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Funny ghost story",
+      "War poem",
+      "Detective case"
+    ],
+    "secretAnswer": "“The Canterville Ghost” is a funny story by Oscar Wilde. An American family moves into a haunted English castle and refuses to be scared, answering the ghost’s tricks with practical fixes like stain remover.",
+    "supportingFacts": [
+      "The ghost, Sir Simon de Canterville, becomes more and more embarrassed.",
+      "Only the young daughter, Virginia, understands that he needs peace."
+    ],
+    "revealExplanation": "The story first appeared in 1887.",
+    "sources": [
+      {
+        "title": "Project Gutenberg: The Canterville Ghost by Oscar Wilde",
+        "url": "https://gutenberg.org/ebooks/14522"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "literature",
+      "england",
+      "ghost-story"
+    ]
+  },
+  {
+    "id": "bk-halloween-043",
+    "canonicalKnowledgeId": "bk-halloween-043",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "Mothman",
+    "publicPrompt": "Who or what is this?",
+    "hintMode": "category",
+    "publicHints": [
+      "West Virginia legend"
+    ],
+    "secretAnswer": "Mothman is a creature reported in Point Pleasant, West Virginia, in November 1966. Two couples said they saw a man-sized flying figure with huge wings and glowing red eyes.",
+    "supportingFacts": [
+      "The town has a Mothman statue and a Mothman Museum, opened in 2006.",
+      "Its yearly Mothman Festival in September draws more visitors than the town’s population."
+    ],
+    "revealExplanation": "The local newspaper’s headline read: “Couples See Man-Sized Bird… Creature… Something.”",
+    "sources": [
+      {
+        "title": "Legends of America: The Mothman of West Virginia",
+        "url": "https://www.legendsofamerica.com/west-virginia-mothman/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "legend",
+      "usa",
+      "creatures"
+    ]
+  },
+  {
+    "id": "bk-halloween-044",
+    "canonicalKnowledgeId": "bk-halloween-044",
+    "deck": "halloween",
+    "locale": "en",
+    "term": "The Marfa lights",
+    "publicPrompt": "What are these?",
+    "hintMode": "choices",
+    "publicHints": [
+      "Mystery lights",
+      "Desert festival",
+      "Star map"
+    ],
+    "secretAnswer": "The Marfa lights are small yellow-white lights that people watch for at night near Marfa, a small town in West Texas. They move slowly and flicker, and they draw many visitors.",
+    "supportingFacts": [
+      "After months of watching, engineering professor Karl Stephan concluded that most of them are car headlights about two dozen miles away.",
+      "Local folklore also includes stories of witches who turn into owls."
+    ],
+    "revealExplanation": "Stephan says a rarer kind is harder to explain, because “you can’t prove a negative”.",
+    "sources": [
+      {
+        "title": "NBC DFW: Texas Wants to Know – what’s behind the Marfa lights?",
+        "url": "https://www.nbcdfw.com/news/local/texas-news/texas-wants-to-know-whats-behind-the-marfa-lights/3211889/"
+      }
+    ],
+    "verificationStatus": "verified",
+    "verifiedAt": "2026-10-24",
+    "enabled": true,
+    "tags": [
+      "halloween",
+      "legend",
+      "usa",
+      "lights"
+    ]
+  }
+]

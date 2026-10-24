@@ -10,4 +10,6 @@ const output = `/* Verified original Bluff King topic cards. Loaded by the trust
 if (process.argv.includes('--check')) {
   if (!fs.existsSync(target) || fs.readFileSync(target,'utf8') !== output) throw new Error('Topic bundle is stale. Run node scripts/bluff-compile-topics.cjs.');
 } else fs.writeFileSync(target,output);
+const packs = {}; for (const q of bank) packs[q.deck || 'classic'] = (packs[q.deck || 'classic'] || 0) + 1;
+console.log(`Packs: ${Object.entries(packs).map(([id, n]) => id + ' ' + n).join(', ')}.`);
 console.log(`Validated ${bank.length} verified topics; ${bank.filter(q=>q.hintMode==='category').length} category, ${bank.filter(q=>q.hintMode==='choices'||q.hintMode==='options').length} choices, ${bank.filter(q=>q.hintMode==='none').length} no-hint; 0 unverified in the playable pool.`);

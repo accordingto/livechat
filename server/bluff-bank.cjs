@@ -10,6 +10,7 @@ function validateQuestions(questions) {
     if (ids.has(q.id)) errors.push(`${label}: duplicate id`); ids.add(q.id);
     if (q.enabled !== false && q.verificationStatus === 'verified') { if (canonical.has(q.canonicalKnowledgeId)) errors.push(`${label}: duplicate canonical knowledge in enabled pool`); canonical.add(q.canonicalKnowledgeId); if (!q.verifiedAt || Number.isNaN(Date.parse(q.verifiedAt))) errors.push(`${label}: missing verifiedAt`); if (!Array.isArray(q.sources) || !q.sources.length || q.sources.some(s => !s.title || !/^https:\/\//.test(s.url || ''))) errors.push(`${label}: verified source required`); }
     if (!Array.isArray(q.supportingFacts) || q.supportingFacts.length < 2 || q.supportingFacts.length > 3 || q.supportingFacts.some(x => typeof x !== 'string' || !x.trim())) errors.push(`${label}: two or three supporting facts required`);
+    if (q.deck !== undefined && !['classic', 'halloween'].includes(q.deck)) errors.push(`${label}: unknown topic pack`);
     const expected = { none: 0, category: 1, choices: 3, options: 3 }[q.hintMode];
     if (expected === undefined || !Array.isArray(q.publicHints) || q.publicHints.length !== expected || q.publicHints.some(x => typeof x !== 'string' || !x.trim())) errors.push(`${label}: invalid public hint count`);
     const projected = publicQuestion(q); for (const key of ['secretAnswer', 'supportingFacts', 'sources', 'revealExplanation', 'verificationStatus', 'verifiedAt']) if (Object.hasOwn(projected, key)) errors.push(`${label}: secret field in public projection`);

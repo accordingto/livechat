@@ -155,3 +155,10 @@ test('a service projection winning a missing-seat CAS keeps its own card and mai
  assert.deepEqual(transport.writes,[]);assert.equal(transport.requests.filter(request=>request.node===missing&&request.method==='PUT').length,1);
  assert.deepEqual(f.storageWrites,[]);
 });
+test('topic packs appear on the manager only after the room service itself projects them',async()=>{
+ const f=fixture('lobby');
+ let view=await f.client._readHostSnapshot(f.raw);assert.ok(Array.isArray(view.decks),'a current service lists its packs');
+ for(const entry of f.entries){const node=f.values.get(f.privatePath(entry)),privateView=JSON.parse(node.viewJson);delete privateView.decks;node.viewJson=JSON.stringify(privateView);}
+ view=await f.client._readHostSnapshot(f.raw);
+ assert.equal(view.decks,undefined,'an older service never receives a pack choice it would reject');assert.equal(view.deck,'classic');assert.equal(view.phase,'lobby');
+});

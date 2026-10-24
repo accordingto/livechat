@@ -156,9 +156,43 @@ excluded. Exhaustion shows the actual remaining count and never resets history
 or reuses a known truth. Cancelling before final identification replaces the
 topic for the same Thinker without scoring. Revealed results cannot be cancelled.
 
+## Topic packs (2026-10-24)
+
+Two packs, chosen in the waiting room before **Start one full circle**:
+**Classic** (the 60 nature and culture cards below, the default) and
+**🎃 Halloween** (44 cards), plus **Mix both** (104). Room state keeps `deck`
+(`classic` / `halloween` / `mixed`); a saved room without it plays Classic.
+`setDeck {deck}` is a lobby-only manager command (host, or a seated player on a
+service-run table); the pack is fixed once a circle starts and survives
+Play another game. Packs filter the same verified pool, known-truth history and
+used-topic rules; totals in the header count only the chosen pack.
+`projectView` adds `deck` and `decks: [{id, count}]`; public topics carry
+`deck`. The card UI shows the picker only when `decks` lists two or more packs,
+and the manager's fast host snapshot drops `decks` unless the service's own
+private projections already list them, so a newer page never sends a pack
+choice to an older service. Halloween topics get a pumpkin tag, a warmer topic
+card and the reveal heading “Here’s the real story”.
+
+The Halloween pack (`server/questions/halloween.json`, `deck: "halloween"`,
+ids `bk-halloween-001…044`) covers old customs (souling, Stingy Jack, Punkie
+Night, barmbrack, Snap-Apple Night, guising, Samhain, calaveras, La Catrina,
+Hyakumonogatari), famous places and true stories (Tower ravens, Whitby,
+Bodie curse, Mary Celeste, CROATOAN, Brown Lady, Borley, Winchester House,
+Room 217, Annie's room, Bran Castle, Houdini séance, Villa Diodati, Surgeon's
+Photograph), folklore (púca, Ichabod Crane, will-o'-the-wisp, zashiki-warashi,
+tsukumogami, Golem, Baba Yaga, kelpie) and spooky science or tricks (St. Elmo's
+fire, foxfire, Vic Tandy's 19 Hz ghost, Pepper's ghost, Phantasmagoria, the Fox
+sisters, Ghost Club, Mothman, Marfa lights). Prompts ask about a custom, place,
+legend or story rather than only a word meaning. Simple English; spooky, never
+gory (a test rejects gore words). Each card was checked against its fetched
+source on 2026-10-24. Brocken spectre stays in Classic only.
+
+Runtime note: the independent service runs this engine and bundle, so the
+service must be redeployed for service-run (normal Hub) tables to offer packs.
+
 ## Topic content and maintenance
 
-**60 verified, enabled English cards; 0 unverified playable cards.** There are
+**104 verified, enabled English cards; 0 unverified playable cards.** Classic has
 30 nature/science topics and 30 cultural objects, tools, traditions and foods.
 Each contains a plain English original core explanation, two source-backed
 supporting facts, reveal text, and a reliable source link. Twenty cards use one
@@ -166,7 +200,8 @@ category hint, twenty three candidate categories, and twenty no category hint.
 Candidate category order is randomized once and saved for the round. Hint amount
 does not change the fixed two-point base score.
 
-Development source files are `server/questions/nature.json` and `culture.json`.
+Development source files are `server/questions/nature.json`, `culture.json` and
+`halloween.json` (optional `deck`: `classic` default or `halloween`).
 These are source-data files; there is no runtime server. Add new independently
 checked cards using the same schema and a stable `canonicalKnowledgeId`.
 Unverified/disabled candidates remain out of the playable bundle.
