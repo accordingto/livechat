@@ -1,3 +1,52 @@
+## CURRENT: Illustrated Word Wolf and clearer conversation cards — 2026-10-26
+
+User follow-up: replace every Word Wolf word's basic art with clear finished
+illustrations; put Word Limit's theme first and fold optional roles on player
+and host pages; use 1–1000 for Who Knows numbers; make Bluff guidance directly
+understandable. The previous release entry below is historical where it differs.
+
+Word Wolf now has 160 independent built-in-imagegen gouache illustrations,
+one per original word, all 640-square WebP at assets/word-wolf/cards-v1/.
+The 80 pairs/IDs, packs, selection, history, canonical authority, voting and
+untimed rules are unchanged. ART derives its manifest from CONTENT alone.
+Cards show a large own illustration with real English/Traditional Chinese
+labels; voting uses a 76px compact picture. Short phones use a complete 162px
+image and compact header so actions remain accessible. No paired image appears
+before reveal. Complete prompt/asset/hash record: docs/word-wolf-art-prompts.json.
+Original PNGs remain outside the repo; the game uses optimized WebP (~10.65 MB
+for the entire set), loading the current card rather than preloading the deck.
+
+Word Limit's theme/brief is above the limit, with roles in closed-by-default
+optional inspiration sections on both player and host pages. It explicitly
+permits free play. No Word Limit engine, turn, weight, score or timer changed.
+Who Knows future numeric deals always use 1–1000, including old saved settings
+of 100; a live legacy 1–100 round keeps its answer, hint, clock and history.
+The host shows a fixed bound rather than a range selector. Number choices do
+not repeat the same digits as a Chinese subtitle. Broad clues still default off.
+Bluff private guidance is two complete made-up explanations, not a multi-step
+writing exercise. Seventy-two original lines use public topic clues only;
+v2 keeps two bilingual starts and an empty steps array. Only bluffers in
+prepare/discussion receive it, and ignoring or changing it is explicit.
+
+Cache tags: ww-art-2, wl-5, wk-5; Bluff bluff-guides-2 and CSS10. Shared
+card-table, Who sync, unrelated games, dependencies and database rules unchanged.
+Full Hub 2384/2384 passed; Word Wolf asset/rules/integration 15/15; renderer
+324 inspections/12 captures pass with 160 decoded distinct images and no label
+clipping. Team visual review of all 160 illustrations found no required redraw.
+Word Wolf real host/original-card 4/9-player fixtures pass 24 flows/144 captures,
+zero page/layout issues or remaining presence; runtime/art hashes unchanged.
+Bluff 174/174, phone fixture 26 scenarios/38 captures; Word Limit 20 flows/72
+captures plus 21-flow core including no-command role toggles; number Who Knows
+27 flows/100 captures at 1–1000. Physical phones/human spoken play unverified.
+
+Independent service dpl_4d5tGj7PXurFvZDdiECNedW3pouC is READY at the stable
+alias, with new Bluff v2 guidance. Production service smoke 30/30 passed and all
+15 exact test nodes deleted/empty, zero cleanup failures. Existing service
+workspace matches all 64 allowlisted files (only Bluff engine changed); stable
+secrets/search routes preserved, service tests 39/39 before/after sync.
+Frontend and final multiplayer publication proof:
+docs/cards-art-2026-10-26-acceptance.md.
+
 ## CURRENT: Conversation cards, secret numbers and restored Word Wolf — 2026-10-26
 
 User requested optional BLUFF PARTY story guidance in both editions, turn-taking

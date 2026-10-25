@@ -9,7 +9,7 @@ var WORD_LIMIT_UI = (() => {
   const dict = {
     brand: ['WORD LIMIT THEATER', 'WORD LIMIT THEATER'],
     subtitle: ['輪流說一句，用你的字數接住這場戲。', 'One line each. Keep the scene going.'],
-    pitch: ['每個人抽一個角色和字數，照順序輪流說一句。1 到 5 字比較常見，可以和別人相同，6 字只會偶爾出現。輪到你時，說完剛好字數的台詞，再按卡片得分並交給下一位。演出中還會重新抽字數。', 'Draw a role and a line limit, then take turns saying one line. Limits of 1–5 are common and may repeat; six is occasional. On your turn, say exactly your limit, then tap your card to score and hand over. Limits change during the scene.'],
+    pitch: ['看主題、抽字數，照順序輪流自由接一句。角色只是可忽略的靈感。1 到 5 字比較常見，可以和別人相同，6 字偶爾出現。輪到你時，說完剛好字數的台詞，再按卡片得分並交給下一位。', 'Read the theme, draw a limit and take turns adding one line freely. Roles are optional inspiration. Limits of 1–5 are common and may repeat; six is occasional. Say exactly your limit, then tap to score and hand over.'],
     hostNote: ['角色、字數和分數都是公開的，大家才能一起抓犯規。', 'Roles, limits and points are public, so everyone can catch a foul.'],
     start: ['開始第一場', 'Start the first scene'],
     sceneN: ['第 {n} 場', 'Scene {n}'],
@@ -19,9 +19,11 @@ var WORD_LIMIT_UI = (() => {
     unit_chars_one: ['個字', 'Chinese character'], unit_chars_many: ['個字', 'Chinese characters'],
     unitOption_words: ['英文（算單字數）', 'English (count words)'], unitOption_chars: ['中文（算字數）', 'Chinese (count characters)'],
     youPlay: ['你演', 'You play'],
+    roleInspiration: ['角色靈感（可忽略）', 'Role inspiration · optional'],
+    roleInspirationHint: ['只供參考，不必照演；可以完全自由發揮。', 'Use it if it helps. You can ignore it and play freely.'],
     castTitle: ['演員表', 'Cast'],
     curtainIn: ['開演倒數', 'Curtain up in'],
-    castHint: ['先看角色、字數和場景。開演後照順序輪流說一句，說完按卡片得分並交給下一位。', 'Read your role, limit and scene. Take turns saying one line, then tap your card to score and hand over.'],
+    castHint: ['先看主題與字數。角色靈感可以忽略。開演後輪流自由接一句，再按卡片得分並交棒。', 'Read the theme and your limit. Ignore the role if you like. Take turns adding a line, then tap to score and hand over.'],
     startNow: ['馬上開演', 'Start now'],
     rerollScene: ['換一個場景', 'Different scene'], rerollsLeft: ['還能換 {n} 次', '{n} left'],
     sceneLeft: ['這場還剩', 'left in the scene'],
@@ -63,7 +65,7 @@ var WORD_LIMIT_UI = (() => {
     pointsFor: ['{n} 字台詞每句得分', 'Points for a line with a limit of {n}'],
     pointsUnit: ['分', 'pts'],
     setupTitle: ['開演前的設定', 'Before the curtain'],
-    rules_1: ['每場抽一個場景與角色。1 到 5 字較常見，可以重複；6 字偶爾出現，每次抽題最多一位。', 'Draw a scene and roles. Limits of 1–5 are common and may repeat; at most one actor occasionally draws six.'],
+    rules_1: ['每場抽一個主題與字數，角色只是可忽略的靈感。1 到 5 字較常見，可以重複；6 字偶爾出現，每次最多一位。', 'Draw a theme and limits. Roles are optional inspiration. Limits of 1–5 are common and may repeat; at most one actor occasionally draws six.'],
     rules_2: ['照畫面順序輪流即興說一句，每句都要剛好是自己的字數。沒有個人倒數，整場時間會繼續跑。', 'Take turns improvising one line, exactly your limit. There is no individual countdown; the scene clock keeps running.'],
     rules_3: ['輪到你說完一句，再按「說完了，下一位」，得到目前字數的分數並交棒。預設幾個字就幾分，可以在設定裡改。', 'On your turn, tap “Line done · next actor” after your line to score and hand over. By default one point per word; settings can change that.'],
     rules_4: ['演出中每個人會重新抽字數好幾次（預設 3 次），一定會換到不一樣的數字，換完記得看自己的新字數。', 'Everyone draws a new limit a few times during the scene (3 by default), always a different number. Check your new limit each time.'],
@@ -179,7 +181,10 @@ var WORD_LIMIT_UI = (() => {
   function board(view, me) {
     const unit = view.unit, limit = me.limit;
     const event = view.event, was = event?.kind === 'shuffle' && me.prev != null ? `<span class="wl-board-was" data-ct-until="${Number(event.ts) + WAS_MS}">${esc(t('wasLimit', { n: me.prev }))}</span>` : '';
-    return `<section class="wl-board${event?.kind === 'shuffle' ? ' just-shuffled' : ''}" aria-label="${esc(t('yourLines'))}"><div class="wl-board-limit"><p class="wl-board-label">${esc(t('everyLine'))}</p><div class="wl-board-num"><b>${esc(limit ?? '–')}</b>${was}</div><p class="wl-board-unit">${esc(unitWord(limit, unit))}</p></div><div class="wl-board-role"><span>${esc(t('youPlay'))}</span><strong>${esc(roleName(me.role))}</strong><em>${esc(roleWant(me.role))}</em></div></section>`;
+    return `<section class="wl-board${event?.kind === 'shuffle' ? ' just-shuffled' : ''}" aria-label="${esc(t('yourLines'))}"><div class="wl-board-limit"><p class="wl-board-label">${esc(t('everyLine'))}</p><div class="wl-board-num"><b>${esc(limit ?? '–')}</b>${was}</div><p class="wl-board-unit">${esc(unitWord(limit, unit))}</p></div></section>`;
+  }
+  function inspiration(content, open = false) {
+    return `<details class="wl-inspiration" data-wl-inspiration${open ? ' open' : ''}><summary>${esc(t('roleInspiration'))}</summary><p class="wl-inspiration-hint">${esc(t('roleInspirationHint'))}</p>${content}</details>`;
   }
   function floor(view, me = 0) {
     const live = view.phase === 'paused' ? view.pausedFrom : view.phase;
@@ -234,13 +239,13 @@ var WORD_LIMIT_UI = (() => {
     const paused = view.phase === 'paused' ? `<div class="wl-paused"><strong>${esc(t('paused'))}</strong><span>${esc(t('pausedHint'))}</span></div>` : '';
     const marquee = `<header class="wl-marquee"><div class="wl-marquee-text"><p class="wl-marquee-no">${esc(t('sceneN', { n: view.roundNo }))}</p>${view.scene ? `<h2 class="wl-marquee-title"${lang() === 'zh' ? '' : ' lang="en"'}>${esc(pick(view.scene.title))}</h2><p class="wl-slug"${lang() === 'zh' ? '' : ' lang="en"'}>${esc(pick(view.scene.slug))}</p>` : ''}</div>${live === 'cast' ? `<div class="wl-marquee-clock"><span>${esc(t('curtainIn'))}</span>${timer(view, { big: true })}</div>` : live === 'scene' ? `<div class="wl-marquee-clock is-ring" data-ct-ring><span>${esc(t('sceneLeft'))}</span>${timer(view, { big: true })}</div>` : ''}</header>`;
     if (view.phase === 'result') {
-      return `<div class="wl-stage wl-phase-result">${marquee}<div class="wl-stage-main"><section class="wl-stage-left">${wrapUp(view, 0)}</section><section class="wl-stage-right">${foulRecap(view)}${castList(view, { big: true, points: true })}</section></div></div>`;
+      return `<div class="wl-stage wl-phase-result">${marquee}<div class="wl-stage-main"><section class="wl-stage-left">${wrapUp(view, 0)}</section><section class="wl-stage-right">${foulRecap(view)}${inspiration(castList(view, { big: true, points: true }))}</section></div></div>`;
     }
     let left;
     if (live === 'vote') left = `<section class="wl-wrapup"><h2>${esc(t('wrapTitle'))}</h2><p>${esc(t('legacyVote'))}</p></section>`;
     else if (live === 'cast') left = `${floor(view)}${script(view, { lineOnly: true })}<p class="wl-stage-hint">${esc(t('castHint'))}</p>${values(view)}`;
     else left = `${floor(view)}${script(view, { lineOnly: true })}${nextSwap(view)}<p class="wl-stage-hint">${esc(t('stageScoreHint'))}</p>${values(view)}`;
-    return `<div class="wl-stage wl-phase-${esc(view.phase)}${view.phase === 'paused' ? ' wl-from-' + esc(view.pausedFrom) : ''}">${paused}${marquee}${flash(view)}<div class="wl-stage-main"><section class="wl-stage-left">${left}</section><section class="wl-stage-right"><h3 class="wl-section-title">${esc(t('castTitle'))}</h3>${castList(view, { big: true, points: live === 'scene' })}</section></div></div>`;
+    return `<div class="wl-stage wl-phase-${esc(view.phase)}${view.phase === 'paused' ? ' wl-from-' + esc(view.pausedFrom) : ''}">${paused}${marquee}${flash(view)}<div class="wl-stage-main"><section class="wl-stage-left">${left}</section><section class="wl-stage-right">${inspiration(castList(view, { big: true, points: live === 'scene' }))}</section></div></div>`;
   }
 
   // ── player card ───────────────────────────────────────────────────────
@@ -250,19 +255,21 @@ var WORD_LIMIT_UI = (() => {
     }
     mount() {
       this.secondaryOpen = false;
+      this.inspirationOpen = false;
       this.moreToggle = event => {
         if (event.target.matches?.('[data-wl-more]') && this.root.contains(event.target)) this.secondaryOpen = event.target.open;
+        if (event.target.matches?.('[data-wl-inspiration]') && this.root.contains(event.target)) this.inspirationOpen = event.target.open;
       };
       this.root.addEventListener('toggle', this.moreToggle, true);
     }
-    localKey() { return String(!!this.secondaryOpen); }
+    localKey() { return JSON.stringify([!!this.secondaryOpen, !!this.inspirationOpen]); }
     theme(view) {
       if (view.phase === 'scene') return 'is-live';
       if (view.phase === 'result' && list(view.result?.best).includes(this.data.playerNum)) return 'is-top';
       return '';
     }
     onUpdate(previous, view) {
-      if (previous && previous.roundNo !== view.roundNo) this.secondaryOpen = false;
+      if (previous && previous.roundNo !== view.roundNo) { this.secondaryOpen = false; this.inspirationOpen = false; }
       if (view.phase === 'scene' && view.me?.isSpeaker && previous &&
         (previous.phase !== 'scene' || previous.speaker !== view.speaker)) vibrate([70]);
       const event = view.event;
@@ -288,12 +295,13 @@ var WORD_LIMIT_UI = (() => {
       const live = view.phase === 'paused' ? view.pausedFrom : view.phase;
       const paused = view.phase === 'paused' ? `<div class="wl-zone is-paused"><h3>${esc(t('paused'))}</h3>${timer(view)}<p>${esc(t('pausedHint'))}</p><button type="button" class="ct-button ct-primary" data-ct-action="resume"${busy ? ' disabled' : ''}>${esc(t('resume'))}</button></div>` : '';
       const mine = me.inRound ? board(view, me) : `<div class="wl-note is-muted"><strong>${esc(t('watching'))}</strong><span>${esc(t('watchingHint'))}</span></div>`;
+      const role = me.inRound ? inspiration(`<div class="wl-role-idea"><strong>${esc(roleName(me.role))}</strong><p>${esc(roleWant(me.role))}</p></div>`, this.inspirationOpen) : '';
       if (live === 'cast') {
         const zone = view.phase === 'paused' ? '' : `<div class="wl-zone-row"><button type="button" class="ct-button ct-primary" data-ct-action="close"${busy || !me.canBegin ? ' disabled' : ''}>${esc(t('startNow'))}</button><button type="button" class="ct-button" data-ct-action="reroll"${busy || !me.canReroll ? ' disabled' : ''}>${esc(t('rerollScene'))} · ${esc(t('rerollsLeft', { n: view.rerollsLeft }))}</button></div>`;
-        return `${paused}${floor(view, n)}${mine}${sceneBrief(view)}${zone}${this.secondary(view, me, n, busy)}`;
+        return `${sceneBrief(view)}${paused}${floor(view, n)}${mine}${zone}${role}${this.secondary(view, me, n, busy)}`;
       }
       if (live === 'scene') {
-        return `${paused}${flash(view, n)}${floor(view, n)}${mine}${sceneBrief(view)}${me.inRound ? lineZone(view, me, busy) : ''}${this.secondary(view, me, n, busy)}`;
+        return `${sceneBrief(view)}${paused}${flash(view, n)}${floor(view, n)}${mine}${me.inRound ? lineZone(view, me, busy) : ''}${role}${this.secondary(view, me, n, busy)}`;
       }
       // A table saved by the earlier version may still be in its MVP vote.
       if (live === 'vote') return `${paused}<section class="wl-zone"><h3 class="wl-wrap-title">${esc(t('wrapTitle'))}</h3><p>${esc(t('legacyVote'))}</p>${me.canEndVote ? `<button type="button" class="ct-button ct-primary" data-ct-action="close"${busy ? ' disabled' : ''}>${esc(t('showResult'))}</button>` : ''}</section>`;

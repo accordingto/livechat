@@ -308,8 +308,14 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     await host.locator('input[name="wl-unit"][value="words"]').check();
     await tap(host, '#wl-start'); await poll(async () => (await state(0))?.phase === 'cast');
     check((await state(0)).round.runSince === null, 'wordlimit-cast-preview-does-not-run-scene-clock');
-    await tap(host, '[data-host-action="close"]'); await started(0, 'scene'); await closeHost();
+    await tap(host, '[data-host-action="close"]'); await started(0, 'scene');
+    check(await host.locator('.wl-stage [data-wl-inspiration]').count() === 1 && await host.locator('.wl-stage [data-wl-inspiration]').getAttribute('open') === null, 'wordlimit-host-role-inspiration-starts-folded');
+    await closeHost();
     let shown = await synchronized(0, 'scene');
+    for (let i = 0; i < 4; i++) check(await players[i].evaluate(() => {
+      const main = document.querySelector('[data-ct-main]'), theme = main?.querySelector('.wl-scene-brief'), limit = main?.querySelector('.wl-board'), role = main?.querySelector('[data-wl-inspiration]');
+      return !!theme?.querySelector('h3')?.textContent.trim() && !!limit && !!role && !role.open && !!(theme.compareDocumentPosition(limit) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }), 'wordlimit-theme-above-limit-and-optional-role-folded-' + (i + 1));
     const first = shown[0].wl, initialDeadline = first.sceneEndsAt, order = first.speakingOrder.slice(), initialTurn = first.speakingTurn;
     check(order.length === 4 && new Set(order).size === 4 && first.speaker === order[0], 'wordlimit-one-saved-four-person-speaking-order');
     check(shown.every(v => v.wl.sceneEndsAt === initialDeadline), 'wordlimit-shared-global-scene-deadline');
@@ -341,6 +347,11 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     for (let i = 0; i < 4; i++) {
       check(shown[i].ww.result === null && !('odd' in shown[i].ww.me) && !('pairId' in shown[i].ww) && !('round' in shown[i].ww), 'wordwolf-no-pre-reveal-role-or-pair-' + (i + 1));
       check(await players[i].locator('[data-ct-main] [data-ww-item]').count() === 1 && await players[i].locator('[data-ct-main] [data-ww-item]').getAttribute('data-ww-item') === items[i], 'wordwolf-actual-own-item-only-' + (i + 1));
+      await poll(async () => players[i].evaluate(id => {
+        const image = document.querySelector('[data-ct-main] [data-ww-art]');
+        return image?.dataset.wwArt === id && image.complete && image.naturalWidth === 640 && image.naturalHeight === 640 && image.getAttribute('src') === `assets/word-wolf/cards-v1/${id}.webp`;
+      }, items[i]));
+      check(true, 'wordwolf-own-real-640-illustration-decoded-' + (i + 1));
     }
     const picked = [];
     for (let i = 0; i < 4; i++) {
@@ -368,7 +379,7 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     progress('whoknows-number-and-optional-broad-clue'); await openHost(2);
     check(await host.locator('#wk-target-kind').inputValue() === 'word' && !(await host.locator('#wk-broad-hint').isChecked()), 'whoknows-default-words-and-no-opening-clue');
     await host.locator('#wk-target-kind').selectOption('number'); await host.locator('#wk-broad-hint').check();
-    await host.locator('#wk-number-max').selectOption('100'); await tap(host, '#wk-start'); await started(2, 'choose');
+    check(await host.locator('#wk-number-max').inputValue() === '1000', 'whoknows-number-pool-fixed-thousand'); await tap(host, '#wk-start'); await started(2, 'choose');
     shown = await synchronized(2, 'choose');
     const mayor = shown[0].wk.mayor, answerer = players[mayor - 1], others = [1, 2, 3, 4].filter(n => n !== mayor);
     check(shown.filter(v => list(v.wk.me.options).length).length === 1 && shown[mayor - 1].wk.me.options.every(o => o.kind === 'number'), 'whoknows-only-master-chooses-numeric-options');
@@ -381,7 +392,7 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     check(shown.every(v => v.wk.targetKind === 'number' && !!v.wk.broadHint && !('numberMax' in v.wk.settings)), 'whoknows-synchronized-broad-clue-without-hidden-pool-setting');
     const hint = JSON.stringify(shown[0].wk.broadHint);
     check(shown.every(v => JSON.stringify(v.wk.broadHint) === hint), 'whoknows-one-frozen-opening-clue');
-    check(shown.every(v => v.wk.broadHint.en === 'An integer from 1 to 100' && v.wk.broadHint.zh === '1 到 100 之間的整數'), 'whoknows-correct-bilingual-hundred-number-opening-clue');
+    check(shown.every(v => v.wk.broadHint.en === 'An integer from 1 to 1000' && v.wk.broadHint.zh === '1 到 1000 之間的整數'), 'whoknows-correct-bilingual-thousand-number-opening-clue');
     const chosenNumber = shown[mayor - 1].wk.me.word?.id;
     check(!!chosenNumber && shown.every(v => v.wk.word === null && (['master', 'insider'].includes(v.wk.me.role) ? v.wk.me.word?.id === chosenNumber : v.wk.me.word === null)), 'whoknows-number-secret-only-on-master-and-insider-projections');
     for (let i = 0; i < 4; i++) {

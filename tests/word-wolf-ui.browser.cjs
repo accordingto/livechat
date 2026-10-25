@@ -9,8 +9,8 @@ const playerCount=Number(process.env.WW_QA_PLAYERS||4);assert.ok([4,9].includes(
 const output=path.resolve(process.env.WW_QA_OUTPUT||path.join(root,'..','word-wolf-browser-qa-'+playerCount));
 const code='WW_BROWSER_QA_'+playerCount,tokens=Array.from({length:playerCount},(_,i)=>'qa-player-'+(i+1));
 const names=['Amy','Kevin','Jason','Willy','Riley','Morgan','Alexandra-Marie','Sam','Robin'].slice(0,playerCount);
-const CONTENT=require('../word-wolf-content.js');
-const sourceFiles=['word-wolf.html','word-wolf-content.js','word-wolf-art.js','word-wolf-engine.js','word-wolf-ui.js','word-wolf-host.js','word-wolf.css','card-table.js','card-table-ui.js','card-table.css','play.html'];
+const CONTENT=require('../word-wolf-content.js'),ART=require('../word-wolf-art.js');
+const sourceFiles=['word-wolf.html','word-wolf-content.js','word-wolf-art.js','word-wolf-engine.js','word-wolf-ui.js','word-wolf-host.js','word-wolf.css','card-table.js','card-table-ui.js','card-table.css','play.html',...ART.ids.map(id=>ART.get(id).src)];
 const sourceHashes=()=>Object.fromEntries(sourceFiles.map(file=>[file,require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
 const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
 const list = value => Array.isArray(value) ? value : Object.values(value || {});
@@ -201,6 +201,10 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await page.setViewportSize({ width, height });
     await page.evaluate(value => I18N.setLang(value), lang);
     await page.evaluate(() => window.scrollTo(0, 0));
+    for (const image of await page.locator('img.ww-object-art').all()) {
+      await image.evaluate(element => element.decode());
+      assert.equal(await image.evaluate(element => element.complete && element.naturalWidth === 640 && element.naturalHeight === 640), true, 'the real card bitmap has loaded at its full authored size');
+    }
     await pause(100);
     const metrics = await page.evaluate(target => {
       const shown = e => e.getClientRects().length && (!e.checkVisibility || e.checkVisibility({ contentVisibilityAuto: true, opacityProperty: true, visibilityProperty: true }));
@@ -218,9 +222,10 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
       if (target) {
         const e = [...document.querySelectorAll(target)].find(shown);
         if (e) {
+          const initial = e.getBoundingClientRect();
           e.scrollIntoView({ block:'center', behavior:'instant' });
           const r = e.getBoundingClientRect(), hit = document.elementFromPoint(Math.floor(r.x+r.width/2),Math.floor(r.y+r.height/2));
-          action = { height:r.height,width:r.width,clickable:e.contains(hit) };
+          action = { height:r.height,width:r.width,clickable:e.contains(hit),initiallyVisible:initial.top>=0&&initial.bottom<=innerHeight };
           window.scrollTo(0,0);
         }
       }
@@ -229,6 +234,7 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     const screenshot = `${label}-${width}x${height}-${lang}.png`;
     await page.screenshot({ path:path.join(output,screenshot),fullPage:true,animations:'disabled',timeout:90000 });
     report.views.push({ label,width,height,lang,screenshot,...metrics });
+    if (['card-different-private','card-shared-private','card-picked'].includes(label)) assert.equal(metrics.action?.initiallyVisible,true,label+': the main action fits on the phone without scrolling');
     if (metrics.overflow>1 || metrics.clipped.length || metrics.badTargets.length || (target&&(!metrics.action||!metrics.action.clickable||metrics.action.height<43.99||metrics.action.width<43.99))) report.layoutIssues.push({ label,width,height,lang,...metrics });
   };
   const PHONES=[[390,844],[320,568]],HOSTS=[[1280,800],[390,844],[320,568]];
@@ -274,7 +280,11 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
       const pointer=db.get(`rooms/${code}/players/${tokens[n-1]}`);
       assert.equal(pointer.game,'wordwolf');assert.deepEqual(pointer.ww,{version:1,table:originalTable});
       assert.equal(pointer.stateJson,undefined);assert.equal(pointer.item,undefined);
-      assert.equal(await card(n).locator('.ww-object-art').count(),1,'default object has clear local vector artwork');
+      const image=card(n).locator('img.ww-object-art');
+      assert.equal(await image.count(),1,'each private item has one independent local bitmap');
+      await image.evaluate(element=>element.decode());
+      assert.equal(await image.evaluate(element=>element.naturalWidth===640&&element.naturalHeight===640),true,'a missing or broken image cannot pass');
+      assert.equal(await image.getAttribute('src'),ART.get((await cards())[n-1].ww.me.item.id).src);
     }
     await views(host,'host-describe','[data-host-action="pick"]',HOSTS);
     await views(card(s.round.odd),'card-different-private','[data-ct-main] [data-ct-action="pick"]');

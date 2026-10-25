@@ -11,16 +11,17 @@ function game(count = 4, seed = 3, options = {}) {
   }, view: actor => E.view(state, actor).ww };
 }
 
-test('restores all 80 original pairs once, bilingual names, and clear illustrations for every default object', () => {
+test('restores all 80 original pairs once, bilingual names, and one local illustration mapping for every item', () => {
   assert.equal(CONTENT.PAIRS.length, 80);
   assert.equal(new Set(CONTENT.PAIRS.map(p => p.id)).size, 80);
   assert.equal(CONTENT.pool('objects').length, 21); assert.equal(CONTENT.pool('food').length, 9); assert.equal(CONTENT.pool('other').length, 50);
-  assert.equal(ART.ids.length, 42);
+  assert.equal(ART.ids.length, 160);
   for (const pair of CONTENT.PAIRS) {
     for (const item of [pair.a, pair.b]) assert.ok(item.id && item.en && item.zh);
     assert.notEqual(pair.a.en, pair.b.en);
-    if (pair.category === 'objects') for (const item of [pair.a, pair.b]) {
-      assert.match(ART.item(item.id), /^<svg /); assert.doesNotMatch(ART.item(item.id), /<script|onload|https:|data:/);
+    for (const item of [pair.a, pair.b]) {
+      assert.match(ART.item(item.id), /^<img /); assert.doesNotMatch(ART.item(item.id), /<script|onload|https:|data:/);
+      assert.equal(ART.get(item.id).src, `assets/word-wolf/cards-v1/${item.id}.webp`);
     }
   }
   assert.equal(ART.item('__proto__'), '');

@@ -37,7 +37,7 @@ test('opening clues stay broad in every selectable word pool, not just the full 
 });
 
 test('the normal word game and hidden opening clue remain the defaults; new options validate strictly', () => {
-  const g = game(); assert.equal(g.state.settings.targetKind, 'word'); assert.equal(g.state.settings.broadHint, false); assert.equal(g.state.settings.numberMax, 100);
+  const g = game(); assert.equal(g.state.settings.targetKind, 'word'); assert.equal(g.state.settings.broadHint, false); assert.equal(g.state.settings.numberMax, 1000);
   g.begin(); assert.equal(E.view(g.state, 0).wk.broadHint, null);
   for (const settings of [{ broadHint: 'yes' }, { targetKind: 'anything' }, { numberMax: 1 }, { numberMax: 200 }, { numberMax: 100.5 }]) assert.throws(() => game(settings), /invalid_options/);
 });
@@ -66,7 +66,8 @@ test('changing clue or answer type mid-round only affects the next deal, retaini
 });
 
 test('number options are three distinct integers in the configured pool; only authorized identities see the chosen answer', () => {
-  for (const mode of E.MODES) for (const numberMax of [100, 1000]) for (const count of [4, 9]) {
+  for (const mode of E.MODES) for (const count of [4, 9]) {
+    const numberMax = 1000;
     const g = game({ mode, targetKind: 'number', numberMax }, count, count + numberMax);
     const r = g.state.round, options = E.view(g.state, r.mayor).wk.me.options;
     assert.equal(options.length, 3); assert.equal(new Set(options.map(x => x.id)).size, 3);
@@ -79,6 +80,31 @@ test('number options are three distinct integers in the configured pool; only au
       if (n > 0) { assert.equal(!!wk.me.word, knows); assert.equal('numberMax' in wk.settings, false); }
     }
   }
+});
+
+test('old saved 1–100 settings upgrade the next deal without changing the active number, clue, clock or history', () => {
+  for (const mode of E.MODES) {
+    const g = game({ mode, targetKind: 'number', broadHint: true });
+    // A real earlier-version snapshot had a per-round pool and three options.
+    g.state.settings.numberMax = 100; g.state.round.numberMax = 100;
+    g.state.round.options = ['wk-n-11', 'wk-n-27', 'wk-n-95'];
+    g.begin();
+    const before = clone(g.state), hint = E.view(g.state, 0).wk.broadHint;
+    assert.equal(g.state.settings.numberMax, 1000, 'future settings migrate automatically');
+    assert.equal(g.state.round.numberMax, 100); assert.equal(g.state.round.wordId, 'wk-n-11');
+    assert.deepEqual(hint, { en: 'An integer from 1 to 100', zh: '1 到 100 之間的整數' });
+    assert.equal(E.view(before, 0).wk.settings.numberMax, 1000);
+    g.cmd(0, 'settings', { settings: { numberMax: 100 } });
+    assert.equal(g.state.settings.numberMax, 1000, 'legacy form submissions cannot keep future rounds at 100');
+    assert.equal(g.state.round.numberMax, 100); assert.equal(g.state.round.wordId, before.round.wordId);
+    assert.equal(g.state.deadline, before.deadline); assert.deepEqual(g.state.wordHistory, before.wordHistory);
+    assert.deepEqual(g.state.scores, before.scores); assert.deepEqual(E.view(g.state, 0).wk.broadHint, hint);
+    g.cmd(0, 'void'); g.cmd(0, 'next');
+    assert.equal(g.state.round.numberMax, 1000); assert.equal(g.state.round.targetKind, 'number');
+    g.choose(); assert.deepEqual(E.view(g.state, 0).wk.broadHint, { en: 'An integer from 1 to 1000', zh: '1 到 1000 之間的整數' });
+    assert.ok(g.state.wordHistory.used.includes('wk-n-11'), 'old question memory survives the upgrade');
+  }
+  assert.equal(game({ targetKind: 'number', numberMax: 100 }).state.round.numberMax, 1000, 'new games normalize legacy settings too');
 });
 
 test('free spoken number answers advance the existing question queue without shortening or restarting the clock', () => {

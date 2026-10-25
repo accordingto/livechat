@@ -41,7 +41,7 @@ var WHO_KNOWS_ENGINE = (() => {
     // Werewolf mode only: how many Yes/No answers the Mayor can give (0 = no limit).
     tokenOptions: Object.freeze([0, 20, 30, 36]), defaultTokens: 36,
     difficulties: Object.freeze(['mixed', 'easy', 'medium', 'hard']), defaultDifficulty: 'mixed',
-    targetKinds: Object.freeze(['word', 'number']), numberMaxOptions: Object.freeze([100, 1000]), defaultNumberMax: 100,
+    targetKinds: Object.freeze(['word', 'number']), numberMaxOptions: Object.freeze([1000]), defaultNumberMax: 1000,
     wolfOptions: Object.freeze(['auto', 1, 2]),
     turnSecondsOptions: Object.freeze([20, 25, 30]), defaultTurnSeconds: 25,
     answers: Object.freeze({
@@ -126,8 +126,11 @@ var WHO_KNOWS_ENGINE = (() => {
     if (!CONFIG.turnSecondsOptions.includes(turnSeconds)) throw new Error('invalid_options');
     const targetKind = input.targetKind === undefined ? base.targetKind : input.targetKind;
     if (!CONFIG.targetKinds.includes(targetKind)) throw new Error('invalid_options');
-    const numberMax = input.numberMax === undefined ? base.numberMax : Number(input.numberMax);
-    if (!CONFIG.numberMaxOptions.includes(numberMax)) throw new Error('invalid_options');
+    const requestedNumberMax = input.numberMax === undefined ? base.numberMax : Number(input.numberMax);
+    // Old settings may carry 100. Accept them on input, but every future deal
+    // uses 1–1000; an existing round keeps its independently saved pool.
+    if (![100, 1000].includes(requestedNumberMax)) throw new Error('invalid_options');
+    const numberMax = CONFIG.defaultNumberMax;
     for (const key of ['mayorSecret', 'masterGuess', 'broadHint']) if (input[key] !== undefined && typeof input[key] !== 'boolean') throw new Error('invalid_options');
     return { mode, questionMinutes: minutes, tokens, difficulty, wolves, turnSeconds,
       mayorSecret: input.mayorSecret ?? !!base.mayorSecret, masterGuess: input.masterGuess ?? base.masterGuess !== false,
@@ -430,7 +433,7 @@ var WHO_KNOWS_ENGINE = (() => {
     const round = state.round;
     if (round) {
       if (!CONFIG.targetKinds.includes(round.targetKind)) round.targetKind = 'word';
-      if (!CONFIG.numberMaxOptions.includes(round.numberMax)) round.numberMax = CONFIG.defaultNumberMax;
+      if (![100, 1000].includes(round.numberMax)) round.numberMax = CONFIG.defaultNumberMax;
       if (!CONFIG.turnSecondsOptions.includes(round.turnSeconds)) round.turnSeconds = CONFIG.defaultTurnSeconds;
       if (round.speaking) round.speaking.order = list(round.speaking.order);
       round.players = list(round.players); round.options = list(round.options); round.queue = list(round.queue); round.log = list(round.log);
@@ -757,7 +760,7 @@ var WHO_KNOWS_ENGINE = (() => {
     const wk = {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, stage: state.stage, phase,
       pausedFrom: phase === 'paused' ? state.pausedFrom : null,
-      settings: Object.assign(defaultSettings(state.settings.mode), copy(state.settings)), roundNo: state.roundNo,
+      settings: Object.assign(defaultSettings(state.settings.mode), copy(state.settings), { numberMax: CONFIG.defaultNumberMax }), roundNo: state.roundNo,
       mode: round?.mode || state.settings.mode, mayor: round?.mayor ?? null,
       targetKind: round?.targetKind || 'word',
       broadHint: round?.broadHint && round.wordId ? copy(round.hintSnapshot || rangeHint(round, round.wordId)) : null,

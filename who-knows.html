@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0f1421">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="who-knows.css?v=wk-4">
+  <link rel="stylesheet" href="who-knows.css?v=wk-5">
 </head>
 <body class="wk-page">
   <div class="topbar">
@@ -60,7 +60,7 @@
       </div>
       <div class="wk-settings">
         <label class="wk-field"><span data-i18n="whoknows.targetKind">Answer type</span><select id="wk-target-kind"></select></label>
-        <label class="wk-field" data-wk-target-only="number" hidden><span data-i18n="whoknows.numberMax">Number pool</span><select id="wk-number-max"></select></label>
+        <div class="wk-field" data-wk-target-only="number" hidden><span data-i18n="whoknows.numberMax">Number pool</span><strong>1–1000</strong><input type="hidden" id="wk-number-max" value="1000"></div>
         <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-minutes"></select></label>
         <label class="wk-field" data-wk-target-only="word"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-difficulty"></select></label>
         <label class="wk-field"><span data-i18n="whoknows.turnSeconds">Time per speaker</span><select id="wk-turn-seconds"></select></label>
@@ -145,7 +145,7 @@
     <div class="wk-settings">
       <label class="wk-field"><span data-i18n="whoknows.modeLabel">Mode</span><select id="wk-m-mode"></select></label>
       <label class="wk-field"><span data-i18n="whoknows.targetKind">Answer type</span><select id="wk-m-target-kind"></select></label>
-      <label class="wk-field" data-wk-m-target-only="number" hidden><span data-i18n="whoknows.numberMax">Number pool</span><select id="wk-m-number-max"></select></label>
+      <div class="wk-field" data-wk-m-target-only="number" hidden><span data-i18n="whoknows.numberMax">Number pool</span><strong>1–1000</strong><input type="hidden" id="wk-m-number-max" value="1000"></div>
       <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-m-minutes"></select></label>
       <label class="wk-field" data-wk-m-target-only="word"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-m-difficulty"></select></label>
       <label class="wk-field"><span data-i18n="whoknows.turnSeconds">Time per speaker</span><select id="wk-m-turn-seconds"></select></label>
@@ -177,10 +177,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="who-knows-words.js?v=wk-4"></script>
-  <script src="who-knows-engine.js?v=wk-4"></script>
-  <script src="who-knows-sync.js?v=wk-4"></script>
-  <script src="who-knows-ui.js?v=wk-4"></script>
-  <script src="who-knows-host.js?v=wk-4"></script>
+  <script src="who-knows-words.js?v=wk-5"></script>
+  <script src="who-knows-engine.js?v=wk-5"></script>
+  <script src="who-knows-sync.js?v=wk-5"></script>
+  <script src="who-knows-ui.js?v=wk-5"></script>
+  <script src="who-knows-host.js?v=wk-5"></script>
 </body>
 </html>

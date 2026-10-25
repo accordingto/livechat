@@ -242,7 +242,7 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
       }
       let primary = null;
       if (target?.includes('.wl-line-btn')) {
-        const start = document.querySelector('[data-ct-main] .wl-floor'), end = document.querySelector(target);
+        const start = document.querySelector('[data-ct-main] .wl-scene-brief'), end = document.querySelector(target);
         if (start && end) {
           const a = start.getBoundingClientRect(), b = end.getBoundingClientRect();
           primary = { height: b.bottom - a.top, fits: b.bottom - a.top <= innerHeight - 16 };
@@ -464,13 +464,29 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
       assert.equal(await card(n).locator('[data-ct-main] .wl-cast-row').count(), playerCount);
       assert.equal(await card(n).locator('[data-ct-main] .wl-cast-row.is-me').count(), 1);
       assert.equal(await card(n).locator('[data-wl-more]').evaluate(element => element.open), false, 'secondary cast details begin folded');
+      assert.equal(await card(n).locator('[data-wl-inspiration]').evaluate(element => element.open), false, 'own role inspiration begins folded');
+      assert.equal(await card(n).locator('.wl-role-idea').isVisible(), false, 'the player can freely speak without reading a role');
+      assert.ok(await card(n).locator('.wl-scene-brief').evaluate(element => element.compareDocumentPosition(document.querySelector('.wl-board')) & Node.DOCUMENT_POSITION_FOLLOWING), 'theme precedes the limit');
+      assert.ok(await card(n).locator('.wl-scene-brief h3').evaluate(element => parseFloat(getComputedStyle(element).fontSize)) >= 18, 'theme title remains clear');
     }
-    const hostText = await text(host);
-    for (const n of s.round.players) assert.ok(hostText.includes(String(CONTENT.scene(s.round.sceneId).roles[s.round.roles[n]].en)), 'the shared screen lists every role');
+    assert.equal(await host.locator('[data-wl-inspiration]').evaluate(element => element.open), false, 'host roles begin folded');
+    const hostText = await host.locator('[data-wl-inspiration]').textContent();
+    for (const n of s.round.players) assert.ok(hostText.includes(String(CONTENT.scene(s.round.sceneId).roles[s.round.roles[n]].en)), 'the host may open every optional role');
     assert.match(await host.locator('.wl-values').innerText(), /\+15/, 'the shared screen shows what each limit scores');
-    check('every card puts its own role and limit first; cast/foul/points details are folded below, remain public, and no cast is forced to have multiple sixes');
+    check('the theme is above each limit; player and host roles begin folded as optional inspiration, with original turn and draw rules');
     await views(host, 'host-cast', '[data-host-action="close"]', HOSTS);
     await views(card(1), 'card-cast', '[data-ct-main] [data-ct-action="close"]', PHONES);
+    const beforeInspiration = await state();
+    await card(1).locator('[data-wl-inspiration] > summary').click();
+    assert.equal(await card(1).locator('.wl-role-idea').isVisible(), true, 'a player may open their role inspiration');
+    await card(1).locator('[data-wl-inspiration] > summary').click();
+    await host.locator('[data-wl-inspiration] > summary').click();
+    assert.equal(await host.locator('[data-wl-inspiration] .wl-cast-row').first().isVisible(), true, 'the host may open the optional cast');
+    await host.locator('[data-wl-inspiration] > summary').click();
+    assert.equal((await state()).turnId, beforeInspiration.turnId, 'opening inspiration does not send a gameplay command');
+    assert.deepEqual((await state()).round.limits, beforeInspiration.round.limits);
+    assert.equal((await state()).deadline, beforeInspiration.deadline);
+    check('native optional role disclosures open and close without changing the round, limits or clock');
     await host.close(); host = null;
     check('the host page is closed from here on: the cards run the table');
 

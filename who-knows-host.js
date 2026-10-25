@@ -85,7 +85,7 @@
       pick(prefix + 'tokens', E.CONFIG.tokenOptions, n => n === 0 ? t('tokensNone') : String(n));
       pick(prefix + 'wolves', E.CONFIG.wolfOptions, w => t('wolves_' + w));
       if (byId(prefix + 'target-kind')) pick(prefix + 'target-kind', E.CONFIG.targetKinds, k => t('target_' + k));
-      if (byId(prefix + 'number-max')) pick(prefix + 'number-max', E.CONFIG.numberMaxOptions, n => t('numberPoolN', { n }));
+      if (byId(prefix + 'number-max')) byId(prefix + 'number-max').value = String(E.CONFIG.defaultNumberMax);
     }
     pick('m-mode', E.MODES, m => t('mode_' + m));
     if (!byId('minutes').dataset.ready) { writeSettings('setup', state?.settings || E.defaultSettings()); byId('minutes').dataset.ready = '1'; }

@@ -22,21 +22,26 @@ function fixture(deck = 'classic', mode = 'thinker') {
   } };
 }
 
-test('every real topic has two optional fiction starts, without consulting private answer evidence', () => {
+test('every real topic has two short sayable fictional explanations, without private answer evidence or extra steps', () => {
   for (const question of bank) {
     const topic = E.publicQuestion(question), key = 'round:seat', guide = E.storyGuide(topic, key);
     assert.equal(guide.kind, 'fiction'); assert.equal(guide.optional, true);
-    assert.equal(guide.topic, topic.term); assert.equal(guide.starts.length, 2); assert.equal(guide.steps.length, 3);
+    assert.equal(guide.version, 2); assert.equal(guide.format, 'sayable');
+    assert.equal(guide.topic, topic.term); assert.equal(guide.starts.length, 2); assert.deepEqual(guide.steps, []);
     assert.notDeepEqual(guide.starts[0], guide.starts[1]);
-    for (const item of [...guide.starts, ...guide.steps]) {
+    for (const item of guide.starts) {
       assert.ok(item.en.length > 20); assert.ok(item.zh.length > 8);
+      assert.ok(item.en.split(/\s+/).length <= 24, 'one short sentence in simple English');
+      assert.ok(item.zh.length <= 55, 'one direct Chinese explanation');
+      assert.match(item.en, /\.$/); assert.match(item.zh, /。$/);
+      assert.doesNotMatch(item.en, /\b(?:invent|choose|pick|imagine|decide|add|start by)\b/i, 'a proposed explanation, not instructions to invent one');
     }
     const poisoned = { ...topic };
     for (const field of ['secretAnswer', 'supportingFacts', 'revealExplanation', 'sources', 'tags', 'truthfulId', 'roles']) {
       Object.defineProperty(poisoned, field, { get() { throw Error('Private evidence was read: ' + field); } });
     }
     assert.deepEqual(E.storyGuide(poisoned, key), guide);
-    assert.deepEqual(E.storyGuide({ ...topic, publicHints: ['changed public category'] }, key), guide, 'starts are story structure, not category-based answer clues');
+    assert.deepEqual(E.storyGuide({ ...topic, publicHints: topic.publicHints.slice().reverse() }, key), guide, 'public choice ordering does not indicate which category is true');
     for (const secret of [question.secretAnswer, question.revealExplanation, ...question.supportingFacts]) assert.ok(!JSON.stringify(guide).includes(secret));
   }
 });
@@ -46,8 +51,21 @@ test('fiction starts stay stable on reconnect, vary among seats, and never expos
   assert.deepEqual(E.storyGuide(topic, 'round-1:seat-1'), guide);
   const variants = new Set(Array.from({ length: 20 }, (_, n) => JSON.stringify(E.storyGuide(topic, 'round-1:seat-' + n).starts)));
   assert.ok(variants.size >= 4);
-  const saved = clone(guide); guide.starts[0].en = 'tampered'; guide.steps[0].zh = 'changed';
+  const saved = clone(guide); guide.starts[0].en = 'tampered'; guide.steps.push({ en: 'tampered', zh: 'changed' });
   assert.deepEqual(E.storyGuide(topic, 'round-1:seat-1'), saved);
+});
+
+test('unfamiliar topics use all public category choices, including decoys, rather than assuming the first is correct', () => {
+  const topic = { id: 'public-only', term: 'Unfamiliar term', deck: 'classic', publicHints: ['Weather', 'Historical tableware', 'Clothing accessory'] };
+  const lines = new Set();
+  for (let n = 0; n < 100; n++) {
+    const key = 'round:seat-' + n, guide = E.storyGuide(topic, key);
+    assert.deepEqual(E.storyGuide({ ...topic, publicHints: topic.publicHints.slice().reverse() }, key), guide);
+    for (const line of guide.starts) lines.add(line.en);
+  }
+  assert.ok([...lines].some(line => line.includes('warm rain')));
+  assert.ok([...lines].some(line => line.includes('little bell')));
+  assert.ok([...lines].some(line => line.includes('tiny mirror')));
 });
 
 test('only current bluffers receive the optional guide, in both packs and both modes; game rules remain untouched', () => {

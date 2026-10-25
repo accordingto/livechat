@@ -187,7 +187,7 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now, games = ['blu
       for (let n = 1; n <= 3; n++) {
         const own = await card(f, n), privateCard = own.view.privateCard, guide = privateCard?.storyGuide;
         check(privateCard?.role === 'bluffer'
-          ? guide?.optional === true && guide.kind === 'fiction' && guide.topic === own.view.round.topic.term && guide.starts?.length === 2 && guide.steps?.length === 3
+          ? guide?.optional === true && guide.kind === 'fiction' && guide.topic === own.view.round.topic.term && guide.version === 2 && guide.starts?.length === 2 && guide.steps?.length === 0
           : guide == null, g);
       }
       check(current.view.round.storyGuide == null && current.view.round.topic.storyGuide == null, g);

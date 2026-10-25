@@ -24,17 +24,21 @@ function renderer(UI) {
   return card;
 }
 
-test('the actor card puts the saved floor, own limit, scene and one scoring handoff before optional details', () => {
+test('the actor card puts the theme above the floor and limit, with roles folded as optional inspiration', () => {
   const state = game();
   for (const language of ['en', 'zh']) {
     const UI = ui(language), card = renderer(UI), view = E.view(state, state.round.speaker), html = card.main(view);
+    assert.ok(html.indexOf('class="wl-scene-brief') < html.indexOf('data-wl-speaker'));
     assert.ok(html.indexOf('data-wl-speaker') < html.indexOf('class="wl-board'));
-    assert.ok(html.indexOf('class="wl-board') < html.indexOf('class="wl-scene-brief'));
-    assert.ok(html.indexOf('class="wl-scene-brief') < html.indexOf('data-ct-action="line"'));
+    assert.ok(html.indexOf('class="wl-board') < html.indexOf('data-ct-action="line"'));
+    assert.ok(html.indexOf('data-ct-action="line"') < html.indexOf('data-wl-inspiration'));
     assert.ok(html.indexOf('data-ct-action="line"') < html.indexOf('data-wl-more'));
     assert.match(html, new RegExp(`data-ct-arg-speaking-turn="${state.round.speakingTurn}"`));
     assert.equal((html.match(/data-ct-action="line"/g) || []).length, 1);
     assert.match(html, /<details class="wl-more" data-wl-more>/, 'secondary information starts folded');
+    assert.match(html, /<details class="wl-inspiration" data-wl-inspiration>/, 'role inspiration starts folded');
+    assert.ok(html.includes(UI.t('roleInspirationHint')));
+    assert.doesNotMatch(html, /class="wl-board-role"/);
     assert.ok(html.includes(UI.t('yourTurn')));
     assert.doesNotMatch(html, /undefined|NaN|Infinity/);
     assert.equal((html.match(/data-ct-deadline/g) || []).length >= 1, true, 'the scene clock is still visible');
@@ -61,6 +65,8 @@ test('the shared screen shows the current floor without a host scoring action, a
   for (const language of ['en', 'zh']) {
     const UI = ui(language), html = UI.stage(E.view(state, 0).wl);
     assert.match(html, /data-wl-speaker/);
+    assert.match(html, /<details class="wl-inspiration" data-wl-inspiration>/, 'host roles start folded too');
+    assert.ok(html.indexOf('wl-marquee-title') < html.indexOf('data-wl-inspiration'));
     assert.doesNotMatch(html, /data-ct-action="line"|<img src=x onerror=x>/);
     assert.match(html, /&lt;img src=x onerror=x&gt;/);
   }

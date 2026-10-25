@@ -24,7 +24,7 @@ to stay open.
 - `card-table.css` — structure shared by all three games; each game styles itself
   through `--ct-*` tokens on its own page and card class.
 - Cache tag `ct-2` on these three files in all three host pages and `play.html`;
-  the games' own files use `wl-4`, `rs-3` and `ww-1` respectively.
+  the games' own files use `wl-5`, `rs-3` and `ww-art-2` respectively.
 
 ## Authority
 
@@ -95,7 +95,7 @@ fouls are in the lower optional panel. See `word-limit-mode.md`.
 
 The real Hub entry is `word-wolf.html`, using `word-wolf-{content,art,engine,ui,host}.js`
 and the original `play.html` cards. It restores 80 original bilingual pairs,
-defaults to 21 object pairs with 42 original SVG illustrations, and supports
+defaults to 21 object pairs; all 160 words have dedicated gouache-style bitmap cards, and it supports
 3–9 players. Exactly one gets a different related card; nobody is told their
 affiliation before the result. Describing and optional random Pick circles
 are untimed. Voting hides each target until reveal, forbids self-votes and

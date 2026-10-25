@@ -845,7 +845,9 @@ test('bluffers have optional story starts below the primary preparation action, 
     const h = await harness(view, { card: true }), guide = view.privateCard.storyGuide;
     assert.match(h.html(), /<details id="bk-story-guide" class="bk-detail bk-story-guide" data-bk-story-guide="fiction">/);
     assert.ok(h.html().indexOf('data-bk-action="ready"') < h.html().indexOf('id="bk-story-guide"'), 'ready remains before optional reading');
-    assert.match(h.html(), /Fiction prompts, not clues to the real answer/);
+    assert.match(h.html(), /Two made-up ideas · optional/);
+    assert.match(h.html(), /Use either, change it, or ignore both/);
+    assert.doesNotMatch(h.html(), /bk-guide-steps|bk-guide-topic|A simple way to build it/);
     for (const start of guide.starts) assert.ok(h.html().includes(start.en));
     assert.ok(!expandedMarkup(h.html()).includes(guide.starts[0].en), 'the optional guide does not crowd the initial card');
     assert.equal(h.node('bk-story-guide').open, false);
@@ -873,7 +875,22 @@ test('story-start text is escaped, and old card projections without a guide keep
   const old = await harness(legacy, { card: true });
   assert.equal(old.node('bk-story-guide'), undefined); assert.match(old.html(), /Bluffer/);
   const shared = await harness(view);
-  assert.equal(shared.node('bk-story-guide'), undefined); assert.doesNotMatch(shared.html(), /Fiction prompts/);
+  assert.equal(shared.node('bk-story-guide'), undefined); assert.doesNotMatch(shared.html(), /Two made-up ideas/);
+});
+
+test('old or malformed guide projections stay safe and never restore long steps or extra blocks', async () => {
+  const state = fixture('discussion'), bluffer = state.rooms.UITEST.members.find(p => project(state, p.identityId).privateCard?.role === 'bluffer');
+  const view = project(state, bluffer.identityId);
+  view.privateCard.storyGuide = { version: 1, kind: 'fiction', optional: true, topic: 'REPEATED_TOPIC_MARKER',
+    starts: [{ en: 'Legacy first start', zh: '舊版第一個起點' }, { en: 'Legacy second start', zh: '舊版第二個起點' }, { en: 'EXTRA_START_MUST_NOT_SHOW', zh: '多餘起點' }],
+    steps: [{ en: 'LONG_LEGACY_STEPS_MUST_NOT_SHOW', zh: '舊版長步驟' }] };
+  const old = await harness(view, { card: true });
+  assert.match(old.html(), /Legacy first start/); assert.match(old.html(), /Legacy second start/);
+  assert.doesNotMatch(old.html(), /REPEATED_TOPIC_MARKER|EXTRA_START_MUST_NOT_SHOW|LONG_LEGACY_STEPS_MUST_NOT_SHOW|bk-guide-steps/);
+  view.privateCard.storyGuide.starts = [null, {}, 123, { en: '' }];
+  const malformed = await harness(view, { card: true }); assert.equal(malformed.node('bk-story-guide'), undefined);
+  view.privateCard.storyGuide.starts = [{ en: 'English fallback remains available' }];
+  const fallback = await harness(view, { card: true }); assert.match(fallback.html(), /English fallback remains available/);
 });
 
 test('active player cards put the full score roster below play in an optional panel; public tables keep it expanded', async () => {

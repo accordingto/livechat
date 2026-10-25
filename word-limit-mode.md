@@ -1,7 +1,8 @@
 # WORD LIMIT THEATER — act one scene, every line exactly your limit
 
 A spoken improv game for 2–9 players on the existing room and original player
-links. Everyone draws a role in one scene and a line limit from 1 to 6. Players
+links. Everyone shares one theme and draws a line limit from 1 to 6. Assigned
+roles are optional inspiration: players may ignore them and speak freely. Players
 take turns in one saved order; each line must contain exactly the actor's
 limit of English words or Chinese characters. Limits of 1–5 are common and
 may repeat across players; six is occasional. After speaking, the current
@@ -45,7 +46,7 @@ card-table-mode.md).
   by the card page through `body.wl-card-page`).
 - `assets/word-limit-theater/` — Hub/header mark and self-hosted Latin subsets
   of Anton and Courier Prime with their SIL OFL licences.
-- Cache tag `wl-4` (game) and `ct-2` (shared table) in both entry pages.
+- Cache tag `wl-5` (game) and `ct-2` (shared table) in both entry pages.
 
 ## Limit draw policy
 
@@ -67,8 +68,9 @@ the limits or the saved speaking order.
 
 ## Round flow
 
-1. **Cast** (20 s). Each card shows its own role and limit on a big letterboard;
-   every card and the shared screen list the whole cast with limits, and the
+1. **Cast** (20 s). Each card shows the theme first, then its own limit;
+   role inspiration is folded by default on both cards and the host screen.
+   Every card and the shared screen can open the whole cast with limits, and the
    shared screen shows what a line at each dealt limit scores. Any player can
    start early or draw a different scene (5 per round). The roles are the
    scene's first N roles dealt at random. Limits follow the weighted policy
@@ -128,17 +130,30 @@ does not move the floor. Returning an actor joins their place in the saved
 cycle, and a change while paused does not resume the scene clock. Settings
 capture scene duration, units, swap count and point values for the next scene.
 
-Cards place the current/next speaker and scene clock, the player's own role
-and large limit, a short scene brief and the current action first. Waiting
-actors retain their own role and limit but have no other actor's scoring
+Cards place the theme title and situation at the top, above the current/next
+speaker, scene clock and large line limit. The current action follows those
+essentials. **Role inspiration · optional** starts folded and explicitly says
+players can ignore the role and play freely; the host's cast/role area starts
+folded too. Waiting actors retain their limit but have no other actor's scoring
 button. **Cast & scene details** below folds the personal scene totals, swap timer,
 point legend, complete cast, foul controls and standings into a secondary area;
-the open state survives ordinary rerenders. Existing Table controls remain
+the open state survives ordinary rerenders, as does a player's opened role
+inspiration. Both reset closed for the next scene. Existing Table controls remain
 lower down. This is a spoken game: there is no microphone API, recognition,
 automatic word counter or AI referee.
 
 ## Validation
 
+- Theme-first/optional-role follow-up: the combined focused Word Limit/shared
+  table/Who Knows suite passes **92/92**. The real host and four original
+  player links pass **20 checks / 72 captures** at 390/320 EN/ZH, with zero
+  page errors, overflow, clipping, contrast or action-target findings. A
+  separate core run passes **21 checks**, including native player/host role
+  disclosure toggles that preserve the turn, limits and deadline. Reports:
+  `wl-theme-inspiration-browser-4/report.json` and
+  `wl-theme-inspiration-browser-core-4/report.json`, outside the public Hub.
+  Final 320-pixel English/Chinese scene cards were visually inspected. These
+  are isolated-fixture checks; this follow-up has not been deployed/live-tested.
 - Engine (21), card UI (4), shared table (9) and shared integration (7) tests
   pass **41/41**, run with `node --test tests/word-limit-engine.test.cjs
   tests/word-limit-ui.test.cjs tests/card-table.test.cjs

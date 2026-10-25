@@ -60,7 +60,7 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
         await page.goto(base + '/bluff-king-live-chat.html?room=GUIDE' + (shared ? '' : '&card=1'));
         await page.locator('.bk-topic').waitFor(); await page.evaluate(lang => I18N.setLang(lang), lang);
         const tag = [scenario.deck, scenario.mode, scenario.phase, scenario.role, width, lang].join('-');
-        const metrics = await page.evaluate(() => {
+        const audit = () => page.evaluate(() => {
           const clipped = [...document.querySelectorAll('h1,h2,p,li,button,summary')].filter(element => {
             const box = element.getBoundingClientRect(); return box.width > 0 && box.height > 0 && element.scrollWidth > element.clientWidth + 1;
           }).map(element => element.textContent.trim().slice(0, 80));
@@ -69,6 +69,7 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
           }).map(element => ({ text: element.textContent.trim(), width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height }));
           return { overflow: document.documentElement.scrollWidth - innerWidth, clipped, badTargets };
         });
+        const metrics = await audit();
         await page.screenshot({ path: path.join(output, tag + '.png'), fullPage: true });
         report.captures.push(tag + '.png');
         report.views.push({ ...scenario, ...metrics, screenshot: tag + '.png' });
@@ -88,15 +89,21 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
           const guide = page.locator('#bk-story-guide'); assert.equal(await guide.getAttribute('open'), null);
           await guide.locator('summary').click(); assert.equal(await guide.getAttribute('open'), '');
           assert.equal(await guide.locator('.bk-guide-starts li').count(), 2);
+          assert.equal(await guide.locator('.bk-guide-steps,.bk-guide-topic').count(), 0, 'only two direct explanations, no repeated topic or long steps');
           const expected = view.privateCard.storyGuide.starts[0][lang]; assert.ok((await guide.innerText()).includes(expected));
           await page.evaluate(() => window.__bluffOptions.onView({ ...window.__bluffView, version: window.__bluffView.version + 1 }));
           assert.equal(await guide.getAttribute('open'), '', 'sync preserves the optional panel');
           await page.locator('[data-bk-action="toggleRole"]').click(); assert.equal(await guide.count(), 0, 'hiding role hides the optional guide');
           await page.locator('[data-bk-action="toggleRole"]').click(); assert.equal(await guide.getAttribute('open'), null);
           assert.deepEqual(await page.evaluate(() => window.__bluffCommands), [], 'reading/toggling sends no game command');
-          if (scenario.deck === 'halloween') {
-            await guide.locator('summary').click(); await page.screenshot({ path: path.join(output, tag + '-guide-open.png'), fullPage: true }); report.captures.push(tag + '-guide-open.png');
-          }
+          await guide.locator('summary').click();
+          const opened = await audit(), guideHeight = await guide.evaluate(element => element.getBoundingClientRect().height);
+          report.views.push({ ...scenario, guideOpen: true, ...opened, guideHeight });
+          assert.ok(opened.overflow <= 1, tag + ' open guide horizontal overflow');
+          assert.deepEqual(opened.clipped, [], tag + ' open guide clipped text');
+          assert.deepEqual(opened.badTargets, [], tag + ' open guide tap targets');
+          assert.ok(guideHeight <= 450, tag + ' two concise ideas fit in one small panel');
+          await page.screenshot({ path: path.join(output, tag + '-guide-open.png'), fullPage: true }); report.captures.push(tag + '-guide-open.png');
         } else assert.equal(await page.locator('#bk-story-guide').count(), 0);
         report.checks.push(tag);
       } finally { await context.close(); }

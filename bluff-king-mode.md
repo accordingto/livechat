@@ -245,23 +245,26 @@ offer the mode only after the independent service is redeployed.
 
 ## Optional fiction starts and quieter player cards (2026-10-26)
 
-Bluffers can open **Story starting points · optional** on their own card during
+Bluffers can open **Two made-up ideas · optional** on their own card during
 `prepare` and `discussion`. This applies to Classic and Halloween topics in
 both Thinker and Everyone votes modes, including topics drawn from Mix both.
-The panel explicitly labels its contents as invented directions rather than
-facts. Players may use one, combine ideas or ignore everything; no story has to
-follow a template and no extra action is required before Ready or speaking.
+The panel has one short permission-to-ignore sentence and two complete,
+simple fictional explanations that players can say directly or change. There
+is no repeated topic heading, abstract direction, category list or step-by-step
+worksheet. For Puzzle jug, examples include a cup with a bell to request
+another drink, or a false-bottom container for hiding snacks. A haunted place
+might have a locked room that opens when a visitor says the wrong name. These
+are explicitly made up, not facts or clues to the real answer. No extra action
+is required before Ready or speaking.
 
-`bluff-king-engine.js` owns the original bilingual scaffolds: six Classic
-starting frames and six Halloween starting frames. Each eligible private
-projection gets two distinct starts and three short steps: choose or ignore
-the starts, add who/where/one concrete detail, then give a simple reason that
-can be changed freely during follow-ups. Examples include an unexpected use, a
-misunderstood name, a caretaker's repeated sound or an ordinary house rule that
-grew into a spooky warning. These are prompts to invent, never extra evidence.
-
-`storyGuide(publicTopic, roundAndSeatKey)` uses only public topic ID, deck and
-term, plus the current round and seat identity. Its deterministic selection
+`bluff-king-engine.js` owns 72 original bilingual explanations in 18 small
+fiction families. `storyGuide(publicTopic, roundAndSeatKey)` considers only
+literal public title words, visible category choices and the public question.
+For unfamiliar titles with multiple public categories, it includes decoy
+categories too and never assumes the first category is true; category ordering
+does not affect selection. With no usable literal/category cue, it uses a
+general fictional explanation. The topic ID plus current round/seat identity
+selects two distinct lines. Its deterministic selection
 stays the same on reconnect, does not consume game randomness and does not
 write room state or knowledge history. `projectView` adds
 `privateCard.storyGuide` only for an eligible Bluffer in preparation or
@@ -271,6 +274,10 @@ research, explanation and other players' unrevealed roles do not feed it.
 The Truth Teller still sees the complete real answer and every supporting fact
 without expanding a panel. Hiding the private role also removes the fiction
 starts; showing the role again begins with that panel closed.
+Guide version 2 retains `starts: [{en, zh}, ...]`, `kind: 'fiction'` and
+`optional: true`, adds `format: 'sayable'`, and leaves legacy `steps` empty.
+The new UI also accepts old version-1 starts, escapes their text, caps them at
+two and ignores their long steps. Missing/malformed guides do not block play.
 
 The original `play.html` card still embeds the same real game page. Its
 single-column layout puts the topic, own role/evidence, current speaker and
@@ -285,17 +292,19 @@ header; shared table presentation and all game rules remain unchanged.
 
 The guide is part of the engine's private projection, so normal service-run
 Hub tables need the updated independent runtime as well as the frontend. The
-frontend engine/UI tag is `bluff-guides-1`, CSS is `v=9`; the unchanged sync
+frontend engine/UI tag is `bluff-guides-2`, CSS is `v=10`; the unchanged sync
 tag remains `vote-1`. There is no second guide data bundle to maintain.
 
-Local verification for this change passed 172 Bluff/executor tests, including
+Local verification passed 174 Bluff/executor tests, covering
 all 104 real topics, deterministic detached guides, secret-field independence,
 role/phase privacy, escaped output, Hide/Show and folded panels. The isolated
 real-page fixture `tests/bluff-guides.browser.cjs <playwright>` passed 26
-scenarios and 30 captures across EN/ZH, 320/390 player cards and the 1280 shared
+scenarios and 38 captures across EN/ZH, 320/390 player cards and the 1280 shared
 screen, with no page errors, overflow, clipped text or target findings. Its
 transport is a read-only stub; it does not establish production-service
 deployment, live multiplayer correctness or physical-phone validation.
+All twelve open-guide phone states also passed the layout checks, with the
+two-idea panels measuring about 248–290px high.
 
 ## Topic content and maintenance
 

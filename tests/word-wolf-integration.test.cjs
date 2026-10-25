@@ -12,14 +12,14 @@ test('the restored game has one real Hub entry and the original player links loa
   const hub = read('index.html'), page = read('word-wolf.html'), play = read('play.html');
   assert.equal([...hub.matchAll(/href="word-wolf\.html"/g)].length, 1);
   assert.match(hub, /descWordwolf/); assert.match(page, /<h1>WORD WOLF<\/h1>/);
-  const files = ['content', 'art', 'engine', 'ui'].map(x => `word-wolf-${x}.js?v=ww-1`);
+  const files = ['content', 'art', 'engine', 'ui'].map(x => `word-wolf-${x}.js?v=ww-art-2`);
   for (const html of [page, play]) {
     let before = html.indexOf('card-table-ui.js?v=ct-2');
     assert.ok(before > 0);
     for (const file of files) { const at = html.indexOf(file); assert.ok(at > before, file + ' dependency order'); before = at; }
-    assert.match(html, /href="word-wolf\.css\?v=ww-1"/);
+    assert.match(html, /href="word-wolf\.css\?v=ww-art-2"/);
   }
-  assert.match(page, /word-wolf-host\.js\?v=ww-1/); assert.doesNotMatch(play, /word-wolf-host\.js/);
+  assert.match(page, /word-wolf-host\.js\?v=ww-art-2/); assert.doesNotMatch(play, /word-wolf-host\.js/);
   assert.match(play, /wordwolf: \{ key: 'ww', page: 'ww-card-page', title: 'WORD WOLF', ui: \(\) => WORD_WOLF_UI \}/);
   assert.match(play, /'ct-card-page', 'wl-card-page', 'rs-card-page', 'ww-card-page'/);
   for (const id of ['room-label', 'demo-bar', 'demo-view', 'demo-link', 'status', 'setup-needed', 'switched', 'continue', 'setup', 'start', 'setup-cancel', 'count-note', 'game', 'scene', 'actions', 'controls', 'error', 'category']) assert.match(page, new RegExp(`id="ww-${id}"`));
@@ -49,6 +49,6 @@ test('all own copy is bilingual and the compact card escapes names while retaini
   const next = E.apply(state, { id: 'vote-ui-1', type: 'vote', actor: 1, sessionId: state.sessionId, stage: state.stage, now: 2 });
   const data = E.view(next, 1), html = UI.Card.prototype.main.call({ pending: null }, data);
   assert.match(html, /data-ct-action="ballot"/); assert.ok(!html.includes('data-ct-arg-target="1"'));
-  assert.ok(!html.includes('<img')); assert.match(html, /X img onerror=x/);
+  assert.doesNotMatch(html, /<img[^>]*\bonerror\s*=/); assert.match(html, /X img onerror=x/);
   assert.ok(UI.settingsForm({ category: 'objects' }).includes('data-ct-set="category"'));
 });

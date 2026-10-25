@@ -1,0 +1,1135 @@
+{
+  "version": 1,
+  "tool": "built-in image_gen.imagegen",
+  "generatedFor": "WORD WOLF",
+  "assets": "assets/word-wolf/cards-v1/<item-id>.webp",
+  "count": 160,
+  "format": "WebP",
+  "width": 640,
+  "height": 640,
+  "transparentBackground": false,
+  "preparation": "Original generated PNGs preserved outside the repository; only resize/contain and WebP compression were applied for the game. No stock images or duplicate placeholder cards.",
+  "visualDirection": "One coherent, polished illustrated-card family. Clear large subject, readable silhouette and restrained simple background. Square composition with comfortable crop-safe margins. Illustrations contain no word labels, captions, watermarks or logos; the real UI renders the English and Traditional Chinese names below. Each image shows only its own concept; never show both paired answers together. Feelings and other abstract ideas use a small immediately understandable scene. Pair-specific details in artDescription are mandatory for recognition, while color and art style remain consistent across the collection.",
+  "cards": [
+    {
+      "id": "donut",
+      "file": "assets/word-wolf/cards-v1/donut.webp",
+      "sha256": "8277c40be7b65c93855b8530c4677dff53ddcca030c928574f361a1d170cfebc",
+      "bytes": 56256,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One round doughnut with a clear central hole, pink icing and a few sprinkles; appetizing bakery still life. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "bagel",
+      "file": "assets/word-wolf/cards-v1/bagel.webp",
+      "sha256": "f188fd18f727bcd9878f6ad7047d0f8cd05300c181e8d7df0308dfc1601bc1a6",
+      "bytes": 100772,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One golden-brown plain bagel with a clear central hole, dense chewy bread and sesame seeds; no icing or sweet decoration. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "taco",
+      "file": "assets/word-wolf/cards-v1/taco.webp",
+      "sha256": "9850f39ee16c1ef84930d654bb42455f72db128654c7d4a23f44aed9585f1826",
+      "bytes": 67302,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One open crunchy folded taco shell, visibly filled with lettuce, diced tomato and cooked filling; the open top and crisp U shape are unmistakable. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "burrito",
+      "file": "assets/word-wolf/cards-v1/burrito.webp",
+      "sha256": "883aa9221500ac27685b3407f7e10e27dee1ed18a0150894ad4aad65aaba3d5f",
+      "bytes": 79762,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One large tightly rolled soft flour tortilla burrito, closed ends, cut across the middle so rice, beans and filling show inside; no open taco shell. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "sushi",
+      "file": "assets/word-wolf/cards-v1/sushi.webp",
+      "sha256": "86191870648617297aaff0552adcba5bb76758b8c44595ed24d2488f0f0c8bca",
+      "bytes": 68856,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A small plate with two clearly recognizable salmon nigiri sushi: orange fish slices sitting on compact white rice, plus one neat nori roll. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "rice-ball",
+      "file": "assets/word-wolf/cards-v1/rice-ball.webp",
+      "sha256": "202b6970ccfac16f162c7ecb3cb25c8ef7c2b95a1732f8ef2fcbcf736e227dc7",
+      "bytes": 63468,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A single triangular Japanese rice ball made of white rice, with one broad black nori strip around its lower half; no raw fish on top. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "noodles",
+      "file": "assets/word-wolf/cards-v1/noodles.webp",
+      "sha256": "438f29127934fb00f74396a7c46f9117a338efbd0d15675cac2fba8e75d9462d",
+      "bytes": 69244,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A ceramic Asian noodle bowl with pale noodles in broth and chopsticks lifting several strands; clearly a soup bowl rather than spaghetti on a plate. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "spaghetti",
+      "file": "assets/word-wolf/cards-v1/spaghetti.webp",
+      "sha256": "4ca51662bd695e989b2ab60a98137d5d4ee369a511ff82fa8f83a418a48f6f08",
+      "bytes": 85422,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A shallow plate of long spaghetti with red tomato sauce, basil and a fork twirling strands; recognizable Italian pasta, not noodle soup. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "popcorn",
+      "file": "assets/word-wolf/cards-v1/popcorn.webp",
+      "sha256": "4f55eb2fe6383e4ce7526da0c423753600619aa4e63106bea9030c57f48cd82a",
+      "bytes": 52384,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A small striped cinema-style carton overflowing with fluffy white popped corn, with several individual kernels beside it; no written branding. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "pretzel",
+      "file": "assets/word-wolf/cards-v1/pretzel.webp",
+      "sha256": "5765e5922edb490db020a6b1830dc99a06b7c9f91d36ecf5572b374f6f538966",
+      "bytes": 98174,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One golden-brown baked pretzel with a clear traditional looped knot, three openings and large salt crystals. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "cupcake",
+      "file": "assets/word-wolf/cards-v1/cupcake.webp",
+      "sha256": "768062910b748752f8575f757581f72f47fd73184cf797dafd8d29c07e22d6f7",
+      "bytes": 48620,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One small cupcake in a paper case with a tall generous swirl of pink frosting and a few sprinkles; frosting is the main distinguishing feature. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "muffin",
+      "file": "assets/word-wolf/cards-v1/muffin.webp",
+      "sha256": "f34009d7ce06fce4c746c785ecadb9f6b709b051a377fc5e93b6e43a9cfe23c4",
+      "bytes": 77916,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One golden blueberry muffin in a paper case, a rough rounded baked top with visible blueberries; entirely unfrosted. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "avocado",
+      "file": "assets/word-wolf/cards-v1/avocado.webp",
+      "sha256": "1835317e6d0559468f16fa638c37aa00b16d00c8c01b120f9f97435d0bb99c17",
+      "bytes": 72986,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A ripe avocado cut lengthwise, showing creamy green flesh and one large round brown stone, with its textured dark-green half beside it. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "pear",
+      "file": "assets/word-wolf/cards-v1/pear.webp",
+      "sha256": "d004570dcbb86255ce5416a0d3ac80472acc28c02ca1eebcb52ad686ea7c97a4",
+      "bytes": 41980,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One yellow-green pear with a clearly narrow neck, rounded lower body, short brown stem and a small green leaf; no cut avocado or large stone. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "watermelon",
+      "file": "assets/word-wolf/cards-v1/watermelon.webp",
+      "sha256": "a5893bd5e78f8615ea3a4ef1ff0a8db69f7cd5dad7e0281c442df45009602295",
+      "bytes": 89084,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A triangular watermelon slice with vivid red flesh, black seeds and striped green rind, beside part of the round fruit. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "melon",
+      "file": "assets/word-wolf/cards-v1/melon.webp",
+      "sha256": "86c4f6deb640aba92efae320fe91bf58d0e8cfeb70bbce0f8b42a5ac5c8325b0",
+      "bytes": 76750,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A pale-green netted sweet melon cut in half, showing pale orange flesh and a small central seed cavity; no red flesh or black watermelon seeds. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "ginger",
+      "file": "assets/word-wolf/cards-v1/ginger.webp",
+      "sha256": "54c932b70ad8cfd981874ccf471a00fb869b5fe0fac8019e776e774d9f3f97e8",
+      "bytes": 62178,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A fresh tan ginger rhizome with irregular branching knuckles and a small cut end showing pale yellow flesh; no garlic bulb. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "garlic",
+      "file": "assets/word-wolf/cards-v1/garlic.webp",
+      "sha256": "fa2ad9c8db6a040b69e8ee21fcdd8aac8a5385d4de6eafe287a9e3090b76b1aa",
+      "bytes": 53356,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A white papery garlic bulb opened slightly to show distinct curved cloves, with two peeled cloves beside it. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "happy",
+      "file": "assets/word-wolf/cards-v1/happy.webp",
+      "sha256": "7dc3bcae1ba39deb35c296858434dac02726e7c11c45618410deb12827e3fd29",
+      "bytes": 81082,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person with a warm unhurried smile, bright eyes and relaxed open posture enjoying a peaceful pleasant moment; gentle happiness rather than jumping excitement. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "excited",
+      "file": "assets/word-wolf/cards-v1/excited.webp",
+      "sha256": "d8a41016c3fead5470f69443ed5c2539e68365b474e4bf8a5dfae026ec5208a3",
+      "bytes": 27946,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person bursting with delighted energy, wide sparkling eyes, open grin, lifted heels and both fists raised in celebration; visibly more energetic than a quiet smile. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "sad",
+      "file": "assets/word-wolf/cards-v1/sad.webp",
+      "sha256": "b19e2ac90af2c479d2e6f42e3dcf32b41332243cbad18d9e4e3af7ec69b59a20",
+      "bytes": 51620,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person sitting quietly with downturned mouth, lowered shoulders and a tear on their cheek; a simple clear expression of sadness. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "disappointed",
+      "file": "assets/word-wolf/cards-v1/disappointed.webp",
+      "sha256": "4f2b7f7ee2b4609824768c7d72972949c304f7d2d9b392b9bcf12d0010abed11",
+      "bytes": 44928,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person looking down at a fallen or spoiled small cake, shoulders slumped and expression let down after expecting something good; quiet disappointment. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "angry",
+      "file": "assets/word-wolf/cards-v1/angry.webp",
+      "sha256": "10b39975162e2bc1f40700de7aefb31b82ddb63ec0afe1c7e10322a2e036cd68",
+      "bytes": 39000,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person with deeply furrowed eyebrows, tense jaw, clenched fists and a strong forward posture; clearly intense anger without violence. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "annoyed",
+      "file": "assets/word-wolf/cards-v1/annoyed.webp",
+      "sha256": "e68bf8fa022b5c1590ed978a5853831db067013c2d59a518bdeaba40dff1c539",
+      "bytes": 25086,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person giving an irritated side-eye and slight eye roll, lips pressed and arms crossed; restrained everyday annoyance, not rage. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "scared",
+      "file": "assets/word-wolf/cards-v1/scared.webp",
+      "sha256": "d691ff3d5d1b9cf685df186004ecaea16b872535f6aeb9d4907f70a5da685657",
+      "bytes": 46014,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A frightened person recoiling from an indistinct shadow, eyes very wide, shoulders raised and hands held defensively near the chest; clear immediate fear. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "nervous",
+      "file": "assets/word-wolf/cards-v1/nervous.webp",
+      "sha256": "1aea0cef1e36085ae3a924a858fdbcbf9f3d230e988b5019d2ec1fe164f2836e",
+      "bytes": 30198,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person waiting to speak beside a small lectern, fidgeting with their fingers, tense smile and a small bead of sweat; anticipation and stage nerves, not a visible monster. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "surprised",
+      "file": "assets/word-wolf/cards-v1/surprised.webp",
+      "sha256": "bb7b44245c96436fb98f276cd2d54303e00ee055ddd88e261c5424d6767b926d",
+      "bytes": 59950,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person receiving an unexpected wrapped gift, eyebrows lifted, eyes bright and mouth forming a small delighted gasp; a pleasant surprise. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "shocked",
+      "file": "assets/word-wolf/cards-v1/shocked.webp",
+      "sha256": "1159f0c135f61b3e0f4a368a74cff9eebed326aa16cdb2ff951637dbe5ba5fca",
+      "bytes": 57968,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person frozen with wide eyes, pale stunned expression and dropped hands after startling news, a tipped cup nearby; stronger speechless shock rather than happy surprise. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "confused",
+      "file": "assets/word-wolf/cards-v1/confused.webp",
+      "sha256": "65b346f6deec3b73ce746c9fab278d3de1635929e66f0943810fcc5fadc5f060",
+      "bytes": 61026,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person puzzling over a small set of mismatched puzzle pieces, eyebrows drawn together, head tilted and palms turned upward; visibly unable to understand. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "curious",
+      "file": "assets/word-wolf/cards-v1/curious.webp",
+      "sha256": "a30c83913cf428f333211f83e7e185477ece763160df56a023f77a28967081f9",
+      "bytes": 71054,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person leaning forward with an attentive interested expression, examining a small shell closely with a magnifying glass; active curiosity rather than confusion. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "proud",
+      "file": "assets/word-wolf/cards-v1/proud.webp",
+      "sha256": "0a243d6a3dc85ed345591ac27c2bf3782d66a897fa0c9949f513c0b54371aa41",
+      "bytes": 38018,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person standing tall with chin raised and a satisfied smile, holding a small medal or finished handmade creation close to the chest; pride in an achievement. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "confident",
+      "file": "assets/word-wolf/cards-v1/confident.webp",
+      "sha256": "27d34d805cc6cfa85f1eab61344e401a993d79127bc08056eb8a0cbf054c5765",
+      "bytes": 50622,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person standing comfortably upright with shoulders back, steady direct gaze and one hand on the hip, ready to begin; calm self-assurance without a trophy. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "bored",
+      "file": "assets/word-wolf/cards-v1/bored.webp",
+      "sha256": "ff8eb51585747a138f9cb8706ae75bfeb688899826c1034916395d8d597c631b",
+      "bytes": 54458,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person resting their cheek heavily on one hand at a bare desk, half-lidded uninterested eyes and a flat expression; no yawning or exhaustion. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "tired",
+      "file": "assets/word-wolf/cards-v1/tired.webp",
+      "sha256": "ae5947b07245f80a7660d89417e9edf9ae50b11541e7fbf844b1becdcb52842a",
+      "bytes": 49288,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A visibly sleepy person with drooping eyelids, tousled hair and a large yawn covered with one hand, shoulders sagging; clear fatigue. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "shy",
+      "file": "assets/word-wolf/cards-v1/shy.webp",
+      "sha256": "0b8ed7e7ed4da709ece33516e22ee3b2ff8240abc8b68b32362ea4b65d37e10b",
+      "bytes": 26368,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person slightly turned inward with a small hesitant smile, pink cheeks, lowered gaze and hands held together; gentle shyness without a public mishap. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "embarrassed",
+      "file": "assets/word-wolf/cards-v1/embarrassed.webp",
+      "sha256": "3219e9c65576d314dc65c3890b3d8fd30d3c4b28adbf5c7d6f4c352d64326d19",
+      "bytes": 58890,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person flushing strongly and covering part of their face after accidentally spilling a drink, glancing away awkwardly; unmistakable embarrassment. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "lonely",
+      "file": "assets/word-wolf/cards-v1/lonely.webp",
+      "sha256": "4f390e6a0371b4786935b6754c12043c9718bcdcd7201e0df4c96937669352cb",
+      "bytes": 106600,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One person sitting alone at the end of a long empty park bench, looking wistfully at the vacant space beside them; quiet loneliness. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "jealous",
+      "file": "assets/word-wolf/cards-v1/jealous.webp",
+      "sha256": "944cff0b8bcf6bf05f40b9836374ef63189adcc5cf3bc12f67fd94b5b066391c",
+      "bytes": 67988,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person giving an envious sideways glance toward another person receiving an appealing present, with tense folded arms and a slight pout; jealousy without anger or violence. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "worried",
+      "file": "assets/word-wolf/cards-v1/worried.webp",
+      "sha256": "38b6e78befa2fca2b2f6937a9725cae3965106b2ea52bb654bafedd35c18feff",
+      "bytes": 59556,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person sitting forward, hands clasped tightly, brow furrowed while looking at a phone with a blank screen; a clear anxious worried expression. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "hopeful",
+      "file": "assets/word-wolf/cards-v1/hopeful.webp",
+      "sha256": "1cad70ccd49329c2edb7d2e3aa34aab1a96dbf54448297d9b27024905d4fe183",
+      "bytes": 61694,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person looking toward warm morning light through a window, eyes lifted and hands gently clasped, with a small expectant smile; hope for something good. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "calm",
+      "file": "assets/word-wolf/cards-v1/calm.webp",
+      "sha256": "80be107e015966c3bea5c40bc3541a15a41715ad764f0c875c74d77b06626389",
+      "bytes": 76818,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person seated upright in quiet meditation, eyes softly closed, hands resting on knees, serene expression and very still posture. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "relaxed",
+      "file": "assets/word-wolf/cards-v1/relaxed.webp",
+      "sha256": "92732a1833b2181b2f256dbcd9c10d3f9be14cccb10794700e5433382cfcbc4e",
+      "bytes": 70548,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person lounging comfortably on a sofa, leaning back with hands behind the head and loose posture, eyes contentedly half closed; physical relaxation rather than meditation. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "grateful",
+      "file": "assets/word-wolf/cards-v1/grateful.webp",
+      "sha256": "6686e9627cc0c2e0873cfaceb4d71d7d7bb8a63cc8154a7eee2fc4959d7c64f1",
+      "bytes": 65884,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person receiving a small helpful gift with a warm sincere smile and one hand over the heart, leaning slightly toward the giver in appreciation. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "relieved",
+      "file": "assets/word-wolf/cards-v1/relieved.webp",
+      "sha256": "03e1985694e8b5c9f7cac0f8eb6f07f8adbcbb6d5cf8755d02f89700fb8da739",
+      "bytes": 57368,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person visibly exhaling after a difficulty has passed, one hand wiping the forehead, shoulders dropping and a small relieved smile; tension releasing. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "frustrated",
+      "file": "assets/word-wolf/cards-v1/frustrated.webp",
+      "sha256": "4f82ba692b1cb87f60872ca938fc6d9e3129fb420dc552e3f9265545a3bfca02",
+      "bytes": 73128,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person struggling with a tangled cord or stubborn unfinished task, hands in hair and an exasperated grimace; blocked effort and frustration. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "overwhelmed",
+      "file": "assets/word-wolf/cards-v1/overwhelmed.webp",
+      "sha256": "f0a80648292bf631df36981736372b6386ca7fc7d3c78360ae9c8267ab6b84da",
+      "bytes": 78808,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person seated amid too many plain papers and tasks piled around them, hands near the temples and eyes overwhelmed; more demands than they can handle, without readable words. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "determined",
+      "file": "assets/word-wolf/cards-v1/determined.webp",
+      "sha256": "6d1f2a4cb5a387ba42f7d795ef26179d85552ace236c6acbdfb7eaacfbf87c5f",
+      "bytes": 71056,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person tightening running-shoe laces with a focused set jaw and steady eyes, leaning forward ready to persist; firm determination. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "motivated",
+      "file": "assets/word-wolf/cards-v1/motivated.webp",
+      "sha256": "c478af90bb7a200817e9be0cabef6e64c7ed314f7f5c90e46c1c1e329ec2aecc",
+      "bytes": 64732,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An energized person beginning to climb a few simple steps, purposeful forward stride, bright focused expression and a raised encouraging fist; eager drive to take action. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "church",
+      "file": "assets/word-wolf/cards-v1/church.webp",
+      "sha256": "d4d47cfe195f822657866f3dbdbd56d5586999e1e722b005bfcaba85d524782e",
+      "bytes": 88280,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A small recognizable church with a tall pointed steeple topped by a cross, arched stained-glass windows and a central doorway. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "temple",
+      "file": "assets/word-wolf/cards-v1/temple.webp",
+      "sha256": "2f6a7690c11aa05d43928c8846f480e14485bd4c0cb45c9c19bbff81173bbe9c",
+      "bytes": 122298,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A recognizable East Asian temple entrance with sweeping tiled roofs, red pillars, stone steps and a small incense burner; no church cross. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "farm",
+      "file": "assets/word-wolf/cards-v1/farm.webp",
+      "sha256": "f28e19def8aa20290af119f4b2c9daf933d2d4a14448551dd94099c6cebfd7e6",
+      "bytes": 126370,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A small crop farm with a barn, neat cultivated rows of vegetables and a farmer tending the field; growing crops is the dominant activity. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "ranch",
+      "file": "assets/word-wolf/cards-v1/ranch.webp",
+      "sha256": "95d460d6acfbae2a61bab6a0b9699198c24b72836f5ac29cc1d56c57d12f26dc",
+      "bytes": 78288,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A spacious livestock ranch with horses or cattle inside a wooden paddock, open pasture and a simple stable; animals and fencing dominate, not crop rows. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "cabin",
+      "file": "assets/word-wolf/cards-v1/cabin.webp",
+      "sha256": "e1ac5709f38c30d3d74e6524003e17fd48028b768b1835efbb0bd94d299ebb7e",
+      "bytes": 124272,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A compact rustic log cabin in a forest, visible stacked timber walls, simple roof, chimney and small porch; strong wooden wilderness character. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "cottage",
+      "file": "assets/word-wolf/cards-v1/cottage.webp",
+      "sha256": "1391493b15aa23164edc9d8001528fbdaf1e2e9820b6bccc21be0a402a6bf150",
+      "bytes": 146622,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A cozy cream stone countryside cottage with a pitched roof, flower garden and a low garden fence; a cultivated home rather than a rough forest log cabin. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "stadium",
+      "file": "assets/word-wolf/cards-v1/stadium.webp",
+      "sha256": "e61d229d01637b1aa223040227a7f5775fa4dc64a6d47229f0a8a1f3c6223fae",
+      "bytes": 90862,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An open-air oval sports stadium viewed at an angle, a green field and running track surrounded by spectator tiers, clearly open sky above. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "arena",
+      "file": "assets/word-wolf/cards-v1/arena.webp",
+      "sha256": "9c84e6efed2fe48c5f2e8d85f318477b7b80090947bf09e4908719ecb1ba155a",
+      "bytes": 97910,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An indoor sports arena with a high fully enclosed roof, a central basketball-size court and surrounding spectator stands; unmistakably indoors. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "aquarium",
+      "file": "assets/word-wolf/cards-v1/aquarium.webp",
+      "sha256": "333d0499d7132739de0992351e25ae23fa2c58012acfc31ac389d610ab4e215f",
+      "bytes": 111626,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A visitor looking into a large public aquarium glass tank with colorful fish and a shark or ray swimming through blue water; clearly a place to visit. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "zoo",
+      "file": "assets/word-wolf/cards-v1/zoo.webp",
+      "sha256": "7f7a13f5b001689a3449f035007609b41d5421842d8ea51a47b0d585f5666008",
+      "bytes": 89978,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A visitor path in a zoo beside a spacious giraffe or elephant enclosure, with safe fencing and leafy habitat; clearly land animals, not an aquarium. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "museum",
+      "file": "assets/word-wolf/cards-v1/museum.webp",
+      "sha256": "226b920e5ff29be7ee55325c2a12909732510af320882a44b192535b9cf383b0",
+      "bytes": 63274,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A museum interior with a dinosaur skeleton and one ancient artifact on display plinths, quietly lit exhibition space; no book stacks. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "library",
+      "file": "assets/word-wolf/cards-v1/library.webp",
+      "sha256": "cdb9e481b10055b6a63b0f97902d0ae13275a23b0aaa69e55481b08581da065d",
+      "bytes": 118570,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A welcoming library interior with tall book-filled shelves, a reading table and a seated reader; books and reading are unmistakable. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "bus",
+      "file": "assets/word-wolf/cards-v1/bus.webp",
+      "sha256": "8adfcb25017913fbc001beb52ac8050895a091cb8e9b93c5bc15fdeb98e00686",
+      "bytes": 58112,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A modern city bus with a tall rectangular body, broad front windshield, visible road wheels and side passenger doors; no rails or overhead wire. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "trolley",
+      "file": "assets/word-wolf/cards-v1/trolley.webp",
+      "sha256": "f12b4e685449a195d57ee6771317b908562f7c6a22df957685bd7c36f8623285",
+      "bytes": 107124,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A city streetcar tram riding on steel rails, with an overhead electric wire and a visible roof pantograph; unmistakable rail transport, not a shopping trolley. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "truck",
+      "file": "assets/word-wolf/cards-v1/truck.webp",
+      "sha256": "0a8adca21be31368e60150890681b1e36147a1e52f45603f3fcc09948678686e",
+      "bytes": 41466,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A medium cargo truck with a separate cab and a large rectangular freight box, large wheels and a practical delivery silhouette. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "van",
+      "file": "assets/word-wolf/cards-v1/van.webp",
+      "sha256": "9ea639eda2bc3691315ed20efe15bbe99102316414c05756d350747285a94883",
+      "bytes": 47428,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A compact passenger or delivery van with one continuous enclosed body, sliding side door and smaller wheels; not a truck with a separate cargo box. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "helicopter",
+      "file": "assets/word-wolf/cards-v1/helicopter.webp",
+      "sha256": "e00424150b131fc210f3ff2040489acefe1b1dd1bf7b6996b660f615f354d236",
+      "bytes": 52858,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A clearly recognizable helicopter with a large main rotor, tail rotor, cabin windows and landing skids, hovering against a simple pale sky. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "drone",
+      "file": "assets/word-wolf/cards-v1/drone.webp",
+      "sha256": "8fa98bccdb4de90a1540572feac5c39ed84effcf9520a4b3fbf48f6c9bedce0c",
+      "bytes": 39646,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A small unmanned quadcopter with four separate propellers and a compact central camera body; no passenger cabin. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "scooter",
+      "file": "assets/word-wolf/cards-v1/scooter.webp",
+      "sha256": "f0fec79ffcc7a075ef2236ce23ace77207e3b00ae68c886fa250d3fce8493b04",
+      "bytes": 30540,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A nonmotorized kick scooter with a narrow standing deck, two small wheels and a tall T-shaped handlebar; not a motor scooter or skateboard. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "rollerblades",
+      "file": "assets/word-wolf/cards-v1/rollerblades.webp",
+      "sha256": "912c02637a660dfdc9e7dd940c4724a5167645b41627b7ff92c371907b496754",
+      "bytes": 61862,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A pair of inline roller skates with high supportive boots and four wheels arranged in a single straight row under each boot. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "canoe",
+      "file": "assets/word-wolf/cards-v1/canoe.webp",
+      "sha256": "16cbc12f95de3643060db0f03432c0d478240b3f28cb2a7f4493ef648bb4b983",
+      "bytes": 74326,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An open-topped canoe with visible interior bench seats, a high pointed bow and a single-bladed paddle resting across it; no enclosed cockpit. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "kayak",
+      "file": "assets/word-wolf/cards-v1/kayak.webp",
+      "sha256": "14cdf77b45a5955751bfa9b0ef3753d56cdd0aa4c69733e9c989af51303946c8",
+      "bytes": 100274,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A sleek mostly enclosed kayak with a small central cockpit opening and a double-bladed paddle; distinguish its covered deck from an open canoe. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "flute",
+      "file": "assets/word-wolf/cards-v1/flute.webp",
+      "sha256": "d5c37225c31b11e63234c9b640b773a14301956e2bbbc4cebe6f5b081565e63e",
+      "bytes": 28466,
+      "prompt": "Use case: stylized-concept. Asset type: finished illustration for one private Word Wolf vocabulary game card. Subject: one elegant silver concert flute, a real modern transverse flute with clearly visible mouthpiece, tone holes, round key cups, rods and foot joint, shown diagonally in a close three-quarter view, whole instrument visible. Polished editorial gouache illustration with convincing dimensional form, delicate painterly texture and soft warm studio light, restrained sophisticated colors, attractive board-game art rather than a line icon or emoji. Warm ivory paper background, faint soft grounding shadow, generous but not excessive margins; the object should occupy around 80 percent of the square canvas. No person, no other musical instrument, no text, letters, numbers, border, UI, watermark or decorative symbols. Prioritize immediate recognition and accurate physical shape on a phone."
+    },
+    {
+      "id": "clarinet",
+      "file": "assets/word-wolf/cards-v1/clarinet.webp",
+      "sha256": "58a9a288e5ff94767c4bd09887e37883084d20baf63687a224325092953ae52c",
+      "bytes": 19302,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One real black clarinet, whole instrument diagonal, single reed mouthpiece, silver keywork, black flared bell. Clearly a clarinet, not flute. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "drum",
+      "file": "assets/word-wolf/cards-v1/drum.webp",
+      "sha256": "32197f128ce658df45850fcb4867e726dc48d7b2850e33d346a213630bd37353",
+      "bytes": 67044,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One large snare drum with a broad round white drumhead, metal side fittings and a pair of wooden drumsticks; not two small hand drums. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "bongo",
+      "file": "assets/word-wolf/cards-v1/bongo.webp",
+      "sha256": "27ce29f394c4511f7ab0b9815b803f9d0d2393f8e88a6d003753813a31814401",
+      "bytes": 54516,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One connected pair of small wooden bongo hand drums of different sizes, natural skin tops and clear tuning lugs, shown at an attractive three-quarter angle. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "piano",
+      "file": "assets/word-wolf/cards-v1/piano.webp",
+      "sha256": "50c5c94cdc5eaef1f6dfc48fc89fe15fd28857725ed4a9efb5c7765d0623e088",
+      "bytes": 66338,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A full acoustic upright piano with a substantial dark wooden cabinet, open keyboard cover, piano keys and three pedals. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "keyboard",
+      "file": "assets/word-wolf/cards-v1/keyboard.webp",
+      "sha256": "603f7e38d5ffaddabd51d6353a9d0381f09c86eb906250b5138d6b5c2fc60e88",
+      "bytes": 45010,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A slim portable electronic musical keyboard on an X stand, with piano keys, small controls and built-in speakers; no large acoustic piano cabinet. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "microphone",
+      "file": "assets/word-wolf/cards-v1/microphone.webp",
+      "sha256": "59fa6eab53dd02d1b95bf663c4510381775038d1df350e308135b9177b083e9a",
+      "bytes": 35980,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One handheld stage microphone with a rounded dark metal mesh grille, a narrow handle and a small cable, shown large and clearly. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "megaphone",
+      "file": "assets/word-wolf/cards-v1/megaphone.webp",
+      "sha256": "323078e3b167d1c4e6cc69258356b5177a3b5a87b17c218fd60dd21e3c65291f",
+      "bytes": 41650,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One handheld megaphone with a wide flared cone, small rear mouthpiece and pistol-style handle; clearly an acoustic horn, not a microphone. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "pilot",
+      "file": "assets/word-wolf/cards-v1/pilot.webp",
+      "sha256": "bfdbbf1c3735ac7e7abbd2ddfe91d89ac16242016dc461f59e0e07a823857ef1",
+      "bytes": 78660,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An airline pilot in a neat uniform with shoulder epaulettes and cap, seated by recognizable cockpit controls and windows; no airline logos. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "flight-attendant",
+      "file": "assets/word-wolf/cards-v1/flight-attendant.webp",
+      "sha256": "8b30ce4a627c27bb6919695cbedd7d85c326bb420130d89711c8b8fd14493b02",
+      "bytes": 44236,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A flight attendant in a neat cabin uniform offering a drink tray beside airplane passenger seats and overhead bins; no airline logos. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "electrician",
+      "file": "assets/word-wolf/cards-v1/electrician.webp",
+      "sha256": "ae7acc3c3ac8d9adff9ea1df9a15c147de49b15449360e5e0680e2f097ceb24d",
+      "bytes": 52348,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An electrician wearing practical work clothes, examining insulated wires and a light fixture with a handheld tester; clear electrical repair context. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "plumber",
+      "file": "assets/word-wolf/cards-v1/plumber.webp",
+      "sha256": "aadff2f2bf749b302f85dd7d31a9d04ff134ef4f1e9db5f4b8c801ba54a5d0e3",
+      "bytes": 75706,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A plumber in practical work clothes kneeling at a visible sink pipe with a large adjustable wrench, with a faucet and plumbing fittings nearby. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "photographer",
+      "file": "assets/word-wolf/cards-v1/photographer.webp",
+      "sha256": "261672c46f17d3cfd630b5074fb96c953422096bc53dce5c1e4fc9ff2c14ef60",
+      "bytes": 60794,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A photographer holding a still-photo camera with a prominent lens to the eye, finger near the shutter, taking a photograph. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "videographer",
+      "file": "assets/word-wolf/cards-v1/videographer.webp",
+      "sha256": "3ba9b1b9adfca38832e055f3704fe9a6e19cad47661efe2bb8e4bb3b2c200068",
+      "bytes": 93634,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A videographer operating a larger video camera on a tripod with a side monitor and microphone, filming a scene; clearly video equipment rather than a handheld still camera. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "teacher",
+      "file": "assets/word-wolf/cards-v1/teacher.webp",
+      "sha256": "d3f7d430f8abff933a4faec1ed3726ce59dc31a036332e386616d5f19dcd01d7",
+      "bytes": 85744,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A school teacher guiding a small group of children at a classroom board with simple shapes and number-like blocks, no readable text; recognizable primary-school classroom. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "professor",
+      "file": "assets/word-wolf/cards-v1/professor.webp",
+      "sha256": "4f8eb5fbc1bf266abf49e0a3ceccfaf16ee242a900f3efddfcb8c93b54f37d33",
+      "bytes": 67582,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A university professor giving a lecture behind a lectern to adult students in a tiered lecture room, with books and an abstract diagram, no readable text. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "doctor",
+      "file": "assets/word-wolf/cards-v1/doctor.webp",
+      "sha256": "b1097a8f9e8306febf9a9483dd7b67f22d0011904c1721e802aa30817d0742c3",
+      "bytes": 69712,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A doctor wearing a white coat and stethoscope, examining a patient in a clinic with a medical chart that contains no readable text. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "nurse",
+      "file": "assets/word-wolf/cards-v1/nurse.webp",
+      "sha256": "e4704e489c5a0fc5aa3d6b7c657e568625de9229d3b4558d3c0c7149e888359d",
+      "bytes": 54212,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A nurse in plain colored scrubs checking a seated patient and holding a small care tray beside a hospital bed; no white doctor coat or written labels. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "rain",
+      "file": "assets/word-wolf/cards-v1/rain.webp",
+      "sha256": "eb4816c5852e35b0f5b34f8f1fb5c39255e8da03ab0018864715be4915184c08",
+      "bytes": 127878,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Steady widespread rain falling from a broad gray cloud across a simple outdoor view, many clear long raindrops and small wet puddles. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "shower",
+      "file": "assets/word-wolf/cards-v1/shower.webp",
+      "sha256": "771d71e0cbcea7e8945dce1a8b741783347613c2a2bc6dfb2457228834f25e09",
+      "bytes": 111318,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A brief localized rain shower from one small cloud, with blue sky and warm sunlight visible around it; rain concentrated in one narrow patch. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "snow",
+      "file": "assets/word-wolf/cards-v1/snow.webp",
+      "sha256": "7039c611273e1f3e7048b69a5ab3eaac53f86c892b400b7e0a34ecfc29a1c125",
+      "bytes": 111684,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Soft delicate snowflakes falling gently onto a white ground and tree branches; airy flakes rather than round solid pellets. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "hail",
+      "file": "assets/word-wolf/cards-v1/hail.webp",
+      "sha256": "db4c2552862722260fc06786ba23f4fb16cb6ff92b4ced6a5e3a1e0e2a08f23b",
+      "bytes": 93636,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Small hard round white ice pellets visibly bouncing on a pavement beside a few little ice stones, under a dark cloud; clearly hail rather than soft snow. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "cloudy",
+      "file": "assets/word-wolf/cards-v1/cloudy.webp",
+      "sha256": "32a3648fe5f97f010d618d46f4dfabca01499474d80417225f181dc5743fbe64",
+      "bytes": 112914,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A landscape beneath several large layered white-gray clouds high in the sky, with distant objects still clearly visible; no ground-level fog. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "foggy",
+      "file": "assets/word-wolf/cards-v1/foggy.webp",
+      "sha256": "511bf58df07a38677223a0e29d37f1afdee32cc3965375c1edb96fe3b0c44fdb",
+      "bytes": 77448,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Dense low mist surrounding a path and nearby trees, distant forms fading almost completely into pale fog; the main effect is reduced visibility near the ground. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "windy",
+      "file": "assets/word-wolf/cards-v1/windy.webp",
+      "sha256": "6d4472ab3a784580f1a330af173ba520eaa5518ed4a370c98635884dc29d7994",
+      "bytes": 129334,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A tree bending in strong wind, leaves and a scarf streaming sideways beneath a clear or lightly cloudy sky; no heavy rain or lightning. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "stormy",
+      "file": "assets/word-wolf/cards-v1/stormy.webp",
+      "sha256": "2795a0dc45aab48d7098344c8f8b875da48e0675cbc8017c0ae1fb95f388f768",
+      "bytes": 160280,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A dark thunderstorm with a bright lightning bolt, slanting heavy rain and wind-tossed trees; clearly more severe than ordinary wind. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "badminton",
+      "file": "assets/word-wolf/cards-v1/badminton.webp",
+      "sha256": "bcc4285c56579e312b0964d9f92b561f40854308ad1ddab711078ef13cfeb0e5",
+      "bytes": 75018,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person holding a light badminton racket beside a clearly feathered white shuttlecock over a simple net; the shuttlecock is large enough to recognize. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "tennis",
+      "file": "assets/word-wolf/cards-v1/tennis.webp",
+      "sha256": "2322db99a965a64438a64589cef9a86a31dc4b6865a1638083d6d9cbd900e285",
+      "bytes": 75334,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person with a tennis racket and a bright yellow-green tennis ball on a simple hard court with a net; no feathered shuttlecock. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "rugby",
+      "file": "assets/word-wolf/cards-v1/rugby.webp",
+      "sha256": "e6092abbaab585958bdddd6e191062099c1193f1e066a78e6d96de2b6a99e45e",
+      "bytes": 62578,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A rugby player in a jersey and shorts carrying an oval rugby ball, without a helmet or bulky shoulder pads, on a grassy field. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "american-football",
+      "file": "assets/word-wolf/cards-v1/american-football.webp",
+      "sha256": "42145752a36346476944d5d7670b6e6b86c02be5528da3dfb350c3d140f382f7",
+      "bytes": 73310,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An American football player wearing a helmet and bulky shoulder pads, holding a brown pointed oval ball with visible white laces on a marked field. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "archery",
+      "file": "assets/word-wolf/cards-v1/archery.webp",
+      "sha256": "6b140c36e6f7496961f0d7f6e3314eca885480f06e16bc2c0eca779beba2cd55",
+      "bytes": 97322,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A person drawing a bow with an arrow aimed toward a large circular target on an outdoor practice range; the full bow shape is clear. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "darts",
+      "file": "assets/word-wolf/cards-v1/darts.webp",
+      "sha256": "748445aafa769fa47b000377a75387525e181b187ebb4290af66606d563e6c9c",
+      "bytes": 98788,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A hand holding a small dart beside a wall-mounted circular dartboard, with a few darts already in it; indoor pub-game scale, not a bow and arrow. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "judo",
+      "file": "assets/word-wolf/cards-v1/judo.webp",
+      "sha256": "7a388a67299723f01a1d2350f30ff90a0a0bd7b805edf286af0654a36c49556d",
+      "bytes": 57666,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Two judo practitioners in white gi holding each other by sleeves and lapels on a mat, one beginning a controlled grappling throw; no striking pose. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "karate",
+      "file": "assets/word-wolf/cards-v1/karate.webp",
+      "sha256": "3e01ddd62aae742f53e2772b3885f9803823ff21e8f5bb2dc8fc217aac20ddb0",
+      "bytes": 46066,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A karate practitioner in a white gi and belt holding a strong extended punch stance on a simple mat; clear striking form, not a grappling throw. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "vase",
+      "file": "assets/word-wolf/cards-v1/vase.webp",
+      "sha256": "2c3a9cc0d29fa6d416db27acf016e136a0c1d589d1b5deaea6abdac8322d9f4d",
+      "bytes": 33864,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One beautiful tall blue glazed ceramic vase, narrow neck, round belly and clearly open lip, no flowers. Not a plant pot. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "pot",
+      "file": "assets/word-wolf/cards-v1/pot.webp",
+      "sha256": "3466f747de4397c569680e3b595a6db73e5378f50633f569cd79fa1176c8975b",
+      "bytes": 28146,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One terracotta flower pot, tapered shape, wide open rim and drainage saucer; a small plain leafy seedling establishes a plant pot. Not a cooking pot or vase. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "ladder",
+      "file": "assets/word-wolf/cards-v1/ladder.webp",
+      "sha256": "fa6b7fc3a332b2873b2b4b77ccd9b2485e764c92fc925728669d58f558c1ca5e",
+      "bytes": 32138,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One full wooden A-frame stepladder with six clear rungs and both sides, three-quarter view, realistic connected construction. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "step-stool",
+      "file": "assets/word-wolf/cards-v1/step-stool.webp",
+      "sha256": "d61b3aa424242b48dd298b0847627cf6ddf5cd928e142c3ca44f372f3c60389f",
+      "bytes": 52314,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One low sturdy wooden two-step stool, two broad steps close to floor, simple functional furniture, not a tall ladder. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "suitcase",
+      "file": "assets/word-wolf/cards-v1/suitcase.webp",
+      "sha256": "76b97176dff6656e4e8fcbbfb34547f6cf0b8106f1ec1f5e28026ff23b8c6146",
+      "bytes": 26424,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A modern upright wheeled travel suitcase with a retractable handle, two visible wheels and a zippered hard-shell case. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "trunk",
+      "file": "assets/word-wolf/cards-v1/trunk.webp",
+      "sha256": "d6bdee662456ec3dd37a5d6d5a38251600ea03632e01870f6846073941a4278d",
+      "bytes": 41068,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A large low vintage travel trunk with a broad rectangular hinged lid, leather straps, reinforced corners and a central clasp; no upright trolley handle. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "umbrella",
+      "file": "assets/word-wolf/cards-v1/umbrella.webp",
+      "sha256": "ffea4e68a2929d39500cc706e35392d6e58dbb6d56a110600131d6a35743a278",
+      "bytes": 54032,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A practical dark rain umbrella with a curved hook handle and several clear raindrops around its canopy; made for rain. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "parasol",
+      "file": "assets/word-wolf/cards-v1/parasol.webp",
+      "sha256": "945b8f831f235422833f2489e7a7ee16e12db06beb7221070d950493a015e97f",
+      "bytes": 53540,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A light decorative cream sun parasol with a straight wooden handle and a delicate canopy, held under a small warm sun; dry and clearly for shade. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "bowl",
+      "file": "assets/word-wolf/cards-v1/bowl.webp",
+      "sha256": "0448c82f6b1a9192ccb23e87deef04ef73c75c4176bdb67be9b0ead538c4799e",
+      "bytes": 44838,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One deep round ceramic bowl viewed slightly from above, with a wide open mouth, substantial curved sides and a small foot; show its depth clearly. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "plate",
+      "file": "assets/word-wolf/cards-v1/plate.webp",
+      "sha256": "e6b5789023325de802c5fe550f9debb0e78093a1914812740000b81aa8f229de",
+      "bytes": 26260,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One broad flat ceramic dinner plate viewed slightly from above, with a shallow center and wide rim; clearly flat rather than a deep bowl. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "kettle",
+      "file": "assets/word-wolf/cards-v1/kettle.webp",
+      "sha256": "cc1366582f4a79ba822607f391acd485d7336aed4e8b267defe4100a5ddfc56b",
+      "bytes": 37820,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One rounded brushed stainless steel stovetop water kettle, arched handle above its lid, short upright spout with whistle cap, sturdy flat base. Not a ceramic teapot. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "teapot",
+      "file": "assets/word-wolf/cards-v1/teapot.webp",
+      "sha256": "cd15e04a6d5f4b40e4a8c6a5e6f8bd9ffb8b1317060268becaa2553eef209e20",
+      "bytes": 21324,
+      "prompt": "Use case: stylized-concept. Asset type: one finished Word Wolf game-card illustration. Subject: One beautiful glazed cream ceramic teapot, round body, lid with small knob, curved side handle and long curved spout, no stove or electric base. Style: sophisticated editorial gouache with dimensional believable materials, delicate painterly paper texture, soft warm light, natural restrained color, beautiful premium board-game artwork. Whole subject large and clear at phone size, centered with safe margins on warm ivory paper background and a soft grounding shadow. Avoid line icons, emojis, flat diagrams, clutter, decoration, branding, letters, numbers, text, watermarks, card borders or UI. Only the named subject."
+    },
+    {
+      "id": "chopsticks",
+      "file": "assets/word-wolf/cards-v1/chopsticks.webp",
+      "sha256": "4f973a5bd794cdbf06578c7b3e535fc36e94a796b9bcda369f754b345aa1564f",
+      "bytes": 34654,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A clear pair of long slim wooden chopsticks resting diagonally side by side, with a small chopstick rest; no other eating utensil. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "fork",
+      "file": "assets/word-wolf/cards-v1/fork.webp",
+      "sha256": "ad5e081283721aaaceaf532fbd9015e096004bb5e75d48c5e2fffe1ab8eda67c",
+      "bytes": 23592,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One polished metal dinner fork shown large with four distinct tines and a long handle. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "backpack",
+      "file": "assets/word-wolf/cards-v1/backpack.webp",
+      "sha256": "311e3217e36f0685af563a04c84920b8b9c53e6e3772c82edf23fcaaa439a1c9",
+      "bytes": 56236,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A recognizable two-strap school backpack with a rounded zippered body, front pocket and top carry loop; both shoulder straps visible. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "tote-bag",
+      "file": "assets/word-wolf/cards-v1/tote-bag.webp",
+      "sha256": "1f9e8b2db14d949d14924021f5701813547822ccd2b6676bb8eb7f6f98b7bb44",
+      "bytes": 33302,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A simple canvas tote bag with one broad rectangular open body and two long loop handles, without backpack shoulder straps or a zippered front pouch. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "ruler",
+      "file": "assets/word-wolf/cards-v1/ruler.webp",
+      "sha256": "16447dae5d7d6af2e144336a4dfe9cf099fdfaa5ff5d02c42f5f85445d1fa28f",
+      "bytes": 24102,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One straight wooden ruler with evenly spaced measurement tick marks along a long rigid edge; no readable numbers needed. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "measuring-tape",
+      "file": "assets/word-wolf/cards-v1/measuring-tape.webp",
+      "sha256": "a4b90b9e5ff0ee4e3096d0f58d9789b7b27cbe8699d00ffe03e8c6e16f1cd2d8",
+      "bytes": 46800,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A compact retractable tape-measure housing with a flexible metal measuring strip extended and curved slightly; clear tick marks and metal end hook. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "textbook",
+      "file": "assets/word-wolf/cards-v1/textbook.webp",
+      "sha256": "2c93e44dfe092f18e6eae78ee9c9f8d53f7460193583e2fa9cce4be468ac8486",
+      "bytes": 45198,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A substantial open school textbook filled with neat printed paragraph blocks and one simple educational diagram, plus a sturdy book cover; no readable lettering. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "workbook",
+      "file": "assets/word-wolf/cards-v1/workbook.webp",
+      "sha256": "67865c7756f01a212c04054adb46432f9d37371c0c86e295432fdcdbab10cf74",
+      "bytes": 43324,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An open thin school exercise workbook with empty answer lines and simple boxed practice exercises, a pencil resting across the page; no readable lettering. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "phone",
+      "file": "assets/word-wolf/cards-v1/phone.webp",
+      "sha256": "323031755d03558f08656457a6cb72dd7692b0e72cb6f58b992fa59d48d08c7c",
+      "bytes": 25376,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A single modern smartphone held upright, clearly small enough for one hand, with a simple blank or abstract screen and a narrow body; no brand. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "tablet",
+      "file": "assets/word-wolf/cards-v1/tablet.webp",
+      "sha256": "91eac21d0ea4baf53e0e7ae7a03d1eca0137e6dde6c3e4b05480330b1dec3187",
+      "bytes": 29694,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A broad thin tablet computer shown in landscape orientation with a stylus beside it, clearly much larger than a phone; simple abstract screen and no brand. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "router",
+      "file": "assets/word-wolf/cards-v1/router.webp",
+      "sha256": "bdcf5b0f3283b399565f027aab0be0ace3e27c98b48e95fc10516295876cbd34",
+      "bytes": 39328,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A home Wi-Fi router with two or three clearly upright external antennas, a low rectangular body and a few tiny status lights; no text or logo. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "modem",
+      "file": "assets/word-wolf/cards-v1/modem.webp",
+      "sha256": "a43921a74891ac8989ab38b42c7582db155a0b15a634ce94e537ecb215dfa203",
+      "bytes": 55028,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A compact upright internet modem with no external antennas, tiny status lights and a visible coaxial-style cable connection beside an Ethernet cable; no text or logo. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "printer",
+      "file": "assets/word-wolf/cards-v1/printer.webp",
+      "sha256": "306ee96b3fb6e6eb9f19858c6c15c34af3bef6fc873fc6ddfe0d17b36f63fe3e",
+      "bytes": 37676,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A desktop printer with a visible paper feed and a sheet emerging from its output tray, broad practical housing and small controls; no readable text on the paper. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "scanner",
+      "file": "assets/word-wolf/cards-v1/scanner.webp",
+      "sha256": "6d188f917fa0713dd119f63dadd3486376d195037b0ec130ca3f8f1720bbc454",
+      "bytes": 37190,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A flatbed document scanner with its broad glass bed and hinged lid lifted, one flat sheet resting on the glass; no printed output tray. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "hoodie",
+      "file": "assets/word-wolf/cards-v1/hoodie.webp",
+      "sha256": "c77a088845e603569e334df217afac6e5c8b605b999536ad118cdb1f8cd2b3dd",
+      "bytes": 47560,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A casual pullover hoodie displayed clearly with an attached hood, drawstrings and a front kangaroo pocket; no writing or logo. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "sweatshirt",
+      "file": "assets/word-wolf/cards-v1/sweatshirt.webp",
+      "sha256": "9f5a0567ad3cc72167914e1da02ed9fff70f994d8480e0e926eb32b2a7215cad",
+      "bytes": 49570,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A plain crew-neck sweatshirt with a round neckline, ribbed cuffs and hem, no hood or drawstrings and no writing or logo. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "scarf",
+      "file": "assets/word-wolf/cards-v1/scarf.webp",
+      "sha256": "071ef5d9d02b2e52da3bb7288a999a2e8d753018ef2826e5a1e2cc9d75d0972d",
+      "bytes": 71954,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A long narrow knitted winter scarf with fringed ends wrapped loosely around a neck or draped to show its long thin shape. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "shawl",
+      "file": "assets/word-wolf/cards-v1/shawl.webp",
+      "sha256": "e041cdaec242503fc3b6b26a9c1b8203750c7b3fc4a7335f7edcf913b7dfad8b",
+      "bytes": 59852,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A large broad soft fabric shawl draped over a person’s shoulders and upper arms, with its triangular or wide wrap shape clearly visible. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "gloves",
+      "file": "assets/word-wolf/cards-v1/gloves.webp",
+      "sha256": "cb6f57c6cd43d05a8d0e68e2fd3c8803e828b0afd2f684f5eabaf3074ebc42f3",
+      "bytes": 84434,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A pair of winter gloves with all five separate fingers clearly visible on each glove. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "mittens",
+      "file": "assets/word-wolf/cards-v1/mittens.webp",
+      "sha256": "dc8648a09d2175258a1c51362ff8d093b9155a9a9e9693564dcb5491f35c08d6",
+      "bytes": 90450,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A pair of winter mittens with one separate thumb and one rounded shared compartment for the other four fingers. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "necktie",
+      "file": "assets/word-wolf/cards-v1/necktie.webp",
+      "sha256": "5e647c0cc5820e02bdfcc6a0d130838e82358855a5aac58008a821223a99e23c",
+      "bytes": 24920,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One long conventional necktie with a neat triangular knot and a long tapered pointed blade, displayed against a plain shirt collar. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "bow-tie",
+      "file": "assets/word-wolf/cards-v1/bow-tie.webp",
+      "sha256": "7ff63e6318106032cf3c9927b409e328fbc2ad609779ae4668d6dfe729e6a83b",
+      "bytes": 52142,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One compact symmetrical bow tie with two folded wings and a small center knot, displayed against a plain shirt collar. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "pumpkin",
+      "file": "assets/word-wolf/cards-v1/pumpkin.webp",
+      "sha256": "37fd2a59b454c0f872f6c69660a1e638299dd24c840c7658050e4e2b36f91e42",
+      "bytes": 61166,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One plump round orange pumpkin with strong deep vertical ribs and a short thick curved stalk; a natural vegetable, not a carved Halloween face. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "squash",
+      "file": "assets/word-wolf/cards-v1/squash.webp",
+      "sha256": "0c199b6593941761baa3f9b3d7954ea5b1cdac56f79945cc07e98ece34240dd9",
+      "bytes": 38156,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One elongated pale tan butternut squash with a narrow neck and bulbous rounded lower end, with a cut piece showing orange flesh; visibly different from a round orange pumpkin. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "wreath",
+      "file": "assets/word-wolf/cards-v1/wreath.webp",
+      "sha256": "34db464f32db3099a56e91ee1841a508f3a9bbfc91017cd16bbe0b4dfa77a115",
+      "bytes": 117152,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A circular evergreen holiday wreath with a clear open center, a red ribbon and a few berries, hanging alone; not a tree. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "christmas-tree",
+      "file": "assets/word-wolf/cards-v1/christmas-tree.webp",
+      "sha256": "f9a315fcf03c9efc5492b135b068225bde0857c13c90147b4492bdbaac581b79",
+      "bytes": 61200,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A full conical evergreen Christmas tree with a star at the top and simple small ornaments, its trunk visible at the bottom. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "podcast",
+      "file": "assets/word-wolf/cards-v1/podcast.webp",
+      "sha256": "7b64a14ec3d26566858c248ec9d7ca590d76bdb1814394aedaa7b94bd17e98b9",
+      "bytes": 82280,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A small modern home podcast setup: a person wearing headphones speaking into a tabletop USB microphone beside a laptop showing abstract audio waves; no branding or written words. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "radio-show",
+      "file": "assets/word-wolf/cards-v1/radio-show.webp",
+      "sha256": "596f2d3ef7745173afd35049c5aaaab806ca612762826e87b2623b031123e8d8",
+      "bytes": 85486,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A radio presenter in a professional broadcast booth with a large mixing console and studio microphone, with a radio transmission tower visible beyond a window; no readable signs. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "concert",
+      "file": "assets/word-wolf/cards-v1/concert.webp",
+      "sha256": "e4a632cd83adcb0f073270440fae645c96e52a4b8fcd0b369c3755519a6c4c69",
+      "bytes": 86618,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A live singer performing on a raised stage with colorful stage lights and a visible audience raising hands; unmistakable public concert. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "karaoke",
+      "file": "assets/word-wolf/cards-v1/karaoke.webp",
+      "sha256": "f5201f18357bcb30c0a0218d12944230290c315e1db66f7dca50422b10b18d19",
+      "bytes": 86072,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Friends singing with handheld microphones in a small private karaoke room with a sofa and a large screen showing abstract music imagery without lyrics. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "comic-book",
+      "file": "assets/word-wolf/cards-v1/comic-book.webp",
+      "sha256": "35af0b677ece42097b7d474eff9dc503a0c57c2f9a877de7c4b9dd6f08c755f9",
+      "bytes": 73604,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An open colorful comic book with multiple illustrated panels and a few empty speech bubbles, clearly sequential art and no legible text. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "magazine",
+      "file": "assets/word-wolf/cards-v1/magazine.webp",
+      "sha256": "b5709c6eeb5b4fa6d39745f2b66c7645274bbcf6e5dbce170d38c09c649301b8",
+      "bytes": 63600,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A glossy magazine with a photographic-style portrait cover, abstract headline blocks and several visible thin pages; no comic panels or readable words. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "puzzle",
+      "file": "assets/word-wolf/cards-v1/puzzle.webp",
+      "sha256": "f31d967ec4905d8f4bfe0661c72e109969375d13bcf50e92c2f44eb8f109b301",
+      "bytes": 119512,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A partly completed jigsaw puzzle on a table with interlocking pieces and several loose pieces beside a simple landscape image. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "board-game",
+      "file": "assets/word-wolf/cards-v1/board-game.webp",
+      "sha256": "46a07ce3baff220d3a4ae43d7c2b8fca00bde888a73d307f5bbf08ca7c0ddd73",
+      "bytes": 79954,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A tabletop board game with a clear board of spaces, a few playing pawns, dice and small cards; not a jigsaw puzzle. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "cactus",
+      "file": "assets/word-wolf/cards-v1/cactus.webp",
+      "sha256": "a1cd4b48c1e1259ae5131ad95d6054647bd55ef7d26037da81068fa45f234b84",
+      "bytes": 79446,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A thick green cactus with fleshy upright or paddle-shaped sections and clearly visible spines, planted in dry sandy soil. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "aloe",
+      "file": "assets/word-wolf/cards-v1/aloe.webp",
+      "sha256": "681fd730b07034aebd4c0c9dec4d1f60e848d574bf00f42b93f13cf7d2fad1bc",
+      "bytes": 60526,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: An aloe plant with a rosette of thick pointed fleshy green leaves with small toothed edges, spreading outward from the center; no cactus arms. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "bamboo",
+      "file": "assets/word-wolf/cards-v1/bamboo.webp",
+      "sha256": "87528baed247818e2d438f5aebae36075c552502cdcdf73d034a7ba42233ae0d",
+      "bytes": 71170,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Several tall green bamboo stems with distinct segmented joints and narrow leaves, forming a small recognizable bamboo cluster. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "reed",
+      "file": "assets/word-wolf/cards-v1/reed.webp",
+      "sha256": "58c7ddfaa72dba5a4a23a88d4102b790e12e3b15b8f46f4e69e93e45495588e7",
+      "bytes": 99374,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Slender reed grasses beside water, thin upright stems with feathery brown seed plumes and narrow leaves; no thick jointed bamboo trunks. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "palm-tree",
+      "file": "assets/word-wolf/cards-v1/palm-tree.webp",
+      "sha256": "f6bc6b264ceb08349edc2dd348c404cca998c5a2af89a0fafc3f140840bd595b",
+      "bytes": 71404,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A tropical palm tree with a tall slender textured trunk and a crown of long arching green fronds, a simple warm setting. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "pine-tree",
+      "file": "assets/word-wolf/cards-v1/pine-tree.webp",
+      "sha256": "0553a4c2ff08cf127f0dd683fc0b2275525e4308dc7df93f4d0ea7a6a308b94f",
+      "bytes": 108118,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A conical evergreen pine tree with layered branches, dense needle foliage and one visible pinecone, in a simple cool forest setting. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "ivy",
+      "file": "assets/word-wolf/cards-v1/ivy.webp",
+      "sha256": "cbcbfcd8ac86be0bea2a13220c9d8f94947788926d53860f5a1cf6165de39fba",
+      "bytes": 119582,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: Recognizable ivy climbing a small stone wall, with dense pointed lobed dark-green leaves and thin clinging stems. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "vine",
+      "file": "assets/word-wolf/cards-v1/vine.webp",
+      "sha256": "b11482e19b3a5e45a4589f8739931c898c038f74fd4dfb13c9ddd2f5cdef7d43",
+      "bytes": 81152,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: A climbing grapevine on a simple trellis, with curling tendrils, broad rounded leaves and a small bunch of grapes; a clear vine distinct from dense wall ivy. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "brain",
+      "file": "assets/word-wolf/cards-v1/brain.webp",
+      "sha256": "db7db46734b3f9ecc02caaa0a182f078d8785161b90749e0370415434662820a",
+      "bytes": 63002,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One clean anatomical human brain illustration, pink-gray rounded hemispheres and characteristic folded grooves, isolated without a skull; educational and non-gory. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    },
+    {
+      "id": "skull",
+      "file": "assets/word-wolf/cards-v1/skull.webp",
+      "sha256": "7313d5167f684ef1bfc03c60c177dd079dfe55e01dd1cde3e28ac18067aaa8fe",
+      "bytes": 61266,
+      "prompt": "Use case: stylized-concept. Asset type: one finished standalone illustration for a private Word Wolf vocabulary card. Subject: One clean ivory human skull viewed three-quarter angle, clear eye sockets, nasal opening and teeth, no brain tissue; educational and non-gory. Render as sophisticated editorial gouache: clearly modeled dimensional forms and accurate materials, subtle painterly paper texture, natural restrained colors, soft warm light. A beautiful premium board-game illustration, immediately recognizable on a phone, not a simple icon, not emoji, not a diagram. One cohesive image with subject large, whole and centered with safe margins on warm ivory paper, soft grounding shadows. For a human concept, use expressive naturally proportioned East Asian young adults in simple tasteful clothes and minimal relevant setting. No labels, letters, numbers, speech bubbles, text, logos, watermark, UI, decorative border, comparison object or multiple-panel collage. Depict only the requested concept."
+    }
+  ]
+}

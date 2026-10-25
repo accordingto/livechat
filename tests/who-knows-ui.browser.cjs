@@ -1,7 +1,7 @@
 'use strict';
 // Run: node tests/who-knows-ui.browser.cjs [path-to-playwright-package]
 // WK_QA_MODE=insider|werewolf, WK_QA_PLAYERS=4..9, WK_QA_OUTPUT=<dir outside the Hub>,
-// WK_QA_TARGET=word|number, WK_QA_HINT=0|1, WK_QA_NUMBER_MAX=100|1000.
+// WK_QA_TARGET=word|number, WK_QA_HINT=0|1. All future numeric rounds use 1–1000.
 // WK_QA_CAPTURE_FILTER=<label fragment> keeps the entire flow but captures one surface.
 // WK_QA_LAYOUT=0 skips the captures. Serves the REAL who-knows.html host and the
 // original play.html links against one isolated Firebase-compatible in-memory
@@ -18,8 +18,8 @@ const root = path.resolve(__dirname, '..');
 const mode = process.env.WK_QA_MODE || 'insider';
 const targetKind = process.env.WK_QA_TARGET || process.env.WHO_QA_TARGET || 'word';
 const showHint = (process.env.WK_QA_HINT || process.env.WHO_QA_HINT || '0') === '1';
-const numberMax = Number(process.env.WK_QA_NUMBER_MAX || 100);
-assert.ok(['word', 'number'].includes(targetKind)); assert.ok([100, 1000].includes(numberMax));
+const numberMax = 1000;
+assert.ok(['word', 'number'].includes(targetKind));
 assert.ok(['insider', 'werewolf'].includes(mode), 'WK_QA_MODE must be insider or werewolf');
 const playerCount = Number(process.env.WK_QA_PLAYERS || 5);
 assert.ok(Number.isInteger(playerCount) && playerCount >= 4 && playerCount <= 9, 'WK_QA_PLAYERS must be 4–9');
@@ -357,11 +357,11 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     } else assert.equal(await host.locator('#wk-tokens').isVisible(), false);
     assert.equal(await host.inputValue('#wk-target-kind'), 'word');
     assert.equal(await host.locator('#wk-broad-hint').isChecked(), false, 'opening clues are off by default');
-    assert.equal(await host.inputValue('#wk-number-max'), '100');
+    assert.equal(await host.inputValue('#wk-number-max'), '1000');
     await host.selectOption('#wk-target-kind', targetKind);
     await host.locator('#wk-broad-hint').setChecked(showHint);
     if (targetKind === 'number') {
-      await host.selectOption('#wk-number-max', String(numberMax));
+      assert.equal(await host.locator('#wk-number-max').getAttribute('type'), 'hidden', 'numeric range is fixed, with no extra choice');
       assert.equal(await host.locator('#wk-difficulty').isVisible(), false);
       assert.equal(await host.locator('#wk-tokens').isVisible(), false, 'number replies do not use yes/no tokens');
     }

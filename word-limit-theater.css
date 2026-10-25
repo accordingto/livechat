@@ -301,7 +301,7 @@ html[lang="zh-Hant"] .wl-wrapup h2 { font-family: inherit; font-weight: 900; }
   .wl-line-btn b { font-size: 1.45rem; padding: 6px 10px 4px; }
 }
 
-/* A quiet player card: the floor, own role/limit, scene and one action first.
+/* A quiet player card: the theme, floor, own limit and one action first.
    Cast, points and foul controls stay available below the main reading area. */
 body.wl-card-page {
   --ct-bg: #17191e; --ct-surface: #20232a; --ct-surface-2: #292d35;
@@ -330,8 +330,11 @@ body.wl-card-page #i18n-toggle button.active { color: #25211b; }
 .wl-floor.is-mine > div > span { color: #e6cda9; }
 .wl-floor-clock { display: grid; justify-items: end; gap: 3px; flex-shrink: 0; }
 .wl-floor .wl-clock { font-family: inherit; color: var(--ct-text-hi); font-size: 1.2rem; font-weight: 550; letter-spacing: 0; }
-.wl-card .wl-board { grid-template-columns: 84px minmax(0, 1fr); align-items: center; gap: 15px; padding: 14px; border: 0; border-radius: 13px; background: #eee8dd; background-image: none; color: #262b32; box-shadow: none; }
-.wl-card .wl-board-limit { display: grid; justify-items: center; min-width: 0; gap: 2px; }
+.wl-card .wl-board { grid-template-columns: 1fr; align-items: center; padding: 12px 18px; border: 0; border-radius: 13px; background: #eee8dd; background-image: none; color: #262b32; box-shadow: none; }
+.wl-card .wl-board-limit { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; justify-items: start; min-width: 0; column-gap: 16px; row-gap: 0; }
+.wl-card .wl-board-label { grid-column: 2; align-self: end; }
+.wl-card .wl-board-num { grid-column: 1; grid-row: 1 / 3; justify-self: center; }
+.wl-card .wl-board-unit { grid-column: 2; align-self: start; }
 .wl-card .wl-board-label { color: #4f545c; font-size: .67rem; white-space: nowrap; }
 .wl-card .wl-board-num b { font-family: Georgia, 'Times New Roman', serif; font-size: 3.9rem; font-weight: 400; color: #252b32; text-shadow: none; line-height: 1; }
 .wl-card .wl-board .wl-board-unit { margin: 0; font-family: inherit; font-size: .7rem; font-weight: 550; letter-spacing: 0; color: #4f545c; }
@@ -341,8 +344,8 @@ body.wl-card-page #i18n-toggle button.active { color: #25211b; }
 .wl-card .wl-board-role em { font-style: normal; color: #444b54; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
 .wl-card .wl-board-was { left: auto; right: -18px; top: -5px; background: #d5b88e; padding: 2px 5px; font-size: .63rem; }
 .wl-card .wl-board:has(.wl-board-was.is-live) .wl-board-num b { color: #252b32; animation: none; }
-.wl-scene-brief { display: grid; gap: 5px; padding: 2px 1px; text-align: left; }
-.wl-scene-brief h3 { margin: 0; color: var(--ct-text-hi); font: inherit; font-size: .98rem; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.wl-scene-brief { display: grid; gap: 7px; padding: 2px 1px 5px; text-align: left; }
+.wl-scene-brief h3 { margin: 0; color: var(--ct-text-hi); font: inherit; font-size: 1.24rem; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
 .wl-scene-brief p { margin: 0; color: var(--ct-text-2); font-size: .9rem; line-height: 1.55; overflow-wrap: anywhere; }
 .wl-card .wl-line-btn { min-height: 58px; border-radius: 11px; padding: 11px 12px; gap: 9px; font-size: 1rem; font-weight: 650; box-shadow: none; }
 .wl-card .wl-line-btn svg { width: 21px; height: 21px; }
@@ -353,6 +356,13 @@ body.wl-card-page #i18n-toggle button.active { color: #25211b; }
 .wl-more > summary { min-height: 52px; padding: 12px 2px; color: var(--ct-text-2); cursor: pointer; font-size: .84rem; line-height: 1.4; }
 .wl-more > summary small { display: block; padding-left: 15px; color: var(--ct-muted); font-size: .73rem; margin-top: 3px; }
 .wl-more-content { display: grid; gap: 12px; padding: 4px 0 10px; }
+.wl-inspiration { text-align: left; border: 1px solid var(--ct-border); border-radius: 11px; padding: 0 12px; }
+.wl-inspiration > summary { min-height: 44px; padding: 12px 0; cursor: pointer; color: var(--ct-text-2); font-size: .84rem; line-height: 1.4; }
+.wl-inspiration-hint { margin: 0 0 12px; color: var(--ct-muted); font-size: .85rem; line-height: 1.55; }
+.wl-role-idea { padding: 0 0 12px; color: var(--ct-text-hi); }
+.wl-role-idea strong { font-size: 1rem; font-weight: 650; }
+.wl-role-idea p { margin: 5px 0 0; color: var(--ct-text-2); font-size: .9rem; line-height: 1.5; }
+.wl-stage .wl-inspiration { padding: 0 16px 10px; }
 .wl-card .wl-more .wl-score-line { font-size: .84rem; font-weight: 500; }
 .wl-card .wl-wrapup { background: #272b32; box-shadow: none; border: 1px solid var(--ct-border); border-radius: 14px; }
 .wl-card .wl-wrapup h2, .wl-card .wl-wrap-title { font-family: inherit; font-size: 1.7rem; letter-spacing: 0; font-weight: 700; }
@@ -361,7 +371,7 @@ body.wl-card-page #i18n-toggle button.active { color: #25211b; }
 .wl-card .wl-flash { box-shadow: 0 8px 24px #0004; animation: none; }
 .wl-stage .wl-floor { margin: 0; }
 @media (max-width: 380px) {
-  .wl-card .wl-board { grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 12px; }
+  .wl-card .wl-board { grid-template-columns: 1fr; padding: 12px; }
   .wl-card .wl-board-role { padding-left: 11px; }
   .wl-card .wl-board-role strong { font-size: 1rem; }
   .wl-card .wl-board-role em { font-size: .8rem; }

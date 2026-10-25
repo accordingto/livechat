@@ -32,7 +32,7 @@ host is sharing.
 
 **BLUFF PARTY** uses the existing room/player links, Classic and Halloween topics, private roles, Spotlight, and automatic scoring. Bluffers can open optional story starting points on their own cards and freely ignore them. Its independent executor keeps the game running after the host page closes. See [`bluff-king-mode.md`](bluff-king-mode.md) for modes, knowledge history and the accepted trust boundary. No new environment variables or backend credentials are required.
 
-**WORD WOLF**, **WORD LIMIT THEATER** and **WHO KNOWS?** also reuse the original player links. Their canonical tables run through the players' cards; the host page can close after starting. See [`word-wolf-mode.md`](word-wolf-mode.md), [`word-limit-mode.md`](word-limit-mode.md) and [`who-knows-mode.md`](who-knows-mode.md) for rules and privacy limits. WORD WOLF restores the original 80 pairs, with 42 clear SVG illustrations for the default 21 everyday-object pairs.
+**WORD WOLF**, **WORD LIMIT THEATER** and **WHO KNOWS?** also reuse the original player links. Their canonical tables run through the players' cards; the host page can close after starting. See [`word-wolf-mode.md`](word-wolf-mode.md), [`word-limit-mode.md`](word-limit-mode.md) and [`who-knows-mode.md`](who-knows-mode.md) for rules and privacy limits. WORD WOLF restores the original 80 pairs, with a dedicated gouache-style illustration for each of the 160 words across all 80 pairs.
 
 **Dixit** retains its original Hub entry. Its prominent phase bar tells
 each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card

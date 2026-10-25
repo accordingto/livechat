@@ -8,6 +8,7 @@ const fs = require('node:fs'), path = require('node:path'), crypto = require('no
 const assert = require('node:assert/strict');
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_BASE = 'https://livechat-two-alpha.vercel.app/';
+const WORD_WOLF_CONTENT = require('../word-wolf-content.js');
 const FILES = Object.freeze([
   'index.html', 'play.html', 'i18n.js', 'shared.css', 'qrcode.js', 'firebase-config.js', 'room.js',
   'hub-launcher.js', 'hub-membership.css', 'hub-executor.js', 'card-table.js', 'card-table-ui.js', 'card-table.css',
@@ -18,6 +19,7 @@ const FILES = Object.freeze([
   'assets/word-limit-theater/courier-prime-latin-400.woff2', 'assets/word-limit-theater/courier-prime-latin-700.woff2',
   'who-knows.html', 'who-knows-engine.js', 'who-knows-words.js', 'who-knows-sync.js', 'who-knows-ui.js', 'who-knows-host.js', 'who-knows.css', 'assets/who-knows/mark.svg',
   'word-wolf.html', 'word-wolf-engine.js', 'word-wolf-content.js', 'word-wolf-art.js', 'word-wolf-ui.js', 'word-wolf-host.js', 'word-wolf.css', 'assets/word-wolf/mark.svg',
+  ...WORD_WOLF_CONTENT.PAIRS.flatMap(pair => [pair.a, pair.b]).map(item => 'assets/word-wolf/cards-v1/' + item.id + '.webp'),
 ]);
 function assetPath(file) {
   return typeof file === 'string' && /^[a-zA-Z0-9_./-]+$/.test(file) && !file.startsWith('/') && !file.split('/').some(part => !part || part === '.' || part === '..');

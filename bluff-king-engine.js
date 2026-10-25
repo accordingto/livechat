@@ -63,43 +63,157 @@ function cleanName(name) { const n = String(name || '').trim().replace(/[\u0000-
 function normalizeCode(code) { const c = String(code || '').toUpperCase().trim(); if (!/^[A-Z0-9]{4,12}$/.test(c)) fail('invalid_room', 'Use a room code with 4–12 letters or numbers.', 400); return c; }
 function target(room, targetId) { const p = room.members.find(p => p.id === targetId && currentPlayers(room).includes(p.id) && eligibleMember(p)); if (!p || p.id === room.round.thinkerId) fail('invalid_target', 'Choose a formal player other than the Thinker.', 400); return p; }
 function publicQuestion(q, hints) { return q ? { id: q.id, canonicalKnowledgeId: q.canonicalKnowledgeId, deck: deckOf(q), locale: q.locale, term: q.term, publicPrompt: q.publicPrompt, hintMode: q.hintMode, publicHints: hints || q.publicHints || [] } : null; }
-// Optional fiction scaffolds, never factual hints. This function accepts only
-// the public topic projection: answers, research and hidden roles cannot guide
-// the bluff. A seat/round key varies the starting points without drawing RNG,
-// changing the canonical game or changing them on a reconnect.
+// Original, deliberately made-up explanations. Use only the words/categories
+// already visible on the public topic, never the answer, evidence or research.
+// A round/seat key picks two complete lines without RNG or canonical mutation.
 const STORY_STARTS = {
-  classic: [
-    { en: 'A small everyday problem: invent who needed a solution, then give this topic an unexpected practical use.', zh: '從一個生活小麻煩開始：誰需要解決它？再替這個題目編一個意想不到的用途。' },
-    { en: 'A name that stuck: invent a misunderstanding, nickname or mix-up that made people call it this.', zh: '從名稱的由來開始：編一場誤會、一個綽號，或一次弄錯，讓這個名字流傳下來。' },
-    { en: 'A practical arrangement became a custom: decide what people originally needed and what later became a game.', zh: '從習俗的起點開始：原本是為了什麼實際需要，後來又怎麼變成大家玩的遊戲？' },
-    { en: 'One unusual detail has a simple reason: pick a shape, sound or feature and invent the inconvenience it solved.', zh: '抓一個奇怪的小細節：形狀、聲音或特色，然後編它原本解決了什麼不方便。' },
-    { en: 'Two ordinary things meet: invent how someone combined familiar objects or ideas and found a surprising result.', zh: '讓兩樣普通的東西碰在一起：有人怎麼組合它們，結果意外發現了什麼？' },
-    { en: 'Two places tell different versions: invent their disagreement, then explain why one version became popular.', zh: '讓兩個地方各說一個版本：差別在哪裡？再編為什麼其中一個說法特別流行。' },
+  weather: [
+    { en: 'It is mist that freezes around floating seeds, leaving a strange shape in the air.', zh: '這是霧氣在空中的種子周圍結冰，才留下這種奇怪的形狀。' },
+    { en: 'It happens when warm rain hits frozen sand and rises back into the sky.', zh: '這是暖雨碰到結冰的沙地，又往天空升起時出現的現象。' },
+    { en: 'Old sailors used this name for weather that seemed to follow one ship all day.', zh: '以前水手用這個名字，形容一整天都像跟著同一艘船走的天氣。' },
+    { en: 'It forms when cold air traps a thin layer of flower dust above the ground.', zh: '這是冷空氣把一層花粉困在地面上方，形成的特殊景象。' },
   ],
-  halloween: [
-    { en: 'After closing time, a caretaker notices the same small sound. Invent an ordinary object behind it and why the story spread.', zh: '打烊後，管理員總聽見同一個小聲音。編一樣和聲音有關的普通物件，再說故事為何傳開。' },
-    { en: 'A village custom began as a small favor. Choose one object, then invent how its purpose changed over generations.', zh: '村裡的習俗原本只是幫一個小忙。挑一樣物件，再編它的用途怎麼一代代變了。' },
-    { en: 'Two witnesses remember an ordinary event differently. Invent the two details that turned their disagreement into a mystery.', zh: '兩個人對一件普通小事記得不一樣。各編一個細節，讓這場爭論慢慢變成謎團。' },
-    { en: 'A harmless house rule became a spooky warning. Invent the rule and why the first person took it so seriously.', zh: '一條無害的家規變成了神祕警告。先編規矩，再說第一個人為什麼那麼在意。' },
-    { en: 'An annual gathering got its name from an unexpected visitor. Invent what the visitor wanted and what people copied later.', zh: '一年一度的聚會因為一位意外訪客而得名。編他想做什麼，以及後來的人模仿了什麼。' },
-    { en: 'An ordinary object passed between families with a changing story. Invent where its first owner found it and one detail later added.', zh: '一樣普通物件在幾個家庭間流傳，故事也跟著改。編第一個主人在哪找到它，再加一個後來的細節。' },
+  light: [
+    { en: 'It is moonlight passing through dust from a dry lake, making a pale ring.', zh: '這是月光穿過乾湖底揚起的細沙，才出現一圈淡淡的光。' },
+    { en: 'It is a moving light made by tiny fish scales floating on the water.', zh: '這是漂在水面上的小魚鱗反光，看起來像一團會移動的光。' },
+    { en: 'It appears when warm stones release the sunlight they stored during the day.', zh: '這是石頭把白天存下的陽光慢慢放出來，所以晚上才看得到。' },
+    { en: 'It is light from faraway windows, bent into a new shape by cold air.', zh: '這是遠處窗戶的燈光，被冷空氣折成了另一種形狀。' },
+  ],
+  stone: [
+    { en: 'It is a rock full of salt crystals that slowly push its surface into a new shape.', zh: '這種石頭裡有鹽晶，鹽晶慢慢把表面推成了特別的形狀。' },
+    { en: 'It is a stone coating left by beetles that use the same path every night.', zh: '這是甲蟲每晚走同一條路，久了在石頭上留下的表層。' },
+    { en: 'It is soft stone shaped by tree roots that have already rotted away.', zh: '這是以前的樹根把軟石頭擠出形狀，後來樹根已經腐掉了。' },
+    { en: 'It forms when hot sand cools around tiny air pockets left by seaweed.', zh: '這是熱沙冷卻時，包住海草留下的小氣泡，才形成的東西。' },
+  ],
+  plant: [
+    { en: 'It is how a plant stores small drops of rain inside its flowers for dry days.', zh: '這是植物把小雨滴存進花裡，留到乾旱時再使用的方式。' },
+    { en: 'It happens when two plants grow close enough to share the same root.', zh: '這是兩株植物長得太近，最後共用同一條根時發生的現象。' },
+    { en: 'It is a plant growing a bitter outer layer to stop insects from stealing its water.', zh: '這是植物長出一層苦苦的外皮，防止昆蟲偷走水分。' },
+    { en: 'It is a gardening trick that makes a plant flower by turning its pot each morning.', zh: '這是一種園藝方法，每天早上轉動花盆，就能讓植物提早開花。' },
+  ],
+  animal: [
+    { en: 'It is how a small animal copies the smell of a larger one to keep enemies away.', zh: '這是小動物模仿大型動物的氣味，讓敵人不敢靠近的方式。' },
+    { en: 'It is a resting habit that lets an animal save water by breathing through wet leaves.', zh: '這是動物休息時透過濕葉子呼吸，藉此省下水分的習慣。' },
+    { en: 'It is a way animals mark safe paths with a dust that only their young can see.', zh: '這是動物用特殊粉末標出安全路線，而且只有幼獸看得見。' },
+    { en: 'It happens when an animal borrows another species’ empty shell for its sleeping place.', zh: '這是動物借用另一種動物留下的空殼，當作睡覺的地方。' },
+  ],
+  container: [
+    { en: 'It is a cup with a little bell underneath, used to ask for another drink.', zh: '這是底下裝著小鈴鐺的杯子，用來提醒別人再倒一杯。' },
+    { en: 'It is a container with a false bottom, used to hide snacks during a long meal.', zh: '這是有假底的容器，吃很久的宴席時，可以偷偷把點心藏起來。' },
+    { en: 'It is a travel container that keeps two drinks apart until someone turns the handle.', zh: '這是旅行用的容器，平常把兩種飲料分開，轉一下把手才會混合。' },
+    { en: 'It is a small vessel that changes its sound when the drink inside is too hot.', zh: '這是一種小容器，裡面的飲料太燙時，敲起來的聲音就會改變。' },
+  ],
+  clothing: [
+    { en: 'It is a tiny mirror sewn into clothing so travelers could check who was following them.', zh: '這是縫在衣服上的小鏡子，讓旅人可以偷看後面有沒有人跟著。' },
+    { en: 'It is a clip that holds a small bag of warm stones inside a winter coat.', zh: '這是冬衣裡的夾子，用來固定一小袋保暖的熱石頭。' },
+    { en: 'It is an old clothing charm that rattles when the wearer is walking too fast.', zh: '這是一種老式衣物配件，走太快就會發出聲音，提醒人放慢腳步。' },
+    { en: 'It is a cloth cover used to keep expensive sleeves clean while eating street food.', zh: '這是吃路邊食物時套上的布罩，避免弄髒昂貴的袖子。' },
+  ],
+  writing: [
+    { en: 'It is a board with moving letter tiles, used to send short messages without speaking.', zh: '這是裝著活動字片的板子，不用說話也能拼出簡短訊息。' },
+    { en: 'It is a small writing tool that stamps the same secret mark on every page.', zh: '這是一種小寫字工具，會在每一頁蓋下同樣的祕密記號。' },
+    { en: 'It is a book whose pages were turned by pulling a cord under the table.', zh: '這是一本特別的書，只要拉桌子底下的繩子，就會自動翻頁。' },
+    { en: 'It is a drawing method that hides a second picture until the paper gets warm.', zh: '這是一種畫法，紙張變暖之後，原本藏著的第二張圖才會出現。' },
+  ],
+  craft: [
+    { en: 'It is a hand tool used to press a family’s secret pattern into soft bread.', zh: '這是一種手工具，用來把家族的祕密花紋壓在還軟的麵包上。' },
+    { en: 'It is a woven cover that keeps insects away from food without hiding the food.', zh: '這是一種編織罩子，可以擋住昆蟲，又讓人看得到裡面的食物。' },
+    { en: 'It is a frame that uses stretched strings to measure how much a wall has moved.', zh: '這是一種拉著細線的框架，用來看牆壁是不是慢慢歪掉了。' },
+    { en: 'It is a craft where broken cups are joined into a small whistle for children.', zh: '這是一種手工藝，把破杯子的碎片接起來，做成給小孩玩的哨子。' },
+  ],
+  food: [
+    { en: 'It is a sweet drink shaken with clean stones to make a thick layer of foam.', zh: '這是一種甜飲料，放進乾淨石頭一起搖，就會出現厚厚的泡沫。' },
+    { en: 'It is a small bread baked around an empty shell, so every piece has a hidden pocket.', zh: '這是一種包著空殼烤的小麵包，所以每一個裡面都有小空洞。' },
+    { en: 'It is a winter dish served cold so guests have to warm it with their hands first.', zh: '這是一道冬天故意冷著上的菜，客人要先用雙手把它捂暖。' },
+    { en: 'It is a festival snack shaped like a key, shared before opening the first gift.', zh: '這是一種鑰匙形狀的節慶點心，大家要先分著吃，才可以拆第一份禮物。' },
+  ],
+  performance: [
+    { en: 'It is a game where each singer must answer the last line using only animal sounds.', zh: '這是一種遊戲，每個唱歌的人都要用動物叫聲回答上一句。' },
+    { en: 'It is a dance that slowly moves the whole crowd into a spiral around one empty chair.', zh: '這是一種舞蹈，人群會慢慢繞成螺旋形，中間留著一張空椅子。' },
+    { en: 'It is a story contest where the last listener has to retell everything in one breath.', zh: '這是一種說故事比賽，最後一個聽眾要一口氣把整個故事重講一次。' },
+    { en: 'It is a tiny instrument played with a wet finger to imitate a bird at night.', zh: '這是一種小樂器，用濕手指摩擦，就能模仿夜裡的鳥叫聲。' },
+  ],
+  custom: [
+    { en: 'Families leave an empty chair outside so a lost traveler will know which house is friendly.', zh: '家家戶戶會在門外放一張空椅子，讓迷路的旅人知道哪一家願意幫忙。' },
+    { en: 'Neighbors swap front-door keys for one night, then return them with a small gift.', zh: '鄰居會交換一晚的大門鑰匙，第二天再連同一份小禮物還回去。' },
+    { en: 'Everyone hides one shoe before dinner, and finding it is meant to bring a lucky year.', zh: '大家吃晚餐前都藏起一隻鞋，找到鞋子的人就會幸運一整年。' },
+    { en: 'Children ring a wooden bell at each door to remind people to put out an extra plate.', zh: '小孩會挨家挨戶敲木鈴，提醒大家晚餐多放一個盤子。' },
+  ],
+  person: [
+    { en: 'It is a traveler who sold empty bottles, claiming they could hold a person’s bad dreams.', zh: '這是一位賣空瓶子的旅人，聲稱瓶子可以裝走別人的惡夢。' },
+    { en: 'It is a performer who became famous for arriving at parties before anyone had sent an invitation.', zh: '這是一位表演者，總在邀請函寄出前就出現在派對上，因此出了名。' },
+    { en: 'It is a storyteller who left the same warning inside every clock repaired for a customer.', zh: '這是一位愛說故事的修鐘師傅，每修好一個鐘，都在裡面留下同樣的警告。' },
+    { en: 'It is a village keeper who rang a bell whenever a stranger forgot their own name.', zh: '這是一位村莊守門人，只要有陌生人忘記自己的名字，就會敲響鐘聲。' },
+  ],
+  place: [
+    { en: 'People say one locked room opens by itself whenever a visitor says the wrong name.', zh: '傳說只要訪客說錯一個名字，裡面一間上鎖的房間就會自己打開。' },
+    { en: 'The owner built a second front door so lost spirits could leave without passing the family.', zh: '主人特別蓋了第二道大門，讓迷路的幽靈可以離開，不必經過家人身邊。' },
+    { en: 'A night guard kept hearing a missing clock, although every clock had been removed years earlier.', zh: '夜間警衛一直聽見鐘聲，但那裡所有的鐘，多年前就已經搬走了。' },
+    { en: 'Visitors once left a coin at the gate so their shadows would not stay there after sunset.', zh: '以前訪客要在門口留一枚硬幣，據說這樣日落後，影子才不會被留下。' },
+  ],
+  creature: [
+    { en: 'It is a creature that copies a friend’s voice but can only speak while nobody looks at it.', zh: '這是一種會模仿朋友聲音的怪物，但只要有人看著牠，牠就說不出話。' },
+    { en: 'It is a little spirit that swaps the shoes by the door whenever someone tells a lie.', zh: '這是一種小精靈，只要有人說謊，就會把門口的鞋子全部換位置。' },
+    { en: 'It is a night creature that follows travelers because it wants to borrow a human shadow.', zh: '這是一種夜裡跟著旅人的生物，因為牠想借走人類的影子。' },
+    { en: 'It is a spirit that can enter a house only if someone leaves a spoon facing the door.', zh: '這是一種精靈，只有家裡有人把湯匙朝著大門放，牠才進得來。' },
+  ],
+  illusion: [
+    { en: 'A hidden radio picked up voices from a nearby taxi office, making an empty room seem haunted.', zh: '藏起來的收音機收到附近計程車行的聲音，才讓空房間像是在鬧鬼。' },
+    { en: 'A performer used a painted sheet pulled through a narrow wall to make a figure disappear.', zh: '表演者把畫著人影的布拉進牆上的細縫，讓人看起來像突然消失。' },
+    { en: 'A small light inside a moving glass bottle made a face seem to float across the room.', zh: '移動的玻璃瓶裡藏著一盞小燈，讓一張臉看起來像飄過房間。' },
+    { en: 'A stage assistant moved a bright mask behind wet cloth, making it seem to change faces.', zh: '舞台助手在濕布後面移動發亮的面具，看起來就像一張臉不停在變。' },
+  ],
+  mystery: [
+    { en: 'A friend made up a warning to stop visitors taking a keepsake, and the warning became a ghost story.', zh: '有人為了阻止遊客拿走紀念物，編了一句警告，後來就傳成了鬼故事。' },
+    { en: 'A photographer mixed up two pictures, and people thought the extra figure had never been there.', zh: '攝影師把兩張照片弄混，大家卻以為多出來的人影，拍照時根本不在現場。' },
+    { en: 'Two visitors used the same false name, so later witnesses remembered one person being in two places.', zh: '兩位訪客用了同一個假名字，後來大家便以為一個人同時出現在兩個地方。' },
+    { en: 'Someone hid a tiny music box in a wall, and the tune returned whenever the room got cold.', zh: '有人把小音樂盒藏進牆裡，房間一變冷，那段音樂就會再次響起。' },
+  ],
+  unknown: [
+    { en: 'It is an old guessing game where players hide a coin under one of three cups.', zh: '這是一種老遊戲，玩家把硬幣藏在三個杯子的其中一個下面，讓別人猜。' },
+    { en: 'It is a small wooden tool that leaves a secret mark inside a freshly baked loaf.', zh: '這是一種小木工具，可以在剛烤好的麵包裡留下祕密記號。' },
+    { en: 'It is a village custom of keeping one lamp lit until every traveler has come home.', zh: '這是一種村莊習俗，要留一盞燈，直到所有出門的人都回家。' },
+    { en: 'It is a sweet drink served in two layers, which guests mix by tapping the table.', zh: '這是一種分成兩層的甜飲料，客人要敲桌子，讓它們慢慢混在一起。' },
   ],
 };
+function storyFamily(text) {
+  const value = String(text || '').toLowerCase();
+  if (/cloud|snow|ice\b|weather|fog|rain/.test(value)) return 'weather';
+  if (/light|vision|fire\b|\bbow\b|bow$|\barc\b/.test(value)) return 'light';
+  if (/rock|stone|lava|varnish/.test(value)) return 'stone';
+  if (/plant|garden/.test(value)) return 'plant';
+  if (/animal|living things|sea life/.test(value)) return 'animal';
+  if (/jug|cup|vessel|tableware|\bbox\b|\bpot\b|vase/.test(value)) return 'container';
+  if (/clothing|accessory|costume|fashion|purse|bouquet/.test(value)) return 'clothing';
+  if (/book|writing|learning|painting|almanac/.test(value)) return 'writing';
+  if (/craft|textile|weav|metalwork|decoration|architecture|navigation/.test(value)) return 'craft';
+  if (/food|drink|cooking|cheese|pastry|cider/.test(value)) return 'food';
+  if (/dance|sing|poetry|verse|instrument|storytelling|body language/.test(value)) return 'performance';
+  if (/abbey|rectory|castle|house|hall\b|room|hotel|tower|ghost town|place/.test(value)) return 'place';
+  if (/illusion|ghost show|laboratory|real cause/.test(value)) return 'illusion';
+  if (/creature|folklore|folk tale|\blegend\b/.test(value)) return 'creature';
+  if (/custom|tradition|festival|celebration|party game|wedding|toys/.test(value)) return 'custom';
+  if (/who is|who are|why (?:is|are) (?:he|she|they)|character|sisters|visitor|promise/.test(value)) return 'person';
+  if (/mystery|photograph|picture|what happened|story behind/.test(value)) return 'mystery';
+  return null;
+}
 function storyGuide(topic, seatRoundKey = '') {
   if (!topic) return null;
-  const starts = STORY_STARTS[topic.deck === 'halloween' ? 'halloween' : 'classic'];
+  // Literal words in a public title take priority. For an unfamiliar title,
+  // use all public categories, including decoys: never assume the first is true.
+  const literal = storyFamily(topic.term), hints = Array.isArray(topic.publicHints) ? topic.publicHints : [];
+  const families = literal ? [literal] : [...new Set(hints.map(storyFamily).filter(Boolean))].sort();
+  if (!families.length) families.push(storyFamily(topic.publicPrompt) || (topic.deck === 'halloween' ? 'mystery' : 'unknown'));
+  const starts = families.flatMap(family => STORY_STARTS[family]);
   let seed = 2166136261;
   for (const char of String(topic.id || '') + ':' + String(seatRoundKey)) seed = Math.imul(seed ^ char.charCodeAt(0), 16777619) >>> 0;
   const first = seed % starts.length, second = (first + 1 + (seed >>> 8) % (starts.length - 1)) % starts.length;
   return {
-    version: 1, optional: true, kind: 'fiction',
+    version: 2, optional: true, kind: 'fiction', format: 'sayable',
     topic: String(topic.term || ''),
     starts: [starts[first], starts[second]].map(value => ({ ...value })),
-    steps: [
-      { en: 'Pick one starting point, or ignore both.', zh: '挑一個起點，或兩個都不用。' },
-      { en: 'Add who, where and one concrete detail.', zh: '補上人物、地點和一個具體細節。' },
-      { en: 'Give your explanation a simple reason; change it freely as people ask.', zh: '替說法加一個簡單理由；被追問時可以自由修改。' },
-    ],
+    // Kept empty for older frontends that expect the original guide shape.
+    steps: [],
   };
 }
 function availableQuestions(store, room, bank) { const known = new Set(room.roster.filter(pid => eligibleMember(room.members.find(p => p.id === pid))).flatMap(pid => Object.keys(identity(store, room.members.find(p => p.id === pid).identityId).known))); const used = new Set(room.usedKnowledgeIds); return deckBank(room, bank).filter(q => playable(q) && !known.has(q.canonicalKnowledgeId) && !used.has(q.canonicalKnowledgeId)); }

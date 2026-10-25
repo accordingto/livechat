@@ -41,7 +41,7 @@ var WORD_WOLF_UI = (() => {
   function itemCard(item, title, compact = false) {
     if (!item) return '';
     const image = art(item.id);
-    return `<section class="ww-item-card${compact ? ' is-compact' : ''}${image ? '' : ' is-type-only'}" data-ww-item="${esc(item.id)}"><p class="ww-eyebrow">${esc(title)}</p>${image}<h2 lang="en">${esc(item.en)}</h2>${C.lang() === 'zh' ? `<p class="ww-item-zh" lang="zh-Hant">${esc(item.zh)}</p>` : ''}</section>`;
+    return `<section class="ww-item-card${compact ? ' is-compact' : ''}${image ? '' : ' is-type-only'}" data-ww-item="${esc(item.id)}"><p class="ww-eyebrow">${esc(title)}</p>${image ? `<div class="ww-item-art">${image}</div>` : ''}<div class="ww-item-caption"><h2 lang="en">${esc(item.en)}</h2><p class="ww-item-zh" lang="zh-Hant">${esc(item.zh)}</p></div></section>`;
   }
   function players(v, me = 0) {
     return `<ul class="ww-players">${list(v.roster).map(p => `<li class="${v.picked === p.playerNum ? 'is-picked' : ''}${p.active ? '' : 'is-out'}"><span>${esc(p.name || t('player', { n: p.playerNum }))}${p.playerNum === me ? ` <em>${esc(t('you'))}</em>` : ''}</span>${!p.active ? `<small>${esc(t('sittingOut'))}</small>` : v.picked === p.playerNum ? '<span class="ww-floor-dot" aria-hidden="true"></span>' : ''}</li>`).join('')}</ul>`;
@@ -71,7 +71,7 @@ var WORD_WOLF_UI = (() => {
       Array.from(this.root.querySelectorAll('details.ww-more')).forEach((detail, i) => { if (open[i]) detail.open = true; });
       this.moreScope = scope;
     }
-    head(data) { return `${this.nameBanner(data)}<div class="ww-card-head"><span>WORD WOLF</span><span>${esc(t('roundN', { n: data.ww.roundNo }))}</span></div>`; }
+    head(data) { return `<div class="ww-card-head">${this.nameBanner(data)}<div class="ww-card-meta"><span>WORD WOLF</span><span>${esc(t('roundN', { n: data.ww.roundNo }))}</span></div></div>`; }
     main(data) {
       const v = data.ww, me = v.me, busy = !!this.pending, disabled = busy ? ' disabled' : '';
       if (v.phase === 'finished') return `<div class="ww-outcome"><h2>${esc(t('finished'))}</h2><p>${esc(t('noScores'))}</p></div>${me.canControl ? `<button class="ct-button ct-primary ct-wide" type="button" data-ct-action="restart"${disabled}>${esc(t('newGame'))}</button>` : this.back()}`;
@@ -81,7 +81,7 @@ var WORD_WOLF_UI = (() => {
       const card = itemCard(me.item, t('secret'), phase === 'vote');
       if (v.phase === 'paused') return `${card}<section class="ww-zone"><h3>${esc(t('paused'))}</h3><button type="button" class="ct-button ct-primary ct-wide" data-ct-action="resume"${disabled}>${esc(t('resume'))}</button></section>`;
       if (phase === 'vote') return `${card}<section class="ww-zone"><h3>${esc(t('vote'))}</h3><p data-ww-vote-progress>${esc(t('voteProgress', { n: v.votesCast, total: v.votersTotal }))}</p><div class="ww-ballot">${list(v.roster).filter(p => p.active && p.inRound && p.playerNum !== data.playerNum).map(p => `<button type="button" class="ct-button${me.vote === p.playerNum ? ' is-selected' : ''}" data-ct-action="ballot" data-ct-arg-target="${p.playerNum}" aria-pressed="${me.vote === p.playerNum}"${disabled}>${esc(p.name || t('player', { n: p.playerNum }))}</button>`).join('')}</div><p class="ww-fine">${esc(me.vote ? t('votedFor', { name: nameOf(v, me.vote) }) : t('voteHint'))}</p></section>`;
-      return `${card}<p class="ww-card-note">${esc(t('keepSecret'))}</p><section class="ww-zone">${v.picked ? `<h3 data-ww-picked="${v.picked}">${esc(t('picked', { name: nameOf(v, v.picked) }))}</h3>` : `<h3>${esc(t('describe'))}</h3>`}<div class="ww-action-row"><button type="button" class="ct-button" data-ct-action="pick"${disabled}>${esc(t('pick'))}</button><button type="button" class="ct-button ct-primary" data-ct-action="vote"${disabled}>${esc(t('openVote'))}</button></div></section>`;
+      return `${card}<p class="ww-card-note">${esc(t('keepSecret'))}</p><section class="ww-zone">${v.picked ? `<h3 data-ww-picked="${v.picked}">${esc(t('picked', { name: nameOf(v, v.picked) }))}</h3>` : ''}<div class="ww-action-row"><button type="button" class="ct-button" data-ct-action="pick"${disabled}>${esc(t('pick'))}</button><button type="button" class="ct-button ct-primary" data-ct-action="vote"${disabled}>${esc(t('openVote'))}</button></div></section>`;
     }
     tail(data) { const v = data.ww; return ['describe', 'vote', 'paused'].includes(v.phase) ? `<details class="ww-more"><summary>${esc(t('playersMore'))}</summary><p>${esc(t('describeHint'))}</p><p>${esc(t('unknownRole'))}</p>${players(v, data.playerNum)}</details>` : ''; }
   }

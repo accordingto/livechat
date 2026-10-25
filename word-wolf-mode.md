@@ -18,9 +18,14 @@ moderator; a host who plays uses their own original player card.
 - `word-wolf-content.js` — the editable authority for all 80 restored pairs
   from `12d64cd^`, stable `ww-001…ww-080` IDs and bilingual item names. Do not
   append a second copy of the old bank.
-- `word-wolf-art.js` — 42 original inline SVG object illustrations, one for
-  every item in the default 21 object pairs. Other packs use clear word cards
-  when an item has no illustration.
+- `word-wolf-art.js` — immutable local bitmap manifest for all **160 unique
+  items in the 80 pairs**, derived from `CONTENT.PAIRS` ids. It keeps the
+  existing `item(id)` / `ids` interface and adds `get(id)` / `manifest`; names
+  stay exclusively in the content authority.
+- `assets/word-wolf/cards-v1/{item-id}.webp` — one independent **640×640**
+  illustrated card per word, including food, feelings, places, professions,
+  weather and other abstract concepts. No pack falls back to a generic icon
+  or unillustrated known-word card.
 - `word-wolf-engine.js` — pure canonical rules, selection/history, private
   projections, voting and result calculation.
 - `word-wolf-ui.js` — private card, public stage, bilingual copy and
@@ -31,10 +36,41 @@ moderator; a host who plays uses their own original player card.
   original-card lifecycle, controls and presentation base; see
   [card-table-mode.md](card-table-mode.md).
 
-Own files use cache tag `ww-1`, shared files `ct-2`. Both the host page and
+Own files use cache tag `ww-art-2`, shared files `ct-2`. Both the host page and
 `play.html` load content, art, engine and UI in dependency order; only the host
 page loads `word-wolf-host.js`. `word-wolf.html?demo=1` is the separate
 one-device preview with a five-player demo roster, not a new live room.
+
+## Illustrated cards
+
+The previous 42 small vector studies are replaced by a complete family of
+standalone editorial gouache illustrations on warm ivory paper. Objects use
+clear forms and recognizable materials; feelings and other abstract answers
+use a small expressive situation. Near-neighbor pairs have distinct visual
+cues: a flute versus clarinet, an open canoe versus a covered kayak, a flower
+vase versus a soil-filled flowerpot, and so on. There are no names, labels,
+logos or comparison panels painted into the images. The source prompt set and
+built-in generation provenance are maintained in
+`docs/word-wolf-art-prompts.json`.
+
+The private card resolves only `me.item.id` through the manifest. It renders
+one square image followed by live, readable English and Traditional Chinese
+names; Chinese remains a reading aid when controls are English. The global
+EN/ZH switch still controls actual interface copy. An image's empty alt avoids
+announcing those adjacent names twice. Unknown ids have no guessed image URL.
+The public screen never renders either secret image before reveal; only the
+existing result projection permits both cards to appear together. Images
+neither change the canonical answer nor select a pair on a client.
+
+Describe uses a large square image. On short 320-pixel phone screens it scales
+to 162 pixels so the name and main actions remain visible; larger phone cards
+allow up to 234 pixels. Voting uses a 76-pixel image beside the same readable
+names, leaving space for ballots. Result cards show both pictures with their
+own labels. Fixed intrinsic dimensions and `object-fit: contain` preserve the
+whole composition while avoiding layout shifts and cropping. The compact
+name/round header and removal of a repeated describe headline keep the focus
+on the card and current action. Rules, history, packs, voting and scoring are
+unchanged by this art revision.
 
 ## Packs and pair history
 
@@ -141,7 +177,9 @@ node --test tests/word-wolf-*.test.cjs
 node tests/word-wolf-ui.browser.cjs <path-to-playwright-package>
 ```
 
-The unit/integration suites check all 80 pairs, 42 safe object SVGs, 3–9-seat
+The unit/integration suites check all 80 pairs, a safe immutable 160-item
+bitmap manifest, complete distinct 640-square files, bilingual renderer
+labels and own-image-only rendering, 3–9-seat
 one-different deals, private projections, Pick circles, mutable private
 ballots, all vote outcomes, history/recycling, pause/reconnect, stale/duplicate
 commands, sit-out cancellation, renames and actual Hub/`play.html` wiring.
@@ -172,3 +210,34 @@ language-asserted EN/ZH phone captures are used; all seven disposable nodes
 were conditionally deleted. Physical devices and a human voice-session game
 remain unverified. See [release acceptance](docs/conversation-cards-2026-10-26-acceptance.md)
 for the full coverage, first-run recovery and publication evidence.
+
+The production smoke above predates this illustrated-card revision. New art
+validation requires the complete real bitmap set, decoded image checks and
+fresh phone/multiplayer regression; its results must be recorded separately
+in `docs/cards-art-2026-10-26-acceptance.md`. The renderer-only audit
+`tests/word-wolf-art.browser.cjs` checks every item in large/compact layouts at
+320 pixels and selected long names at 390; it uses no Firebase or game state
+and does not replace the real-entry multiplayer fixture. Missing image files
+fail both asset coverage and browser startup; metadata or placeholders cannot
+stand in for a completed 160-card deck.
+
+For this art revision, the engine/integration/art suite passes **15/15**. It
+checks every one of the 160 actual files for a valid complete WebP container,
+640×640 dimensions and a distinct SHA256, plus the exact known-id manifest,
+own-image-only output and readable live EN/ZH labels for every item. The
+isolated renderer audit passes **324 inspections** with **12 representative
+captures**: all 160 items in describe and compact voting layouts at 320 pixels,
+plus four long-name layouts at 390. It reports no decode, overflow or clipped
+label errors. Report: `../word-wolf-art-renderer-final/report.json`.
+
+Fresh real-entry fixtures with four and nine players each pass **12 flows and
+72 captures** (24 flows, 144 captures total), zero page errors or layout
+findings. They decode the real own/revealed bitmaps, retain all earlier
+authority/privacy/voting/Next/reconnect checks, and verify the main describe
+actions fit on the phone before scrolling. Source and all 160 bitmap hashes
+match before/after both runs, and all fixture presence is empty after closing
+the pages. Reports: `../word-wolf-art-final-4/report.json` and
+`../word-wolf-art-final-9/report.json`. Actual 320-pixel English private cards,
+Chinese voting and result cards, and long-word renderer captures were visually
+reviewed. These new runs use isolated transport and emulated viewports; this
+section does not claim a new production Firebase or physical-phone playtest.
