@@ -29,6 +29,9 @@ var BOMB_RELAY_ENGINE = (() => {
     defaultTiming: timing.DEFAULT_TIMING_SETTINGS,
     cardOptions: Object.freeze([5, 10, 15, 20]), defaultCards: 10,
     promptWeights: selector.DEFAULT_WEIGHTS, familyWindow: 3,
+    editions: Object.freeze(['classic', 'halloween']),
+    monsters: Object.freeze(['pumpkin', 'ghost', 'furry']),
+    avatars: Object.freeze(['boy', 'girl', 'curly', 'ponytail']),
     boomHoldMs: 4500,
     discussionMs: 45000,
     // A resumed bomb never explodes in the same instant it starts ticking.
@@ -41,6 +44,48 @@ var BOMB_RELAY_ENGINE = (() => {
   const isActive = (state, number) => active(state).some(player => player.playerNum === number);
   const isPlayer = (state, number) => roster(state).some(player => player.playerNum === number);
   const nameOf = (state, number) => roster(state).find(player => player.playerNum === number)?.name || '';
+  const avatarOf = player => CONFIG.avatars.includes(player?.avatar) ? player.avatar
+    : CONFIG.avatars[((Number(player?.playerNum) || 1) - 1) % CONFIG.avatars.length];
+  function normalizeAppearance(value = {}) {
+    return { edition: CONFIG.editions.includes(value?.edition) ? value.edition : 'classic',
+      monster: CONFIG.monsters.includes(value?.monster) ? value.monster : 'pumpkin' };
+  }
+  function validAppearance(value) {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      && CONFIG.editions.includes(value.edition) && CONFIG.monsters.includes(value.monster);
+  }
+  function effectiveAppearance(state) {
+    const preview = state.phase === 'ready' || (state.phase === 'paused' && state.pausedFrom === 'ready');
+    return normalizeAppearance(preview ? state.appearance : state.roundAppearance ?? state.appearance);
+  }
+  function cosmeticClock(state) {
+    const saved = state.cosmeticClock;
+    if (saved && Number.isFinite(saved.elapsedMs) && saved.elapsedMs >= 0) {
+      return { elapsedMs: saved.elapsedMs, startedAt: Number.isFinite(saved.startedAt) ? saved.startedAt : null };
+    }
+    // Older saves have no cosmetic clock. Only a known, still-running GO
+    // timestamp is useful; never infer a cosmetic duration from the secret fuse.
+    return { elapsedMs: 0, startedAt: state.phase === 'ticking' && Number.isFinite(state.litAt) ? state.litAt : null };
+  }
+  function freezeCosmeticClock(state, now) {
+    const clock = cosmeticClock(state);
+    state.cosmeticClock = { elapsedMs: clock.elapsedMs + (clock.startedAt === null ? 0 : Math.max(0, now - clock.startedAt)), startedAt: null };
+  }
+  function chaseSnapshot(state) {
+    const saved = state.lastChase;
+    if (!saved || saved.edition !== 'halloween' || typeof saved.id !== 'string'
+      || !isPlayer(state, saved.loser) || !CONFIG.monsters.includes(saved.monster) || !CONFIG.avatars.includes(saved.avatar)) return null;
+    return { id: saved.id, loser: saved.loser, monster: saved.monster, avatar: saved.avatar, edition: 'halloween' };
+  }
+  function normalizeCosmetics(state) {
+    state.appearance = normalizeAppearance(state.appearance);
+    state.roster.forEach(player => { player.avatar = avatarOf(player); });
+    state.cosmeticClock = cosmeticClock(state);
+    if (state.phase !== 'ready' && !(state.phase === 'paused' && state.pausedFrom === 'ready')) {
+      state.roundAppearance = effectiveAppearance(state);
+    }
+    state.lastChase = chaseSnapshot(state);
+  }
 
   function rng(seed) {
     let a = (Number(seed) >>> 0) || 0x9e3779b9;
@@ -161,6 +206,7 @@ var BOMB_RELAY_ENGINE = (() => {
     state.history = [];
     state.lastBoom = null;
     state.boom = null;
+    state.lastChase = null;
     const players = active(state);
     const starter = players[Math.floor(random() * players.length)]?.playerNum ?? null;
     readyCard(state, starter, now, random);
@@ -171,6 +217,7 @@ var BOMB_RELAY_ENGINE = (() => {
     state.passes = 0; state.lastPass = null; state.bounce = null;
     state.explodeAt = null; state.remainingMs = null; state.litAt = null;
     state.roundId = null; state.roundFuse = null;
+    state.roundAppearance = null; state.cosmeticClock = { elapsedMs: 0, startedAt: null };
     state.phaseUntil = null; state.pausedFrom = null;
     state.discussionUntil = null;
     bump(state, now);
@@ -180,8 +227,12 @@ var BOMB_RELAY_ENGINE = (() => {
     state.penalties = state.penalties || {};
     state.penalties[loser] = [...list(state.penalties[loser]), cardId];
     state.history = [...list(state.history), { cardId, loser, passes: state.passes }];
-    state.boom = { id: `${state.sessionId}:${state.cardIndex}`, loser, cardId, passes: state.passes,
+    state.boom = { id: `${state.sessionId}:${state.cardIndex}`, at: now, loser, cardId, passes: state.passes,
       last: state.cardIndex + 1 >= totalCards(state) };
+    const appearance = effectiveAppearance(state);
+    state.lastChase = appearance.edition === 'halloween' ? { id: state.boom.id, loser,
+      monster: appearance.monster, avatar: avatarOf(roster(state).find(player => player.playerNum === loser)), edition: 'halloween' } : null;
+    state.cosmeticClock = { elapsedMs: 0, startedAt: null };
     state.phase = 'boom'; state.phaseUntil = now + CONFIG.boomHoldMs;
     // One fixed schedule is saved with the once-only score settlement. The
     // original explosion presentation completes before the 45 s conversation.
@@ -212,6 +263,7 @@ var BOMB_RELAY_ENGINE = (() => {
     state.holder = null; state.explodeAt = null; state.remainingMs = null; state.lastPass = null; state.bounce = null;
     state.phaseUntil = null; state.pausedFrom = null; state.boom = null;
     state.discussionUntil = null;
+    state.lastChase = null; state.cosmeticClock = { elapsedMs: 0, startedAt: null };
     bump(state, now);
   }
   // The secret fuse is checked before every move, so a pass that reaches the
@@ -219,12 +271,12 @@ var BOMB_RELAY_ENGINE = (() => {
   const due = (state, now) => state.phase === 'ticking' && Number.isFinite(state.explodeAt) && now >= state.explodeAt;
 
   function create({ id, roster: seats, fuse, timing: timingOptions, cards = CONFIG.defaultCards, category = 'mixed',
-    promptHistory: priorPromptHistory, weights = CONFIG.promptWeights, familyWindow = CONFIG.familyWindow, now, seed } = {}) {
+    promptHistory: priorPromptHistory, weights = CONFIG.promptWeights, familyWindow = CONFIG.familyWindow, appearance, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(seats) || seats.length < CONFIG.minPlayers || seats.length > CONFIG.maxPlayers) throw new Error('invalid_roster');
     if (seats.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1 || player.playerNum > CONFIG.maxPlayers)
       || new Set(seats.map(player => player.playerNum)).size !== seats.length) throw new Error('invalid_roster');
     if ((fuse !== undefined && !validFuse(fuse)) || !validCards(cards) || !validCategory(category)
-      || !validPromptOptions(weights, familyWindow, category)) throw new Error('invalid_options');
+      || !validPromptOptions(weights, familyWindow, category) || (appearance !== undefined && !validAppearance(appearance))) throw new Error('invalid_options');
     let settingsTiming;
     try { settingsTiming = normalizeTimingSettings(timingOptions !== undefined ? timingOptions : (fuse !== undefined ? legacyTiming(fuse) : {})); }
     catch (_) { throw new Error('invalid_options'); }
@@ -233,7 +285,9 @@ var BOMB_RELAY_ENGINE = (() => {
       fuse: fuse || 'classic', settingsTiming, cards, category, promptRotationVersion: 1,
       promptHistory: promptHistory(priorPromptHistory),
       promptWeights: Object.assign({}, CONFIG.promptWeights, weights), familyWindow,
-      roster: seats.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false })),
+      appearance: normalizeAppearance(appearance), roundAppearance: null, lastChase: null,
+      cosmeticClock: { elapsedMs: 0, startedAt: null },
+      roster: seats.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false, avatar: avatarOf(player) })),
       order: [], cardIndex: 0, phase: 'ready', holder: null, starter: null,
       passes: 0, lastPass: null, bounce: null, boom: null, lastBoom: null,
       explodeAt: null, remainingMs: null, litAt: null, phaseUntil: null, discussionUntil: null, pausedFrom: null, stopped: false,
@@ -260,6 +314,7 @@ var BOMB_RELAY_ENGINE = (() => {
     }
     const state = copy(current);
     state.roster = roster(state); state.order = list(state.order); state.history = list(state.history);
+    normalizeCosmetics(state);
     normalizePromptState(state);
     // Lazily migrate settings only. An old running/paused deadline is never
     // reconstructed, sampled again or extended by opening the upgraded page.
@@ -284,6 +339,8 @@ var BOMB_RELAY_ENGINE = (() => {
       case 'light':
         if (state.phase !== 'ready' || !fresh || !mayAct || (!host && actor !== state.holder) || !isActive(state, state.holder)) { error = 'not_available'; break; }
         state.phase = 'ticking'; state.litAt = Math.round(now);
+        state.roundAppearance = normalizeAppearance(state.appearance);
+        state.cosmeticClock = { elapsedMs: 0, startedAt: state.litAt };
         state.roundFuse = lightFuse(state, state.litAt, random);
         state.roundId = state.roundFuse.roundId;
         state.explodeAt = state.roundFuse.explodeAtMs;
@@ -318,7 +375,7 @@ var BOMB_RELAY_ENGINE = (() => {
         if (!host || !['ready', 'ticking'].includes(state.phase)) { error = 'not_available'; break; }
         if (due(state, now)) { explode(state, now); break; }
         state.pausedFrom = state.phase;
-        if (state.phase === 'ticking') { state.remainingMs = Math.max(CONFIG.resumeFloorMs, state.explodeAt - now); state.explodeAt = null; }
+        if (state.phase === 'ticking') { freezeCosmeticClock(state, now); state.remainingMs = Math.max(CONFIG.resumeFloorMs, state.explodeAt - now); state.explodeAt = null; }
         state.phase = 'paused';
         bump(state, now);
         break;
@@ -326,7 +383,8 @@ var BOMB_RELAY_ENGINE = (() => {
         if (!host || state.phase !== 'paused') { error = 'not_available'; break; }
         if (active(state).length < CONFIG.minPlayers) { error = 'not_enough_players'; break; }
         if (!isActive(state, state.holder)) state.holder = nextActive(state, state.holder);
-        if (state.pausedFrom === 'ticking') { state.phase = 'ticking'; state.explodeAt = now + Math.max(CONFIG.resumeFloorMs, state.remainingMs || 0); }
+        if (state.pausedFrom === 'ticking') { state.phase = 'ticking'; state.explodeAt = now + Math.max(CONFIG.resumeFloorMs, state.remainingMs || 0);
+          state.cosmeticClock = { elapsedMs: cosmeticClock(state).elapsedMs, startedAt: Math.round(now) }; }
         else { state.phase = 'ready'; state.starter = state.holder; }
         state.remainingMs = null; state.pausedFrom = null;
         bump(state, now);
@@ -383,6 +441,29 @@ var BOMB_RELAY_ENGINE = (() => {
         if (due(state, now)) explode(state, now);
         state.lastChangeAt = now;
         break;
+      case 'appearance': {
+        if (!host) { error = 'not_available'; break; }
+        const requested = input.appearance ?? { edition: input.edition ?? state.appearance.edition, monster: input.monster ?? state.appearance.monster };
+        if (!validAppearance(requested)) { error = 'invalid_options'; break; }
+        if (due(state, now)) explode(state, now);
+        state.appearance = normalizeAppearance(requested);
+        state.lastChangeAt = now;
+        break;
+      }
+      case 'monster':
+        if (!mayAct) { error = 'not_available'; break; }
+        if (!CONFIG.monsters.includes(input.monster)) { error = 'invalid_options'; break; }
+        if (due(state, now)) explode(state, now);
+        state.appearance.monster = input.monster;
+        state.lastChangeAt = now;
+        break;
+      case 'avatar':
+        if (host || !mayAct) { error = 'not_available'; break; }
+        if (!CONFIG.avatars.includes(input.avatar)) { error = 'invalid_options'; break; }
+        if (due(state, now)) explode(state, now);
+        state.roster.find(player => player.playerNum === actor).avatar = input.avatar;
+        state.lastChangeAt = now;
+        break;
       case 'stop':
         if (!host || state.phase === 'finished') { error = 'not_available'; break; }
         finish(state, now, true);
@@ -396,7 +477,7 @@ var BOMB_RELAY_ENGINE = (() => {
 
   function standings(state) {
     const rows = roster(state).map(player => ({
-      playerNum: player.playerNum, name: player.name, active: player.active !== false,
+      playerNum: player.playerNum, name: player.name, active: player.active !== false, avatar: avatarOf(player),
       cards: list(state.penalties?.[player.playerNum]),
     }));
     const fewest = rows.length ? Math.min(...rows.map(row => row.cards.length)) : 0;
@@ -407,16 +488,29 @@ var BOMB_RELAY_ENGINE = (() => {
   // Public projection. No fuse time, remaining time or RNG seed ever leaves.
   function view(state, actor) {
     const playerNum = Number(actor);
-    const seats = roster(state).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active !== false,
+    const seats = roster(state).map(player => ({ playerNum: player.playerNum, name: player.name, active: player.active !== false, avatar: avatarOf(player),
       count: list(state.penalties?.[player.playerNum]).length }));
     const mine = seats.find(player => player.playerNum === playerNum);
     const me = playerNum === 0 || mine?.active === true;
     const ticking = state.phase === 'ticking';
     const last = state.lastPass;
+    const boom = state.boom ? copy(state.boom) : null;
+    if (boom && !Number.isFinite(boom.at)) {
+      // Settlement is already public. Its saved boundary synchronizes the
+      // existing brief blast on late/reconnected cards, without a fuse leak.
+      const discussionEnd = Number.isFinite(state.discussionUntil) ? state.discussionUntil
+        : state.phase === 'discussion' && Number.isFinite(state.phaseUntil) ? state.phaseUntil : null;
+      boom.at = state.phase === 'boom' && Number.isFinite(state.phaseUntil)
+        ? state.phaseUntil - CONFIG.boomHoldMs
+        : discussionEnd === null ? null : discussionEnd - CONFIG.discussionMs - CONFIG.boomHoldMs;
+    }
     const challengeable = ticking && last && !last.bounced && state.holder === last.to && isActive(state, last.from);
     const bomb = {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, phase: state.phase,
       fuse: state.fuse, settingsTiming: timingSettings(state), cards: state.cards, category: state.category,
+      settingsAppearance: normalizeAppearance(state.appearance), appearance: effectiveAppearance(state),
+      clock: ticking || (state.phase === 'paused' && state.pausedFrom === 'ticking') ? cosmeticClock(state) : { elapsedMs: 0, startedAt: null },
+      lastChase: chaseSnapshot(state),
       cardId: state.phase === 'finished' ? null : state.order[state.cardIndex] ?? null,
       prompt: currentPrompt(state),
       // Policy bounds only, never the random choice or active deadline.
@@ -427,7 +521,7 @@ var BOMB_RELAY_ENGINE = (() => {
       passes: state.passes, pausedFrom: state.phase === 'paused' ? state.pausedFrom : null,
       lastPass: last ? { from: last.from, to: last.to, bounced: !!last.bounced } : null,
       bounce: state.bounce ? copy(state.bounce) : null,
-      boom: state.boom ? copy(state.boom) : null,
+      boom,
       lastBoom: state.lastBoom ? copy(state.lastBoom) : null,
       phaseUntil: ['boom', 'discussion'].includes(state.phase) ? state.phaseUntil : null,
       stopped: state.phase === 'finished' && state.stopped === true,
@@ -440,10 +534,10 @@ var BOMB_RELAY_ENGINE = (() => {
       canNext: ['boom', 'discussion'].includes(state.phase) && me,
       reply: (state.replies || {})[playerNum] || null,
     };
-    return { game: 'bombrelay', playerNum, name: mine?.name || null, bomb };
+    return { game: 'bombrelay', playerNum, name: mine?.name || null, appearance: normalizeAppearance(state.appearance), bomb };
   }
 
   return { CONFIG, create, apply, view, standings, nextActive, list, rng, nameOf,
-    normalizeTimingSettings, timingSettings, getTimingRange };
+    normalizeTimingSettings, timingSettings, getTimingRange, normalizeAppearance, effectiveAppearance };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = BOMB_RELAY_ENGINE;

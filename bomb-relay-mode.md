@@ -8,6 +8,50 @@ Avoid obvious repeated answers within one bomb; specific elaborations can count.
 The next bomb permits previous answers again. Players judge loosely by voice;
 there is no answer input, recognition, recording, AI or automatic judging.
 
+## Classic and Halloween appearance — 2026-10-25
+
+The approved v5 artwork is now part of the actual host and original player
+links. Host setup and Host controls choose Classic or Halloween, with Pumpkin,
+Ghost and Furry monsters. Every active player can choose one of four avatars
+and change the room's next monster from the existing card. There is one monster
+choice, shared by the main character and the next chase; no separate chase picker.
+
+The trusted-host control node's canonical state owns `appearance`, roster
+`avatar`, frozen `roundAppearance`, `cosmeticClock` and one `lastChase`.
+Ready shows pending preferences; GO freezes that bomb's edition and monster.
+Changing preferences after GO affects the next bomb without invalidating a
+pending pass, drawing a prompt or changing the fuse. Restart and host takeover
+preserve preferences and seat avatars, including after a player rename.
+
+Ten seconds of active time changes the classic bomb to its angry image or the
+monster to its warning image. Paused time is excluded. This cosmetic clock
+never decides when the bomb explodes, and no remaining fuse/duration/deadline
+is projected. Actual BOOM uses the monster's flaming-eye rage image or an 850ms
+classic blast/smoke sequence. Public `boom.at` synchronizes that brief graphic;
+reconnecting after it has finished does not replay it. The original 4500ms
+settlement, 45000ms discussion, manual next/GO, timing settings, audio PCM,
+scoring, prompt bank and activity history remain unchanged.
+
+At a Halloween explosion, `lastChase` freezes the loser's avatar and this
+bomb's monster. The host recap and only that loser's card show the chase
+through the following preview and running bomb, even when the next monster
+changes. The next explosion replaces it. Classic explosions, Restart and End
+clear it. A single connected upper-body image holds each character's head,
+torso and arms fixed; only thigh/knee layers run in place at a shared 480ms
+cycle. There are no detached arms, body bobbing or moving chase lanes.
+Reduced motion freezes the legs; pause freezes the animation. Keyed DOM and
+animation progress survive passes, cosmetic updates and language changes.
+
+`bomb-relay-art.js` is the asset/crop authority for sixteen approved transparent
+WebP files under `assets/bomb-relay/characters/`. `bomb-relay-visuals.js` only
+renders those public cosmetics: it owns no room storage, gameplay timer,
+commands, RNG or audio. Both `bomb-relay.html` and `play.html` load art then
+visuals then the shared UI. Changed presentation/engine/sync cache tag is
+`br-halloween-1`; deck/selector/timing remain `br-pacing-3-1`, audio `br-sound-4`.
+This game still uses its trusted host, so this frontend release requires no
+independent executor deployment. Refresh host and player pages together at a
+natural break to load the new controls; existing old rooms migrate lazily.
+
 ## Real entry and why old prompts were places
 
 `index.html` links directly to `bomb-relay.html`. This game uses its existing

@@ -491,7 +491,7 @@ function observeAudio() {
       await wait(async () => (await state()).phase === 'boom' && (await cards()).every(card => card.bomb.phase === 'boom'));
       current = await samePrompt(); assert.equal(current.boom.loser, loser);
       for (const card of await cards()) assert.equal(card.bomb.boom.loser, loser);
-      assert.equal(await host.locator('.br-burst').count(), 1);
+      assert.equal(await host.locator('[data-br-hero][data-br-expression="burst"]').count(), 1);
       assert.ok(await players[loser - 1].locator('.is-boom').count());
       if (round === 0) for (const [width, height] of [[1280, 800], [375, 740]]) for (const lang of ['en', 'zh']) {
         await surface(host, 'host-boom', width, height, lang);
@@ -627,10 +627,12 @@ function observeAudio() {
     }
     if (process.env.BOMB_QA_LAYOUT !== '0') {
       await host.emulateMedia({ reducedMotion: 'reduce' });
-      const spark = await host.locator('.br-bomb.is-live .br-object-spark').evaluate(element => ({ animation: getComputedStyle(element).animationName, opacity: getComputedStyle(element).opacity }));
-      assert.equal(spark.animation, 'none'); assert.equal(spark.opacity, '1');
+      const hero = await host.locator('[data-br-hero][data-br-edition="classic"]').evaluate(element => [...element.children]
+        .map(child => ({ animation: getComputedStyle(child).animationName, display: getComputedStyle(child).display, opacity: getComputedStyle(child).opacity }))
+        .filter(child => child.display !== 'none'));
+      assert.ok(hero.length); assert.ok(hero.every(child => child.animation === 'none' && child.opacity === '1'));
       await host.emulateMedia({ reducedMotion: 'no-preference' });
-      check('reduced-motion keeps a visible static red spark without animated movement');
+      check('reduced-motion keeps the approved bomb artwork visible without animated movement');
     }
     assert.deepEqual(errors, [], 'no uncaught browser errors');
     report.blockedExternalRequests = [...blockedRequests]; report.errors = errors; report.finalPrompt = promptId(current);

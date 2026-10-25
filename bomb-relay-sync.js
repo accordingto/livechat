@@ -111,7 +111,7 @@
       if (!result.committed && !noChange) throw new Error('not_available');
       return stateOf(result.snapshot.val());
     }
-    start({ fuse, timing, cards = 10, category = 'mixed', weights, familyWindow } = {}) {
+    start({ fuse, timing, cards = 10, category = 'mixed', weights, familyWindow, appearance } = {}) {
       return this.enqueue(async () => {
         await this.cardsReady; await this.outgoing;
         if (!this.sameRoom() || this.stopped) throw new Error('not_available');
@@ -122,11 +122,15 @@
         // The control node belongs to this Hub room/activity, not a single
         // scored game. Restart, settings edits and reopening keep draw history.
         // A genuinely new Hub room has a new control node and starts it empty.
-        try { return await this.change(current => ENGINE().create({ id, roster, fuse,
+        try { return await this.change(current => ENGINE().create({ id,
+          // Seat identity, not its editable display name, owns the avatar.
+          roster: roster.map(player => Object.assign({}, player, {
+            avatar: seen(current?.roster).find(previous => previous.playerNum === player.playerNum)?.avatar })), fuse,
           timing: timing ?? (fuse === undefined && current ? ENGINE().timingSettings(current) : undefined),
           cards, category, now, seed: randomSeed,
           promptHistory: current?.promptHistory, weights: weights ?? current?.promptWeights,
-          familyWindow: familyWindow ?? current?.familyWindow }), { opening, allowSwitched: true }); }
+          familyWindow: familyWindow ?? current?.familyWindow,
+          appearance: appearance ?? (current ? ENGINE().normalizeAppearance(current.appearance) : undefined) }), { opening, allowSwitched: true }); }
         catch (error) { this.suspended = priorSuspended; throw error; }
       });
     }
@@ -167,6 +171,11 @@
       // Time of receipt decides a race with the fuse: a pass that reached the
       // host before the explosion counts even if the queue was busy.
       const input = { id: action.id, type: String(action.type || ''), turnId: action.turnId, sessionId: action.sessionId, actor: playerNum, now: this.now(), seed: seed() };
+      // Only the payload belonging to this cosmetic command is forwarded.
+      // Cards cannot forge actor/playerNum, host appearance settings, a fuse,
+      // score, clock or a chase snapshot through their bearer node.
+      if (input.type === 'avatar') input.avatar = action.avatar;
+      if (input.type === 'monster') input.monster = action.monster;
       this.enqueue(() => this.change(current => ENGINE().apply(current, input)))
         .catch(error => { if (error.message !== 'not_available' && !this.stopped) this.status('error'); })
         .finally(() => this.incoming.delete(key));

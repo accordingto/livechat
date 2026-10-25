@@ -857,3 +857,188 @@ test('fractional authority clock offsets are normalized once at GO', () => {
   assert.equal(g.state.roundFuse.startedAtMs, 1501);
   assert.equal(g.state.explodeAt - g.state.litAt, g.state.roundFuse.durationMs);
 });
+
+test('appearance defaults and seat avatars are canonical, whitelisted and projected consistently', () => {
+  const g = game({ roster: seats(9) });
+  assert.deepEqual(g.state.appearance, { edition: 'classic', monster: 'pumpkin' });
+  assert.deepEqual(g.state.roster.map(p => p.avatar), ['boy', 'girl', 'curly', 'ponytail', 'boy', 'girl', 'curly', 'ponytail', 'boy']);
+  for (const actor of [0, 1, 9]) {
+    const view = E.view(g.state, actor);
+    assert.deepEqual(view.appearance, g.state.appearance);
+    assert.deepEqual(view.bomb.settingsAppearance, g.state.appearance);
+    assert.deepEqual(view.bomb.appearance, g.state.appearance);
+    assert.deepEqual(view.bomb.clock, { elapsedMs: 0, startedAt: null });
+    assert.equal(view.bomb.roster[2].avatar, 'curly');
+  }
+  assert.throws(() => game({ appearance: { edition: 'halloween', monster: 'zombie' } }), /invalid_options/);
+  assert.throws(() => game({ appearance: { edition: 'other', monster: 'ghost' } }), /invalid_options/);
+});
+
+test('only the host changes edition, active players choose a monster and only their own avatar', () => {
+  const g = game();
+  const turn = g.state.turnId;
+  assert.equal(g.act(1, 'appearance', { appearance: { edition: 'halloween', monster: 'ghost' } }), 'not_available');
+  assert.equal(g.act(0, 'appearance', { appearance: { edition: 'halloween', monster: 'ghost' } }), '');
+  assert.equal(g.act(2, 'monster', { monster: 'furry' }), '');
+  assert.equal(g.act(2, 'avatar', { avatar: 'ponytail', playerNum: 1 }), '');
+  assert.equal(g.state.roster[0].avatar, 'boy', 'a playerNum payload cannot rename another player\'s avatar');
+  assert.equal(g.state.roster[1].avatar, 'ponytail');
+  assert.equal(g.act(0, 'avatar', { avatar: 'girl' }), 'not_available', 'host display is not a numbered player');
+  assert.equal(g.act(2, 'avatar', { avatar: 'external-url' }), 'invalid_options');
+  assert.equal(g.act(2, 'monster', { monster: '__proto__' }), 'invalid_options');
+  assert.equal(g.state.turnId, turn, 'cosmetic preferences cannot invalidate an otherwise fresh pass');
+  g.act(0, 'exclude', { playerNum: 2, active: false });
+  assert.equal(g.act(2, 'avatar', { avatar: 'boy' }), 'not_available');
+  assert.equal(g.act(2, 'monster', { monster: 'pumpkin' }), 'not_available');
+});
+
+test('GO freezes appearance while next-round preferences and avatar changes never redraw the fuse or prompt', () => {
+  const g = game({ appearance: { edition: 'halloween', monster: 'ghost' } });
+  g.state.holder = 1; g.state.starter = 1;
+  g.act(1, 'light', { now: 2000 });
+  const fuse = JSON.stringify(g.state.roundFuse), prompt = JSON.stringify(g.state.promptSnapshot);
+  const history = JSON.stringify(g.state.promptHistory), deadline = g.state.explodeAt, turn = g.state.turnId;
+  g.act(2, 'monster', { monster: 'furry', now: 3000 });
+  g.act(0, 'appearance', { appearance: { edition: 'classic', monster: 'pumpkin' }, now: 3100 });
+  g.act(1, 'avatar', { avatar: 'ponytail', now: 3200 });
+  assert.deepEqual(g.state.roundAppearance, { edition: 'halloween', monster: 'ghost' });
+  assert.deepEqual(E.view(g.state, 2).bomb.appearance, g.state.roundAppearance);
+  assert.deepEqual(E.view(g.state, 2).appearance, { edition: 'classic', monster: 'pumpkin' });
+  assert.equal(g.state.turnId, turn);
+  assert.equal(g.state.explodeAt, deadline);
+  assert.equal(JSON.stringify(g.state.roundFuse), fuse);
+  assert.equal(JSON.stringify(g.state.promptSnapshot), prompt);
+  assert.equal(JSON.stringify(g.state.promptHistory), history);
+  g.act(1, 'pass', { now: 3300, turnId: turn });
+  assert.equal(g.state.holder, 2, 'a pending pass remains usable after settings arrive');
+  assert.deepEqual(E.view(g.state, 0).bomb.clock, { elapsedMs: 0, startedAt: 2000 });
+});
+
+test('one immutable last-chase snapshot follows the loser through the next round and a classic explosion clears it', () => {
+  const g = game({ appearance: { edition: 'halloween', monster: 'ghost' } });
+  g.state.holder = 1; g.state.starter = 1;
+  g.act(1, 'avatar', { avatar: 'ponytail' });
+  g.act(1, 'light', { now: 2000 });
+  g.act(2, 'monster', { monster: 'furry', now: 2100 });
+  const at = g.state.explodeAt;
+  g.act(0, 'tick', { now: at });
+  const chase = { id: g.state.boom.id, loser: 1, monster: 'ghost', avatar: 'ponytail', edition: 'halloween' };
+  assert.deepEqual(g.state.lastChase, chase);
+  g.act(1, 'avatar', { avatar: 'boy', now: at + 1 });
+  g.act(2, 'monster', { monster: 'pumpkin', now: at + 2 });
+  for (const actor of [0, 1, 2, 3, 4]) assert.deepEqual(E.view(g.state, actor).bomb.lastChase, chase);
+  g.act(0, 'tick', { now: g.state.phaseUntil });
+  assert.equal(g.state.phase, 'discussion');
+  assert.deepEqual(g.state.lastChase, chase);
+  g.act(2, 'next', { now: at + 5000 });
+  assert.equal(g.state.phase, 'ready');
+  assert.deepEqual(g.state.lastChase, chase);
+  assert.deepEqual(E.view(g.state, 2).bomb.appearance, { edition: 'halloween', monster: 'pumpkin' });
+  g.act(0, 'appearance', { appearance: { edition: 'classic', monster: 'furry' } });
+  g.act(g.state.holder, 'light');
+  assert.deepEqual(g.state.lastChase, chase, 'new GO does not clear or replace the prior loser');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  assert.equal(g.state.lastChase, null);
+  assert.equal(g.state.history.length, 2);
+});
+
+test('cosmetic commands received at expiry score once and snapshot the old avatar before accepting a new preference', () => {
+  const g = game({ appearance: { edition: 'halloween', monster: 'pumpkin' } });
+  g.state.holder = 1; g.state.starter = 1;
+  g.act(1, 'light', { now: 2000 });
+  const id = 'late-avatar-command';
+  const input = { id, type: 'avatar', avatar: 'girl', actor: 1, sessionId: g.state.sessionId, turnId: g.state.turnId, now: g.state.explodeAt, seed: 1 };
+  g.state = E.apply(g.state, input);
+  assert.equal(g.state.phase, 'boom');
+  assert.equal(g.state.lastChase.avatar, 'boy');
+  assert.equal(g.state.roster[0].avatar, 'girl');
+  const scored = g.state;
+  g.state = E.apply(g.state, input);
+  assert.equal(g.state, scored);
+  assert.equal(g.state.history.length, 1);
+  assert.equal(g.state.penalties[1].length, 1);
+});
+
+test('the cosmetic clock crosses ten seconds without exploding and freezes across emergency pause/resume', () => {
+  const g = game({ appearance: { edition: 'halloween', monster: 'ghost' } });
+  g.act(g.state.holder, 'light', { now: 2000 });
+  const running = g.state, fuse = JSON.stringify(g.state.roundFuse), deadline = g.state.explodeAt;
+  g.act(0, 'tick', { now: 12000 });
+  assert.equal(g.state, running, 'ten seconds is expression timing only, never a new fuse');
+  assert.deepEqual(E.view(g.state, 1).bomb.clock, { elapsedMs: 0, startedAt: 2000 });
+  g.act(0, 'pause', { now: 13000 });
+  assert.deepEqual(E.view(g.state, 1).bomb.clock, { elapsedMs: 11000, startedAt: null });
+  const paused = JSON.parse(JSON.stringify(g.state));
+  g.state = paused;
+  g.act(2, 'monster', { monster: 'furry', now: 80000 });
+  assert.deepEqual(E.view(g.state, 2).bomb.clock, { elapsedMs: 11000, startedAt: null });
+  g.act(0, 'resume', { now: 90000 });
+  assert.deepEqual(E.view(g.state, 1).bomb.clock, { elapsedMs: 11000, startedAt: 90000 });
+  assert.equal(g.state.explodeAt, deadline + 77000);
+  assert.equal(JSON.stringify(g.state.roundFuse), fuse);
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  assert.deepEqual(E.view(g.state, 1).bomb.clock, { elapsedMs: 0, startedAt: null }, 'settlement does not publish the sampled duration as elapsedMs');
+});
+
+test('Restart and Stop clear chase only, preserving edition, monster, own avatars and activity prompt history', () => {
+  const g = game({ appearance: { edition: 'halloween', monster: 'furry' } });
+  g.act(1, 'avatar', { avatar: 'girl' });
+  g.act(g.state.holder, 'light');
+  g.act(0, 'tick', { now: g.state.explodeAt });
+  assert.ok(g.state.lastChase);
+  const seen = g.state.promptHistory.seenIds.slice();
+  g.act(0, 'restart');
+  assert.equal(g.state.lastChase, null);
+  assert.deepEqual(g.state.appearance, { edition: 'halloween', monster: 'furry' });
+  assert.equal(g.state.roster[0].avatar, 'girl');
+  assert.ok(seen.every(id => g.state.promptHistory.seenIds.includes(id)));
+  g.act(g.state.holder, 'light'); g.act(0, 'tick', { now: g.state.explodeAt });
+  assert.ok(g.state.lastChase);
+  g.act(0, 'stop');
+  assert.equal(g.state.lastChase, null);
+  assert.equal(g.state.phase, 'finished');
+  assert.equal(g.state.roster[0].avatar, 'girl');
+});
+
+test('old live and paused saves gain safe cosmetics without changing their deadline, GO audit or prompt history', () => {
+  for (const paused of [false, true]) {
+    const g = game();
+    g.act(g.state.holder, 'light', { now: 2000 });
+    if (paused) g.act(0, 'pause', { now: 3500 });
+    for (const key of ['appearance', 'roundAppearance', 'cosmeticClock', 'lastChase']) delete g.state[key];
+    g.state.roster.forEach(p => { delete p.avatar; });
+    const before = JSON.stringify(g.state), deadline = g.state.explodeAt, remaining = g.state.remainingMs;
+    const fuse = JSON.stringify(g.state.roundFuse), history = JSON.stringify(g.state.promptHistory);
+    const legacy = E.view(g.state, 1);
+    assert.deepEqual(legacy.bomb.appearance, { edition: 'classic', monster: 'pumpkin' });
+    assert.deepEqual(legacy.bomb.clock, { elapsedMs: 0, startedAt: paused ? null : 2000 });
+    assert.equal(JSON.stringify(g.state), before, 'reading a legacy view must be pure');
+    g.act(0, 'appearance', { appearance: { edition: 'halloween', monster: 'ghost' }, now: 5000 });
+    assert.deepEqual(g.state.roundAppearance, { edition: 'classic', monster: 'pumpkin' });
+    assert.equal(g.state.explodeAt, deadline);
+    assert.equal(g.state.remainingMs, remaining);
+    assert.equal(JSON.stringify(g.state.roundFuse), fuse);
+    assert.equal(JSON.stringify(g.state.promptHistory), history);
+    assert.deepEqual(g.state.roster.map(p => p.avatar), ['boy', 'girl', 'curly', 'ponytail']);
+    const json = JSON.stringify(E.view(g.state, 1));
+    for (const key of ['explodeAt', 'durationMs', 'remainingMs', 'roundFuse', 'seed']) assert.ok(!json.includes(key), key);
+  }
+});
+
+test('the public settlement timestamp synchronizes a late blast and legacy views derive it without mutating saved timers', () => {
+  const g = game({ appearance: { edition: 'halloween', monster: 'ghost' } });
+  g.act(g.state.holder, 'light');
+  const settledAt = g.state.explodeAt + 400;
+  g.act(0, 'tick', { now: settledAt });
+  assert.equal(g.state.boom.at, settledAt);
+  assert.equal(E.view(g.state, 1).bomb.boom.at, settledAt);
+  delete g.state.boom.at;
+  const oldBoom = JSON.stringify(g.state);
+  assert.equal(E.view(g.state, 1).bomb.boom.at, settledAt);
+  assert.equal(JSON.stringify(g.state), oldBoom);
+  g.act(0, 'tick', { now: g.state.phaseUntil });
+  assert.equal(g.state.phase, 'discussion');
+  assert.equal(E.view(g.state, 1).bomb.boom.at, settledAt);
+  delete g.state.discussionUntil;
+  assert.equal(E.view(g.state, 2).bomb.boom.at, settledAt, 'old discussion uses its saved discussion end');
+});

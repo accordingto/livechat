@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#202422">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="bomb-relay.css?v=br-pacing-3-1">
+  <link rel="stylesheet" href="bomb-relay.css?v=br-halloween-1">
 </head>
 <body class="br-page">
   <div class="topbar">
@@ -29,11 +29,13 @@
     </div>
     <form class="br-panel br-setup" id="br-setup" novalidate>
       <div class="br-setup-hero">
-        <span class="br-setup-emblem" aria-hidden="true"><span class="br-object"><span class="br-object-shadow"></span><span class="br-object-fuse"></span><span class="br-object-lid"></span><span class="br-object-shell"></span></span></span>
+        <span class="br-setup-emblem" id="br-setup-emblem" aria-hidden="true"></span>
         <p class="br-kicker" data-i18n="bomb.setupLead">One shared prompt. One moving bomb.</p>
       </div>
       <p class="br-intro" data-i18n="bomb.intro">Read the prompt. Say one fitting answer, then pass. The fuse stays secret.</p>
       <div class="br-settings">
+        <label class="br-field"><span data-i18n="bomb.edition">Edition</span><select id="br-edition"></select></label>
+        <label class="br-field" id="br-monster-field" hidden><span data-i18n="bomb.monster">Monster</span><select id="br-monster"></select></label>
         <label class="br-field"><span data-i18n="bomb.fuse">Bomb pace</span><select id="br-fuse" aria-describedby="br-timing-range br-timing-note"></select></label>
         <label class="br-field"><span data-i18n="bomb.cards">Cards in this game</span><select id="br-cards"></select></label>
         <label class="br-field"><span data-i18n="bomb.category">Prompt pack</span><select id="br-category"></select></label>
@@ -98,6 +100,12 @@
     <form method="dialog" class="br-dialog-header"><h2 id="br-manage-title" data-i18n="bomb.manage">Host controls</h2><button class="br-button" data-i18n="bomb.close">Close</button></form>
     <p class="br-soft" data-i18n="bomb.rosterHint">Let someone sit out if they leave the call; the bomb skips them.</p>
     <div class="br-roster" id="br-roster"></div>
+    <section class="br-manage-appearance" aria-labelledby="br-manage-appearance-title">
+      <h3 id="br-manage-appearance-title" data-i18n="bomb.appearanceManage">Look for the next bomb</h3>
+      <label class="br-field"><span data-i18n="bomb.edition">Edition</span><select id="br-manage-edition"></select></label>
+      <label class="br-field" id="br-manage-monster-field" hidden><span data-i18n="bomb.monster">Monster</span><select id="br-manage-monster"></select></label>
+      <p class="br-soft" data-i18n="bomb.appearanceNext">A lit round keeps its look. Changes apply to the next bomb.</p>
+    </section>
     <section class="br-manage-timing" aria-labelledby="br-manage-timing-title">
       <h3 id="br-manage-timing-title" data-i18n="bomb.timingManage">Pace for the next bomb</h3>
       <label class="br-field"><span data-i18n="bomb.fuse">Bomb pace</span><select id="br-manage-speed" aria-describedby="br-manage-timing-range br-manage-timing-note"></select></label>
@@ -125,10 +133,12 @@
   <script src="bomb-relay-deck.js?v=br-pacing-3-1"></script>
   <script src="bomb-relay-selector.js?v=br-pacing-3-1"></script>
   <script src="bomb-relay-timing.js?v=br-pacing-3-1"></script>
-  <script src="bomb-relay-engine.js?v=br-pacing-3-1"></script>
-  <script src="bomb-relay-sync.js?v=br-pacing-3-1"></script>
+  <script src="bomb-relay-engine.js?v=br-halloween-1"></script>
+  <script src="bomb-relay-sync.js?v=br-halloween-1"></script>
   <script src="bomb-relay-audio.js?v=br-sound-4"></script>
-  <script src="bomb-relay-ui.js?v=br-pacing-3-1"></script>
-  <script src="bomb-relay-host.js?v=br-pacing-3-1"></script>
+  <script src="bomb-relay-art.js?v=br-halloween-1"></script>
+  <script src="bomb-relay-visuals.js?v=br-halloween-1"></script>
+  <script src="bomb-relay-ui.js?v=br-halloween-1"></script>
+  <script src="bomb-relay-host.js?v=br-halloween-1"></script>
 </body>
 </html>

@@ -12,8 +12,8 @@ function hostFixture() {
   let transport = null;
   let canonical = E.create({ id: 'host-settings', roster: [1, 2, 3].map(playerNum => ({ playerNum, name: 'P' + playerNum })), now: 10000, seed: 1 });
   const elements = new Map(), listeners = new Map();
-  const selectIds = new Set(['fuse', 'manage-speed', 'cards', 'category', 'library-category', 'demo-view']);
-  const document = { activeElement: null, body: { classList: { toggle() {} } } };
+  const selectIds = new Set(['fuse', 'manage-speed', 'cards', 'category', 'library-category', 'demo-view', 'edition', 'monster', 'manage-edition', 'manage-monster']);
+  const document = { activeElement: null, body: { dataset: {}, classList: { toggle() {} } } };
   const element = id => {
     if (elements.has(id)) return elements.get(id);
     let value = '', html = '';
@@ -55,6 +55,7 @@ function hostFixture() {
     localStorage: { getItem: key => key === 'room-last-session' ? 'HOST_SETTINGS_QA' : JSON.stringify({ tokens: ['a', 'b', 'c'], playerCount: 3 }) },
     ROOM: { enabled: true, code: 'HOST_SETTINGS_QA', init() {} }, firebase: { database: () => ({}) },
     BOMB_RELAY_ENGINE: E, BOMB_RELAY_DECK: DECK,
+    BOMB_RELAY_VISUALS: { heroHTML: () => '', preserve: (element, html) => { element.innerHTML = html; }, refresh() {}, clear() {} },
     BOMB_RELAY_SYNC: { Host: Transport, uid: () => 'host-setting-request' },
     BOMB_RELAY_UI: { t: key => key, esc: String, list: value => Array.isArray(value) ? value : Object.values(value || {}),
       Sound, stage: () => '', nameOf: () => 'P1', colorOf: () => '#000' },
@@ -79,6 +80,33 @@ function hostFixture() {
     restart() { return context.window.BOMB_RELAY_HOST.start({ restart: true }); },
   };
 }
+
+test('host retains a newer appearance preference across delayed acknowledgements and ordinary Restart', async () => {
+  const host = hostFixture(), originalPrompt = host.canonical.promptSnapshot.id;
+  await host.change('manage-edition', 'halloween');
+  const firstAck = host.canonical;
+  assert.equal(host.state.appearance.edition, 'classic');
+  assert.equal(host.element('manage-edition').value, 'halloween');
+  await host.change('manage-monster', 'ghost');
+  const newestAck = host.canonical;
+  assert.deepEqual(newestAck.appearance, { edition: 'halloween', monster: 'ghost' });
+  host.deliver(firstAck);
+  assert.equal(host.element('manage-monster').value, 'ghost', 'an older value event cannot replace the newer choice');
+  await host.restart();
+  assert.deepEqual(host.lastStart.appearance, newestAck.appearance, 'Restart retains a committed preference before its value event');
+  host.deliver(newestAck);
+  assert.equal(host.element('manage-monster').value, 'ghost');
+  assert.equal(host.canonical.promptSnapshot.id, originalPrompt);
+  assert.equal(host.canonical.explodeAt, null);
+});
+
+test('failed appearance edits restore the canonical host choices', async () => {
+  const host = hostFixture();
+  host.failNext(); await host.change('manage-edition', 'halloween');
+  assert.equal(host.element('manage-edition').value, 'classic');
+  assert.equal(host.canonical.appearance.edition, 'classic');
+  assert.equal(host.element('error').textContent, 'offline');
+});
 
 test('host preserves a committed settings preview until its delayed value event confirms it', async () => {
   const host = hostFixture();

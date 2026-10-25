@@ -8,6 +8,7 @@
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null, editing = false;
   let demoCard = null, demoCardActor = 0;
   let setupTiming = null, timingPending = null;
+  let setupAppearance = { edition: 'classic', monster: 'pumpkin' }, appearancePending = null, emblemKey = '';
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => BOMB_RELAY_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
@@ -25,7 +26,8 @@
     byId('sound-status').textContent = sound.unsupported ? t('soundUnsupported') : waiting ? t('soundBlocked') : '';
   }
   function options() {
-    return { timing: readTiming('fuse', 'scale', ''), cards: Number(byId('cards').value), category: byId('category').value };
+    return { timing: readTiming('fuse', 'scale', ''), cards: Number(byId('cards').value), category: byId('category').value,
+      appearance: { ...setupAppearance } };
   }
   function restoreOptions(current) {
     if (!current) return;
@@ -35,6 +37,38 @@
     byId('max').value = setupTiming.baseMaxSeconds ?? '';
     byId('cards').value = String(current.cards);
     byId('category').value = BOMB_RELAY_DECK.categories.includes(current.category) ? current.category : 'mixed';
+    setupAppearance = { edition: 'classic', monster: 'pumpkin', ...current.appearance };
+  }
+  function renderAppearance() {
+    const pending = appearancePending || state?.appearance || setupAppearance;
+    for (const [prefix, value] of [['', setupAppearance], ['manage-', pending]]) {
+      byId(prefix + 'edition').value = value.edition;
+      byId(prefix + 'monster').value = value.monster;
+      byId(prefix + 'monster-field').hidden = value.edition !== 'halloween';
+      byId(prefix + 'edition').disabled = byId(prefix + 'monster').disabled = busy || (!!prefix && (!state || !canControl()));
+    }
+    const setup = !byId('setup').hidden;
+    document.body.dataset.brEdition = (setup ? setupAppearance : view()?.appearance || pending).edition;
+    const key = JSON.stringify(setupAppearance);
+    if (key !== emblemKey) {
+      byId('setup-emblem').innerHTML = BOMB_RELAY_VISUALS.heroHTML({ phase: 'ready', appearance: setupAppearance });
+      emblemKey = key;
+    }
+  }
+  function changeSetupAppearance() {
+    setupAppearance = { edition: byId('edition').value, monster: byId('monster').value };
+    renderAppearance();
+  }
+  async function changeRoomAppearance() {
+    if (busy || !state || !canControl()) return;
+    const requested = { edition: byId('manage-edition').value, monster: byId('manage-monster').value };
+    appearancePending = requested;
+    let succeeded = false;
+    try { succeeded = await command('appearance', { appearance: requested }); }
+    finally {
+      if (appearancePending === requested && (!succeeded || JSON.stringify(state?.appearance) === JSON.stringify(requested))) appearancePending = null;
+      renderAppearance();
+    }
   }
   function readTiming(speedId, scaleId, prefix) {
     const minimum = byId(prefix + 'min').value.trim(), maximum = byId(prefix + 'max').value.trim();
@@ -122,6 +156,10 @@
     };
     pick('fuse', BOMB_RELAY_ENGINE.CONFIG.speedModes, v => t(v));
     pick('manage-speed', BOMB_RELAY_ENGINE.CONFIG.speedModes, v => t(v));
+    for (const prefix of ['', 'manage-']) {
+      pick(prefix + 'edition', ['classic', 'halloween'], v => t(v));
+      pick(prefix + 'monster', ['pumpkin', 'ghost', 'furry'], v => t(v));
+    }
     pick('cards', BOMB_RELAY_ENGINE.CONFIG.cardOptions, v => t('cardsN', { n: v }));
     pick('category', BOMB_RELAY_DECK.categories, v => `${t(v)} (${BOMB_RELAY_DECK.pool(v).length})`);
     if (!byId('fuse').dataset.ready) {
@@ -165,8 +203,10 @@
       else {
         if (demoCard) { demoCard.destroy(); demoCard = null; demoCardActor = 0; }
         const key = JSON.stringify([I18N.lang, bomb.sessionId, bomb.turnId, bomb.phase,
+          bomb.appearance, bomb.lastChase, bomb.roster,
           bomb.phase === 'ready' ? [bomb.settingsTiming, bomb.timingRange, participantCount(true)] : null]);
-        if (key !== sceneKey) { byId('scene').innerHTML = BOMB_RELAY_UI.stage(bomb); sceneKey = key; }
+        if (key !== sceneKey) { BOMB_RELAY_VISUALS.preserve(byId('scene'), BOMB_RELAY_UI.stage(bomb)); sceneKey = key; }
+        BOMB_RELAY_VISUALS.refresh(byId('scene'), bomb, { now: now(), lang: I18N.lang });
       }
       const holder = bomb.holder != null ? BOMB_RELAY_UI.nameOf(bomb, bomb.holder) : '';
       const hostView = !actor;
@@ -187,7 +227,7 @@
       byId('stop').disabled ||= bomb.phase === 'finished';
       renderRoster(bomb);
     } else if (demoCard) { demoCard.destroy(); demoCard = null; demoCardActor = 0; }
-    renderTiming(); paintSound(); follow();
+    renderTiming(); renderAppearance(); paintSound(); follow();
   }
   // In the one-device demo, the scene area becomes the chosen player's card.
   function renderDemoCard(actor) {
@@ -196,6 +236,7 @@
       byId('scene').innerHTML = '<div class="br-demo-phone"></div>';
       demoCardActor = actor;
       demoCard = new BOMB_RELAY_UI.Card(byId('scene').firstElementChild, {
+        now,
         nameBanner: data => `<span class="name-banner br-demo-banner" style="--seat:${BOMB_RELAY_UI.colorOf(data.playerNum)}">${esc(data.name)}</span>`,
         send: command => {
           state = BOMB_RELAY_ENGINE.apply(state, Object.assign({}, command, { actor, now: now(), seed: seed() }));
@@ -236,11 +277,12 @@
     if (!restart && !validBounds('', byId('fuse').value)) return;
     const chosen = restart && state ? { timing: timingPending || BOMB_RELAY_ENGINE.timingSettings(state), cards: state.cards,
       category: BOMB_RELAY_DECK.categories.includes(state.category) ? state.category : 'mixed',
-      weights: state.promptWeights, familyWindow: state.familyWindow } : options();
+      weights: state.promptWeights, familyWindow: state.familyWindow,
+      appearance: appearancePending || state.appearance || setupAppearance } : options();
     if (sound.enabled) sound.ensure(); // inside the click: unlocks Web Audio
     busy = true; error = ''; render();
     try {
-      if (demo) state = BOMB_RELAY_ENGINE.create({ ...chosen, id: uid(), roster: demoRoster, now: now(), seed: seed(),
+      if (demo) state = BOMB_RELAY_ENGINE.create({ ...chosen, id: uid(), roster: state?.roster || demoRoster, now: now(), seed: seed(),
         promptHistory: state?.promptHistory, weights: state?.promptWeights, familyWindow: state?.familyWindow });
       else await sync.start(chosen);
       editing = false; byId('manage').close();
@@ -250,6 +292,8 @@
   const turn = () => state?.turnId;
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(); });
   byId('setup-cancel').addEventListener('click', () => { editing = false; render(); });
+  for (const id of ['edition', 'monster']) byId(id).addEventListener('change', changeSetupAppearance);
+  for (const id of ['manage-edition', 'manage-monster']) byId(id).addEventListener('change', changeRoomAppearance);
   byId('fuse').addEventListener('change', changeSetupTiming);
   byId('scale').addEventListener('change', changeSetupTiming);
   byId('min').addEventListener('change', changeSetupTiming);
@@ -296,11 +340,12 @@
       sync = new BOMB_RELAY_SYNC.Host({ room: ROOM, db: firebase.database(),
         onChange: next => {
           if (state?.turnId !== next?.turnId) error = '';
-          if (!state || state.sessionId !== next?.sessionId) { timingPending = null; restoreOptions(next); }
+          if (!state || state.sessionId !== next?.sessionId) { timingPending = null; appearancePending = null; restoreOptions(next); }
           else if (timingPending && timingMatches(next, timingPending)) timingPending = null;
+          if (appearancePending && JSON.stringify(next?.appearance) === JSON.stringify(appearancePending)) appearancePending = null;
           state = next; render();
         },
-        onStatus: next => { status = next; if (next === 'switched') { timingPending = null; editing = false; sound.stopLoop(); sceneKey = ''; byId('manage').close(); } render(); },
+        onStatus: next => { status = next; if (next === 'switched') { timingPending = null; appearancePending = null; editing = false; sound.stopLoop(); sceneKey = ''; byId('manage').close(); } render(); },
       });
       sync.connect();
     }
@@ -309,6 +354,7 @@
   I18N.onChange(() => { labels(); render(); });
   // Only the simulation advances locally; live rooms tick inside the sync host.
   timer = setInterval(() => {
+    if (!closed && state && !byId('game').hidden && !demoCard) BOMB_RELAY_VISUALS.refresh(byId('scene'), view(), { now: now(), lang: I18N.lang });
     if (closed || !demo || !state || busy) return;
     const due = state.phase === 'ticking' ? state.explodeAt : ['boom', 'discussion'].includes(state.phase) ? state.phaseUntil : null;
     if (due && now() >= due) {
@@ -316,7 +362,7 @@
       render();
     }
   }, 100);
-  function close() { closed = true; timingPending = null; clearInterval(timer); sync?.close(); sound.close(); demoCard?.destroy(); }
+  function close() { closed = true; timingPending = null; appearancePending = null; clearInterval(timer); BOMB_RELAY_VISUALS.clear(byId('scene')); sync?.close(); sound.close(); demoCard?.destroy(); }
   window.addEventListener('storage', event => {
     if (!demo && event.key === 'room-last-session' && event.newValue !== roomCode) { close(); status = 'roomChanged'; byId('manage').close(); render(); }
   });

@@ -1,3 +1,46 @@
+## CURRENT: Bomb Relay approved characters and Halloween edition — 2026-10-25
+
+User approved the v5 visual preview for production. Read bomb-relay-mode.md
+"Classic and Halloween appearance". The real bomb-relay.html and original
+play.html links now load sixteen approved transparent WebP assets through one
+bomb-relay-art.js metadata module and the presentation-only bomb-relay-visuals.js.
+Classic uses the supplied cutout, an angry expression after ten active seconds,
+and an 850ms blast/smoke. Halloween has Pumpkin/Ghost/Furry idle, warning and
+flaming-eye rage expressions. No head/background fire or moving chase lane.
+Four light-skinned East Asian-style avatars have fixed connected upper bodies
+with frightened faces and both hands raised. Monsters have fixed open claws.
+Only thigh/knee layers run at 480ms; no detached arms or body bobbing.
+
+Host setup/management choose edition and monster. Active cards choose their
+own avatar and the shared next monster. Canonical appearance/roster avatar
+preferences persist Restart/rename/takeover. GO freezes roundAppearance;
+mid-round edits affect the next bomb and do not invalidate a pass. One canonical
+lastChase freezes the loser's avatar plus the actual exploding monster, shown
+on the host and only that losing card through the following bomb. The next
+explosion replaces it; Classic explosion, Restart and End clear it. Cosmetic
+elapsed time excludes pause and exposes no secret fuse. Public boom.at aligns
+the brief blast across reconnects. Keyed artwork preserves animation progress
+across passes, preferences and language changes. Compact phone art leaves the
+prompt/PASS readable, and the Bomb-only language pill scrolls away from text.
+
+The random fuse policy and overrides, pass/bounce rules, scores, approved sound
+class/PCM, 4500ms settlement, 45000ms discussion, early Next, manual GO and the
+720 retained / 700 eligible prompts with activity history are unchanged.
+Old saves migrate cosmetics lazily without redrawing a live fuse/prompt.
+Cache tag br-halloween-1 for changed engine/sync/host/UI/CSS and new art/visuals;
+deck/selector/timing stay br-pacing-3-1, audio br-sound-4. Frontend-only trusted
+host game: no independent executor, dependency, rule or secret change. Remote
+Once/Bluff/WORD LIMIT/ROOM SURVEY updates were fast-forwarded and preserved;
+play.html changes in this release are limited to Bomb asset loaders and CSS.
+
+Validation: final full Hub 2333/2333, zero failures/skips; Bomb 169/169.
+New real-page isolated Firebase-compatible multiplayer flows pass 4 and 8
+players, ten checks each; original regression flows pass 3 and 8 players,
+seventeen checks each including exact approved audio PCM. Desktop/phone
+viewport audits cover EN/ZH, 1280/390/320, prompt/actions, fixed joined hands,
+running-leg continuity and reduced motion. These isolated tests are not a
+physical-phone, human voice session or hardware speaker test.
+
 ## CURRENT: Once opening stories + host proportions — 2026-10-25
 
 Read once-upon-a-time-mode.md "Opening stories replace the starter card". User

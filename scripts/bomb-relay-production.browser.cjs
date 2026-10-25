@@ -12,6 +12,7 @@ const uid = () => randomBytes(16).toString('hex');
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
 const canonical = node => typeof node?.stateJson === 'string' ? JSON.parse(node.stateJson) : null;
+const halloween = process.env.BOMB_QA_EDITION === 'halloween';
 
 function fixture() {
   const code = 'BQ' + randomBytes(4).toString('hex').toUpperCase(), marker = uid();
@@ -211,6 +212,10 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     check(await host.evaluate(() => BOMB_RELAY_DECK.pool('mixed').length === 700 && BOMB_RELAY_DECK.pool('everyday').length === 351 && BOMB_RELAY_DECK.pool('playful').length === 349), 'real-host-uses-700-eligible-reviewed-prompts');
     check(/30–90/.test(await host.locator('#br-timing-range').innerText()), 'real-three-player-setup-shows-effective-v31-normal-range');
     check(await host.evaluate(() => !!BOMB_RELAY_DECK.get('tb-everyday-360') && !!BOMB_RELAY_DECK.get('tb-playful-360')), 'real-host-loaded-both-expanded-pack-tails');
+    if (halloween) {
+      await host.locator('#br-edition').selectOption('halloween');
+      await host.locator('#br-monster').selectOption('ghost');
+    }
     await host.locator('#br-start').click();
     await poll(async () => (await state())?.phase === 'ready');
     await captureOwners();
@@ -231,6 +236,16 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
       await page.evaluate(lang => I18N.setLang(lang), index === 1 ? 'zh' : 'en');
     }
     await samePlayers('ready');
+    if (halloween) {
+      for (let index = 0; index < players.length; index++) {
+        await players[index].locator('.br-card-appearance summary').click();
+        await players[index].locator('[data-br-avatar="curly"]').click();
+        await poll(async () => (await state()).roster.find(seat => seat.playerNum === index + 1)?.avatar === 'curly');
+      }
+      await samePlayers('ready');
+      check((await state()).appearance.edition === 'halloween' && (await state()).appearance.monster === 'ghost', 'halloween-host-choice-is-canonical');
+      check((await state()).roster.every(seat => seat.avatar === 'curly'), 'real-player-links-save-their-selected-avatars');
+    }
     for (let attempt = 0; Number((await state()).order[0].split('-').at(-1)) <= 60 && attempt < 12; attempt++) {
       const turn = (await state()).turnId; await host.locator('#br-reroll').click(); await poll(async () => (await state()).turnId !== turn);
     }
@@ -240,6 +255,14 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     for (let index = 0; index < players.length; index++) await screenshot(players[index], `player-${index + 1}-ready`);
     progress('real-v31-go-and-first-player-link-pass');
     const first = await tapHolder('light'), deadline = first.explodeAt, promptId = first.order[0], snapshot = JSON.stringify(first.roundFuse);
+    if (halloween) {
+      check(first.roundAppearance.edition === 'halloween' && first.roundAppearance.monster === 'ghost', 'real-go-freezes-halloween-ghost');
+      const changeFrom = first.holder;
+      await players[changeFrom - 1].locator('select[data-br-monster]').selectOption('pumpkin');
+      await poll(async () => (await state()).appearance.monster === 'pumpkin');
+      const changed = await state();
+      check(changed.roundAppearance.monster === 'ghost' && changed.explodeAt === deadline && changed.turnId === first.turnId && changed.order[0] === promptId, 'real-player-monster-choice-is-next-round-only-without-restarting-fuse');
+    }
     check(first.roundFuse.speedModeAtStart === 'normal' && first.roundFuse.scaleWithPlayersAtStart === true && first.roundFuse.activePlayerCountAtStart === 3, 'normal-go-snapshot-three-eligible-players');
     check(first.roundFuse.policyVersion === 'talk-bomb-timing-3.1' && first.roundFuse.minMsAtStart === 30000 && first.roundFuse.maxMsAtStart === 90000 && first.roundFuse.durationMs >= 30000 && first.roundFuse.durationMs <= 90000, 'normal-go-real-v31-30-to-90-seconds');
     report.realFuseDurationMs = first.roundFuse.durationMs;
@@ -344,6 +367,10 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
       return ['boom', 'discussion'].includes(current.phase);
     }, Math.max(15000, deadline - now() + 15000));
     const boom = await state(), views = await samePlayers(boom.phase);
+    if (halloween) {
+      check(boom.lastChase?.monster === 'ghost' && boom.lastChase?.avatar === 'curly' && boom.lastChase?.loser === boom.boom.loser, 'real-boom-snapshots-old-monster-and-loser-avatar');
+      for (let index = 0; index < players.length; index++) check(await players[index].locator('[data-br-chase]').count() === (index + 1 === boom.boom.loser ? 1 : 0), `real-chase-visible-only-on-loser-card-${index + 1}`);
+    }
     const animationEnd = boom.discussionUntil - 45000;
     report.explosionPresentationObserved = boom.phase === 'boom';
     check(boom.order[0] === promptId && boom.history.length === 1 && Object.values(boom.penalties).reduce((sum, cards) => sum + list(cards).length, 0) === 1, 'real-auto-explosion-settles-exactly-one-penalty');
@@ -401,6 +428,10 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
     report.realDiscussion.waitSamples = discussionWaitSamples;
     check(discussionWaitSamples > 0, 'waiting-discussion-retains-one-deadline-prompt-and-score');
     const afterDiscussion = await state();
+    if (halloween) {
+      check(afterDiscussion.appearance.monster === 'pumpkin' && JSON.stringify(afterDiscussion.lastChase) === JSON.stringify(boom.lastChase), 'real-next-preview-keeps-old-ghost-chase-and-pending-pumpkin');
+      check(await players[boom.boom.loser - 1].locator('[data-br-chase]').count() === 1, 'real-loser-chase-persists-into-next-preview');
+    }
     await samePlayers('ready');
     check(afterDiscussion.explodeAt === null && afterDiscussion.roundFuse === null && afterDiscussion.phaseUntil === null &&
       afterDiscussion.discussionUntil === null && afterDiscussion.history.length === 1 && afterDiscussion.order[1] !== promptId,

@@ -5,6 +5,12 @@ var BOMB_RELAY_UI = (() => {
   'use strict';
   const dict = {
     brand: ['BOMB RELAY', 'BOMB RELAY'], subtitle: ['一個答案，傳給下一位。', 'One answer. Pass it on.'],
+    edition: ['外觀版本', 'Edition'], classic: ['經典炸彈', 'Classic bomb'], halloween: ['萬聖節', 'Halloween'],
+    monster: ['本輪怪物', 'Monster'], pumpkin: ['南瓜怪', 'Pumpkin'], ghost: ['小幽靈', 'Ghost'], furry: ['毛毛怪', 'Furry'],
+    appearanceManage: ['下一顆炸彈的外觀', 'Look for the next bomb'],
+    appearanceNext: ['點燃後固定本輪外觀；更換會在下一輪生效。', 'A lit round keeps its look. Changes apply to the next bomb.'],
+    avatar: ['選擇你的角色', 'Choose your avatar'], boy: ['短髮', 'Short hair'], girl: ['鮑伯頭', 'Bob'], curly: ['捲髮', 'Curls'], ponytail: ['馬尾', 'Ponytail'],
+    appearancePlayer: ['你的角色與怪物', 'Your avatar & monster'],
     setupLead: ['共用一題，輪流傳炸彈。', 'One shared prompt. One moving bomb.'],
     intro: ['看題目，說一個合理的答案，然後傳炸彈。爆炸時間是秘密。', 'Read the prompt. Say one fitting answer, then pass. The fuse stays secret.'],
     fuse: ['炸彈節奏', 'Bomb pace'], fast: ['Fast · 快速', 'Fast'], normal: ['Normal · 標準', 'Normal'], chill: ['Chill · 悠閒', 'Chill'],
@@ -94,6 +100,10 @@ var BOMB_RELAY_UI = (() => {
   const seatsOf = bomb => list(bomb?.roster).slice().sort((a, b) => a.playerNum - b.playerNum);
   const nameOf = (bomb, n) => seatsOf(bomb).find(p => p.playerNum === n)?.name || t('player', { n });
   const errorKey = code => ['stale_turn', 'too_late', 'not_available', 'not_enough_players', 'invalid_options', 'invalid_roster'].includes(code) ? code : 'error';
+  const visuals = () => typeof BOMB_RELAY_VISUALS !== 'undefined' ? BOMB_RELAY_VISUALS : null;
+  const lookClass = bomb => visuals()?.appearance(bomb).edition === 'halloween' ? ' br-edition-halloween' : '';
+  const visualMark = (bomb, fallback) => visuals() ? visuals().heroHTML(bomb) : fallback;
+  const chase = (bomb, playerNum = 0) => visuals()?.chaseHTML(bomb, { playerNum, lang: lang(), name: nameOf(bomb, bomb.lastChase?.loser) }) || '';
 
   function bombIcon() {
     return '<span class="br-object" aria-hidden="true"><span class="br-object-shadow"></span><span class="br-object-fuse"></span><span class="br-object-lid"></span><span class="br-object-shell"></span><span class="br-object-spark"></span></span>';
@@ -156,22 +166,34 @@ var BOMB_RELAY_UI = (() => {
     const live = phase === 'ticking';
     return `<div class="br-bomb${live ? ' is-live' : ''}${phase === 'paused' ? ' is-paused' : ''}" aria-hidden="true">${bombIcon()}</div>`;
   }
+  const cardMark = phase => visuals() ? '' : bombMark(phase);
+  function appearanceControls(bomb, me, busy) {
+    if (!visuals()) return '';
+    const player = seatsOf(bomb).find(row => row.playerNum === me);
+    if (!player) return '';
+    const avatar = ['boy', 'girl', 'curly', 'ponytail'].includes(player.avatar) ? player.avatar : 'boy';
+    const selected = bomb.settingsAppearance || bomb.appearance || {};
+    const disabled = busy || player.active === false ? ' disabled' : '';
+    const options = ['pumpkin', 'ghost', 'furry'].map(id => `<option value="${id}"${selected.monster === id || (!selected.monster && id === 'pumpkin') ? ' selected' : ''}>${esc(t(id))}</option>`).join('');
+    const buttons = ['boy', 'girl', 'curly', 'ponytail'].map(id => `<button type="button" class="br-avatar-choice" data-br-avatar="${id}" aria-label="${esc(t(id))}" aria-pressed="${avatar === id}"${disabled}>${visuals().avatarHTML(id)}<span>${esc(t(id))}</span></button>`).join('');
+    return `<details class="br-card-appearance"><summary>${esc(t('appearancePlayer'))}</summary><div class="br-avatar-picker" role="group" aria-label="${esc(t('avatar'))}">${buttons}</div><label class="br-field br-card-monster"><span>${esc(t('monster'))}</span><select data-br-monster aria-label="${esc(t('monster'))}"${disabled}>${options}</select></label><p class="br-soft">${esc(t('appearanceNext'))}</p></details>`;
+  }
 
   // The shared host screen: the prompt, who holds the bomb, everyone's pile.
   function stage(bomb, { animate = true } = {}) {
     if (!bomb) return '';
-    if (bomb.phase === 'finished') return `<div class="br-stage br-phase-finished">${standings(bomb, 0)}</div>`;
+    if (bomb.phase === 'finished') return `<div class="br-stage br-phase-finished${lookClass(bomb)}">${chase(bomb)}${standings(bomb, 0)}</div>`;
     const holder = bomb.holder != null ? nameOf(bomb, bomb.holder) : '';
     let focus = '';
-    if (bomb.phase === 'ready') focus = `${bombMark('ready')}<p class="br-kicker">${esc(t('starter'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('readyHint', { name: holder }))}</p>${preparationRange(bomb)}`;
-    else if (bomb.phase === 'ticking') focus = `${bombMark('ticking')}<p class="br-kicker">${esc(t('holdsTitle'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('holdsHint'))}</p>${bomb.next ? `<p class="br-next" style="--seat:${colorOf(bomb.next)}">${esc(t('next', { name: nameOf(bomb, bomb.next) }))}</p>` : ''}${bounceNote(bomb)}`;
-    else if (bomb.phase === 'paused') focus = `${bombMark('paused')}<p class="br-kicker">${esc(t('paused'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('pausedHint'))}</p>`;
+    if (bomb.phase === 'ready') focus = `${visualMark(bomb, bombMark('ready'))}<p class="br-kicker">${esc(t('starter'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('readyHint', { name: holder }))}</p>${preparationRange(bomb)}`;
+    else if (bomb.phase === 'ticking') focus = `${visualMark(bomb, bombMark('ticking'))}<p class="br-kicker">${esc(t('holdsTitle'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('holdsHint'))}</p>${bomb.next ? `<p class="br-next" style="--seat:${colorOf(bomb.next)}">${esc(t('next', { name: nameOf(bomb, bomb.next) }))}</p>` : ''}${bounceNote(bomb)}`;
+    else if (bomb.phase === 'paused') focus = `${visualMark(bomb, bombMark('paused'))}<p class="br-kicker">${esc(t('paused'))}</p><h3 class="br-who" style="--seat:${colorOf(bomb.holder)}">${esc(holder)}</h3><p class="br-hint">${esc(t('pausedHint'))}</p>`;
     else if (['boom', 'discussion'].includes(bomb.phase)) {
       const loser = nameOf(bomb, bomb.boom?.loser);
-      focus = `${burstMark()}<h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.phase === 'discussion' ? `<p class="br-soft br-discussion-note">${esc(t('discussionHint'))}</p>` : ''}`;
+      focus = `${visualMark(bomb, burstMark())}<h3 class="br-who" style="--seat:${colorOf(bomb.boom?.loser)}">${esc(loser)}</h3><p class="br-hint">${esc(t('takes'))}</p><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.phase === 'discussion' ? `<p class="br-soft br-discussion-note">${esc(t('discussionHint'))}</p>` : ''}`;
     }
     const cls = ['br-stage', `br-phase-${bomb.phase}`, bomb.phase === 'boom' && animate ? 'br-exploding' : '', !animate || bomb.phase === 'discussion' ? 'br-static' : ''].filter(Boolean).join(' ');
-    return `<div class="${cls}">${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId, '', bomb.prompt)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
+    return `<div class="${cls}${lookClass(bomb)}">${chase(bomb)}${strip(bomb)}<div class="br-main"><div class="br-scene">${sceneTitle(bomb.boom?.cardId || bomb.cardId, '', bomb.prompt)}</div><div class="br-focus">${focus}</div></div>${seats(bomb, 0)}</div>`;
   }
 
   // Approved recorded tick and bass-reduced explosion. Cadence is fixed and
@@ -254,13 +276,17 @@ var BOMB_RELAY_UI = (() => {
       this.sound = new Sound(() => this.paintSound()); this.sound.enabled = false;
       this.click = event => {
         if (event.target.closest('[data-br-sound]')) { this.sound.toggle().then(() => { this.sound.follow(this.data?.bomb); this.paintSound(); }); return; }
+        const avatar = event.target.closest('[data-br-avatar]');
+        if (avatar && !avatar.disabled) { this.action('avatar', { avatar: avatar.dataset.brAvatar }); return; }
         const button = event.target.closest('[data-br-action]');
         if (button && !button.disabled) this.action(button.dataset.brAction);
       };
       this.element.addEventListener('click', this.click);
-      this.timer = setInterval(() => this.paint(), 500);
+      this.change = event => { const select = event.target.closest('[data-br-monster]'); if (select && !select.disabled) this.action('monster', { monster: select.value }); };
+      this.element.addEventListener('change', this.change);
+      this.timer = setInterval(() => this.paint(), 100);
     }
-    action(type) {
+    action(type, extra = {}) {
       const bomb = this.data?.bomb;
       if (!bomb || !this.send || this.pending || !this.connected()) return;
       const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
@@ -268,7 +294,7 @@ var BOMB_RELAY_UI = (() => {
       this.error = '';
       if (type === 'pass') this.sound.pass();
       this.renderKey = ''; this.update(this.data);
-      Promise.resolve(this.send({ id, type, sessionId: bomb.sessionId, turnId: bomb.turnId })).catch(error => {
+      Promise.resolve(this.send({ ...extra, id, type, sessionId: bomb.sessionId, turnId: bomb.turnId })).catch(error => {
         if (this.pending?.id !== id) return;
         this.pending = null; this.error = t(errorKey(error?.message === 'stale_turn' ? 'stale_turn' : 'error'));
         this.renderKey = ''; this.update(this.data);
@@ -292,9 +318,16 @@ var BOMB_RELAY_UI = (() => {
       this.wasHolder = holding;
       this.sound.follow(bomb);
       const key = JSON.stringify([lang(), data.name, data.playerNum, bomb.sessionId, bomb.turnId, bomb.phase, this.pending?.id, this.error,
+        bomb.appearance, bomb.settingsAppearance, bomb.lastChase, seatsOf(bomb).map(player => [player.playerNum, player.avatar]),
         bomb.phase === 'ready' ? [bomb.settingsTiming, bomb.timingRange,
           list(bomb.roster).filter(player => player.active !== false).map(player => player.playerNum)] : null]);
-      if (key !== this.renderKey) { this.renderKey = key; this.element.innerHTML = this.html(data); this.paintSound(); }
+      if (key !== this.renderKey) {
+        this.renderKey = key;
+        const appearanceOpen = this.element.querySelector('.br-card-appearance')?.open;
+        if (visuals()) visuals().preserve(this.element, this.html(data)); else this.element.innerHTML = this.html(data);
+        if (appearanceOpen) { const details = this.element.querySelector('.br-card-appearance'); if (details) details.open = true; }
+        this.paintSound();
+      }
       if (arrived) {
         const button = this.element.querySelector('[data-br-action="pass"]'), box = button?.getBoundingClientRect?.();
         if (box && (box.top < 0 || box.bottom > (window.innerHeight || 0))) {
@@ -309,38 +342,38 @@ var BOMB_RELAY_UI = (() => {
       const bomb = data.bomb, me = data.playerNum, mine = list(bomb.standings).find(row => row.playerNum === me);
       const head = `<div class="br-card-head"><span class="br-kicker br-card-brand">${esc(t('brand'))}</span>${bomb.phase !== 'finished' ? `<span class="br-pill">${esc(t('cardOf', { n: bomb.cardNo, total: bomb.cardsTotal }))}</span>` : ''}</div>`;
       let body = '', theme = '';
-      if (bomb.phase === 'finished') body = standings(bomb, me);
+      if (bomb.phase === 'finished') body = chase(bomb, me) + standings(bomb, me);
       else {
         const sceneId = bomb.boom?.cardId || bomb.cardId;
         const scene = `<div class="br-card-scene">${sceneTitle(sceneId, 'is-compact', bomb.prompt)}</div>`;
         const { zone, cls } = this.zone(bomb, me);
         theme = cls;
         // A compact text card keeps the prompt and the pass action together.
-        body = scene + zone;
+        body = chase(bomb, me) + scene + (visuals() ? `<div class="br-card-art">${visuals().heroHTML(bomb)}</div>` : '') + zone;
       }
       const pile = mine && mine.count && bomb.phase !== 'finished' ? `<div class="br-mine"><span class="br-kicker">${esc(t('yourCards'))} · ${esc(t('count', { n: mine.count }))}</span>${thumbs(mine.cards, 8)}</div>` : '';
       const table = bomb.phase !== 'finished' ? seats(bomb, me) : '';
-      return `<div class="secret-card br-card ${theme}">${this.nameBanner(data)}${head}${body}${pile}${table}<div class="br-card-tools"><button type="button" class="br-button br-small" data-br-sound title="${esc(t('cardSoundHint'))}"></button></div><p class="br-feedback" data-br-error role="status">${esc(this.error)}</p><p class="br-feedback" data-br-connection role="status"></p></div>`;
+      return `<div class="secret-card br-card ${theme}${lookClass(bomb)}">${this.nameBanner(data)}${head}${body}${appearanceControls(bomb, me, !!this.pending || !this.connected())}${pile}${table}<div class="br-card-tools"><button type="button" class="br-button br-small" data-br-sound title="${esc(t('cardSoundHint'))}"></button></div><p class="br-feedback" data-br-error role="status">${esc(this.error)}</p><p class="br-feedback" data-br-connection role="status"></p></div>`;
     }
     zone(bomb, me) {
       const holder = bomb.holder, holderName = holder != null ? nameOf(bomb, holder) : '';
       const busy = !!this.pending, out = !list(bomb.roster).find(p => p.playerNum === me)?.active;
       if (bomb.phase === 'ready') {
-        if (holder === me) return { cls: 'is-start', zone: `<div class="br-zone br-zone-start">${bombMark('ready')}<h3>${esc(t('youStart'))}</h3><p>${esc(t('youStartHint'))}</p>${preparationRange(bomb)}<button type="button" class="br-button br-primary br-huge" data-br-action="light"${bomb.canLight && !busy ? '' : ' disabled'}>${esc(t('light'))}</button></div>` };
+        if (holder === me) return { cls: 'is-start', zone: `<div class="br-zone br-zone-start">${cardMark('ready')}<h3>${esc(t('youStart'))}</h3><p>${esc(t('youStartHint'))}</p>${preparationRange(bomb)}<button type="button" class="br-button br-primary br-huge" data-br-action="light"${bomb.canLight && !busy ? '' : ' disabled'}>${esc(t('light'))}</button></div>` };
         return { cls: '', zone: `<div class="br-zone"><p class="br-zone-line">${esc(t('waitStart', { name: holderName }))}</p>${preparationRange(bomb)}</div>` };
       }
       if (bomb.phase === 'ticking') {
         const bounce = bomb.canBounce && bomb.lastPass ? `<div class="br-challenge"><button type="button" class="br-button br-bounce-btn" data-br-action="bounce"${busy ? ' disabled' : ''}>${esc(t('bounce', { name: nameOf(bomb, bomb.lastPass.from) }))}</button><p class="br-soft">${esc(t('bounceHint'))}</p></div>` : '';
         const note = bounceNote(bomb);
-        if (holder === me) return { cls: 'is-holder', zone: `<div class="br-zone br-zone-hot"><div class="br-hot-head">${bombMark('ticking')}<h3>${esc(t('youHave'))}</h3></div><p>${esc(t('youHaveHint'))}</p>${note}<button type="button" class="br-button br-pass br-huge" data-br-action="pass"${bomb.canPass && !busy ? '' : ' disabled'}>${esc(busy && this.pending.type === 'pass' ? t('passing') : t('pass', { name: nameOf(bomb, bomb.next) }))}</button></div>${bounce}` };
+        if (holder === me) return { cls: 'is-holder', zone: `<div class="br-zone br-zone-hot"><div class="br-hot-head">${cardMark('ticking')}<h3>${esc(t('youHave'))}</h3></div><p>${esc(t('youHaveHint'))}</p>${note}<button type="button" class="br-button br-pass br-huge" data-br-action="pass"${bomb.canPass && !busy ? '' : ' disabled'}>${esc(busy && this.pending.type === 'pass' ? t('passing') : t('pass', { name: nameOf(bomb, bomb.next) }))}</button></div>${bounce}` };
         if (bomb.next === me) return { cls: 'is-next', zone: `<div class="br-zone br-zone-next"><p class="br-zone-line">${esc(t('otherHolds', { name: holderName }))}</p><h3>${esc(t('youNext'))}</h3>${note}</div>${bounce}` };
         return { cls: '', zone: `<div class="br-zone"><p class="br-zone-line">${esc(t('otherHolds', { name: holderName }))}</p>${bomb.next ? `<p class="br-soft">${esc(t('next', { name: nameOf(bomb, bomb.next) }))}</p>` : ''}${note}${out ? `<p class="br-soft">${esc(t('out'))}</p>` : ''}</div>${bounce}` };
       }
-      if (bomb.phase === 'paused') return { cls: '', zone: `<div class="br-zone">${bombMark('paused')}<h3>${esc(t('paused'))}</h3><p>${esc(t('pausedHint'))}</p></div>` };
+      if (bomb.phase === 'paused') return { cls: '', zone: `<div class="br-zone">${cardMark('paused')}<h3>${esc(t('paused'))}</h3><p>${esc(t('pausedHint'))}</p></div>` };
       if (['boom', 'discussion'].includes(bomb.phase)) {
         const lost = bomb.boom?.loser === me;
         const nextLabel = bomb.boom?.last ? t('showResults') : t('nextCard');
-        return { cls: lost ? 'is-boom' : '', zone: `<div class="br-zone br-zone-boom${lost ? ' is-you' : ''}${bomb.phase === 'discussion' ? ' br-static' : ''}">${burstMark()}<h3>${esc(lost ? t('youBoom') : t('otherBoom', { name: nameOf(bomb, bomb.boom?.loser) }))}</h3><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.phase === 'discussion' ? `<p class="br-soft br-discussion-note">${esc(t('discussionHint'))}</p>` : ''}${bomb.canNext ? `<button type="button" class="br-button" data-br-action="next"${busy ? ' disabled' : ''}>${esc(nextLabel)}</button>` : ''}</div>` };
+        return { cls: lost ? 'is-boom' : '', zone: `<div class="br-zone br-zone-boom${lost ? ' is-you' : ''}${bomb.phase === 'discussion' ? ' br-static' : ''}">${visuals() ? '' : burstMark()}<h3>${esc(lost ? t('youBoom') : t('otherBoom', { name: nameOf(bomb, bomb.boom?.loser) }))}</h3><p class="br-soft">${esc(t(bomb.boom?.last ? 'boomLast' : 'boomPasses', { n: bomb.boom?.passes || 0 }))}</p>${bomb.phase === 'discussion' ? `<p class="br-soft br-discussion-note">${esc(t('discussionHint'))}</p>` : ''}${bomb.canNext ? `<button type="button" class="br-button" data-br-action="next"${busy ? ' disabled' : ''}>${esc(nextLabel)}</button>` : ''}</div>` };
       }
       return { cls: '', zone: '' };
     }
@@ -352,9 +385,10 @@ var BOMB_RELAY_UI = (() => {
     paint() {
       if (this.destroyed || !this.data) return;
       const bomb = this.data.bomb, line = this.element.querySelector('[data-br-connection]');
+      visuals()?.refresh(this.element, bomb, { now: this.now() });
       if (line) line.textContent = !this.connected() ? t('offline') : bomb.hostLiveUntil && this.now() > bomb.hostLiveUntil + 4000 ? t('hostAway') : '';
     }
-    destroy() { this.destroyed = true; clearInterval(this.timer); this.sound.close(); this.element.removeEventListener('click', this.click); }
+    destroy() { this.destroyed = true; clearInterval(this.timer); visuals()?.clear(this.element); this.sound.close(); this.element.removeEventListener('click', this.click); this.element.removeEventListener('change', this.change); }
   }
 
   function libraryHTML(category = 'mixed') {

@@ -65,9 +65,9 @@ function setup(count = 4) {
     state: () => JSON.parse(db.values.get(`rooms/BOMBTEST/players/${extras.bombRelayControlToken}`).stateJson),
     get now() { return clock; }, set now(value) { clock = value; },
     // Exactly what play.html writes: one bombAction fenced to the shown turn.
-    async action(i, type) {
+    async action(i, type, extra = {}) {
       const card = this.card(i);
-      const command = { id: `action-${i}-${++n}-xxxxxxxx`, type, sessionId: card.bomb.sessionId, turnId: card.bomb.turnId };
+      const command = Object.assign({}, extra, { id: `action-${i}-${++n}-xxxxxxxx`, type, sessionId: card.bomb.sessionId, turnId: card.bomb.turnId });
       const result = await db.ref(paths[i - 1]).transaction(current => {
         if (current?.game !== 'bombrelay' || current.bomb?.sessionId !== command.sessionId || current.bomb?.turnId !== command.turnId) return;
         return Object.assign({}, current, { bombAction: command });
@@ -76,6 +76,108 @@ function setup(count = 4) {
     },
   };
 }
+
+test('cosmetic commands are canonical and the player transport forwards only their own whitelisted payload', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5, appearance: { edition: 'halloween', monster: 'ghost' } }); await settle(h);
+  const originalTurn = s.state().turnId;
+  await s.action(2, 'avatar', { avatar: 'ponytail', playerNum: 1, actor: 0, explodeAt: 1, lastChase: { loser: 1 } }); await settle(h);
+  assert.equal(s.state().roster[0].avatar, 'boy');
+  assert.equal(s.state().roster[1].avatar, 'ponytail');
+  assert.equal(s.state().lastChase, null, 'canonical stateJson retains explicit null');
+  await s.action(3, 'monster', { monster: 'furry', appearance: { edition: 'classic', monster: 'pumpkin' } }); await settle(h);
+  assert.deepEqual(s.state().appearance, { edition: 'halloween', monster: 'furry' });
+  assert.equal(s.state().turnId, originalTurn);
+  for (const player of [1, 2, 3, 4]) {
+    assert.equal(s.card(player).bomb.roster[1].avatar, 'ponytail');
+    assert.deepEqual(s.card(player).bomb.appearance, { edition: 'halloween', monster: 'furry' });
+  }
+  await s.action(1, 'appearance', { appearance: { edition: 'classic', monster: 'pumpkin' } }); await settle(h);
+  assert.equal(s.card(1).bomb.reply.error, 'not_available');
+  assert.equal(s.state().appearance.edition, 'halloween');
+  await h.command('exclude', { playerNum: 3, active: false }); await settle(h);
+  await s.action(3, 'monster', { monster: 'pumpkin' }); await settle(h);
+  assert.equal(s.card(3).bomb.reply.error, 'not_available');
+  h.close();
+});
+
+test('restarting with a refreshed roster keeps per-seat avatars and pending appearance while clearing chase', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5, appearance: { edition: 'halloween', monster: 'ghost' } }); await settle(h);
+  await s.action(1, 'avatar', { avatar: 'curly' }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  s.now = s.state().explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  assert.ok(s.state().lastChase);
+  const seenIds = s.state().promptHistory.seenIds.slice();
+  s.room.name = i => `Renamed ${i + 1}`;
+  await h.start({ cards: 5 }); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  assert.equal(s.state().roster[0].name, 'Renamed 1');
+  assert.equal(s.state().roster[0].avatar, 'curly');
+  assert.deepEqual(s.state().appearance, { edition: 'halloween', monster: 'ghost' });
+  assert.equal(s.state().lastChase, null);
+  assert.ok(seenIds.every(id => s.state().promptHistory.seenIds.includes(id)));
+  h.close();
+});
+
+test('all links receive one frozen loser snapshot and changing next-round monster cannot replace it', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5, appearance: { edition: 'halloween', monster: 'ghost' } }); await settle(h);
+  const loser = s.state().holder;
+  await s.action(loser, 'avatar', { avatar: 'ponytail' }); await settle(h);
+  await s.action(loser, 'light'); await settle(h);
+  const deadline = s.state().explodeAt;
+  await s.action(2, 'monster', { monster: 'furry' }); await settle(h);
+  assert.equal(s.state().explodeAt, deadline);
+  assert.equal(s.state().roundAppearance.monster, 'ghost');
+  s.now = deadline; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  const chase = s.state().lastChase;
+  assert.deepEqual(chase, { id: s.state().boom.id, loser, monster: 'ghost', avatar: 'ponytail', edition: 'halloween' });
+  h.pulse(); await settle(h);
+  assert.equal(s.state().history.length, 1);
+  await s.action(1, 'next'); await settle(h);
+  assert.equal(s.state().phase, 'ready');
+  await s.action(2, 'monster', { monster: 'pumpkin' }); await settle(h);
+  for (const i of [1, 2, 3, 4]) assert.deepEqual(s.card(i).bomb.lastChase, chase);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  assert.equal(s.state().roundAppearance.monster, 'pumpkin');
+  assert.deepEqual(s.card(loser).bomb.lastChase, chase);
+  await h.command('appearance', { appearance: { edition: 'classic', monster: 'furry' } }); await settle(h);
+  s.now = s.state().explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  await s.action(1, 'next'); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  assert.equal(s.state().roundAppearance.edition, 'classic');
+  s.now = s.state().explodeAt; await h.renew(); await settle(h); h.pulse(); await settle(h);
+  for (const i of [1, 2, 3, 4]) assert.equal(s.card(i).bomb.lastChase, undefined);
+  h.close();
+});
+
+test('a paused cosmetic clock survives lease takeover without rerolling its fuse, appearance or prompt', async () => {
+  const s = setup(), h = s.host(); await settle(h);
+  await h.start({ cards: 5, appearance: { edition: 'halloween', monster: 'furry' } }); await settle(h);
+  await s.action(s.state().holder, 'light'); await settle(h);
+  s.now += 11000; await h.renew(); await settle(h);
+  await h.command('pause'); await settle(h);
+  const previous = s.state(), pausedClock = s.card(1).bomb.clock;
+  assert.deepEqual(pausedClock, { elapsedMs: 11000 });
+  h.close(); await settle(h);
+  s.now += 60000;
+  const adopted = s.host(); await settle(adopted);
+  assert.equal(adopted.lastStatus, 'ready');
+  assert.deepEqual(s.card(2).bomb.clock, pausedClock);
+  await adopted.command('resume'); await settle(adopted);
+  const resumed = s.state();
+  assert.deepEqual(s.card(1).bomb.clock, { elapsedMs: 11000, startedAt: s.now });
+  assert.equal(resumed.explodeAt, s.now + previous.remainingMs);
+  assert.deepEqual(resumed.roundFuse, previous.roundFuse);
+  assert.deepEqual(resumed.roundAppearance, previous.roundAppearance);
+  assert.deepEqual(resumed.promptHistory, previous.promptHistory);
+  for (const i of [1, 2, 3, 4]) {
+    const json = JSON.stringify(s.card(i));
+    for (const secret of ['explodeAt', 'durationMs', 'remainingMs', 'roundFuse', 'seed']) assert.ok(!json.includes(secret), secret);
+  }
+  adopted.close();
+});
 
 test('the host deals cards to every original link and players drive the relay', async () => {
   const s = setup(); const h = s.host(); await settle(h);

@@ -163,6 +163,7 @@
 /* Original player-card page: override its shared inline identity colour only here. */
 body.bomb-card-page { padding: 56px 12px 24px; justify-content: flex-start; }
 .br-page #i18n-toggle, body.bomb-card-page #i18n-toggle { --accent: #c6a77d; background: #262d24; border-color: #59624c; box-shadow: none; }
+body.bomb-card-page #i18n-toggle { position: absolute; }
 .br-page #i18n-toggle button, body.bomb-card-page #i18n-toggle button { color: #b8c0ac; }
 .br-page #i18n-toggle button.active, body.bomb-card-page #i18n-toggle button.active { color: #252b21; box-shadow: none; }
 .secret-card.br-card { max-width: 420px; width: 100%; gap: 10px; padding: 16px 14px; border: 1px solid #515b46; border-radius: 18px; background: #20281e; box-shadow: 0 8px 32px #0002; animation: none; display: flex; flex-direction: column; align-items: stretch; text-align: left; }
@@ -256,4 +257,105 @@ body.bomb-card-page { padding: 56px 12px 24px; justify-content: flex-start; }
 #br-game:has(.br-phase-finished) .br-session-actions { position: static; }
 @media (prefers-reduced-motion: reduce) {
   .br-page *, .br-page *::before, .br-page *::after, .br-card *, .br-card *::before, .br-card *::after { animation: none !important; transition: none !important; }
+}
+
+/* Approved artwork. The prompt stays on paper; only the game surrounds change. */
+body.br-page[data-br-edition="halloween"],
+body.bomb-card-page:has(.br-card.br-edition-halloween) {
+  --bg: #17121a; --surface: #211923; --surface-2: #2a202d;
+  --border: #3a2d3c; --br-line: #443443; --br-muted: #c1b0bc;
+  --btn-face: #35293a; --btn-face-hi: #433149;
+  --accent: #dd9b62; --br-brass: #dd9b62;
+  background: radial-gradient(ellipse at 85% 0, #57304d21, transparent 45%), #17121a;
+}
+.br-stage.br-edition-halloween, .secret-card.br-card.br-edition-halloween {
+  --br-brass: #dd9b62; --br-muted: #c1b0bc; --br-line: #443443;
+  --btn-face: #35293a; --btn-face-hi: #433149;
+  background: #211923; border-color: #564052;
+}
+.br-edition-halloween .br-focus, .br-edition-halloween .br-zone,
+.br-edition-halloween .br-seat { background: #2b202d; border-color: #524054; }
+.br-edition-halloween .br-zone-hot, .br-edition-halloween .br-zone-start,
+.br-edition-halloween .br-seat.is-holder { background: #3b2936; border-color: #b37d5b; }
+.br-edition-halloween .br-zone-next, .br-edition-halloween .br-seat.is-next { background: #332637; border-color: #8d718d; }
+.br-edition-halloween .br-zone-boom { background: #3e272d; border-color: #b67d65; }
+.br-edition-halloween .br-seat-name, .br-edition-halloween .br-zone h3 { color: #f3e9e1; }
+.br-edition-halloween .br-seat-count, .br-edition-halloween .br-zone p { color: #d1c1cb; }
+.br-edition-halloween .br-button:not(.br-primary):not(.br-pass):not(.br-stop),
+body.br-page[data-br-edition="halloween"] .br-button:not(.br-primary):not(.br-pass):not(.br-stop) { border-color: #75627a; color: #eadce9; }
+.br-edition-halloween .br-bounce-btn { background: #34263a; border-color: #75627a; color: #eadce9; }
+.br-edition-halloween .br-field select,
+body.br-page[data-br-edition="halloween"] .br-field select { background: #241a28; border-color: #6e566d; }
+.br-hero-art { position: relative; isolation: isolate; flex-shrink: 0; display: block; width: 154px; height: 154px; }
+.br-setup-emblem:has([data-br-hero]) { width: 154px; height: 154px; border: 0; border-radius: 0; background: transparent; }
+.br-hero-monster { position: absolute; inset: 0; display: block; transform-origin: 50% 88%; animation: br-art-idle 3.6s ease-in-out infinite; }
+.br-hero-crop { display: block; position: absolute; background-repeat: no-repeat; overflow: hidden; }
+.br-hero-classic, .br-hero-burst { position: absolute; inset: 0; display: block; background-repeat: no-repeat; background-position: center; }
+.br-hero-classic { background-size: contain; transform-origin: 50% 75%; animation: br-art-classic .85s ease-in-out infinite; }
+.br-hero-burst { display: none; background-size: 300% 200%; }
+.br-hero-art[data-br-edition="classic"] .br-hero-monster,
+.br-hero-art[data-br-edition="halloween"] .br-hero-classic,
+.br-hero-art[data-br-edition="halloween"] .br-hero-burst { display: none; }
+.br-hero-art[data-br-expression="warning"] .br-hero-monster,
+.br-hero-art[data-br-expression="rage"] .br-hero-monster { animation: none; transform: none; }
+.br-hero-art[data-br-edition="classic"][data-br-expression="angry"] .br-hero-classic,
+.br-hero-art[data-br-edition="classic"][data-br-expression="burst"] .br-hero-classic,
+.br-hero-art[data-br-edition="classic"][data-br-expression="spent"] .br-hero-classic { display: none; }
+.br-hero-art[data-br-edition="classic"][data-br-expression="angry"] .br-hero-burst { display: block; background-position: 50% 0%; animation: br-art-angry .16s ease-in-out infinite; }
+.br-hero-art[data-br-edition="classic"][data-br-expression="burst"] .br-hero-burst { display: block; animation: br-art-burst .85s step-end 1 forwards, br-art-smoke .85s linear 1 forwards; }
+.br-hero-art[data-br-edition="classic"][data-br-expression="spent"] .br-hero-burst { display: block; background-position: 100% 100%; opacity: 0; }
+.br-hero-art[data-br-paused="true"] *, .br-chase[data-br-paused="true"] * { animation-play-state: paused; }
+.br-card-art { display: flex; align-items: center; justify-content: center; margin: -3px 0 0; }
+.br-card .br-hero-art { width: 154px; height: 154px; }
+.br-chase { width: 100%; max-width: 420px; margin: 0 auto 12px; }
+.br-chase-caption { color: var(--br-muted); font-size: .75rem; line-height: 1.5; margin: 0 3px 6px; overflow-wrap: anywhere; }
+.br-chase-lane { height: 90px; position: relative; overflow: hidden; isolation: isolate; border: 1px solid #4b3548; border-radius: 12px; background: #251b28; contain: paint; }
+.br-chase-ground { position: absolute; inset: auto 8% 11px; height: 1px; background: linear-gradient(90deg, transparent, #60444e 14%, #60444e 86%, transparent); }
+.br-run-actor { position: absolute; bottom: 11px; width: 76px; height: 76px; isolation: isolate; }
+.br-run-monster { left: calc(50% - 81px); }
+.br-run-avatar { left: calc(50% + 5px); }
+.br-run-paint { display: block; position: absolute; overflow: hidden; background-repeat: no-repeat; pointer-events: none; user-select: none; }
+.br-run-upper { z-index: 3; transform: none; animation: none; }
+.br-run-leg, .br-run-knee { position: absolute; width: 0; height: 0; transform-origin: 0 0; }
+.br-run-leg { animation: br-run-thigh .48s linear infinite; }
+.br-run-leg-back { z-index: 1; animation-delay: -.24s; }
+.br-run-leg-front { z-index: 4; }
+.br-run-knee { animation: br-run-knee .48s linear infinite; }
+.br-run-leg-back .br-run-knee { animation-delay: -.24s; }
+.br-run-shadow { position: absolute; z-index: 0; left: 21px; right: 21px; bottom: -1px; height: 5px; border-radius: 50%; background: #0000003d; }
+.br-card-appearance { border-top: 1px solid var(--br-line); padding-top: 2px; }
+.br-card-appearance summary { min-height: 44px; padding: 12px 2px; color: var(--br-muted); font-size: .8rem; cursor: pointer; }
+.br-avatar-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 1px 0 13px; }
+.br-avatar-choice { min-width: 0; min-height: 72px; display: flex; align-items: center; flex-direction: column; gap: 3px; padding: 7px 2px; border: 1px solid #585247; border-radius: 10px; background: #292922; color: #d8d2c6; font: inherit; font-size: .75rem; cursor: pointer; }
+.br-avatar-choice[aria-pressed="true"] { border-color: var(--br-brass); background: #3b3027; color: #fff1df; }
+.br-avatar-choice:disabled { opacity: .5; cursor: default; }
+.br-avatar-art { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+.br-avatar-art > span { display: block; flex-shrink: 0; overflow: hidden; background-repeat: no-repeat; }
+.br-card-monster { gap: 7px; margin-bottom: 9px; }
+.br-card-appearance .br-soft { font-size: .75rem; }
+.br-avatar-choice:focus-visible, .br-card-appearance summary:focus-visible { outline: 2px solid #e4c59a; outline-offset: 3px; }
+.br-edition-halloween .br-avatar-choice { background: #2a202d; border-color: #594455; }
+.br-edition-halloween .br-avatar-choice[aria-pressed="true"] { background: #412b39; border-color: #dd9b62; }
+@keyframes br-art-idle { 0%,100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
+@keyframes br-art-classic { 0%,100% { transform: rotate(-.35deg); } 50% { transform: rotate(.35deg); } }
+@keyframes br-art-angry { 0%,100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg) translateY(-.5px); } }
+@keyframes br-art-burst { 0% { background-position: 100% 0%; } 20% { background-position: 0% 100%; } 55% { background-position: 50% 100%; } 78%,100% { background-position: 100% 100%; } }
+@keyframes br-art-smoke { 0%,65% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes br-run-thigh { 0%,100% { transform: rotate(-34deg); } 18% { transform: rotate(0deg); } 36% { transform: rotate(38deg); } 52% { transform: rotate(26deg); } 68% { transform: rotate(-52deg); } 84% { transform: rotate(-50deg); } }
+@keyframes br-run-knee { 0%,100% { transform: rotate(22deg); } 18% { transform: rotate(10deg); } 36% { transform: rotate(30deg); } 52% { transform: rotate(108deg); } 68% { transform: rotate(116deg); } 84% { transform: rotate(58deg); } }
+@media (max-width: 380px), (max-width: 500px) and (max-height: 700px) {
+  /* Scale only the decorative art, leaving the prompt and 56px pass target. */
+  .br-card-art { height: 60px; }
+  .br-card .br-hero-art { transform: scale(.38961); transform-origin: center; }
+}
+@media (max-width: 820px) {
+  .br-stage .br-hero-art { margin-block: -41px; transform: scale(.46753); transform-origin: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .br-hero-art *, .br-chase * { animation: none !important; transition: none !important; }
+  .br-run-leg-front { transform: rotate(-30deg); }
+  .br-run-leg-back { transform: rotate(28deg); }
+  .br-run-leg-front .br-run-knee { transform: rotate(25deg); }
+  .br-run-leg-back .br-run-knee { transform: rotate(95deg); }
+  .br-hero-art[data-br-edition="classic"][data-br-expression="burst"] .br-hero-burst { background-position: 0% 100%; opacity: 1; }
 }

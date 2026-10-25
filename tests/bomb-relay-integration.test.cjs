@@ -40,10 +40,10 @@ test('the actual live deck retains 720 bilingual lookups but only 700 eligible p
 test('the host page loads its modules in dependency order and every file parses', () => {
   const html = read('bomb-relay.html');
   const files = [...html.matchAll(/<script src="(bomb-relay-[^"]+\.js)(?:\?[^"]*)?"/g)].map(match => match[1]);
-  assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-timing.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
+  assert.deepEqual(files, ['bomb-relay-deck.js', 'bomb-relay-selector.js', 'bomb-relay-timing.js', 'bomb-relay-engine.js', 'bomb-relay-sync.js', 'bomb-relay-audio.js', 'bomb-relay-art.js', 'bomb-relay-visuals.js', 'bomb-relay-ui.js', 'bomb-relay-host.js']);
   for (const file of files) new vm.Script(read(file));
   assert.match(html, /<h1>Bomb Relay<\/h1>/);
-  assert.match(html, /href="bomb-relay\.css\?v=br-pacing-3-1"/);
+  assert.match(html, /href="bomb-relay\.css\?v=br-halloween-1"/);
   assert.doesNotMatch(html, /assets\/bomb-relay\//);
   assert.match(html, /id="br-reroll" hidden/);
   const host = read('bomb-relay-host.js');
@@ -55,11 +55,11 @@ test('the host page loads its modules in dependency order and every file parses'
 test('original player links render the Bomb Relay card and fence actions to the shown turn', () => {
   const play = read('play.html');
   for (const file of ['deck', 'timing']) assert.match(play, new RegExp('bomb-relay-' + file + '\\.js\\?v=br-pacing-3-1'));
-  assert.match(play, /bomb-relay-ui\.js\?v=br-pacing-3-1/);
+  assert.match(play, /bomb-relay-ui\.js\?v=br-halloween-1/);
   assert.doesNotMatch(play, /<script src="bomb-relay-(?:selector|engine|sync)\.js/, 'players consume the authority projection rather than drawing or simulating independently');
-  assert.match(play, /bomb-relay\.css\?v=br-pacing-3-1/);
-  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-pacing-3-1'));
-  assert.ok(play.indexOf('bomb-relay-timing.js?v=br-pacing-3-1') < play.indexOf('bomb-relay-ui.js?v=br-pacing-3-1'));
+  assert.match(play, /bomb-relay\.css\?v=br-halloween-1/);
+  assert.ok(play.indexOf('bomb-relay-audio.js?v=br-sound-4') < play.indexOf('bomb-relay-ui.js?v=br-halloween-1'));
+  assert.ok(play.indexOf('bomb-relay-timing.js?v=br-pacing-3-1') < play.indexOf('bomb-relay-ui.js?v=br-halloween-1'));
   assert.match(play, /new BOMB_RELAY_UI\.Card/); assert.match(play, /bombCard\.destroy\(\)/);
   assert.match(play, /current\.bomb\?\.sessionId !== command\.sessionId \|\| current\.bomb\?\.turnId !== command\.turnId/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
