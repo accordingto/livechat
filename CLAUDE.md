@@ -1,3 +1,42 @@
+## CURRENT: Complete the pending Claude game-service release — 2026-10-26
+
+User asked to finish Claude's recent undeployed Hub work. No uncommitted Hub
+changes were found; latest main 8b8ed79 adds the disposable service-mode smoke.
+The older work/livechat checkout is clean and its c17c171 is an ancestor of
+main, so it contains no additional unpublished feature. The missing release
+was the independent service: frontend assets already matched 64/64, while the
+live service was still the 2026-10-22 deployment and did not project Bluff's
+new mode/pack choices. This supersedes the NOT redeployed status in the three
+historical entries below.
+
+Deployed the current runtime to the existing icebreaker-youtube-search project:
+BLUFF PARTY's Everyone votes mode and 44-topic Halloween pack; Once's 100
+opening stories, redraw and replacement of the starter-card deal. Production
+deployment dpl_DHqo856YvqAcNkhzDxv7zbRmbcfz is READY at the unchanged service
+URL; deployment URL icebreaker-youtube-search-mii5hui8k-willintaiwan.vercel.app.
+Packaged from this Hub with the existing allowlist packager, linked only the
+original project metadata and used the existing CLI account/scope. No secret
+was exported, copied or rotated. Search/lyrics handler code is byte-identical;
+search remains 200, lyrics remains 410. The new code/config allowlist is also
+synced back to the original service workspace (64 verified files, 10 changed),
+preserving its environment, login and project link. An isolated previous-code
+snapshot and previous deployment URL are retained outside the public repo.
+
+Validation: full Hub 2337/2337; isolated release-smoke safety tests 4/4;
+independent search/lyrics suite 39/39 before and after source sync. Its stale
+deployment assertion now strictly accepts the already-required @vercel/queue
+0.8.0 rather than expecting no dependencies. Before deployment, the live
+smoke failed at bluff:open (missing mode/pack projection), with all 11 tracked
+test nodes deleted or empty and no cleanup failures. After deployment it
+passes all 26 checks: a three-player Everyone-votes Halloween round including
+self-vote rejection, private ballots and scoring; Once deal/newOpening/
+randomFirst; ready/CORS/synthetic-ticket rejection/private-source blocking.
+All 15 fresh tracked nodes are deleted or empty, zero cleanup failures.
+Post-release readback again passes 64/64 frontend assets and every service
+boundary. No existing user room was read, reset or modified. Details:
+docs/service-modes-2026-10-26-acceptance.md. These are programmatic service
+flows, not a new physical-phone or human voice-session playtest.
+
 ## CURRENT: Bomb Relay approved characters and Halloween edition — 2026-10-25
 
 User approved the v5 visual preview for production. Read bomb-relay-mode.md
