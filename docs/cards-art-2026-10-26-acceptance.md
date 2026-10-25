@@ -96,7 +96,36 @@ outside the public repository; environment/auth files were not copied or rotated
 
 ## Frontend publication and live cards
 
-Pending final frontend publication and finite fresh-node production smoke.
+Feature commit `18e6caf1c31f75fbb5180f9c5132712f2a5a3ae9` is published to main.
+Vercel Production deployment `7XgAAuWv6ZVgWK1ieHHXh2HDtqNE` reports success at
+the unchanged `https://livechat-two-alpha.vercel.app/` URL. Read-only SHA256
+verification matches **211/211 frontend assets**, including every new bitmap,
+and **64/64 broader preservation assets**. Executor readiness/CORS/synthetic
+rejection and private runtime boundaries also pass.
+
+The final actual-production browser smoke passes **109 checks** with four real
+original player links and the released host pages, real Firebase SDK and clock.
+It verifies theme-before-limit and closed optional roles on all four Word Limit
+cards plus host; one scoring/handoff per speaker, unchanged deadline and reload;
+Word Wolf own 640px bitmap decoding and private words, Pick cycle, synchronized
+ballots/reveal/new pair; fixed numeric pool 1000, bilingual opening clue,
+Master-only choices/replies, secret projections, free spoken queue and confirmed
+Correct into the original post-guess phase. Cards continue after native host
+disconnect/closure. The same original links switch between all three games.
+
+Seven actual EN/ZH phone captures have language assertions; no page errors or
+horizontal overflow. Seven exact disposable nodes conditionally deleted with
+zero cleanup failures and independently reread as null after browser closure.
+No existing user room was read or changed. Root visually inspected production
+Word Wolf and Word Limit screenshots.
+
+The first production attempt timed out waiting for the initial Word Limit
+Start control before any round/check ran. It had zero page errors and all seven
+test nodes were deleted. Its cause was not confirmed. A fresh retry passed all
+109 checks without a product-code change or relaxed guard; only safe host
+diagnostics were added to the harness. Both runs' seven exact paths were
+independently verified empty. The initial timeout is retained as a failed
+attempt, not counted as a successful game test.
 
 Physical phones, completed human voice-session play and hardware audio output
 remain unverified. The prior WHO abrupt-close presence race remains documented

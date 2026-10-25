@@ -241,3 +241,12 @@ the pages. Reports: `../word-wolf-art-final-4/report.json` and
 Chinese voting and result cards, and long-word renderer captures were visually
 reviewed. These new runs use isolated transport and emulated viewports; this
 section does not claim a new production Firebase or physical-phone playtest.
+
+The subsequent actual-production four-link run passes **109 combined checks**
+with Word Limit and Who Knows, including the own-card 640px image decode,
+private words, Pick cycle, one full vote/reveal, new pair and original-link
+switching after host disconnection/closure. All 211 frontend assets, including
+every bitmap, match the published source; seven new test nodes deleted and
+reread empty. No page errors. See
+[current release acceptance](docs/cards-art-2026-10-26-acceptance.md).
+Physical phones and completed human voice play remain unverified.

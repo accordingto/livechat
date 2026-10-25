@@ -306,6 +306,13 @@ deployment, live multiplayer correctness or physical-phone validation.
 All twelve open-guide phone states also passed the layout checks, with the
 two-idea panels measuring about 248–290px high.
 
+The subsequent independent-service deployment
+`dpl_4d5tGj7PXurFvZDdiECNedW3pouC` passes 30 live service checks, including
+the private v2 guides, original votes and scoring; all 15 exact QA nodes are
+deleted or empty. The published frontend also matches the release readback.
+See [current release acceptance](docs/cards-art-2026-10-26-acceptance.md).
+This does not establish physical-phone or human voice-session play coverage.
+
 ## Topic content and maintenance
 
 **104 verified, enabled English cards; 0 unverified playable cards.** Classic has

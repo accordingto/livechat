@@ -430,6 +430,19 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     report.gameplayVerified = true; report.ok = true; progress('verified-before-owned-cleanup');
   } catch (error) {
     report.ok = false; report.error = 'production_step_failed:' + report.step;
+    if (host && !host.isClosed()) {
+      try {
+        const snapshot = await host.evaluate(() => ({ readyState: document.readyState,
+          hostModule: !!window.WORD_LIMIT_HOST, tableModule: !!window.CARD_TABLE,
+          status: document.querySelector('#wl-status')?.textContent || '', error: document.querySelector('#wl-error')?.textContent || '',
+          setupHidden: document.querySelector('#wl-setup')?.hidden, setupNeeded: document.querySelector('#wl-setup-needed') ? !document.querySelector('#wl-setup-needed').hidden : null,
+          startExists: !!document.querySelector('#wl-start'), startDisabled: document.querySelector('#wl-start')?.disabled,
+          startVisible: !!document.querySelector('#wl-start')?.getClientRects().length }));
+        let safeSnapshot = JSON.stringify(snapshot);
+        for (const secret of [f.code, f.marker, ...f.tokens, ...f.tableTokens]) safeSnapshot = safeSnapshot.split(secret).join('[redacted]');
+        report.hostDiagnostic = JSON.parse(safeSnapshot.replace(/https?:\/\/[^"\s]+/g, '[url]').replace(/[a-f0-9]{32}/gi, '[capability]'));
+      } catch (_) { report.hostDiagnostic = { unavailable: true }; }
+    }
     // Raw Playwright errors can contain player URLs. Retain a bounded,
     // redacted diagnostic, never raw links, tokens, sessions or recovery data.
     let safe = String(error?.message || 'unknown_error');

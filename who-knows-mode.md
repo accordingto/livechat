@@ -256,11 +256,11 @@ card-only language pill scrolls with the page so it does not cover the action.
   four original links, Numbers/Insider with opening clue on, passes **27 checks /
   100 captures**, zero page errors or layout findings, including 320/390 EN/ZH.
   Report: `who-number1000-browser-4/report.json` outside the public Hub. The
-  320-pixel Chinese fixed-range setup was visually inspected. This follow-up
-  has not been deployed/live-tested; the production result below predates it.
+  320-pixel Chinese fixed-range setup was visually inspected. Separate
+  production verification of this follow-up follows below.
 - `scripts/conversation-cards-production.browser.cjs` passes 78 offline safety
-  checks and a separate 99-check combined live smoke with Word Limit/Word Wolf.
-  Four real original links play Numbers/Insider with a 1–100 opening clue,
+  checks and a separate 109-check combined live smoke with Word Limit/Word Wolf.
+  Four real original links play Numbers/Insider with a 1–1000 opening clue,
   private Master choices/answer permissions, queued free spoken replies,
   Correct confirmation and the original post-guess speaking phase after the
   host disconnects/closes. Real SDK/clock and language-asserted phone captures;
@@ -269,5 +269,8 @@ card-only language pill scrolls with the page so it does not cover the action.
   run exposed a pre-existing host-presence release race, recovered safely;
   the final harness explicitly disconnects before closure. Full results and
   that maintenance limitation are in
-  [release acceptance](docs/conversation-cards-2026-10-26-acceptance.md).
+  [prior release acceptance](docs/conversation-cards-2026-10-26-acceptance.md).
+  This revision's fixed-1000 publication, full asset readback, successful live
+  retry and clean seven-node teardown are recorded in
+  [current release acceptance](docs/cards-art-2026-10-26-acceptance.md).
   Physical phones and a human voice-session playtest remain unverified.

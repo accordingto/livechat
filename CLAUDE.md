@@ -44,8 +44,17 @@ alias, with new Bluff v2 guidance. Production service smoke 30/30 passed and all
 15 exact test nodes deleted/empty, zero cleanup failures. Existing service
 workspace matches all 64 allowlisted files (only Bluff engine changed); stable
 secrets/search routes preserved, service tests 39/39 before/after sync.
-Frontend and final multiplayer publication proof:
-docs/cards-art-2026-10-26-acceptance.md.
+Feature commit 18e6caf is published; Vercel Production
+7XgAAuWv6ZVgWK1ieHHXh2HDtqNE succeeds. Readback matches 211/211 affected
+assets including all 160 images, plus 64/64 preservation assets. Actual
+production pages/four original links pass 109 checks: folded roles/theme
+position, preserved turn/score/deadline, own 640px bitmap decode and voting,
+fixed-1000 number hint/private answers/free spoken queue/confirmed Correct.
+Zero page errors, seven nodes conditionally deleted and reread null. First
+attempt timed out at initial host readiness before a round, with seven nodes
+cleaned; fresh retry passed without product changes or relaxed guards. Cause
+unconfirmed; safe host diagnostic fields were added only to the QA harness.
+Final publication proof: docs/cards-art-2026-10-26-acceptance.md.
 
 ## CURRENT: Conversation cards, secret numbers and restored Word Wolf — 2026-10-26
 

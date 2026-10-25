@@ -153,7 +153,7 @@ automatic word counter or AI referee.
   `wl-theme-inspiration-browser-4/report.json` and
   `wl-theme-inspiration-browser-core-4/report.json`, outside the public Hub.
   Final 320-pixel English/Chinese scene cards were visually inspected. These
-  are isolated-fixture checks; this follow-up has not been deployed/live-tested.
+  are isolated-fixture checks; separate production verification follows below.
 - Engine (21), card UI (4), shared table (9) and shared integration (7) tests
   pass **41/41**, run with `node --test tests/word-limit-engine.test.cjs
   tests/word-limit-ui.test.cjs tests/card-table.test.cjs
@@ -178,12 +178,13 @@ automatic word counter or AI referee.
   visually inspected. Existing Room Survey's three-player core regression
   separately passed 24 checks.
 - `scripts/conversation-cards-production.browser.cjs` passes **78 offline safety
-  checks** and a separate **99-check combined production run** with Word Wolf
+  checks** and a separate **109-check combined production run** with Word Wolf
   and Who Knows. Four real original links complete one speaking circuit after
-  the host disconnects/closes; only the current speaker scores, the scene
+  the host disconnects/closes; host/player roles start folded, the theme is above
+  each limit, only the current speaker scores, and the scene
   deadline never resets, reload preserves floor/score/deadline and one presence,
   and card End works before switching games. Real SDK/clock, language-asserted
   English/Chinese phone captures; seven new nodes conditionally deleted with
   zero final cleanup failures. The initial run/recovery and finite coverage are
-  detailed in [release acceptance](docs/conversation-cards-2026-10-26-acceptance.md).
+  detailed in [release acceptance](docs/cards-art-2026-10-26-acceptance.md).
   Physical phones and a human spoken-session playtest remain unverified.
