@@ -37,9 +37,23 @@ Validation: final full Hub 2333/2333, zero failures/skips; Bomb 169/169.
 New real-page isolated Firebase-compatible multiplayer flows pass 4 and 8
 players, ten checks each; original regression flows pass 3 and 8 players,
 seventeen checks each including exact approved audio PCM. Desktop/phone
-viewport audits cover EN/ZH, 1280/390/320, prompt/actions, fixed joined hands,
-running-leg continuity and reduced motion. These isolated tests are not a
-physical-phone, human voice session or hardware speaker test.
+viewport audits pass all 52 captures in EN/ZH at 1280/390/320, with zero
+overflow, clipped text, language-pill overlap or action-target findings;
+fixed joined hands, running-leg continuity and reduced motion are checked.
+
+Published frontend 4cb6627 to main; Vercel Production deployment
+G97fyxkdWqrknN7CoAoh1UZKJTob reports success. Read-only production verification
+matches all 33 source/catalog/image assets to this release. Real production
+pages and Firebase then pass 350 checks with three original player links:
+avatar/monster preferences, frozen GO appearance, six real passes, natural
+host-lease takeover, one explosion/penalty, a full real 45000ms discussion,
+automatic untimed preview, manual GO, player early Next and End cleanup.
+The first sampled Normal fuse was 38437ms; no fake clock or engine was used.
+Four newly marked exact nodes were all conditionally deleted, zero cleanup
+failures and zero page errors. The production harness now waits for an enabled
+action after cosmetic acknowledgements instead of forcing a disabled PASS.
+Physical phones, human voice-session play and hardware speaker output remain
+unverified; audio buffers were checked in the isolated regression fixture.
 
 ## CURRENT: Once opening stories + host proportions — 2026-10-25
 

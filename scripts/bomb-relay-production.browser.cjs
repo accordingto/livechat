@@ -155,7 +155,10 @@ async function run({ playwrightPath = 'playwright', fetchImpl = globalThis.fetch
   }
   async function tapHolder(type) {
     const before = await state();
-    await players[before.holder - 1].locator(`[data-br-action="${type}"]`).click({ force: true, timeout: type === 'pass' ? 2500 : 15000 });
+    // A preceding cosmetic preference can commit at the host before its reply
+    // reaches this card. Wait for that real acknowledgement; forcing a click
+    // on a still-disabled PASS silently does nothing in the browser.
+    await players[before.holder - 1].locator(`[data-br-action="${type}"]:not([disabled])`).click({ timeout: type === 'pass' ? 5000 : 15000 });
     await poll(async () => (await state()).turnId !== before.turnId);
     return state();
   }
