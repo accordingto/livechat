@@ -162,9 +162,13 @@ automatic word counter or AI referee.
   and `wl-turns-browser-final-9/report.json`; final 320-pixel cards were also
   visually inspected. Existing Room Survey's three-player core regression
   separately passed 24 checks.
-- `scripts/conversation-cards-production.browser.cjs` contains a finite real-UI
-  smoke for this game, Word Wolf and Who Knows, using seven fresh exact nodes
-  with conditional ownership-checked cleanup. Its **70 offline safety checks**
-  pass; they do not establish a successful production run. At this
-  documentation update, this revision's production Firebase UI flow, physical
-  phones and a human spoken-session playtest remain unverified.
+- `scripts/conversation-cards-production.browser.cjs` passes **78 offline safety
+  checks** and a separate **99-check combined production run** with Word Wolf
+  and Who Knows. Four real original links complete one speaking circuit after
+  the host disconnects/closes; only the current speaker scores, the scene
+  deadline never resets, reload preserves floor/score/deadline and one presence,
+  and card End works before switching games. Real SDK/clock, language-asserted
+  English/Chinese phone captures; seven new nodes conditionally deleted with
+  zero final cleanup failures. The initial run/recovery and finite coverage are
+  detailed in [release acceptance](docs/conversation-cards-2026-10-26-acceptance.md).
+  Physical phones and a human spoken-session playtest remain unverified.

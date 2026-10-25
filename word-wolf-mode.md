@@ -162,3 +162,13 @@ left zero fixture presence; checked source hashes stayed unchanged.
 These are automated Chromium pages with emulated viewports and isolated
 transport. They do not verify production Firebase permissions/latency,
 physical iOS/Android devices or a completed human voice-session playtest.
+
+Separate production verification on 2026-10-26 passes a combined 99-check smoke
+with Word Limit and Who Knows using four real original links. Word Wolf checks
+one different private item, hidden pre-reveal role/pair, a complete Pick cycle,
+four private ballots producing one identical result, a fresh Next pair and
+card End after the host disconnects/closes. The real Firebase SDK/clock and
+language-asserted EN/ZH phone captures are used; all seven disposable nodes
+were conditionally deleted. Physical devices and a human voice-session game
+remain unverified. See [release acceptance](docs/conversation-cards-2026-10-26-acceptance.md)
+for the full coverage, first-run recovery and publication evidence.

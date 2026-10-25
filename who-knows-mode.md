@@ -245,8 +245,16 @@ card-only language pill scrolls with the page so it does not cover the action.
   findings. Reports are outside the public Hub in the corresponding
   `who-knows-*-final/report.json` directories, including
   `who-knows-number-header-final/report.json`.
-- `scripts/conversation-cards-production.browser.cjs` prepares a separate,
-  finite real-UI production smoke for the released host and four original
-  player links. Its offline safety checks pass (70); this is not a completed
-  live run. At this documentation update, this revision's production Firebase
-  UI flow, physical phones and a human voice-session playtest remain unverified.
+- `scripts/conversation-cards-production.browser.cjs` passes 78 offline safety
+  checks and a separate 99-check combined live smoke with Word Limit/Word Wolf.
+  Four real original links play Numbers/Insider with a 1–100 opening clue,
+  private Master choices/answer permissions, queued free spoken replies,
+  Correct confirmation and the original post-guess speaking phase after the
+  host disconnects/closes. Real SDK/clock and language-asserted phone captures;
+  all seven new nodes deleted. This is limited production coverage; the other
+  combinations above remain isolated-fixture checks. The first natural-close
+  run exposed a pre-existing host-presence release race, recovered safely;
+  the final harness explicitly disconnects before closure. Full results and
+  that maintenance limitation are in
+  [release acceptance](docs/conversation-cards-2026-10-26-acceptance.md).
+  Physical phones and a human voice-session playtest remain unverified.

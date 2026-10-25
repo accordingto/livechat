@@ -29,7 +29,7 @@ game rules/timers/audio were not changed. No dependency or database rule change.
 - Entire Hub: **2378/2378 tests pass**, no failures/skips.
 - Independent search/lyrics service suite: **39/39** before and after code sync.
 - Production service-mode smoke safety: **4/4** tests.
-- New card production harness: **70 offline safety checks**, including exact
+- New card production harness: **78 offline safety checks**, including exact
   seven-node allowlist, collision refusal, conditional writes/deletes, foreign
   ownership refusal and active-presence cleanup refusal.
 - Frontend SHA verifier: 51-file manifest and 12 offline test cases pass.
@@ -62,9 +62,65 @@ or rotated. Previous deployment: `dpl_DHqo856YvqAcNkhzDxv7zbRmbcfz`.
 
 ## Frontend and real production cards
 
-Publication, asset readback and finite live browser results will be recorded
-here after they run. A source/unit or isolated fixture pass alone does not
-establish real Firebase synchronization.
+Frontend feature commit **4e854d63cf914d8a737cb5d5b371034ce93afb43** is on main.
+Vercel Production deployment **BUXq2x2qv4ZNz969dDuHoKfn6u6S** succeeded at the
+unchanged `https://livechat-two-alpha.vercel.app/` URL. SHA256 readback matches
+**51/51** affected frontend assets and **64/64** broader preservation assets;
+service health, CORS, synthetic rejection and private-source boundaries pass.
+
+The final finite live browser run passes **99 checks** with the actual released
+host pages, four original `play.html` links, real Firebase SDK and real clock.
+No local engine/transport replacement or clock manipulation was used.
+
+- Word Limit: cast preview consumes no scene time; cards continue after host
+  disconnect/close; four actors complete one circle with only the current
+  actor's line control, one score per completion and one unchanged deadline.
+  Reload preserves floor/score/deadline and one live seat presence; card End
+  succeeds before switching the same links to the next game.
+- Word Wolf: the same four links receive exactly three shared items and one
+  different item, no pre-reveal role/pair. A Pick cycle covers everyone once;
+  four private ballots reveal one identical full result, then Next selects a
+  new pair while recording one prior result. Host page stays closed.
+- Who Knows: Numbers/Insider/4, optional hint on, pool 100. Only Master gets
+  numeric choices; only Master/Insider sees the chosen answer; every card gets
+  one exact frozen bilingual clue without exposing the hidden pool setting.
+  Two raised hands queue; only Master has spoken/correct answer controls.
+  Spoken advances the queue without token cost, one Correct tap does not end
+  guessing, and confirmation enters the unchanged post-guess speaking phase.
+  Other identity/hint/pool combinations are covered by the isolated fixtures,
+  not this limited production browser run.
+- Seven production screenshots: real language-button clicks and assertions on
+  I18N, HTML language, active button and stored preference; English at 390px,
+  Traditional Chinese at 320px. Root visually inspected all three card styles.
+  Zero page errors/horizontal overflow. All SDK requests stayed inside the
+  seven owned node subtrees. Seven nodes conditionally deleted, zero cleanup
+  failures; native disconnects left zero presence before deletion.
+
+### Initial harness findings and recovery
+
+The initial live run passed 89 game checks with zero page errors, but its
+language seed used the wrong storage key (`icebreak-lang`, actual `site-lang`)
+and its abrupt natural host closure left one stale actor-0 presence in the
+finished WHO table. Cleanup correctly refused that nonempty-presence table:
+six nodes deleted, one refused. With every test browser already closed, root
+verified the remaining node's marker, known session, four fixture names,
+stopped/finished state and stale host-only presence, then conditionally deleted
+it using its current ETag. All seven exact nodes were read back as null. The
+first report remains recorded as a cleanup failure with a separate successful
+recovery proof; it is not counted as a clean pass.
+
+The harness now uses the correct language seed plus real visible UI selection,
+explicit native SDK goOffline before each host closure, bounded presence
+settlement, and safe per-index cleanup diagnostics. Its final new seven-node
+run passes 99 checks and cleans up completely. No existing user room was
+listed, opened or modified during either run.
+
+The underlying WHO sync release-order race predates this change and was not
+modified: it cancels onDisconnect before a fire-and-forget presence removal.
+Abrupt closure may leave that presence. It does not change canonical deadlines,
+scores or settlement; a residue still marked visible can delay tick ranking.
+A future narrow fix needs disconnect/ack and rapid retarget tests, rather than
+changing shared synchronization as part of this feature release.
 
 Physical phones, human voice-session play and hardware speaker output have not
 been tested for this release.

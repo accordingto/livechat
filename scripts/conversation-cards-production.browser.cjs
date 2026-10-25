@@ -59,6 +59,31 @@ function owned(value, f, index, proofs, sessions) {
     ? value.playerNum === index + 1 && value.name === f.names[index] && !value.wl && !value.ww && !value.wk
     : pointerProof(value, f, index, proofs, sessions);
 }
+function cleanupReason(error) {
+  const label = String(error?.message || '');
+  return new Set(['outside_exact_node_allowlist', 'qa_request_budget_exhausted', 'exact_node_read_failed',
+    'untracked_node_cleanup_refused', 'ownership_cleanup_refused', 'active_presence_cleanup_refused',
+    'conditional_cleanup_failed', 'conditional_cleanup_conflict', 'marked_node_ownership_not_proven',
+    'projection_ownership_not_proven', 'projection_marker_write_failed', 'projection_marker_conflict']).has(label)
+    ? label : error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'exact_node_timeout' : 'exact_node_transport_failed';
+}
+async function waitForPresence({ store, attempted, proofs, limitMs = 30000, now = Date.now, sleepImpl = sleep }) {
+  const started = now(), until = started + limitMs, indexes = [4, 5, 6].filter(i => attempted.has(i));
+  const failures = new Map(); let settled = indexes.length === 0;
+  while (!settled && now() < until) {
+    let successful = 0;
+    for (const index of indexes) {
+      const remaining = until - now(); if (remaining <= 0) break;
+      try { proofs[index] = (await store.read(index, { timeoutMs: remaining })).value; successful++; failures.delete(index); }
+      catch (error) { failures.set(index, cleanupReason(error)); }
+    }
+    settled = successful === indexes.length && indexes.every(i => !Object.keys(proofs[i]?.presence || {}).length);
+    if (!settled && now() < until) await sleepImpl(Math.min(300, until - now()));
+  }
+  return { limitMs, elapsedMs: Math.max(0, now() - started), settled,
+    remaining: indexes.map(index => ({ index, count: Object.keys(proofs[index]?.presence || {}).length })),
+    readFailures: [...failures].map(([index, reason]) => ({ index, reason })) };
+}
 
 // The same fail-closed browser guard is exercised with a fake transport in the
 // offline test. It observes sent session IDs; it never substitutes game state.
@@ -92,13 +117,13 @@ function installBrowserGuard({ roots, tables }) {
 
 function makeStore({ f, fetchImpl, attempted, saveRecovery, sessions, proofs }) {
   let requests = 0;
-  const http = async (index, options = {}) => {
+  const http = async (index, options = {}, timeoutMs = 25000) => {
     if (!Number.isInteger(index) || !allowedPath(f, f.paths[index])) throw Error('outside_exact_node_allowlist');
     if (++requests > 1800) throw Error('qa_request_budget_exhausted');
-    return fetchImpl(`${DATABASE}/${f.paths[index]}.json`, { credentials: 'omit', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(25000), ...options });
+    return fetchImpl(`${DATABASE}/${f.paths[index]}.json`, { credentials: 'omit', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(Math.max(1, Math.min(25000, Math.floor(timeoutMs)))), ...options });
   };
-  const read = async index => {
-    const response = await http(index, { headers: { 'X-Firebase-ETag': 'true' } });
+  const read = async (index, { timeoutMs = 25000 } = {}) => {
+    const response = await http(index, { headers: { 'X-Firebase-ETag': 'true' } }, timeoutMs);
     if (!response.ok || !response.headers.get('etag')) throw Error('exact_node_read_failed');
     return { value: await response.json(), etag: response.headers.get('etag') };
   };
@@ -138,6 +163,7 @@ function makeStore({ f, fetchImpl, attempted, saveRecovery, sessions, proofs }) 
       if (!owned(before.value, f, index, proofs, sessions)) throw Error('ownership_cleanup_refused');
       if (index >= 4 && Object.keys(before.value.presence || {}).length) throw Error('active_presence_cleanup_refused');
       const response = await write(index, before, 'DELETE');
+      if (response.status === 412) throw Error('conditional_cleanup_conflict');
       if (!response.ok) throw Error('conditional_cleanup_failed');
       return 'deleted';
     },
@@ -153,10 +179,10 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
   fs.mkdirSync(output, { recursive: true });
   if (!outsideHub(fs.realpathSync(output))) throw Error('recovery_directory_resolves_inside_public_hub');
   const report = { ok: false, step: 'prepare', checks: [], games: [], screenshots: [], pageErrors: [], realFirebase: true, realProductionPages: true,
-    actualUiActions: true, realClock: true, physicalPhoneVerified: false, humanVoicePlaytest: false,
-    cleanup: { tracked: 0, deleted: 0, empty: 0, failed: 0 }, output };
+    actualUiActions: true, realClock: true, physicalPhoneVerified: false, humanVoicePlaytest: false, gameplayVerified: false,
+    cleanup: { tracked: 0, deleted: 0, empty: 0, failed: 0, nodes: [], markerRestores: [] }, captureLanguages: [], output };
   const startAt = Date.now(), contexts = [], pages = [], players = [];
-  let browser, hostContext, host;
+  let browser, hostContext, host, hostGameIndex = null;
   const saveRecovery = () => fs.writeFileSync(path.join(output, 'fixture-owned.json'), JSON.stringify({ fixture: f, attempted: [...attempted], sessions: sessions.map(s => [...s]) }, null, 2) + '\n');
   const store = makeStore({ f, fetchImpl, attempted, saveRecovery, sessions, proofs });
   const check = (condition, label) => { if (!condition) { report.failureCheck = label; throw Error(label); } report.checks.push(label); };
@@ -172,8 +198,16 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
   };
   const tap = async (page, selector) => { await page.locator(selector + ':not([disabled])').click({ timeout: 15000 }); };
   const screenshot = async (page, label) => {
+    // Use the real visible language switch. The storage seed alone must never
+    // be accepted as evidence that a screenshot's labelled language is shown.
+    const playerIndex = players.indexOf(page), expected = playerIndex >= 0 && playerIndex % 2 ? 'zh' : 'en';
+    await tap(page, `#i18n-toggle button[data-lang="${expected}"]`);
+    await poll(async () => page.evaluate(lang => window.I18N?.lang === lang && document.documentElement.lang === (lang === 'zh' ? 'zh-Hant' : 'en') &&
+      document.querySelector(`#i18n-toggle button[data-lang="${lang}"]`)?.classList.contains('active') && localStorage.getItem('site-lang') === lang, expected));
+    check(true, label + '-actual-language-' + expected);
     check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), label + '-no-horizontal-overflow');
     await page.screenshot({ path: path.join(output, label + '.png'), fullPage: true }); report.screenshots.push(label + '.png');
+    report.captureLanguages.push({ file: label + '.png', language: expected, viewport: page.viewportSize() });
   };
   const observeSessions = async () => {
     for (const page of pages) if (!page.isClosed()) {
@@ -196,12 +230,21 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     return views();
   }
   async function openHost(gi) {
-    const g = GAMES[gi]; host = await hostContext.newPage();
+    const g = GAMES[gi]; host = await hostContext.newPage(); hostGameIndex = gi;
     await host.goto(BASE + g.page, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await host.locator(`#${g.key}-start:not([disabled])`).waitFor({ timeout: 45000 });
     check(await host.evaluate(name => !!window[name], g.host), g.game + '-actual-host-module');
   }
-  async function closeHost() { await observeSessions(); await host.close(); host = null; }
+  async function closeHost() {
+    await observeSessions();
+    // Disconnect the real SDK while this page is alive, so the server executes
+    // its registered onDisconnect removal before pagehide cancels it. Never
+    // synthesize/remove presence data in the database from the harness.
+    await host.evaluate(() => firebase.database().goOffline());
+    await poll(async () => !Object.values((await store.read(hostGameIndex + 4)).value?.presence || {}).some(entry => entry?.actor === 0));
+    check(true, GAMES[hostGameIndex].game + '-native-host-disconnect-clears-host-presence');
+    await host.close(); host = null; hostGameIndex = null;
+  }
   async function started(gi, phase) {
     const g = GAMES[gi]; await poll(async () => (await state(gi))?.phase === phase);
     await refreshProofs();
@@ -228,7 +271,7 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     async function context(options, allowed, language) {
       const item = await browser.newContext(options); contexts.push(item); item.setDefaultTimeout(15000);
       await item.addInitScript(installBrowserGuard, { roots: allowed, tables: f.paths.slice(4) });
-      await item.addInitScript(lang => { if (location.origin === 'https://livechat-two-alpha.vercel.app') localStorage.setItem('icebreak-lang', lang); }, language);
+      await item.addInitScript(lang => { if (location.origin === 'https://livechat-two-alpha.vercel.app') localStorage.setItem('site-lang', lang); }, language);
       await item.route('**/*', route => {
         const url = new URL(route.request().url());
         if (/firebasedatabase\.app$|firebaseio\.com$/.test(url.hostname)) {
@@ -373,7 +416,7 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
       check(!horizontalOverflow, 'phone-layout-without-horizontal-overflow');
     }
     check(report.pageErrors.length === 0, 'no-production-page-javascript-errors');
-    report.ok = true; progress('verified-before-owned-cleanup');
+    report.gameplayVerified = true; report.ok = true; progress('verified-before-owned-cleanup');
   } catch (error) {
     report.ok = false; report.error = 'production_step_failed:' + report.step;
     // Raw Playwright errors can contain player URLs. Retain a bounded,
@@ -386,26 +429,37 @@ async function run({ live = false, playwrightPath = 'playwright', fetchImpl = gl
     // one pointer but not yet restored its marker; prove it from the exact
     // marked control and an actually observed browser session before stamping.
     try { await refreshProofs(); } catch (_) {}
+    report.cleanup.disconnect = { attempted: 0, failed: 0 };
+    for (const page of pages) if (!page.isClosed()) {
+      report.cleanup.disconnect.attempted++;
+      try { await page.evaluate(() => { if (window.firebase?.database) firebase.database().goOffline(); }); }
+      catch (_) { report.cleanup.disconnect.failed++; }
+    }
+    // Let native onDisconnect settle while pages are still alive. This is a
+    // bounded read-only wait; unknown/still-live presence is never forced out.
+    try { report.cleanup.presenceWait = await waitForPresence({ store, attempted, proofs }); }
+    catch (error) { report.cleanup.presenceWait = { limitMs: 30000, settled: false, reason: cleanupReason(error) }; }
     if (browser) {
       for (const item of contexts) { try { await item.close(); } catch (_) {} }
       try { await browser.close(); } catch (_) {}
     }
     progress('conditional-seven-node-cleanup');
-    // Contexts are closed first so no old presence/onDisconnect write can
-    // recreate a table after deletion. Refresh ETags only after closure.
-    try {
-      const settleUntil = Date.now() + 8000;
-      do {
-        for (let i = 4; i < 7; i++) if (attempted.has(i)) proofs[i] = (await store.read(i)).value;
-        if ([4, 5, 6].every(i => !Object.keys(proofs[i]?.presence || {}).length)) break;
-        await sleep(300);
-      } while (Date.now() < settleUntil);
-    } catch (_) {}
-    for (let i = 0; i < 4; i++) if (attempted.has(i)) { try { await store.restoreMarker(i); } catch (_) {} }
+    // All SDKs and contexts are closed before conditional deletion. Every
+    // proof/ETag used below is read again after closure.
+    for (let i = 4; i < 7; i++) if (attempted.has(i)) {
+      try { proofs[i] = (await store.read(i)).value; }
+      catch (error) { report.cleanup.nodes.push({ index: i, kind: GAMES[i - 4].game + '-table', status: 'proof-read-failed', reason: cleanupReason(error) }); }
+    }
+    for (let i = 0; i < 4; i++) if (attempted.has(i)) {
+      try { await store.restoreMarker(i); report.cleanup.markerRestores.push({ index: i, status: 'owned' }); }
+      catch (error) { report.cleanup.markerRestores.push({ index: i, status: 'refused', reason: cleanupReason(error) }); }
+    }
     report.cleanup.tracked = attempted.size;
     // Originals first: their proof refers to the still-present marked tables.
     for (let i = 0; i < 7; i++) if (attempted.has(i)) {
-      try { report.cleanup[await store.remove(i)]++; } catch (_) { report.cleanup.failed++; report.ok = false; }
+      const kind = i < 4 ? 'original-player-' + (i + 1) : GAMES[i - 4].game + '-table';
+      try { const status = await store.remove(i); report.cleanup[status]++; report.cleanup.nodes.push({ index: i, kind, status }); }
+      catch (error) { report.cleanup.failed++; report.ok = false; report.cleanup.nodes.push({ index: i, kind, status: 'failed', reason: cleanupReason(error) }); }
     }
     saveRecovery(); report.passed = report.checks.length; report.exactRestRequests = store.requests();
     fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
@@ -494,7 +548,7 @@ async function selfTest() {
   const deleteRace = mockStore({}, ({ index, options, nodes, versions }) => {
     if (index === 0 && options.method === 'DELETE') { nodes.set(f.paths[0], { foreign: true }); versions.set(0, (versions.get(0) || 0) + 1); }
   });
-  await deleteRace.store.createAll(); await assert.rejects(deleteRace.store.remove(0), /conditional_cleanup_failed/);
+  await deleteRace.store.createAll(); await assert.rejects(deleteRace.store.remove(0), /conditional_cleanup_conflict/);
   assert.deepEqual(deleteRace.nodes.get(f.paths[0]), { foreign: true });
   const presence = mockStore(); await presence.store.createAll();
   presence.nodes.set(f.paths[4], { ...proofs[4], presence: { connected: { actor: 1 } } });
@@ -503,10 +557,26 @@ async function selfTest() {
   const clean = mockStore(); await clean.store.createAll();
   for (let i = 0; i < 7; i++) assert.equal(await clean.store.remove(i), 'deleted');
   assert.equal(clean.nodes.size, 0); checks += 16;
+  // Presence cleanup can take longer than the old eight-second budget. Wait
+  // at most thirty seconds in total, and never turn a timeout into a removal.
+  let elapsed = 0, reads = 0;
+  const presenceProofs = {}, presenceAttempts = new Set([4, 5, 6]);
+  const delayedPresence = await waitForPresence({ attempted: presenceAttempts, proofs: presenceProofs, now: () => elapsed,
+    sleepImpl: async ms => { elapsed += ms; }, store: { read: async (index, options) => {
+      assert.ok([4, 5, 6].includes(index)); assert.ok(options.timeoutMs > 0 && options.timeoutMs <= 30000); reads++;
+      return { value: elapsed < 10500 ? { presence: { nativeClient: { actor: index - 4 } } } : {} };
+    } } });
+  assert.equal(delayedPresence.settled, true); assert.ok(delayedPresence.elapsedMs >= 10500 && delayedPresence.elapsedMs <= 30000); assert.ok(reads > 3);
+  elapsed = 0;
+  const heldPresence = await waitForPresence({ attempted: new Set([6]), proofs: {}, now: () => elapsed,
+    sleepImpl: async ms => { elapsed += ms; }, store: { read: async () => ({ value: { presence: { unknownClient: { actor: 0 } } } }) } });
+  assert.equal(heldPresence.settled, false); assert.equal(heldPresence.elapsedMs, 30000); assert.deepEqual(heldPresence.remaining, [{ index: 6, count: 1 }]);
+  assert.equal(cleanupReason(Error('ownership_cleanup_refused')), 'ownership_cleanup_refused');
+  assert.equal(cleanupReason(Error('https://private.invalid/' + uid())), 'exact_node_transport_failed'); checks += 8;
   await assert.rejects(run(), /live_flag_required/); checks++;
   return { ok: true, offlineOnly: true, exactNodes: 7, games: GAMES.map(g => g.game), safetyChecks: checks, noNetworkRequests: true, liveRunPerformed: false };
 }
-module.exports = { run, fixture, allowedPath, outsideHub, owned, pointerProof, tableProof, makeStore, installBrowserGuard, selfTest };
+module.exports = { run, fixture, allowedPath, outsideHub, owned, pointerProof, tableProof, cleanupReason, waitForPresence, makeStore, installBrowserGuard, selfTest };
 if (require.main === module) {
   if (process.argv.includes('--self-test')) selfTest().then(result => console.log(JSON.stringify(result))).catch(() => { console.log('{"ok":false,"reason":"offline_self_test_failed"}'); process.exitCode = 1; });
   else if (!process.argv.includes('--live')) { console.log('{"ok":false,"reason":"live_flag_required"}'); process.exitCode = 1; }

@@ -43,7 +43,7 @@ ww-1. Read word-wolf-mode.md and card-table-mode.md for authority/privacy.
 
 Validation before publication: full Hub 2378/2378, independent service 39/39
 before/after sync, release-smoke tests 4/4, production-browser offline safety
-70 checks. Real-page isolated multiplayer/phone audits: Bluff 26 scenarios /
+78 checks. Real-page isolated multiplayer/phone audits: Bluff 26 scenarios /
 30 captures; WORD LIMIT 4/9 players 40 checks /144 captures; WHO KNOWS five
 word/number/role/hint combinations 131 checks /194 captures; WORD WOLF 4/9
 players 24 checks /144 captures. All pass, no reported page/layout issues.
@@ -56,8 +56,19 @@ pass, including optional private guides, voting, original Once flows and
 service boundaries. Fifteen fresh tracked nodes deleted or empty, zero cleanup
 failures. The 64-file code allowlist was verified/synced to the existing service
 workspace; only bluff-king-engine.js changed. Search handlers and stable secrets
-were preserved. Frontend publication/readback and real production card-browser
-results are recorded in docs/conversation-cards-2026-10-26-acceptance.md.
+were preserved. Frontend feature commit 4e854d6 is published; Vercel deployment
+BUXq2x2qv4ZNz969dDuHoKfn6u6S succeeded. Readback matches 51/51 affected assets
+and 64/64 broader preservation assets. Real production host pages and four
+original links pass 99 checks across WORD LIMIT, WORD WOLF and number/Insider
+WHO KNOWS: real SDK/clock, host disconnected/closed, turns/scores/clocks,
+private ballots, one reveal, new pair, clue/answer privacy, free spoken queue,
+Correct confirmation and End. EN/ZH phone screenshots are language-asserted;
+zero page errors, all seven exact nodes deleted. The first natural-close run
+passed 89 game checks but left one stale host presence; its stopped disposable
+table was ownership/ETag recovered and all seven nodes verified empty. The
+subsequent harness uses native SDK disconnect before closure. This is not an
+app presence-race fix. Details and limitations:
+docs/conversation-cards-2026-10-26-acceptance.md.
 
 ## CURRENT: Complete the pending Claude game-service release — 2026-10-26
 
