@@ -52,7 +52,7 @@ test('games need four active players and reject invalid settings', () => {
   assert.throws(() => game(5, { tokens: 12 }), /invalid_options/);
   const g = game(4);
   assert.equal(g.state.phase, 'choose');
-  assert.deepEqual(g.state.settings, { mode: 'insider', questionMinutes: 5, tokens: 36, difficulty: 'mixed', wolves: 'auto', mayorSecret: false, masterGuess: true, turnSeconds: 25 });
+  assert.deepEqual(g.state.settings, { mode: 'insider', questionMinutes: 5, tokens: 36, difficulty: 'mixed', wolves: 'auto', mayorSecret: false, masterGuess: true, turnSeconds: 25, targetKind: 'word', numberMax: 100, broadHint: false });
   for (const turnSeconds of [20, 25, 30]) assert.equal(game(4, { turnSeconds }).round.turnSeconds, turnSeconds);
   for (const turnSeconds of [0, 19, 21, 31, 'oops']) assert.throws(() => game(4, { turnSeconds }), /invalid_options/);
   assert.equal(E.parseSettings({ mode: 'werewolf' }).questionMinutes, 4, 'each mode starts with its own usual length');

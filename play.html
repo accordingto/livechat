@@ -14,9 +14,10 @@
   <link rel="stylesheet" href="open-mic.css?v=om-cards-1">
   <link rel="stylesheet" href="bomb-relay.css?v=br-halloween-1">
   <link rel="stylesheet" href="sketch-relay.css?v=relay-2">
-  <link rel="stylesheet" href="who-knows.css?v=wk-3">
+  <link rel="stylesheet" href="who-knows.css?v=wk-4">
   <link rel="stylesheet" href="card-table.css?v=ct-2">
-  <link rel="stylesheet" href="word-limit-theater.css?v=wl-3">
+  <link rel="stylesheet" href="word-limit-theater.css?v=wl-4">
+  <link rel="stylesheet" href="word-wolf.css?v=ww-1">
   <link rel="stylesheet" href="room-survey.css?v=rs-3">
   <style>
     body {
@@ -905,15 +906,19 @@
   <script src="bomb-relay-ui.js?v=br-halloween-1"></script>
   <script src="sketch-relay-art.js?v=relay-2"></script>
   <script src="sketch-relay-ui.js?v=relay-2"></script>
-  <script src="who-knows-words.js?v=wk-3"></script>
-  <script src="who-knows-engine.js?v=wk-3"></script>
-  <script src="who-knows-sync.js?v=wk-3"></script>
-  <script src="who-knows-ui.js?v=wk-3"></script>
+  <script src="who-knows-words.js?v=wk-4"></script>
+  <script src="who-knows-engine.js?v=wk-4"></script>
+  <script src="who-knows-sync.js?v=wk-4"></script>
+  <script src="who-knows-ui.js?v=wk-4"></script>
   <script src="card-table.js?v=ct-2"></script>
   <script src="card-table-ui.js?v=ct-2"></script>
-  <script src="word-limit-content.js?v=wl-3"></script>
-  <script src="word-limit-engine.js?v=wl-3"></script>
-  <script src="word-limit-ui.js?v=wl-3"></script>
+  <script src="word-limit-content.js?v=wl-4"></script>
+  <script src="word-limit-engine.js?v=wl-4"></script>
+  <script src="word-limit-ui.js?v=wl-4"></script>
+  <script src="word-wolf-content.js?v=ww-1"></script>
+  <script src="word-wolf-art.js?v=ww-1"></script>
+  <script src="word-wolf-engine.js?v=ww-1"></script>
+  <script src="word-wolf-ui.js?v=ww-1"></script>
   <script src="room-survey-content.js?v=rs-3"></script>
   <script src="room-survey-engine.js?v=rs-3"></script>
   <script src="room-survey-ui.js?v=rs-3"></script>
@@ -2551,6 +2556,7 @@
     // table and runs it together with everyone else's cards.
     const CT_GAMES = {
       wordlimit: { key: 'wl', page: 'wl-card-page', title: 'WORD LIMIT THEATER', ui: () => WORD_LIMIT_UI },
+      wordwolf: { key: 'ww', page: 'ww-card-page', title: 'WORD WOLF', ui: () => WORD_WOLF_UI },
       roomsurvey: { key: 'rs', page: 'rs-card-page', title: 'ROOM SURVEY', ui: () => ROOM_SURVEY_UI },
     };
     let ctCard = null, ctTable = null, ctGame = null;
@@ -3103,7 +3109,7 @@
       if (wkTable) { wkTable.close(); wkTable = null; }
       document.body.classList.remove('wk-card-page');
       closeCt();
-      document.body.classList.remove('ct-card-page', 'wl-card-page', 'rs-card-page');
+      document.body.classList.remove('ct-card-page', 'wl-card-page', 'rs-card-page', 'ww-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
@@ -3126,7 +3132,7 @@
     let latestData = null;
     document.addEventListener('visibilitychange', () => { dixitHostBridge?.setActive(!document.hidden); wkTable?.setVisible(!document.hidden); ctTable?.setVisible(!document.hidden); });
     window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; wkTable?.close(); wkTable = null; closeCt(); openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
-    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows', 'wordlimit', 'roomsurvey'].includes(latestData?.game)) tryRenderCard(); });
+    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows', 'wordlimit', 'roomsurvey', 'wordwolf'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;

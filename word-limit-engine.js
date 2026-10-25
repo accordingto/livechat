@@ -32,6 +32,9 @@ var WORD_LIMIT_ENGINE = (() => {
     // may still hold 7–10); every scene deals and swaps limits in 1–6.
     limitValues: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), pointsMax: 50,
     dealValues: Object.freeze([1, 2, 3, 4, 5, 6]),
+    // Short lines may repeat. A six-word line is an occasional variation,
+    // never a compulsory role, and at most one is drawn for the cast.
+    dealWeights: Object.freeze([22, 22, 20, 18, 13, 5]),
     castMs: 20000,
     lineCooldownMs: 3000, foulCooldownMs: 2500,
     maxRerolls: 5,
@@ -104,12 +107,23 @@ var WORD_LIMIT_ENGINE = (() => {
     }
     return { sceneMinutes: minutes, unit, shuffles, points };
   }
-  // Random limits from 1–6, drawn like cards from a bag: up to six players
-  // never share a limit, and a bigger cast starts a second bag.
-  function drawLimits(count, random) {
-    const out = [];
-    while (out.length < count) out.push(...shuffle(CONFIG.dealValues, random));
-    return out.slice(0, Math.max(0, count));
+  // Weighted draws with replacement for 1–5. Drawing order is shuffled so a
+  // seat does not get first refusal on the single occasional six-word slot.
+  // Exclude each seat's previous limit directly rather than retrying entire
+  // deals, which would distort the weights and sometimes force long lines.
+  function drawLimits(count, random, previous = [], allowSix = true) {
+    const size = Math.max(0, Math.min(CONFIG.maxPlayers, Math.floor(Number(count) || 0)));
+    const out = Array(size), order = shuffle(Array.from({ length: size }, (_, index) => index), random);
+    let sixUsed = !allowSix;
+    for (const index of order) {
+      const choices = CONFIG.dealValues.filter(value => value !== Number(previous[index]) && !(value === 6 && sixUsed));
+      const total = choices.reduce((sum, value) => sum + CONFIG.dealWeights[value - 1], 0);
+      let cursor = random() * total, chosen = choices.at(-1);
+      for (const value of choices) { cursor -= CONFIG.dealWeights[value - 1]; if (cursor < 0) { chosen = value; break; } }
+      out[index] = chosen;
+      if (chosen === 6) sixUsed = true;
+    }
+    return out;
   }
   // The points one line at this limit scores in this scene.
   function pointsFor(round, limit) {
@@ -137,6 +151,27 @@ var WORD_LIMIT_ENGINE = (() => {
   }
   const inRound = (state, n) => !!state.round && list(state.round.players).includes(n);
   const livePlayers = state => list(state.round?.players).filter(n => isActive(state, n));
+  function speaking(state) {
+    const round = state.round;
+    if (!round) return { order: [], speaker: null, turn: 0 };
+    const players = list(round.players).map(Number);
+    const order = [...new Set([...list(round.speakingOrder).map(Number).filter(n => players.includes(n)), ...players])];
+    const speaker = order.includes(round.speaker) && isActive(state, round.speaker)
+      ? round.speaker : order.find(n => isActive(state, n)) ?? null;
+    return { order, speaker, turn: Number.isInteger(round.speakingTurn) && round.speakingTurn > 0 ? round.speakingTurn : 1 };
+  }
+  function advanceSpeaker(state) {
+    const round = state.round, floor = speaking(state), from = floor.order.indexOf(round.speaker);
+    round.speaker = null;
+    for (let step = 1; step <= floor.order.length; step++) {
+      const number = floor.order[(Math.max(-1, from) + step) % floor.order.length];
+      if (isActive(state, number)) { round.speaker = number; break; }
+    }
+    round.speakingTurn = floor.turn + 1;
+    // Phase and scene clocks stay put; the existing stage fence makes a
+    // second tap from the previous speaker unable to skip another actor.
+    state.stage++;
+  }
   // A round that has not been settled yet (its points are still running).
   const liveRound = state => !!state.round && !state.round.outcome;
 
@@ -158,15 +193,9 @@ var WORD_LIMIT_ENGINE = (() => {
   // Fresh random limits that avoid repeating last scene's limit where possible.
   function dealLimits(round, previous, random) {
     const before = previous?.limits || {};
-    let best = null;
-    for (let attempt = 0; attempt < 16; attempt++) {
-      const perm = drawLimits(round.players.length, random);
-      const repeats = round.players.filter((n, index) => before[n] === perm[index]).length;
-      if (!best || repeats < best.repeats) best = { perm, repeats };
-      if (!repeats) break;
-    }
+    const perm = drawLimits(round.players.length, random, round.players.map(n => before[n]));
     round.limits = {}; round.prevLimits = {};
-    round.players.forEach((n, index) => { round.limits[n] = best.perm[index]; });
+    round.players.forEach((n, index) => { round.limits[n] = perm[index]; });
   }
   function startRound(state, now, random) {
     const players = activeNums(state);
@@ -184,6 +213,8 @@ var WORD_LIMIT_ENGINE = (() => {
     pickScene(state, round, random);
     dealRoles(round, random);
     dealLimits(round, previous, random);
+    round.speakingOrder = shuffle(players, random);
+    round.speaker = round.speakingOrder[0]; round.speakingTurn = 1;
     state.round = round;
     enter(state, 'cast', now, CONFIG.castMs);
   }
@@ -194,15 +225,10 @@ var WORD_LIMIT_ENGINE = (() => {
   function shuffleLimits(state, now, random) {
     const round = state.round, live = livePlayers(state);
     if (!live.length) return;
-    let perm = null;
-    for (let attempt = 0; attempt < 24 && !perm; attempt++) {
-      const candidate = drawLimits(live.length, random);
-      if (live.every((n, index) => candidate[index] !== round.limits[n])) perm = candidate;
-    }
-    if (!perm) perm = live.map(n => {
-      const options = CONFIG.dealValues.filter(value => value !== round.limits[n]);
-      return options[Math.floor(random() * options.length)];
-    });
+    // Reserve an inactive actor's six-word line, so rejoining cannot add a
+    // second long line to a newly drawn cast. Legacy saved limits stay intact.
+    const reservedSix = list(round.players).some(n => !isActive(state, n) && Number(round.limits[n]) >= 6);
+    const perm = drawLimits(live.length, random, live.map(n => round.limits[n]), !reservedSix);
     round.prevLimits = {};
     live.forEach((n, index) => { round.prevLimits[n] = round.limits[n]; round.limits[n] = perm[index]; });
     round.shuffles++;
@@ -283,6 +309,8 @@ var WORD_LIMIT_ENGINE = (() => {
       for (const key of ['players', 'pending', 'foulLog', 'best']) round[key] = list(round[key]);
       for (const key of ['roles', 'limits', 'prevLimits', 'fouls', 'lines', 'gained', 'lastLine']) round[key] = round[key] || {};
       if (!round.value || typeof round.value !== 'object') round.value = defaultPoints();
+      const floor = speaking(state);
+      round.speakingOrder = floor.order; round.speaker = floor.speaker; round.speakingTurn = floor.turn;
     }
   }
   const PLAYER_COMMANDS = new Set(['reroll', 'line', 'foul', 'next']);
@@ -345,12 +373,22 @@ var WORD_LIMIT_ENGINE = (() => {
       case 'line': {
         // "I said a line": scores the points of the limit this actor has now.
         if (state.phase !== 'scene' || !inRound(state, actor) || !isActive(state, actor)) { fail('not_available'); break; }
+        const floor = speaking(state);
+        if (actor !== floor.speaker) { fail('not_available'); break; }
+        if (input.speakingTurn !== undefined && Number(input.speakingTurn) !== floor.turn) { fail('stale_turn'); break; }
         const last = round.lastLine[actor];
         if (last && now - Number(last.ts) < CONFIG.lineCooldownMs) { fail('cooldown'); break; }
+        // A late tap cannot score after the scene, even if the clock's tick
+        // was still in flight. Due swaps still use the same scene stopwatch.
+        if (state.deadline > 0 && now >= state.deadline) {
+          tickScene(state, now, random);
+          if (state.phase !== 'scene') { bump(state, now); fail('not_available'); break; }
+        }
         const limit = round.limits[actor], worth = pointsFor(round, limit);
         round.lines[actor] = (Number(round.lines[actor]) || 0) + 1;
         round.gained[actor] = (Number(round.gained[actor]) || 0) + worth;
         round.lastLine[actor] = { ts: now, points: worth, limit };
+        advanceSpeaker(state);
         break;
       }
       case 'foul': {
@@ -405,7 +443,12 @@ var WORD_LIMIT_ENGINE = (() => {
         const number = Number(input.playerNum), want = input.active === true, player = seat(state, number);
         if (!player || player.active === want) { fail('not_available'); break; }
         // Points already scored in this scene stay with the player.
+        const previousSpeaker = speaking(state).speaker;
         player.active = want;
+        if (round && inRound(state, number) && (!want && previousSpeaker === number)) advanceSpeaker(state);
+        else if (round && want && previousSpeaker === null && inRound(state, number)) {
+          round.speaker = number; round.speakingTurn = speaking(state).turn + 1; state.stage++;
+        }
         break;
       }
       case 'settings': {
@@ -482,6 +525,9 @@ var WORD_LIMIT_ENGINE = (() => {
     const scene = round ? CONTENT.scene(round.sceneId) : null;
     const running = phase === 'scene' && round?.runSince != null;
     const reveal = phase === 'result' || phase === 'finished';
+    const floor = speaking(state);
+    const floorIndex = floor.order.indexOf(floor.speaker);
+    const after = floor.order.slice(floorIndex + 1).concat(floor.order.slice(0, floorIndex + 1));
     // (A table saved by the earlier version may still hold a scripted twist; it is skipped.)
     const swap = round ? list(round.pending).find(event => event.type === 'shuffle') : null;
     const nextAt = swap && round.runSince == null && phase === 'paused' && state.pausedFrom === 'scene' ? Math.max(0, swap.at - round.runBase) : null;
@@ -492,6 +538,9 @@ var WORD_LIMIT_ENGINE = (() => {
       unit: round?.unit || settings.unit,
       scene: scene ? { id: scene.id, slug: copy(scene.slug), title: copy(scene.title), line: copy(scene.line) } : null,
       cast: castView(state),
+      speaker: ['cast', 'scene', 'paused'].includes(phase) ? floor.speaker : null,
+      speakingOrder: floor.order, speakingTurn: floor.turn,
+      nextSpeaker: after.find(number => isActive(state, number)) ?? null,
       values: valuesView(round),
       deadline: TICKED.includes(phase) ? state.deadline : null,
       remainingMs: phase === 'paused' ? state.remainingMs : null,
@@ -526,7 +575,8 @@ var WORD_LIMIT_ENGINE = (() => {
         lineReadyAt: last ? Number(last.ts) + CONFIG.lineCooldownMs : 0,
         canBegin: phase === 'cast' && active,
         canReroll: phase === 'cast' && active && round.rerolls < CONFIG.maxRerolls,
-        canLine: phase === 'scene' && active && here,
+        isSpeaker: floor.speaker === n && active && here,
+        canLine: phase === 'scene' && active && here && floor.speaker === n,
         canFoul: phase === 'scene' && active,
         canNext: phase === 'result' && active,
         canEndVote: phase === 'vote' && active,

@@ -20,7 +20,7 @@ function load(lang = 'en') {
   return { C: get('CARD_TABLE_UI'), WL: get('WORD_LIMIT_UI'), WE: get('WORD_LIMIT_ENGINE'), RS: get('ROOM_SURVEY_UI'), RE: get('ROOM_SURVEY_ENGINE'), dicts };
 }
 const GAMES = [
-  { page: 'word-limit-theater.html', title: 'WORD LIMIT THEATER', prefix: 'wl', tag: 'wl-3', files: ['word-limit-content.js', 'word-limit-engine.js', 'word-limit-ui.js'], host: 'word-limit-host.js', css: 'word-limit-theater.css', mark: 'assets/word-limit-theater/mark.svg', ns: 'wordlimit' },
+  { page: 'word-limit-theater.html', title: 'WORD LIMIT THEATER', prefix: 'wl', tag: 'wl-4', files: ['word-limit-content.js', 'word-limit-engine.js', 'word-limit-ui.js'], host: 'word-limit-host.js', css: 'word-limit-theater.css', mark: 'assets/word-limit-theater/mark.svg', ns: 'wordlimit' },
   { page: 'room-survey.html', title: 'ROOM SURVEY', prefix: 'rs', tag: 'rs-3', files: ['room-survey-content.js', 'room-survey-engine.js', 'room-survey-ui.js'], host: 'room-survey-host.js', css: 'room-survey.css', mark: 'assets/room-survey/mark.svg', ns: 'roomsurvey' },
 ];
 const slug = title => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -51,10 +51,10 @@ test('each host page loads the shared table, then its own modules, in order, wit
 test('original player links follow either table: play.html loads the rules and the table client, never a host page', () => {
   const play = read('play.html');
   const ct = [...play.matchAll(/<script src="((?:card-table|word-limit|room-survey)[^"?]*\.js)\?v=([a-z0-9-]+)"><\/script>/g)].map(match => `${match[1]}?v=${match[2]}`);
-  assert.deepEqual(ct, ['card-table.js?v=ct-2', 'card-table-ui.js?v=ct-2', 'word-limit-content.js?v=wl-3', 'word-limit-engine.js?v=wl-3', 'word-limit-ui.js?v=wl-3',
+  assert.deepEqual(ct, ['card-table.js?v=ct-2', 'card-table-ui.js?v=ct-2', 'word-limit-content.js?v=wl-4', 'word-limit-engine.js?v=wl-4', 'word-limit-ui.js?v=wl-4',
     'room-survey-content.js?v=rs-3', 'room-survey-engine.js?v=rs-3', 'room-survey-ui.js?v=rs-3']);
   assert.ok(!/word-limit-host\.js|room-survey-host\.js/.test(play), 'cards never load a host page');
-  for (const css of ['card-table.css?v=ct-2', 'word-limit-theater.css?v=wl-3', 'room-survey.css?v=rs-3']) assert.ok(play.includes(`<link rel="stylesheet" href="${css}">`), css);
+  for (const css of ['card-table.css?v=ct-2', 'word-limit-theater.css?v=wl-4', 'room-survey.css?v=rs-3']) assert.ok(play.includes(`<link rel="stylesheet" href="${css}">`), css);
   assert.match(play, /wordlimit: \{ key: 'wl', page: 'wl-card-page', title: 'WORD LIMIT THEATER', ui: \(\) => WORD_LIMIT_UI \}/);
   assert.match(play, /roomsurvey: \{ key: 'rs', page: 'rs-card-page', title: 'ROOM SURVEY', ui: \(\) => ROOM_SURVEY_UI \}/);
   assert.match(play, /data\[spec\.key\]\?\.version === 1 && \/\^\[a-f0-9\]\{32\}\$\/\.test\(data\[spec\.key\]\.table \|\| ''\)/, 'only a well-formed table token is followed');
@@ -63,8 +63,8 @@ test('original player links follow either table: play.html loads the rules and t
   assert.match(play, /setCardTitle\(data\.name \|\| urlName\);\n\s+if \(renderCtCard\(data\)\) return;/, 'these games render before any other game');
   assert.match(play, /ctTable\?\.setVisible\(!document\.hidden\)/, 'a card in the background lets visible cards tick first');
   assert.match(play, /wkTable\?\.close\(\); wkTable = null; closeCt\(\);/, 'pagehide releases the table');
-  assert.match(play, /closeCt\(\);\n\s+document\.body\.classList\.remove\('ct-card-page', 'wl-card-page', 'rs-card-page'\);/, 'leaving to a waiting/error card releases it');
-  assert.match(play, /'whoknows', 'wordlimit', 'roomsurvey'\]\.includes\(latestData\?\.game\)/);
+  assert.match(play, /closeCt\(\);\n\s+document\.body\.classList\.remove\('ct-card-page', 'wl-card-page', 'rs-card-page', 'ww-card-page'\);/, 'leaving to a waiting/error card releases it');
+  assert.match(play, /'whoknows', 'wordlimit', 'roomsurvey', 'wordwolf'\]\.includes\(latestData\?\.game\)/);
   assert.match(play, /if \(ctCard\) ctCard\.paint\(\);/);
   for (const match of play.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(match[1]);
 });
@@ -94,7 +94,7 @@ function keysUsed(source) {
     }
     // Template literals build their key at run time; those are listed as dynamic keys.
     // So do 'prefix_' + (…) concatenations: drop the part after the plus.
-    const argument = source.slice(match.index + match[0].length, end).replace(/`[^`]*`/g, '').replace(/\+\s*\((?:[^()]|\([^()]*\))*\)/g, '');
+    const argument = source.slice(match.index + match[0].length, end).replace(/`[^`]*`/g, '').replace(/\+\s*\((?:[^()]|\([^()]*\))*\)/g, '').replace(/(?:===|!==)\s*'[A-Za-z][A-Za-z0-9_]*'/g, '');
     for (const literal of argument.matchAll(/'([A-Za-z][A-Za-z0-9_]*)'/g)) if (!literal[1].endsWith('_')) keys.add(literal[1]);
   }
   return keys;
@@ -224,12 +224,13 @@ test('WORD LIMIT THEATER: the shared screen shows the scene, every role, limit a
     assert.match(stage(), /class="wl-swap"/, 'the next swap is counted down');
     assert.doesNotMatch(stage(), /wl-cue|twist/i, 'no plot twists');
     cmd(3, 'foul', { target: 1 });
-    cmd(4, 'line');
+    const speaker = state.round.speaker;
+    cmd(speaker, 'line', { speakingTurn: state.round.speakingTurn });
     assert.match(stage(), /wl-pop/, 'a line pops its points');
     cmd(1, 'pause'); assert.match(stage(), /wl-paused/); cmd(1, 'resume');
     cmd(5, 'close');
     assert.equal(state.phase, 'result');
-    assert.ok(stage().includes('Willy'), 'the top scorer is named');
+    assert.ok(stage().includes(roster.find(p => p.playerNum === speaker).name), 'the actual current speaker who scored is named');
     assert.match(stage(), /wl-tally/);
     cmd(1, 'stop');
     assert.match(stage(), /wl-phase-finished/);

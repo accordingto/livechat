@@ -1,6 +1,8 @@
 'use strict';
 // Run: node tests/who-knows-ui.browser.cjs [path-to-playwright-package]
 // WK_QA_MODE=insider|werewolf, WK_QA_PLAYERS=4..9, WK_QA_OUTPUT=<dir outside the Hub>,
+// WK_QA_TARGET=word|number, WK_QA_HINT=0|1, WK_QA_NUMBER_MAX=100|1000.
+// WK_QA_CAPTURE_FILTER=<label fragment> keeps the entire flow but captures one surface.
 // WK_QA_LAYOUT=0 skips the captures. Serves the REAL who-knows.html host and the
 // original play.html links against one isolated Firebase-compatible in-memory
 // database. The host page is CLOSED right after Start: the cards then run the
@@ -14,6 +16,10 @@ const path = require('node:path');
 const http = require('node:http');
 const root = path.resolve(__dirname, '..');
 const mode = process.env.WK_QA_MODE || 'insider';
+const targetKind = process.env.WK_QA_TARGET || process.env.WHO_QA_TARGET || 'word';
+const showHint = (process.env.WK_QA_HINT || process.env.WHO_QA_HINT || '0') === '1';
+const numberMax = Number(process.env.WK_QA_NUMBER_MAX || 100);
+assert.ok(['word', 'number'].includes(targetKind)); assert.ok([100, 1000].includes(numberMax));
 assert.ok(['insider', 'werewolf'].includes(mode), 'WK_QA_MODE must be insider or werewolf');
 const playerCount = Number(process.env.WK_QA_PLAYERS || 5);
 assert.ok(Number.isInteger(playerCount) && playerCount >= 4 && playerCount <= 9, 'WK_QA_PLAYERS must be 4–9');
@@ -22,6 +28,7 @@ const code = `WK_BROWSER_QA_${mode.toUpperCase()}_${playerCount}`;
 const tokens = Array.from({ length: playerCount }, (_, index) => 'qa-player-' + (index + 1));
 const names = ['Amy', 'Kevin', 'Jason', 'Willy', 'Riley', 'Morgan', 'Alexandra-Marie', 'Sam', 'Robin'].slice(0, playerCount);
 const WORDS = require('../who-knows-words.js');
+const answerForId = id => WORDS.get(id) || (/^wk-n-([1-9]\d*)$/.test(id) ? { id, en: id.slice(5), zh: id.slice(5), kind: 'number' } : null);
 const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
 // Firebase drops empty arrays and maps; read projections the way the UI does.
 const list = value => Array.isArray(value) ? value : Object.values(value || {});
@@ -173,7 +180,7 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     await item.goto(base + '/' + url);
     return item;
   };
-  const report = { entry: `who-knows.html + ${playerCount} original play.html links`, mode, playerCount, words: WORDS.items.length,
+  const report = { entry: `who-knows.html + ${playerCount} original play.html links`, mode, targetKind, showHint, numberMax, playerCount, words: WORDS.items.length,
     fixture: 'isolated Firebase-compatible memory database; controlled clock via serverTimeOffset; external network intercepted; desktop Chromium emulates viewport sizes, not physical phones', checks: [], views: [] };
   const check = label => { report.checks.push(label); if (process.env.WK_QA_VERBOSE) console.log('PASS ' + label); };
   const wait = async (predicate, label = 'state') => {
@@ -223,6 +230,7 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
   // ── layout captures with overflow, occlusion and tap-target checks ──
   const capture = async (page, label, { width, height = 900, lang, target = null } = {}) => {
     if (process.env.WK_QA_LAYOUT === '0') return;
+    if (process.env.WK_QA_CAPTURE_FILTER && !label.includes(process.env.WK_QA_CAPTURE_FILTER)) return;
     await page.setViewportSize({ width, height });
     await page.evaluate(language => I18N.setLang(language), lang);
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -276,7 +284,7 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     for (const n of s.round.players)
       assert.equal(await card(n).locator('[data-wk-main] [data-wk-action="speakerDone"]').count(), n === turn.playerNum ? 1 : 0, 'only the speaker has Done');
     if (!s.round.guess) {
-      const secret = WORDS.get(s.round.wordId);
+      const secret = answerForId(s.round.wordId);
       const nonKnower = s.round.players.find(n => n !== s.round.mayor && !['insider', 'seer', 'werewolf'].includes(roleOf(s, n)));
       if (nonKnower) {
         assert.equal(await renderedWord(card(nonKnower), secret), false, 'unfound word stays private during speeches');
@@ -347,6 +355,17 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
       assert.equal(await host.locator('#wk-tokens').isVisible(), true);
       assert.equal(await host.inputValue('#wk-minutes'), '4', 'Werewolf takes its own usual length');
     } else assert.equal(await host.locator('#wk-tokens').isVisible(), false);
+    assert.equal(await host.inputValue('#wk-target-kind'), 'word');
+    assert.equal(await host.locator('#wk-broad-hint').isChecked(), false, 'opening clues are off by default');
+    assert.equal(await host.inputValue('#wk-number-max'), '100');
+    await host.selectOption('#wk-target-kind', targetKind);
+    await host.locator('#wk-broad-hint').setChecked(showHint);
+    if (targetKind === 'number') {
+      await host.selectOption('#wk-number-max', String(numberMax));
+      assert.equal(await host.locator('#wk-difficulty').isVisible(), false);
+      assert.equal(await host.locator('#wk-tokens').isVisible(), false, 'number replies do not use yes/no tokens');
+    }
+    if (targetKind === 'number' || showHint) await views(host, 'host-answer-options', '#wk-start', [[1280, 800], [320, 568]]);
     await host.click('#wk-start');
     await phase('choose');
     let s = await state();
@@ -354,7 +373,8 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     for (let i = 0; i < playerCount; i++)
       assert.deepEqual(db.get(`rooms/${code}/players/${tokens[i]}`), { game: 'whoknows', playerNum: i + 1, name: names[i], wk: { version: 2, table } }, 'each link only points at the table');
     const mayor = s.round.mayor, others = s.round.players.filter(n => n !== mayor);
-    const optionWords = s.round.options.map(id => WORDS.get(id));
+    const optionWords = s.round.options.map(answerForId);
+    assert.equal(s.round.targetKind, targetKind); assert.equal(s.round.broadHint, showHint);
     for (const n of s.round.players) {
       await wait(async () => (await card(n).locator('.wk-ticket-role').count()) === 1, 'ticket');
       const role = await card(n).locator('.wk-ticket-role').innerText();
@@ -378,14 +398,18 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     await tap(card(mayor), '.wk-option >> nth=1');
     await phase('countdown');
     s = await state();
-    const secret = WORDS.get(s.round.wordId);
+    const secret = answerForId(s.round.wordId);
     const knowers = s.round.players.filter(n => n === mayor || ['insider', 'seer', 'werewolf'].includes(roleOf(s, n)));
     for (const n of s.round.players) {
       assert.equal(await renderedWord(card(n), secret), knowers.includes(n), `card ${n} word privacy on screen`);
       assert.equal(carries(JSON.stringify((await cards())[n - 1]), secret), knowers.includes(n), `card ${n} word privacy in projected payload`);
       assert.equal((await card(n).locator('.wk-paper').count()) > 0, knowers.includes(n));
+      assert.equal(await card(n).locator('[data-wk-opening-hint]').count(), showHint ? 1 : 0);
+      assert.deepEqual((await cards())[n - 1].wk.broadHint, showHint ? s.round.hintSnapshot : null);
+      assert.equal('numberMax' in (await cards())[n - 1].wk.settings, false, 'a hidden number range is not leaked through the card settings');
     }
     check('after the answerer chooses, the word appears only on the cards whose role knows it');
+    check('the optional broad clue is synchronized and frozen on every card, while the number pool is absent from card settings');
     await advance(6000);
     await phase('questions');
     check('with the host page closed, a card starts the questions when the five-second countdown runs out');
@@ -393,7 +417,9 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     // ── questions: raise, type, answer ──
     const [a, b, c] = others;
     const input = card(a).locator('[data-wk-input]');
-    await input.fill('Is it something you can eat?');
+    const firstQuestion = targetKind === 'number' ? 'How close is 50?' : 'Is it something you can eat?';
+    if (targetKind === 'number') assert.match(await input.getAttribute('placeholder'), /How close is 50/);
+    await input.fill(firstQuestion);
     await tap(card(a), '[data-wk-action="raise"]');
     await wait(async () => (await state()).round.current?.playerNum === a, 'a asking');
     await tap(card(b), '[data-wk-action="raise"]');
@@ -401,14 +427,19 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     await allCards(wk => wk.current?.playerNum === a && list(wk.queue).length === 1);
     assert.equal(await card(a).locator('.wk-zone-turn').count(), 1);
     assert.match(await card(b).innerText('body'), /#2|第 2/);
-    assert.match(await card(c).innerText('body'), /something you can eat/);
+    assert.ok((await card(c).innerText('body')).includes(firstQuestion));
+    if (targetKind === 'number') {
+      assert.match(await card(a).locator('.wk-zone-turn').innerText(), /Ask an open question or guess a number/);
+      assert.doesNotMatch(await card(a).locator('.wk-zone-turn').innerText(), /yes-or-no/);
+    }
     check('raising a hand forms one shared line; the asker’s typed question shows on the other cards');
     await views(card(a), 'card-your-turn', '[data-wk-action="lower"]', PHONES);
-    await views(card(mayor), 'card-answerer', '[data-wk-action="answer"][data-wk-arg-answer="yes"]', PHONES);
+    const firstAnswer = targetKind === 'number' ? 'spoken' : 'yes', secondAnswer = targetKind === 'number' ? 'spoken' : 'no';
+    await views(card(mayor), 'card-answerer', `[data-wk-action="answer"][data-wk-arg-answer="${firstAnswer}"]`, PHONES);
     const draft = card(c).locator('[data-wk-input]');
     await draft.click(); await draft.pressSequentially('Is it bigger');
     const fieldBefore = await draft.evaluateHandle(element => element);
-    await tap(card(mayor), '[data-wk-action="answer"][data-wk-arg-answer="yes"]');
+    await tap(card(mayor), `[data-wk-action="answer"][data-wk-arg-answer="${firstAnswer}"]`);
     await wait(async () => (await state()).round.log.length === 1 && (await state()).round.current?.playerNum === b, 'answered a');
     await allCards(wk => list(wk.log).length === 1);
     assert.equal(await draft.inputValue(), 'Is it bigger');
@@ -416,17 +447,18 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     assert.equal(await fieldBefore.evaluate(element => element.isConnected), true);
     await draft.pressSequentially(' than a car?');
     check('a player typing a question keeps the same field, text and focus while answers arrive');
-    await tap(card(mayor), '[data-wk-action="answer"][data-wk-arg-answer="no"]');
+    await tap(card(mayor), `[data-wk-action="answer"][data-wk-arg-answer="${secondAnswer}"]`);
     await wait(async () => (await state()).round.log.length === 2, 'answered b');
     await tap(card(c), '[data-wk-action="raise"]');
     await wait(async () => (await state()).round.current?.text === 'Is it bigger than a car?', 'c typed question');
-    const third = mode === 'werewolf' ? 'close' : 'unknown';
+    const third = targetKind === 'number' ? 'spoken' : mode === 'werewolf' ? 'close' : 'unknown';
     await tap(card(mayor), `[data-wk-action="answer"][data-wk-arg-answer="${third}"]`);
     await wait(async () => (await state()).round.log.length === 3, 'answered c');
     await allCards(wk => list(wk.log).length === 3);
-    assert.deepEqual((await state()).round.log.map(entry => [entry.playerNum, entry.answer]), [[a, 'yes'], [b, 'no'], [c, third]]);
-    if (mode === 'werewolf') assert.match(await card(a).innerText('body'), /34 Yes\/No left/i);
-    check('the answerer’s tokens log against each asker on every card' + (mode === 'werewolf' ? '; Yes/No tokens count down' : ''));
+    assert.deepEqual((await state()).round.log.map(entry => [entry.playerNum, entry.answer]), [[a, firstAnswer], [b, secondAnswer], [c, third]]);
+    if (mode === 'werewolf' && targetKind === 'word') assert.match(await card(a).innerText('body'), /34 Yes\/No left/i);
+    if (targetKind === 'number') { assert.equal((await state()).round.tokensUsed, 0); assert.equal((await state()).round.tokens, 0); }
+    check(targetKind === 'number' ? 'the answerer can reply freely out loud and advance the same queue without a yes/no budget' : 'the answerer’s tokens log against each asker on every card' + (mode === 'werewolf' ? '; Yes/No tokens count down' : ''));
 
     // The shared screen is optional: reopening it mid-round just shows the game.
     host = await open('who-knows.html');
@@ -434,6 +466,7 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     await wait(async () => (await host.locator('.wk-log-row').count()) === 3, 'host log');
     assert.equal(await host.locator('#wk-game').isVisible(), true);
     assert.equal(await renderedWord(host, secret), false, 'the shared screen still never shows the secret');
+    assert.equal(await host.locator('[data-wk-opening-hint]').count(), showHint ? 1 : 0);
     await views(host, 'host-questions', '#wk-close', HOSTS);
     await host.close(); host = null;
     check('reopening the host page mid-round shows the same game without restarting it; closing it again changes nothing');
@@ -482,6 +515,7 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     await wait(async () => (await card(b).locator('.wk-ticket-role').count()) === 1, 'reloaded card');
     await wait(() => oneConnection(b), 'reloaded player card has one live connection');
     assert.equal(await card(b).evaluate(() => window.WHO_KNOWS_CARD.view()?.wk?.me?.role), roleOf(await state(), b));
+    assert.deepEqual(await card(b).evaluate(() => window.WHO_KNOWS_CARD.view()?.wk?.broadHint), showHint ? (await state()).round.hintSnapshot : null);
     check('a reloaded player link comes back to the same role and round');
 
     // ── the guess ──
@@ -599,17 +633,21 @@ const carries = (json, word) => json.includes(`"id":"${word.id}"`) || json.inclu
     await card(editor).selectOption('[data-wk-controls] [data-wk-set="mode"]', other);
     await card(editor).selectOption('[data-wk-controls] [data-wk-set="questionMinutes"]', '3');
     await card(editor).selectOption('[data-wk-controls] [data-wk-set="turnSeconds"]', '20');
+    await card(editor).locator('[data-wk-controls] [data-wk-set="broadHint"]').setChecked(!showHint);
     await views(card(editor), 'card-controls-settings', '[data-wk-controls] [data-wk-save-settings]', [[390, 844], [320, 568]]);
     await tap(card(editor), '[data-wk-controls] [data-wk-save-settings]');
     await wait(async () => (await state()).settings.mode === other && (await state()).settings.questionMinutes === 3 && (await state()).settings.turnSeconds === 20, 'settings saved');
     assert.match(await card(editor).locator('[data-wk-controls-note]').innerText(), /next round/);
     assert.equal((await state()).round.mode, mode, 'the current round keeps its mode');
+    assert.equal((await state()).round.broadHint, showHint, 'pending clue changes do not rewrite an active round');
+    assert.equal((await state()).settings.numberMax, numberMax, 'saving the player form preserves the host-only number range');
     await tool(card(editor), '[data-wk-action="void"]'); await tool(card(editor), '[data-wk-action="void"]');
     await phase('result');
     await tap(card(editor), '[data-wk-action="next"]');
     await phase('choose');
     s = await state();
     assert.equal(s.round.mode, other); assert.equal(s.round.questionMs, 180000); assert.equal(s.round.turnSeconds, 20);
+    assert.equal(s.round.broadHint, !showHint); assert.equal(s.round.targetKind, targetKind);
     check('a player changes the mode and question time for the next round from their card');
 
     // ── the question clock runs out with no host page ──

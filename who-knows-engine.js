@@ -41,11 +41,13 @@ var WHO_KNOWS_ENGINE = (() => {
     // Werewolf mode only: how many Yes/No answers the Mayor can give (0 = no limit).
     tokenOptions: Object.freeze([0, 20, 30, 36]), defaultTokens: 36,
     difficulties: Object.freeze(['mixed', 'easy', 'medium', 'hard']), defaultDifficulty: 'mixed',
+    targetKinds: Object.freeze(['word', 'number']), numberMaxOptions: Object.freeze([100, 1000]), defaultNumberMax: 100,
     wolfOptions: Object.freeze(['auto', 1, 2]),
     turnSecondsOptions: Object.freeze([20, 25, 30]), defaultTurnSeconds: 25,
     answers: Object.freeze({
       insider: Object.freeze(['yes', 'no', 'unknown', 'correct']),
       werewolf: Object.freeze(['yes', 'no', 'maybe', 'close', 'far', 'correct']),
+      number: Object.freeze(['spoken', 'correct']),
     }),
     countdownMs: 5000,
     huntMs: 30000, accuseMs: 45000,
@@ -100,7 +102,8 @@ var WHO_KNOWS_ENGINE = (() => {
   // ── settings ───────────────────────────────────────────────────────────
   function defaultSettings(mode = 'insider') {
     return { mode, questionMinutes: CONFIG.defaultQuestionMinutes[mode], tokens: CONFIG.defaultTokens,
-      difficulty: CONFIG.defaultDifficulty, wolves: 'auto', turnSeconds: CONFIG.defaultTurnSeconds, mayorSecret: false, masterGuess: true };
+      difficulty: CONFIG.defaultDifficulty, wolves: 'auto', turnSeconds: CONFIG.defaultTurnSeconds, mayorSecret: false, masterGuess: true,
+      targetKind: 'word', numberMax: CONFIG.defaultNumberMax, broadHint: false };
   }
   // Omitted fields keep the current choice; a mode change without an explicit
   // length takes that mode's usual length. Invalid values throw.
@@ -121,9 +124,14 @@ var WHO_KNOWS_ENGINE = (() => {
     if (!CONFIG.wolfOptions.includes(wolves)) throw new Error('invalid_options');
     const turnSeconds = input.turnSeconds === undefined ? base.turnSeconds : Number(input.turnSeconds);
     if (!CONFIG.turnSecondsOptions.includes(turnSeconds)) throw new Error('invalid_options');
-    for (const key of ['mayorSecret', 'masterGuess']) if (input[key] !== undefined && typeof input[key] !== 'boolean') throw new Error('invalid_options');
+    const targetKind = input.targetKind === undefined ? base.targetKind : input.targetKind;
+    if (!CONFIG.targetKinds.includes(targetKind)) throw new Error('invalid_options');
+    const numberMax = input.numberMax === undefined ? base.numberMax : Number(input.numberMax);
+    if (!CONFIG.numberMaxOptions.includes(numberMax)) throw new Error('invalid_options');
+    for (const key of ['mayorSecret', 'masterGuess', 'broadHint']) if (input[key] !== undefined && typeof input[key] !== 'boolean') throw new Error('invalid_options');
     return { mode, questionMinutes: minutes, tokens, difficulty, wolves, turnSeconds,
-      mayorSecret: input.mayorSecret ?? !!base.mayorSecret, masterGuess: input.masterGuess ?? base.masterGuess !== false };
+      mayorSecret: input.mayorSecret ?? !!base.mayorSecret, masterGuess: input.masterGuess ?? base.masterGuess !== false,
+      broadHint: input.broadHint ?? !!base.broadHint, targetKind, numberMax };
   }
   function wolfCount(setting, players) {
     if (setting === 1) return 1;
@@ -173,6 +181,16 @@ var WHO_KNOWS_ENGINE = (() => {
     round.roles = roles; round.players = players;
   }
   function drawOptions(state, round, random) {
+    if (round.targetKind === 'number') {
+      const used = new Set(list(state.wordHistory?.used)), shown = new Set(list(round.options)), picked = [];
+      for (let i = 0; i < CONFIG.optionCount; i++) {
+        const pool = Array.from({ length: round.numberMax }, (_, n) => numberCard(n + 1).id).filter(id => !shown.has(id) && !picked.includes(id));
+        const fresh = pool.filter(id => !used.has(id)), source = fresh.length ? fresh : pool;
+        if (source.length) picked.push(source[Math.floor(random() * source.length)]);
+      }
+      round.options = picked;
+      return;
+    }
     const used = new Set(list(state.wordHistory?.used)), shown = new Set(list(round.options)), picked = [];
     const pick = level => {
       const pool = WORDS.pool(level).filter(word => !shown.has(word.id) && !picked.includes(word.id));
@@ -191,9 +209,11 @@ var WHO_KNOWS_ENGINE = (() => {
     state.roundNo++;
     const round = {
       no: state.roundNo, mode: s.mode, questionMs: s.questionMinutes * 60000, turnSeconds: s.turnSeconds,
-      tokens: s.mode === 'werewolf' ? s.tokens : 0, difficulty: s.difficulty,
+      tokens: s.mode === 'werewolf' && s.targetKind !== 'number' ? s.tokens : 0, difficulty: s.difficulty,
+      targetKind: s.targetKind || 'word', numberMax: s.numberMax || CONFIG.defaultNumberMax,
       wolves: s.wolves, mayorSecret: s.mode === 'werewolf' && s.mayorSecret, masterGuess: s.mode === 'insider' && s.masterGuess,
       mayor: null, players: [], roles: {}, options: [], rerolls: 0, wordId: null,
+      broadHint: s.broadHint === true, hintSnapshot: null,
       startedAt: null, endedAt: null, endReason: null,
       queue: [], current: null, askSerial: 0, log: [], tokensUsed: 0, guess: null,
       votes: {}, judge: {}, picks: {}, masterPick: null, judgeResult: null, outcome: null, points: {}, speaking: null,
@@ -213,8 +233,21 @@ var WHO_KNOWS_ENGINE = (() => {
   const seerOf = round => Number(Object.keys(round.roles).find(n => round.roles[n] === 'seer')) || null;
   const insiderOf = round => Number(Object.keys(round.roles).find(n => round.roles[n] === 'insider')) || null;
   const knows = (round, n) => !!round && (round.mayor === n || ['seer', 'werewolf', 'insider'].includes(roleOf(round, n)));
-  const word = round => round?.wordId ? WORDS.get(round.wordId) : null;
-  const wordView = card => card ? { id: card.id, en: card.en, zh: card.zh, level: card.level } : null;
+  function numberCard(value) { return { id: `wk-n-${value}`, en: String(value), zh: String(value), level: 'number', kind: 'number' }; }
+  function numberOf(id) { const match = /^wk-n-([1-9]\d{0,3})$/.exec(String(id)); const value = match ? Number(match[1]) : 0; return value >= 1 && value <= 1000 ? value : null; }
+  function answerCard(round, id) {
+    if (round?.targetKind !== 'number') return WORDS.get(id);
+    const value = numberOf(id);
+    return value && value <= (round.numberMax || CONFIG.defaultNumberMax) ? numberCard(value) : null;
+  }
+  function rangeHint(round, id) {
+    return round.targetKind === 'number'
+      ? { en: `An integer from 1 to ${round.numberMax}`, zh: `1 到 ${round.numberMax} 之間的整數` }
+      : WORDS.broadHint(id, round.difficulty);
+  }
+  const word = round => round?.wordId ? answerCard(round, round.wordId) : null;
+  const wordView = card => card ? { id: card.id, en: card.en, zh: card.zh, level: card.level, ...(card.kind === 'number' ? { kind: 'number' } : {}) } : null;
+  const answersFor = round => CONFIG.answers[round?.targetKind === 'number' ? 'number' : round?.mode || 'insider'];
   const teamOf = (round, n) => round.mode === 'werewolf'
     ? (roleOf(round, n) === 'werewolf' ? 'wolves' : 'village')
     : (roleOf(round, n) === 'insider' ? 'insider' : 'commons');
@@ -374,7 +407,7 @@ var WHO_KNOWS_ENGINE = (() => {
       roster: seats.map(player => ({ playerNum: player.playerNum, name: String(player.name || '').trim().slice(0, 80), active: player.active !== false }))
         .sort((a, b) => a.playerNum - b.playerNum),
       scores: {}, rotation: { bag: [], last: null, next: null },
-      wordHistory: { used: list(wordHistory?.used).filter(item => typeof item === 'string' && WORDS.get(item)) },
+      wordHistory: { used: list(wordHistory?.used).filter(item => typeof item === 'string' && (WORDS.get(item) || numberOf(item))) },
       roundNo: 0, round: null, history: [],
       phase: 'choose', deadline: null, pausedFrom: null, remainingMs: null, stopped: false,
       seen: {}, replies: {},
@@ -386,6 +419,9 @@ var WHO_KNOWS_ENGINE = (() => {
 
   function normalize(state) {
     if (!CONFIG.turnSecondsOptions.includes(state.settings.turnSeconds)) state.settings.turnSeconds = CONFIG.defaultTurnSeconds;
+    if (!CONFIG.targetKinds.includes(state.settings.targetKind)) state.settings.targetKind = 'word';
+    if (!CONFIG.numberMaxOptions.includes(state.settings.numberMax)) state.settings.numberMax = CONFIG.defaultNumberMax;
+    if (typeof state.settings.broadHint !== 'boolean') state.settings.broadHint = false;
     state.roster = roster(state); state.history = list(state.history);
     state.scores = state.scores || {}; state.seen = state.seen || {}; state.replies = state.replies || {};
     state.rotation = Object.assign({ bag: [], last: null, next: null }, state.rotation || {});
@@ -393,6 +429,8 @@ var WHO_KNOWS_ENGINE = (() => {
     state.wordHistory = { used: list(state.wordHistory?.used) };
     const round = state.round;
     if (round) {
+      if (!CONFIG.targetKinds.includes(round.targetKind)) round.targetKind = 'word';
+      if (!CONFIG.numberMaxOptions.includes(round.numberMax)) round.numberMax = CONFIG.defaultNumberMax;
       if (!CONFIG.turnSecondsOptions.includes(round.turnSeconds)) round.turnSeconds = CONFIG.defaultTurnSeconds;
       if (round.speaking) round.speaking.order = list(round.speaking.order);
       round.players = list(round.players); round.options = list(round.options); round.queue = list(round.queue); round.log = list(round.log);
@@ -463,7 +501,8 @@ var WHO_KNOWS_ENGINE = (() => {
       case 'choose': {
         if (state.phase !== 'choose' || actor !== round.mayor || !isActive(state, actor) || !round.options.includes(input.wordId)) { fail('not_available'); break; }
         round.wordId = input.wordId;
-        state.wordHistory.used = [...state.wordHistory.used.filter(item => item !== input.wordId), input.wordId].slice(-WORDS.items.length);
+        round.hintSnapshot = round.broadHint ? copy(rangeHint(round, input.wordId)) : null;
+        state.wordHistory.used = [...state.wordHistory.used.filter(item => item !== input.wordId), input.wordId].slice(-(WORDS.items.length + 1000));
         enter(state, 'countdown', now, CONFIG.countdownMs);
         break;
       }
@@ -512,7 +551,7 @@ var WHO_KNOWS_ENGINE = (() => {
       case 'answer': {
         const answer = String(input.answer || '');
         if (state.phase !== 'questions' || actor !== round.mayor || !round.current || round.current.id !== input.askId
-          || !CONFIG.answers[round.mode].includes(answer)) { fail('not_available'); break; }
+          || !answersFor(round).includes(answer)) { fail('not_available'); break; }
         const asked = round.current;
         round.log = [...round.log, { id: asked.id, playerNum: asked.playerNum, answer, text: asked.text || '', at: now - round.startedAt }].slice(-CONFIG.logMax);
         if (answer === 'yes' || answer === 'no') round.tokensUsed++;
@@ -675,10 +714,10 @@ var WHO_KNOWS_ENGINE = (() => {
       active: !!mine?.active, role, isMayor, inRound: !!role,
       word: !reveal && round?.wordId && knows(round, n) ? wordView(word(round)) : null,
       teammates: role === 'werewolf' && round ? wolvesOf(round).filter(other => other !== n) : [],
-      options: isMayor && phase === 'choose' ? round.options.map(id => wordView(WORDS.get(id))).filter(Boolean) : null,
+      options: isMayor && phase === 'choose' ? round.options.map(id => wordView(answerCard(round, id))).filter(Boolean) : null,
       rerollsLeft: isMayor && phase === 'choose' ? Math.max(0, CONFIG.maxRerolls - round.rerolls) : 0,
       queuePos: 0, asking: false, myText: '',
-      canRaise: false, canAnswer: false, answers: round ? CONFIG.answers[round.mode] : [],
+      canRaise: false, canAnswer: false, answers: round ? answersFor(round) : [],
       canFinishSpeaking: phase === 'speaking' && playing(state, n) && speakingView(state)?.playerNum === n,
       vote: null, judge: null, pick: null, canVote: false, voteTargets: [], canJudge: false,
       canNext: phase === 'result' && !!mine?.active,
@@ -718,8 +757,10 @@ var WHO_KNOWS_ENGINE = (() => {
     const wk = {
       version: 1, sessionId: state.sessionId, turnId: state.turnId, stage: state.stage, phase,
       pausedFrom: phase === 'paused' ? state.pausedFrom : null,
-      settings: Object.assign({ turnSeconds: CONFIG.defaultTurnSeconds }, copy(state.settings)), roundNo: state.roundNo,
+      settings: Object.assign(defaultSettings(state.settings.mode), copy(state.settings)), roundNo: state.roundNo,
       mode: round?.mode || state.settings.mode, mayor: round?.mayor ?? null,
+      targetKind: round?.targetKind || 'word',
+      broadHint: round?.broadHint && round.wordId ? copy(round.hintSnapshot || rangeHint(round, round.wordId)) : null,
       composition: composition(round),
       speaking: speakingView(state),
       deadline: timed ? state.deadline : null, remainingMs: phase === 'paused' ? state.remainingMs : null,
@@ -742,7 +783,7 @@ var WHO_KNOWS_ENGINE = (() => {
       nextAnswerer: state.rotation?.next ?? null,
       reply: (state.replies || {})[n] || null,
     };
-    if (n > 0) wk.me = privateView(state, n);
+    if (n > 0) { wk.me = privateView(state, n); delete wk.settings.numberMax; }
     return { game: 'whoknows', playerNum: n, name: seat(state, n)?.name || null, wk };
   }
 

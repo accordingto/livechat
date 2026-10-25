@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0f1421">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="who-knows.css?v=wk-3">
+  <link rel="stylesheet" href="who-knows.css?v=wk-4">
 </head>
 <body class="wk-page">
   <div class="topbar">
@@ -59,14 +59,17 @@
         </label>
       </div>
       <div class="wk-settings">
+        <label class="wk-field"><span data-i18n="whoknows.targetKind">Answer type</span><select id="wk-target-kind"></select></label>
+        <label class="wk-field" data-wk-target-only="number" hidden><span data-i18n="whoknows.numberMax">Number pool</span><select id="wk-number-max"></select></label>
         <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-minutes"></select></label>
-        <label class="wk-field"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-difficulty"></select></label>
+        <label class="wk-field" data-wk-target-only="word"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-difficulty"></select></label>
         <label class="wk-field"><span data-i18n="whoknows.turnSeconds">Time per speaker</span><select id="wk-turn-seconds"></select></label>
         <div class="wk-mode-only" data-wk-only="werewolf" hidden>
-          <label class="wk-field"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-tokens"></select></label>
+          <label class="wk-field" data-wk-target-only="word"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-tokens"></select></label>
           <label class="wk-field"><span data-i18n="whoknows.wolves">Werewolves</span><select id="wk-wolves"></select></label>
         </div>
       </div>
+      <label class="wk-check"><input type="checkbox" id="wk-broad-hint"><span><span data-i18n="whoknows.broadHint">Show a broad starting hint</span><small data-i18n="whoknows.broadHintHint">Optional. Give a useful starting area without revealing the answer.</small></span></label>
       <div class="wk-mode-only" data-wk-only="werewolf" hidden>
         <label class="wk-check"><input type="checkbox" id="wk-mayor-secret"><span><span data-i18n="whoknows.mayorSecret">Advanced: the Mayor also gets a secret role</span><small data-i18n="whoknows.mayorSecretHint">A Werewolf Mayor may give misleading answers; a Seer Mayor may help.</small></span></label>
       </div>
@@ -141,14 +144,17 @@
     <h3 data-i18n="whoknows.nextSettings">Settings for the next round</h3>
     <div class="wk-settings">
       <label class="wk-field"><span data-i18n="whoknows.modeLabel">Mode</span><select id="wk-m-mode"></select></label>
+      <label class="wk-field"><span data-i18n="whoknows.targetKind">Answer type</span><select id="wk-m-target-kind"></select></label>
+      <label class="wk-field" data-wk-m-target-only="number" hidden><span data-i18n="whoknows.numberMax">Number pool</span><select id="wk-m-number-max"></select></label>
       <label class="wk-field"><span data-i18n="whoknows.minutes">Question time</span><select id="wk-m-minutes"></select></label>
-      <label class="wk-field"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-m-difficulty"></select></label>
+      <label class="wk-field" data-wk-m-target-only="word"><span data-i18n="whoknows.difficulty">Word difficulty</span><select id="wk-m-difficulty"></select></label>
       <label class="wk-field"><span data-i18n="whoknows.turnSeconds">Time per speaker</span><select id="wk-m-turn-seconds"></select></label>
       <div class="wk-mode-only" data-wk-m-only="werewolf" hidden>
-        <label class="wk-field"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-m-tokens"></select></label>
+        <label class="wk-field" data-wk-m-target-only="word"><span data-i18n="whoknows.tokens">Yes/No tokens</span><select id="wk-m-tokens"></select></label>
         <label class="wk-field"><span data-i18n="whoknows.wolves">Werewolves</span><select id="wk-m-wolves"></select></label>
       </div>
     </div>
+    <label class="wk-check"><input type="checkbox" id="wk-m-broad-hint"><span><span data-i18n="whoknows.broadHint">Show a broad starting hint</span><small data-i18n="whoknows.broadHintHint">Optional. Give a useful starting area without revealing the answer.</small></span></label>
     <div class="wk-mode-only" data-wk-m-only="werewolf" hidden>
       <label class="wk-check"><input type="checkbox" id="wk-m-mayor-secret"><span><span data-i18n="whoknows.mayorSecret">Advanced: the Mayor also gets a secret role</span><small data-i18n="whoknows.mayorSecretHint"></small></span></label>
     </div>
@@ -171,10 +177,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="who-knows-words.js?v=wk-3"></script>
-  <script src="who-knows-engine.js?v=wk-3"></script>
-  <script src="who-knows-sync.js?v=wk-3"></script>
-  <script src="who-knows-ui.js?v=wk-3"></script>
-  <script src="who-knows-host.js?v=wk-3"></script>
+  <script src="who-knows-words.js?v=wk-4"></script>
+  <script src="who-knows-engine.js?v=wk-4"></script>
+  <script src="who-knows-sync.js?v=wk-4"></script>
+  <script src="who-knows-ui.js?v=wk-4"></script>
+  <script src="who-knows-host.js?v=wk-4"></script>
 </body>
 </html>

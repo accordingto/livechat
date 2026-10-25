@@ -1,3 +1,64 @@
+## CURRENT: Conversation cards, secret numbers and restored Word Wolf — 2026-10-26
+
+User requested optional BLUFF PARTY story guidance in both editions, turn-taking
+and less frequent long WORD LIMIT assignments, simpler player cards, optional
+broad WHO KNOWS hints and a number target, and restoration of the old one-odd-item
+game. They confirmed numbers retain the original roles/endings, and confirmed
+the restored game is WORD WOLF. The default number pool is 1–100, with a host
+choice of 1–1000; its bounds stay hidden unless the broad-hint option is enabled.
+
+BLUFF: private bluffers alone receive an optional fictional starting-point guide
+from the public topic. No real-answer fields enter the guide. Its folded guide,
+inspiration and scores sit below the current topic/role/action. Classic and
+Halloween retain their modes, scoring and spotlight. This engine requires the
+independent executor deployment as well as the frontend. Cache bluff-guides-1
+for engine/UI and CSS v9; topic/sync/assets unchanged.
+
+WORD LIMIT: one canonical speaking order/current speaker/speakingTurn; only the
+current actor can submit a completed line, then the floor advances. Stage and
+turn fencing reject stale/double taps. The scene clock, timed swaps, pause and
+points remain unchanged. Repeated 1–5 assignments are allowed; weights for
+1–6 are 22/22/20/18/13/5, with at most one six. Existing 7–10 saves keep their
+live clock/limits until the next swap. Cache wl-4.
+
+WHO KNOWS: broad starting hint defaults off. All 300 original word IDs remain;
+category hints cover at least eight eligible words (Hard at least ten). Number
+targets preserve Insider/Werewolf roles and endings; the Master privately
+chooses one of three integers. Spoken answers advance the shared question
+queue without spending yes/no tokens, and Correct retains its confirmation.
+Only the host sees the configured numberMax when hints are off. Mid-round
+settings affect the next deal. Card rules/logs/scores are folded below primary
+role/secret/action. Cache wk-4.
+
+WORD WOLF: word-wolf.html and the real index/play loaders restore the 80 pairs
+from before removal (no duplicate append to game-data). Default Objects has 21
+pairs, all 42 words have original simple SVG illustrations; Food has nine and
+Other fifty. One secret different item, unknown own allegiance, untimed spoken
+description, optional random-speaker cycle, private non-self ballots that can
+change until settlement. A unique top vote catches the odd player or lets them
+escape; a tie has no winner. No cumulative scoring was added. Sitting out any
+round participant uniformly cancels it. This is the third CARD_TABLE game;
+canonical stateJson and original player-link pointers, host optional, cache
+ww-1. Read word-wolf-mode.md and card-table-mode.md for authority/privacy.
+
+Validation before publication: full Hub 2378/2378, independent service 39/39
+before/after sync, release-smoke tests 4/4, production-browser offline safety
+70 checks. Real-page isolated multiplayer/phone audits: Bluff 26 scenarios /
+30 captures; WORD LIMIT 4/9 players 40 checks /144 captures; WHO KNOWS five
+word/number/role/hint combinations 131 checks /194 captures; WORD WOLF 4/9
+players 24 checks /144 captures. All pass, no reported page/layout issues.
+ROOM SURVEY's unchanged three-player flow also passes 24 checks. Physical
+phones and human spoken-session play remain unverified.
+
+Independent service dpl_9LtXv32fvoGkihnemUADsb1YkFgW is READY at the unchanged
+icebreaker-youtube-search.vercel.app alias. All 30 production service checks
+pass, including optional private guides, voting, original Once flows and
+service boundaries. Fifteen fresh tracked nodes deleted or empty, zero cleanup
+failures. The 64-file code allowlist was verified/synced to the existing service
+workspace; only bluff-king-engine.js changed. Search handlers and stable secrets
+were preserved. Frontend publication/readback and real production card-browser
+results are recorded in docs/conversation-cards-2026-10-26-acceptance.md.
+
 ## CURRENT: Complete the pending Claude game-service release — 2026-10-26
 
 User asked to finish Claude's recent undeployed Hub work. No uncommitted Hub

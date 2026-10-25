@@ -87,7 +87,10 @@ function installFirebase({ code, tokens, names, epoch }) {
       set: value => request({ type: 'set', path: location, value }),
       update: value => request({ type: 'update', path: location, value }),
       remove: () => request({ type: 'set', path: location, value: null }),
-      onDisconnect: () => ({ remove: async () => {}, cancel: async () => {} }),
+      onDisconnect: () => ({
+        remove: () => request({ type: 'disconnectRemove', path: location }),
+        cancel: () => request({ type: 'disconnectCancel', path: location }),
+      }),
       async transaction(updater) {
         for (let attempt = 0; attempt < 50; attempt++) {
           const { value: current } = await request({ type: 'get', path: location });
@@ -126,11 +129,18 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
   const browser = await chromium.launch({ headless: true, ...(process.env.CT_QA_CHANNEL ? { channel: process.env.CT_QA_CHANNEL } : {}) });
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   let delivery = Promise.resolve();
+  const disconnects = new Map();
   const deliver = () => {
     const tree = db.dump();
     delivery = delivery.then(() => Promise.all([...pages].map(page => page.isClosed() ? null : page.evaluate(tree => window.__qaDeliver?.(tree), tree).catch(() => {}))));
   };
-  await context.exposeBinding('__qaFirebase', (_source, request) => {
+  await context.exposeBinding('__qaFirebase', (source, request) => {
+    if (request.type === 'disconnectRemove' || request.type === 'disconnectCancel') {
+      if (!disconnects.has(source.page)) disconnects.set(source.page, new Set());
+      const paths = disconnects.get(source.page);
+      if (request.type === 'disconnectRemove') paths.add(request.path); else paths.delete(request.path);
+      return { committed: false };
+    }
     const result = db.request(request);
     if (result.committed) setTimeout(deliver, 0);
     return result;
@@ -145,7 +155,14 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
   const open = async url => {
     const item = await context.newPage(); pages.add(item);
     item.on('pageerror', error => errors.push({ url: item.url(), message: error.message }));
-    item.on('close', () => pages.delete(item));
+    const disconnect = () => {
+      // A reload/navigation closes the old Firebase connection too. Model its
+      // registered cleanup even if an async pagehide remove was interrupted.
+      for (const location of disconnects.get(item) || []) db.put(location, null);
+      disconnects.delete(item); deliver();
+    };
+    item.on('framenavigated', frame => { if (frame === item.mainFrame()) disconnect(); });
+    item.on('close', () => { pages.delete(item); disconnect(); });
     await item.goto(base + '/' + url);
     return item;
   };
@@ -191,6 +208,12 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await wait(async () => (await page.locator(`[data-ct-controls] ${selector}.is-armed`).count()) === 1, 'armed ' + selector);
     await tool(page, selector);
   };
+  const wlMore = async (page, want = true) => {
+    const details = page.locator('[data-wl-more]');
+    if (await details.evaluate(element => element.open) !== want) await details.locator(':scope > summary').click();
+    await wait(async () => await details.evaluate(element => element.open) === want, 'word-limit details');
+    await pause(25); // let the native toggle event store the reader's preference
+  };
   const text = page => page.evaluate(() => document.body.innerText);
   // ── layout captures with overflow, clipping, occlusion and tap-target checks ──
   const capture = async (page, label, { width, height = 900, lang, target = null } = {}) => {
@@ -217,7 +240,15 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
           window.scrollTo(0, 0);
         }
       }
-      return { overflow, clipped, action };
+      let primary = null;
+      if (target?.includes('.wl-line-btn')) {
+        const start = document.querySelector('[data-ct-main] .wl-floor'), end = document.querySelector(target);
+        if (start && end) {
+          const a = start.getBoundingClientRect(), b = end.getBoundingClientRect();
+          primary = { height: b.bottom - a.top, fits: b.bottom - a.top <= innerHeight - 16 };
+        }
+      }
+      return { overflow, clipped, action, primary };
     }, target);
     const file = `${label}-${width}x${height}-${lang}.png`;
     await page.screenshot({ path: path.join(output, file), fullPage: true, animations: 'disabled', timeout: 90000 });
@@ -230,6 +261,7 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     if (target && !metrics.action) report.layoutIssues.push(`${where}: ${target} missing`);
     if (metrics.action && !(metrics.action.height >= 44 && metrics.action.width >= 44)) report.layoutIssues.push(`${where}: ${target} tap target ${metrics.action.width}x${metrics.action.height}`);
     if (metrics.action && !metrics.action.clickable) report.layoutIssues.push(`${where}: ${target} is covered`);
+    if (metrics.primary && !metrics.primary.fits) report.layoutIssues.push(`${where}: essential scene/action needs ${metrics.primary.height}px`);
     for (const item of metrics.contrast) report.layoutIssues.push(`${where}: contrast ${item}`);
   };
   // Rendered contrast: shoot the page with and without its glyphs, then compare
@@ -425,16 +457,18 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     assert.equal(s.round.planned, 3); assert.equal(s.round.value[longest], 15);
     check(`the host sets the scene length and the points of the ${longest}-word line (15) before Start`);
     for (const limit of Object.values(s.round.limits)) assert.ok(E.CONFIG.dealValues.includes(limit), 'every dealt limit is within 1–6');
+    assert.ok(Object.values(s.round.limits).filter(limit => limit === 6).length <= 1, 'six is an occasional single role');
     for (const n of s.round.players) {
       await wait(async () => (await card(n).locator('[data-ct-main] .wl-board-num b').count()) === 1, 'board ' + n);
       assert.equal(await card(n).locator('[data-ct-main] .wl-board-num b').innerText(), String(s.round.limits[n]), `card ${n} shows its own limit`);
       assert.equal(await card(n).locator('[data-ct-main] .wl-cast-row').count(), playerCount);
       assert.equal(await card(n).locator('[data-ct-main] .wl-cast-row.is-me').count(), 1);
+      assert.equal(await card(n).locator('[data-wl-more]').evaluate(element => element.open), false, 'secondary cast details begin folded');
     }
     const hostText = await text(host);
     for (const n of s.round.players) assert.ok(hostText.includes(String(CONTENT.scene(s.round.sceneId).roles[s.round.roles[n]].en)), 'the shared screen lists every role');
     assert.match(await host.locator('.wl-values').innerText(), /\+15/, 'the shared screen shows what each limit scores');
-    check('every card shows its own role and limit on the letterboard; the whole cast and the points per limit are public');
+    check('every card puts its own role and limit first; cast/foul/points details are folded below, remain public, and no cast is forced to have multiple sixes');
     await views(host, 'host-cast', '[data-host-action="close"]', HOSTS);
     await views(card(1), 'card-cast', '[data-ct-main] [data-ct-action="close"]', PHONES);
     await host.close(); host = null;
@@ -451,40 +485,64 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await phase('scene');
     check('one card draws a different scene, another raises the curtain early');
 
-    // ── scene: lines score from each actor's own card ──
+    // ── scene: saved-order turns, one line and one handoff per actor ──
     s = await state();
     const worth = n => s.round.value[s.round.limits[n]] ?? s.round.limits[n];
-    // The star is whoever holds the longest limit dealt this scene.
-    const topLimit = Math.max(...s.round.players.map(n => s.round.limits[n]));
-    const star = s.round.players.find(n => s.round.limits[n] === topLimit), a = star === 1 ? 2 : 1;
+    const order = s.round.speakingOrder.slice(), a = s.round.speaker, originalDeadline = s.deadline;
+    assert.equal(a, order[0]);
     await views(card(a), 'card-scene', '[data-ct-main] .wl-line-btn', PHONES);
     assert.match(await card(a).locator('[data-ct-main] .wl-line-btn b').innerText(), new RegExp(`\\+${worth(a)}$`));
+    const waiting = order[1];
+    assert.equal(await card(waiting).locator('[data-ct-main] .wl-line-btn').count(), 0, 'a waiting actor has no scoring control');
+    await views(card(waiting), 'card-waiting-turn', null, PHONES);
+    for (let index = 0; index < order.length; index++) {
+      const actor = order[index], beforeFloor = await state();
+      assert.equal(beforeFloor.round.speaker, actor);
+      await allCards(view => view.speaker === actor && view.speakingTurn === beforeFloor.round.speakingTurn);
+      for (const number of order) assert.equal(await card(number).locator('[data-ct-main] .wl-line-btn').count(), number === actor ? 1 : 0);
+      if (index === 0) await card(actor).locator('[data-ct-main] .wl-line-btn').dblclick({ delay: 35 });
+      else await tap(card(actor), '[data-ct-main] .wl-line-btn');
+      await wait(async () => (await state()).round.lines?.[actor] === 1, 'one line from seat ' + actor);
+      await settle();
+      const afterFloor = await state();
+      assert.equal(afterFloor.round.speaker, order[(index + 1) % order.length]);
+      assert.equal(afterFloor.round.speakingTurn, beforeFloor.round.speakingTurn + 1);
+      assert.equal(afterFloor.round.gained[actor], worth(actor));
+      assert.equal(afterFloor.deadline, originalDeadline, 'a handoff does not restart the scene clock');
+      await advance(E.CONFIG.lineCooldownMs);
+    }
+    assert.equal((await state()).round.speaker, a);
+    await wlMore(card(a));
+    assert.match(await card(a).locator('[data-ct-main] .wl-score-line').innerText(), new RegExp(String(worth(a))));
+    await views(card(a), 'card-line-scored-details', '[data-ct-main] .wl-line-btn', PHONES);
+    await wlMore(card(a), false);
     await tap(card(a), '[data-ct-main] .wl-line-btn');
-    await wait(async () => (await state()).round.gained?.[a] === worth(a), 'line 1');
+    await wait(async () => (await state()).round.lines?.[a] === 2, 'line on the next circuit');
+    check('with the host closed, every actor speaks once in one synchronized saved order; the native double click scores once, short limits may repeat and handoffs keep the scene clock');
+
+    const beforeReload = await state(), reconnecting = beforeReload.round.speaker;
+    await card(reconnecting).reload();
     await settle();
-    await card(star).locator(`[data-ct-main] .wl-cast-row .wl-pop.is-live`).first().waitFor({ state: 'visible' });
-    await wait(async () => (await card(a).locator('[data-ct-main] .wl-line-btn.is-cooling').count()) === 1, 'cooling');
-    assert.equal(await card(a).locator('[data-ct-main] .wl-line-btn').getAttribute('aria-disabled'), 'true');
-    await card(a).locator('[data-ct-main] .wl-line-btn').click({ force: true });
-    await pause(150); await delivery;
-    assert.equal((await state()).round.lines[a], 1, 'a cooling line button does nothing');
-    await advance(E.CONFIG.lineCooldownMs);
-    await tap(card(a), '[data-ct-main] .wl-line-btn');
-    await wait(async () => (await state()).round.lines?.[a] === 2, 'line 2');
-    await tap(card(star), '[data-ct-main] .wl-line-btn');
-    await wait(async () => (await state()).round.gained?.[star] === worth(star), 'long line');
-    await settle();
-    assert.match(await card(star).locator('[data-ct-main] .wl-score-line').innerText(), new RegExp(String(worth(star))));
-    await views(card(star), 'card-line-scored', '[data-ct-main] .wl-line-btn', [[390, 844], [320, 568]]);
-    check(`each actor taps “I said a line” on their own card: +${worth(a)} per line at their limit, +${worth(star)} for the ${topLimit}-word line; a double tap is ignored`);
+    await card(reconnecting).locator('[data-ct-main] .wl-line-btn').waitFor({ state: 'visible' });
+    const afterReload = await state();
+    assert.equal(afterReload.round.speaker, reconnecting);
+    assert.equal(afterReload.round.speakingTurn, beforeReload.round.speakingTurn);
+    assert.equal(afterReload.deadline, beforeReload.deadline);
+    assert.deepEqual(afterReload.round.limits, beforeReload.round.limits);
+    assert.deepEqual(afterReload.round.gained, beforeReload.round.gained);
+    await wait(async () => Object.values(db.get(`rooms/${code}/players/${tableToken()}/presence`) || {}).filter(entry => entry.actor === reconnecting).length === 1, 'one reloaded presence');
+    check('reloading the current actor preserves the same floor, limits, score and scene deadline, with one live presence');
 
     // ── a foul ──
+    await wlMore(card(1));
     await tap(card(1), '[data-ct-main] .wl-foul-btn[data-ct-arg-target="2"]');
     await wait(async () => (await state()).round.fouls[2] === 1, 'foul');
     await card(2).locator('.wl-flash.is-foul.is-mine.is-live').waitFor({ state: 'visible' });
     await card(3).locator('.wl-flash.is-foul.is-live').waitFor({ state: 'visible' });
     await wait(async () => (await card(4).locator('[data-ct-main] .wl-cast-row .wl-fouls').count()) === 1, 'foul count on cards');
-    await views(card(2), 'card-foul-on-you', '[data-ct-main] .wl-line-btn', [[390, 844], [320, 568]]);
+    await views(card(2), 'card-foul-on-you', null, PHONES);
+    await views(card(1), 'card-secondary-foul-controls', '[data-ct-main] .wl-foul-btn[data-ct-arg-target="2"]', [[320, 568]]);
+    await wlMore(card(1), false);
     check('anyone calls a foul from their card; the fouled player sees “Foul on you!”, everyone sees the count');
 
     // ── Table controls: pause, resume, add time ──
@@ -514,6 +572,7 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
       if (s.round.shuffles > shuffled) {
         shuffled = s.round.shuffles;
         for (const n of s.round.players) assert.notEqual(s.round.limits[n], limits[n], `swap ${shuffled}: seat ${n} got a different limit`);
+        assert.ok(Object.values(s.round.limits).filter(limit => limit === 6).length <= 1);
         if (shuffled === 1) {
           await settle();
           await card(1).locator('[data-ct-main] .wl-board-was.is-live').waitFor({ state: 'visible' });
@@ -604,9 +663,9 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
     await tap(card(2), '[data-ct-main] [data-ct-action="close"]');
     await phase('scene');
     s = await state();
-    const one = s.round.players.find(n => s.round.limits[n] === 1);
-    await tap(card(one), '[data-ct-main] .wl-line-btn');
-    await wait(async () => (await state()).round.gained?.[one] === 3, 'a one-character line is worth 3 now');
+    const actor = s.round.speaker, expectedWorth = s.round.value[s.round.limits[actor]];
+    await tap(card(actor), '[data-ct-main] .wl-line-btn');
+    await wait(async () => (await state()).round.gained?.[actor] === expectedWorth, 'new scene scores the current actor’s configured points');
     await twice(card(2), '[data-ct-action="close"]');
     await phase('result');
     check('a player changes length, unit, swaps and the points of a limit for the next scene from their card; the next scene uses them');

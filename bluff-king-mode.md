@@ -61,7 +61,7 @@ Independent original cards are checked afresh on write conflicts. The browser
 waits for the service's supported execution window when a command needs it.
 An interrupted Hub connection shows Retry connection and retains the same roster.
 
-## The conversation
+## The Classic · Thinker conversation
 
 `lobby → topic_check → prepare → discussion → reveal → results`
 
@@ -242,6 +242,60 @@ default** and the Thinker rules above are unchanged.
 
 Runtime note: this is an engine change, so normal Hub tables (service-run)
 offer the mode only after the independent service is redeployed.
+
+## Optional fiction starts and quieter player cards (2026-10-26)
+
+Bluffers can open **Story starting points · optional** on their own card during
+`prepare` and `discussion`. This applies to Classic and Halloween topics in
+both Thinker and Everyone votes modes, including topics drawn from Mix both.
+The panel explicitly labels its contents as invented directions rather than
+facts. Players may use one, combine ideas or ignore everything; no story has to
+follow a template and no extra action is required before Ready or speaking.
+
+`bluff-king-engine.js` owns the original bilingual scaffolds: six Classic
+starting frames and six Halloween starting frames. Each eligible private
+projection gets two distinct starts and three short steps: choose or ignore
+the starts, add who/where/one concrete detail, then give a simple reason that
+can be changed freely during follow-ups. Examples include an unexpected use, a
+misunderstood name, a caretaker's repeated sound or an ordinary house rule that
+grew into a spooky warning. These are prompts to invent, never extra evidence.
+
+`storyGuide(publicTopic, roundAndSeatKey)` uses only public topic ID, deck and
+term, plus the current round and seat identity. Its deterministic selection
+stays the same on reconnect, does not consume game randomness and does not
+write room state or knowledge history. `projectView` adds
+`privateCard.storyGuide` only for an eligible Bluffer in preparation or
+discussion. The Thinker, Truth Teller, public host screen, spectators and later
+phases receive no guide. In particular, `secretAnswer`, supporting facts,
+research, explanation and other players' unrevealed roles do not feed it.
+The Truth Teller still sees the complete real answer and every supporting fact
+without expanding a panel. Hiding the private role also removes the fiction
+starts; showing the role again begins with that panel closed.
+
+The original `play.html` card still embeds the same real game page. Its
+single-column layout puts the topic, own role/evidence, current speaker and
+available action first. The optional fiction panel is closed initially and
+appears below those actions. The player/score roster is folded under
+**Players & scores** during preparation, discussion and voting; the shared
+host table retains its expanded roster. Existing follow-up inspiration is
+also folded, and **Another idea** only changes that local suggestion. Open
+panels survive ordinary sync/language repaints while still present. Player
+cards use restrained ink, charcoal and warm gold, smaller role art and a quiet
+header; shared table presentation and all game rules remain unchanged.
+
+The guide is part of the engine's private projection, so normal service-run
+Hub tables need the updated independent runtime as well as the frontend. The
+frontend engine/UI tag is `bluff-guides-1`, CSS is `v=9`; the unchanged sync
+tag remains `vote-1`. There is no second guide data bundle to maintain.
+
+Local verification for this change passed 172 Bluff/executor tests, including
+all 104 real topics, deterministic detached guides, secret-field independence,
+role/phase privacy, escaped output, Hide/Show and folded panels. The isolated
+real-page fixture `tests/bluff-guides.browser.cjs <playwright>` passed 26
+scenarios and 30 captures across EN/ZH, 320/390 player cards and the 1280 shared
+screen, with no page errors, overflow, clipped text or target findings. Its
+transport is a read-only stub; it does not establish production-service
+deployment, live multiplayer correctness or physical-phone validation.
 
 ## Topic content and maintenance
 

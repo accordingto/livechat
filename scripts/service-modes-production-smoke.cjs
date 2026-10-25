@@ -183,6 +183,14 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now, games = ['blu
       check(current.state.rooms[f.code].round.mode === 'vote' && current.state.rooms[f.code].round.thinkerId === null, g);
       check(current.view.round?.topic?.deck === 'halloween', g);
       report.step = 'bluff:confirm'; current = await command(f, 1, 'confirmTopic'); check(current.state.rooms[f.code].phase === 'prepare', g);
+      report.step = 'bluff:optional-guides';
+      for (let n = 1; n <= 3; n++) {
+        const own = await card(f, n), privateCard = own.view.privateCard, guide = privateCard?.storyGuide;
+        check(privateCard?.role === 'bluffer'
+          ? guide?.optional === true && guide.kind === 'fiction' && guide.topic === own.view.round.topic.term && guide.starts?.length === 2 && guide.steps?.length === 3
+          : guide == null, g);
+      }
+      check(current.view.round.storyGuide == null && current.view.round.topic.storyGuide == null, g);
       report.step = 'bluff:discussion'; current = await command(f, 1, 'beginDiscussion');
       let room = current.state.rooms[f.code]; check(room.phase === 'discussion' && room.round.spotlightOrder.length === 3, g);
       for (let i = 0; i < 3; i++) {

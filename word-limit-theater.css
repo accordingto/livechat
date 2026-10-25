@@ -300,3 +300,73 @@ html[lang="zh-Hant"] .wl-wrapup h2 { font-family: inherit; font-weight: 900; }
   .wl-line-btn { gap: 10px; padding: 10px 10px 10px 14px; font-size: 1.04rem; }
   .wl-line-btn b { font-size: 1.45rem; padding: 6px 10px 4px; }
 }
+
+/* A quiet player card: the floor, own role/limit, scene and one action first.
+   Cast, points and foul controls stay available below the main reading area. */
+body.wl-card-page {
+  --ct-bg: #17191e; --ct-surface: #20232a; --ct-surface-2: #292d35;
+  --ct-border: #3c424d; --ct-border-2: #59616d;
+  --ct-text: #e8e7e4; --ct-text-hi: #faf5ec; --ct-text-2: #d2d3d6; --ct-muted: #b5bac4;
+  --ct-accent: #d4b58b; --ct-accent-hi: #e2c7a3; --ct-accent-ink: #25211b; --ct-accent-text: #e1c49d;
+  --ct-btn: #30353e; --ct-btn-hi: #3b424c; --ct-field-bg: #191c22; --ct-focus: #e2c7a3;
+  --ct-card-bg: #20232a; --ct-card-border: #48515d;
+  --wl-spot: #d4b58b; --wl-felt: #1c1f25; --wl-letter: #f3eee6;
+  background: #17191e; position: relative; padding: 64px 12px 24px;
+}
+body.wl-card-page #i18n-toggle { position: absolute; background: #242830; border-color: #515966; --accent: #d4b58b; }
+body.wl-card-page #i18n-toggle button { color: #d4d6dc; }
+body.wl-card-page #i18n-toggle button.active { color: #25211b; }
+.wl-card { border-radius: 20px; box-shadow: 0 12px 36px #0003; }
+.wl-card.is-live, .wl-card.is-top { border-color: #59616d; box-shadow: 0 12px 36px #0003; }
+.wl-card-head { flex-wrap: nowrap; min-width: 0; }
+.wl-card .name-banner { min-width: 0; color: var(--ct-text-hi) !important; background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0; margin: 0; font-size: 1rem; font-weight: 650; overflow-wrap: anywhere; }
+.wl-card .wl-chip { flex-shrink: 0; border: 0; padding: 4px 0 4px 8px; background: transparent; font-size: .75rem; color: var(--ct-muted); }
+.wl-floor { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--ct-border); border-radius: 12px; background: var(--ct-surface-2); text-align: left; }
+.wl-floor > div:first-child { min-width: 0; display: grid; gap: 2px; }
+.wl-floor > div > span { color: var(--ct-muted); font-size: .73rem; font-weight: 500; }
+.wl-floor strong { color: var(--ct-text-hi); font-size: 1.12rem; line-height: 1.35; font-weight: 650; overflow-wrap: anywhere; }
+.wl-floor small { color: var(--ct-text-2); font-size: .75rem; line-height: 1.4; overflow-wrap: anywhere; }
+.wl-floor.is-mine { border-color: #a68b68; background: #322e29; }
+.wl-floor.is-mine > div > span { color: #e6cda9; }
+.wl-floor-clock { display: grid; justify-items: end; gap: 3px; flex-shrink: 0; }
+.wl-floor .wl-clock { font-family: inherit; color: var(--ct-text-hi); font-size: 1.2rem; font-weight: 550; letter-spacing: 0; }
+.wl-card .wl-board { grid-template-columns: 84px minmax(0, 1fr); align-items: center; gap: 15px; padding: 14px; border: 0; border-radius: 13px; background: #eee8dd; background-image: none; color: #262b32; box-shadow: none; }
+.wl-card .wl-board-limit { display: grid; justify-items: center; min-width: 0; gap: 2px; }
+.wl-card .wl-board-label { color: #4f545c; font-size: .67rem; white-space: nowrap; }
+.wl-card .wl-board-num b { font-family: Georgia, 'Times New Roman', serif; font-size: 3.9rem; font-weight: 400; color: #252b32; text-shadow: none; line-height: 1; }
+.wl-card .wl-board .wl-board-unit { margin: 0; font-family: inherit; font-size: .7rem; font-weight: 550; letter-spacing: 0; color: #4f545c; }
+.wl-card .wl-board-role { width: 100%; min-width: 0; display: grid; gap: 5px; margin: 0; padding: 0 0 0 14px; border-top: 0; border-left: 1px solid #b7b0a5; text-align: left; }
+.wl-card .wl-board-role span { color: #565960; font-size: .7rem; }
+.wl-card .wl-board .wl-board-role strong { font-family: inherit; font-size: 1.08rem; line-height: 1.35; font-weight: 700; color: #252b32; }
+.wl-card .wl-board-role em { font-style: normal; color: #444b54; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }
+.wl-card .wl-board-was { left: auto; right: -18px; top: -5px; background: #d5b88e; padding: 2px 5px; font-size: .63rem; }
+.wl-card .wl-board:has(.wl-board-was.is-live) .wl-board-num b { color: #252b32; animation: none; }
+.wl-scene-brief { display: grid; gap: 5px; padding: 2px 1px; text-align: left; }
+.wl-scene-brief h3 { margin: 0; color: var(--ct-text-hi); font: inherit; font-size: .98rem; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.wl-scene-brief p { margin: 0; color: var(--ct-text-2); font-size: .9rem; line-height: 1.55; overflow-wrap: anywhere; }
+.wl-card .wl-line-btn { min-height: 58px; border-radius: 11px; padding: 11px 12px; gap: 9px; font-size: 1rem; font-weight: 650; box-shadow: none; }
+.wl-card .wl-line-btn svg { width: 21px; height: 21px; }
+.wl-card .wl-line-btn b { background: #352b20; color: #f0d5af; font-family: inherit; font-size: 1.1rem; font-weight: 700; border-radius: 7px; padding: 6px 8px; }
+.wl-card .wl-score-hint { font-size: .75rem; line-height: 1.45; }
+.wl-waiting { margin: 0; padding: 10px 4px; color: var(--ct-muted); font-size: .83rem; line-height: 1.5; text-align: center; }
+.wl-more { margin-top: 8px; border-top: 1px solid var(--ct-border); text-align: left; }
+.wl-more > summary { min-height: 52px; padding: 12px 2px; color: var(--ct-text-2); cursor: pointer; font-size: .84rem; line-height: 1.4; }
+.wl-more > summary small { display: block; padding-left: 15px; color: var(--ct-muted); font-size: .73rem; margin-top: 3px; }
+.wl-more-content { display: grid; gap: 12px; padding: 4px 0 10px; }
+.wl-card .wl-more .wl-score-line { font-size: .84rem; font-weight: 500; }
+.wl-card .wl-wrapup { background: #272b32; box-shadow: none; border: 1px solid var(--ct-border); border-radius: 14px; }
+.wl-card .wl-wrapup h2, .wl-card .wl-wrap-title { font-family: inherit; font-size: 1.7rem; letter-spacing: 0; font-weight: 700; }
+.wl-cast-row.is-speaking { border-color: var(--wl-spot); }
+.wl-card .wl-foul-btn { color: #edbdc0; border-color: #8e686e; border-radius: 9px; }
+.wl-card .wl-flash { box-shadow: 0 8px 24px #0004; animation: none; }
+.wl-stage .wl-floor { margin: 0; }
+@media (max-width: 380px) {
+  .wl-card .wl-board { grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 12px; }
+  .wl-card .wl-board-role { padding-left: 11px; }
+  .wl-card .wl-board-role strong { font-size: 1rem; }
+  .wl-card .wl-board-role em { font-size: .8rem; }
+  .wl-floor { padding: 10px 12px; }
+  .wl-floor strong { font-size: 1.02rem; }
+  .wl-card .wl-zone-row { grid-template-columns: 1fr 1fr; }
+  .wl-card .wl-zone-row .ct-button { padding-inline: 8px; font-size: .8rem; }
+}

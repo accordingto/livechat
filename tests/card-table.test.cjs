@@ -163,17 +163,23 @@ test('WORD LIMIT THEATER: with the host page closed, the cards run a whole scene
   const writes = s.db.writes;
   for (const c of all) c.pulse(); await settle();
   assert.equal(s.db.writes, writes, 'an idle tick writes nothing');
-  // Lines and a foul from the players' cards.
-  await cards[2].command('line'); await settle();
-  const worth2 = cards[2].view().wl.me.worth;
-  assert.equal(s.state('wl').round.gained[2], worth2);
-  await assert.rejects(cards[2].command('line'), /cooldown/, 'a double tap does not score twice');
-  await cards[4].command('line'); await settle();
+  // Only the saved current actor can score; a completed line hands over.
+  const firstActor = s.state('wl').round.speaker, firstStage = s.state('wl').stage;
+  const firstTurn = s.state('wl').round.speakingTurn, deadline = s.state('wl').deadline;
+  const worth = cards[firstActor].view().wl.me.worth;
+  await cards[firstActor].command('line', { speakingTurn: firstTurn }); await settle();
+  assert.equal(s.state('wl').round.gained[firstActor], worth);
+  const secondActor = s.state('wl').round.speaker;
+  assert.notEqual(secondActor, firstActor);
+  await assert.rejects(cards[firstActor].command('line'), /not_available/, 'the prior speaker cannot score on another actor’s floor');
+  await assert.rejects(cards[firstActor].command('line', { stage: firstStage, speakingTurn: firstTurn }), /stale_turn/, 'a raced older handoff is fenced');
+  await cards[secondActor].command('line', { speakingTurn: s.state('wl').round.speakingTurn }); await settle();
+  assert.equal(s.state('wl').deadline, deadline, 'passing the floor keeps the scene deadline');
   await cards[2].command('foul', { target: 1 }); await settle();
   assert.equal(s.state('wl').round.fouls[1], 1);
   await assert.rejects(cards[2].command('foul', { target: 1 }), /cooldown/, 'the same whistle waits a moment');
   await assert.rejects(cards[4].command('twist'), /not_available/, 'no plot twists any more');
-  assert.equal(cards[1].view().wl.standings.find(row => row.playerNum === 2).score, worth2, 'every card sees the points at once');
+  assert.equal(cards[1].view().wl.standings.find(row => row.playerNum === firstActor).score, worth, 'every card sees the points at once');
   // Pause from one card, resume from another: the stopwatch loses nothing.
   s.now += 10000;
   await cards[1].command('pause'); await settle();

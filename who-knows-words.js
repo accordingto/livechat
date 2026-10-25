@@ -104,17 +104,50 @@ var WHO_KNOWS_WORDS = (() => {
     ],
   };
   const LEVELS = Object.freeze(['easy', 'medium', 'hard']);
+  // Optional opening clues describe broad kinds of answers, never spelling,
+  // a distinctive feature or an answer-specific fact. A handful of concrete
+  // words in the old `idea` bucket need a more honest public classification.
+  const HINTS = Object.freeze(Object.fromEntries(Object.entries({
+    animal: ['動物', 'Animals'], food: ['食物或飲品', 'Food or drinks'],
+    home: ['居家與日常生活用品', 'Household and everyday living items'],
+    thing: ['人們使用、攜帶或製作的物件', 'Objects people use, carry or make'],
+    nature: ['自然與戶外', 'Nature and the outdoors'], transport: ['交通工具', 'Transport'],
+    place: ['場所', 'Places'], people: ['人物、職業或角色', 'People, jobs or characters'],
+    sport: ['運動、遊戲或休閒活動', 'Sports, games or leisure activities'],
+    idea: ['生活中的概念、行為或現象', 'Ideas, actions or phenomena in everyday life'],
+    event: ['活動、事件或日子', 'Activities, events or occasions'],
+    peoplePlaces: ['人物、角色或場所', 'People, characters or places'],
+    outdoorPlaces: ['場所或戶外環境', 'Places or outdoor environments'],
+    physical: ['具體事物或自然現象', 'Physical things or natural phenomena'],
+  }).map(([id, [zh, en]]) => [id, Object.freeze({ en, zh })])));
+  const hintOverrides = Object.freeze({ Snowman: 'thing', Sandcastle: 'thing', Treasure: 'thing',
+    Money: 'thing', Tattoo: 'thing', Garbage: 'home', Bubble: 'nature' });
   const prefix = { easy: 'e', medium: 'm', hard: 'h' };
   const items = [];
   for (const level of LEVELS) raw[level].forEach(([en, zh, cat], index) => {
-    items.push(Object.freeze({ id: `wk-${prefix[level]}${String(index + 1).padStart(3, '0')}`, en, zh, level, cat }));
+    items.push(Object.freeze({ id: `wk-${prefix[level]}${String(index + 1).padStart(3, '0')}`, en, zh, level, cat,
+      broadHint: HINTS[hintOverrides[en] || cat] }));
   });
   const byId = new Map(items.map(item => [item.id, item]));
   const pools = Object.fromEntries(LEVELS.map(level => [level, Object.freeze(items.filter(item => item.level === level))]));
+  function broadHint(id, difficulty = 'mixed') {
+    const item = byId.get(id); if (!item) return null;
+    let key = hintOverrides[item.en] || item.cat;
+    // Keep clues broad even when the host has restricted the word pool to one
+    // difficulty. Every label below describes at least eight eligible words.
+    if (difficulty === 'easy' && ['people', 'place'].includes(key)) key = 'peoplePlaces';
+    if (difficulty === 'medium') {
+      if (['home', 'thing', 'transport'].includes(key)) key = 'thing';
+      if (['nature', 'place'].includes(key)) key = 'outdoorPlaces';
+    }
+    if (difficulty === 'hard' && ['home', 'thing', 'nature'].includes(key)) key = 'physical';
+    return HINTS[key];
+  }
   return Object.freeze({
     LEVELS,
     items: Object.freeze(items),
     get: id => byId.get(id) || null,
+    broadHint,
     pool: level => pools[level] || [],
   });
 })();

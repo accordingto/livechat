@@ -29,14 +29,16 @@
 
   // ── settings forms (setup and "next round" in Host controls) ──────────
   const FORMS = {
-    setup: { mode: () => setupMode, minutes: 'minutes', turnSeconds: 'turn-seconds', difficulty: 'difficulty', tokens: 'tokens', wolves: 'wolves', mayorSecret: 'mayor-secret', masterGuess: 'master-guess', only: 'data-wk-only' },
-    manage: { mode: () => byId('m-mode').value, minutes: 'm-minutes', turnSeconds: 'm-turn-seconds', difficulty: 'm-difficulty', tokens: 'm-tokens', wolves: 'm-wolves', mayorSecret: 'm-mayor-secret', masterGuess: 'm-master-guess', only: 'data-wk-m-only' },
+    setup: { mode: () => setupMode, minutes: 'minutes', turnSeconds: 'turn-seconds', difficulty: 'difficulty', tokens: 'tokens', wolves: 'wolves', mayorSecret: 'mayor-secret', masterGuess: 'master-guess', only: 'data-wk-only', target: 'target-kind', numberMax: 'number-max', targetOnly: 'data-wk-target-only' },
+    manage: { mode: () => byId('m-mode').value, minutes: 'm-minutes', turnSeconds: 'm-turn-seconds', difficulty: 'm-difficulty', tokens: 'm-tokens', wolves: 'm-wolves', mayorSecret: 'm-mayor-secret', masterGuess: 'm-master-guess', only: 'data-wk-m-only', target: 'm-target-kind', numberMax: 'm-number-max', targetOnly: 'data-wk-m-target-only' },
   };
   function readSettings(form) {
     const f = FORMS[form], wolves = byId(f.wolves).value;
     return { mode: f.mode(), questionMinutes: Number(byId(f.minutes).value), turnSeconds: Number(byId(f.turnSeconds).value), difficulty: byId(f.difficulty).value,
       tokens: Number(byId(f.tokens).value), wolves: wolves === 'auto' ? 'auto' : Number(wolves),
-      mayorSecret: byId(f.mayorSecret).checked, masterGuess: byId(f.masterGuess).checked };
+      mayorSecret: byId(f.mayorSecret).checked, masterGuess: byId(f.masterGuess).checked,
+      broadHint: !!byId(form === 'setup' ? 'broad-hint' : 'm-broad-hint')?.checked,
+      targetKind: byId(f.target)?.value || 'word', numberMax: Number(byId(f.numberMax)?.value || E.CONFIG.defaultNumberMax) };
   }
   function writeSettings(form, settings) {
     let s; try { s = E.parseSettings(settings || {}); } catch (_) { s = E.defaultSettings(); }
@@ -46,11 +48,20 @@
     byId(f.turnSeconds).value = String(s.turnSeconds ?? 25);
     byId(f.tokens).value = String(s.tokens); byId(f.wolves).value = String(s.wolves);
     byId(f.mayorSecret).checked = !!s.mayorSecret; byId(f.masterGuess).checked = s.masterGuess !== false;
+    const clue = byId(form === 'setup' ? 'broad-hint' : 'm-broad-hint'); if (clue) clue.checked = !!s.broadHint;
+    if (byId(f.target)) byId(f.target).value = s.targetKind;
+    if (byId(f.numberMax)) byId(f.numberMax).value = String(s.numberMax);
     showOnly(form);
   }
   function showOnly(form) {
     const f = FORMS[form], mode = f.mode();
     for (const element of document.querySelectorAll(`[${f.only}]`)) element.hidden = element.getAttribute(f.only) !== mode;
+    const target = byId(f.target)?.value || 'word';
+    for (const element of document.querySelectorAll(`[${f.targetOnly}]`)) element.hidden = element.getAttribute(f.targetOnly) !== target;
+    if (form === 'setup') for (const kind of E.MODES) {
+      const pitch = document.querySelector(`[data-wk-mode-card="${kind}"] [data-i18n="whoknows.pitch_${kind}"]`);
+      if (pitch) pitch.textContent = t((target === 'number' ? 'numberPitch_' : 'pitch_') + kind);
+    }
   }
   function selectMode(mode, { keepMinutes = false } = {}) {
     setupMode = E.MODES.includes(mode) ? mode : 'insider';
@@ -73,6 +84,8 @@
       pick(prefix + 'difficulty', E.CONFIG.difficulties, d => t('diff_' + d));
       pick(prefix + 'tokens', E.CONFIG.tokenOptions, n => n === 0 ? t('tokensNone') : String(n));
       pick(prefix + 'wolves', E.CONFIG.wolfOptions, w => t('wolves_' + w));
+      if (byId(prefix + 'target-kind')) pick(prefix + 'target-kind', E.CONFIG.targetKinds, k => t('target_' + k));
+      if (byId(prefix + 'number-max')) pick(prefix + 'number-max', E.CONFIG.numberMaxOptions, n => t('numberPoolN', { n }));
     }
     pick('m-mode', E.MODES, m => t('mode_' + m));
     if (!byId('minutes').dataset.ready) { writeSettings('setup', state?.settings || E.defaultSettings()); byId('minutes').dataset.ready = '1'; }
@@ -82,6 +95,7 @@
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('demo-view').value = actor;
     byId('room-label').textContent = demo || !sync ? '' : t('room', { code: ROOM.code });
+    showOnly('setup'); showOnly('manage');
     sceneKey = ''; rosterKey = '';
   }
 
@@ -225,6 +239,7 @@
   byId('setup').addEventListener('submit', event => { event.preventDefault(); start(readSettings('setup')); });
   byId('setup').addEventListener('change', event => {
     if (event.target.name === 'wk-mode') selectMode(event.target.value);
+    if (event.target === byId('target-kind')) showOnly('setup');
   });
   byId('setup-cancel').addEventListener('click', () => { editing = false; render(); });
   byId('continue').addEventListener('click', async () => {
@@ -260,6 +275,7 @@
     byId('m-minutes').value = String(E.CONFIG.defaultQuestionMinutes[byId('m-mode').value] || 5);
     showOnly('manage');
   });
+  byId('m-target-kind')?.addEventListener('change', () => showOnly('manage'));
   byId('manage').addEventListener('change', event => { if (event.target.closest('.wk-settings, .wk-check')) { saved = ''; byId('saved').textContent = ''; } });
   byId('save-settings').addEventListener('click', async () => {
     if (await command('settings', { settings: readSettings('manage') })) { saved = t('saved'); render(); }

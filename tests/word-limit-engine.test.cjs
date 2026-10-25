@@ -28,6 +28,12 @@ const ok = (result, label = '') => { assert.equal(result.error, '', label || 'co
 // Start the scene now (anyone may skip the reading time).
 function toScene(state, at) { return ok(run(state, 1, 'close', {}, at ?? state.lastChangeAt + 100)); }
 const COOL = E.CONFIG.lineCooldownMs;
+const say = (state, now = state.lastChangeAt + COOL) => ok(run(state, state.round.speaker, 'line', { speakingTurn: state.round.speakingTurn }, now));
+function cycleTo(state, number) {
+  for (let guard = 0; guard < 9 && state.round.speaker !== number; guard++) state = say(state);
+  assert.equal(state.round.speaker, number, 'the floor returns through the actual speaking order');
+  return state;
+}
 
 test('the content is complete: 36 scenes with nine bilingual roles each, unique ids', () => {
   assert.equal(CONTENT.SCENES.length, 36);
@@ -55,8 +61,7 @@ test('every player gets one of the first N roles and a random limit from 1 to 6'
     assert.deepEqual(Object.values(round.roles).sort((a, b) => a - b), Array.from({ length: n }, (_, i) => i), `${n} players use roles 0..${n - 1}`);
     assert.equal(limits.length, n);
     for (const limit of limits) assert.ok(E.CONFIG.dealValues.includes(limit), `${n} players: ${limit} is within 1–6`);
-    // Drawn like cards from a bag: up to six players never share a limit.
-    assert.equal(new Set(limits).size, Math.min(n, 6), `${n} players: as many different limits as possible`);
+    assert.ok(limits.filter(limit => limit === 6).length <= 1, `${n} players: at most one occasional six`);
   }
   assert.deepEqual(E.CONFIG.dealValues, [1, 2, 3, 4, 5, 6]);
   // Over many tables every limit from 1 to 6 comes up, and nothing above 6.
@@ -64,6 +69,8 @@ test('every player gets one of the first N roles and a random limit from 1 to 6'
   for (let i = 0; i < 60; i++) for (const limit of Object.values(make(4).round.limits)) seen.add(limit);
   assert.deepEqual([...seen].sort((a, b) => a - b), [1, 2, 3, 4, 5, 6]);
   assert.equal(E.drawLimits(9, E.rng(4)).length, 9);
+  assert.deepEqual(E.drawLimits(5, () => 0), [1, 1, 1, 1, 1], 'short limits are allowed to repeat');
+  assert.equal(E.drawLimits(9, () => .999999).filter(value => value === 6).length, 1, 'even an extreme draw cannot force several sixes');
   assert.throws(() => make(1), /not_enough_players/);
   assert.throws(() => E.create({ id: 'x', roster: [{ playerNum: 1 }, { playerNum: 1 }], now: 1, seed: 1 }), /invalid_roster/);
 });
@@ -141,39 +148,44 @@ test('“I said a line”: each actor scores their current limit, with a short c
   let state = toScene(make(4, { shuffles: 1, sceneMinutes: 2 }));
   const t0 = state.lastChangeAt + 10;
   const limitOf = n => state.round.limits[n];
-  const first = limitOf(2);
-  state = ok(run(state, 2, 'line', {}, t0));
-  assert.equal(state.round.gained[2], first, 'one point per word by default');
-  assert.equal(state.round.lines[2], 1);
-  assert.equal(run(state, 2, 'line', {}, t0 + COOL - 1).error, 'cooldown', 'a double tap does not score twice');
-  state = ok(run(state, 3, 'line', {}, t0 + 100), 'another actor is not blocked');
-  state = ok(run(state, 2, 'line', {}, t0 + COOL));
-  assert.equal(state.round.gained[2], first * 2);
+  const actor = state.round.speaker, first = limitOf(actor), originalStage = state.stage;
+  state = say(state, t0);
+  assert.equal(state.round.gained[actor], first, 'one point per word by default');
+  assert.equal(state.round.lines[actor], 1);
+  assert.equal(run(state, actor, 'line', { stage: originalStage }, t0 + 100).error, 'stale_turn', 'a double tap cannot take the next floor');
+  assert.equal(run(state, actor, 'line', {}, t0 + 100).error, 'not_available', 'only the next actor may speak');
+  // Others can each say their own line without waiting for the prior actor's cool-down.
+  for (let i = 1; state.round.speaker !== actor; i++) state = say(state, t0 + i * 100);
+  assert.equal(run(state, actor, 'line', {}, t0 + COOL - 1).error, 'cooldown');
+  state = say(state, t0 + COOL);
+  assert.equal(state.round.gained[actor], first * 2);
   assert.deepEqual(state.scores, {}, 'scores settle when the scene ends');
   const live = E.view(state, 0).wl;
-  assert.equal(live.standings.find(row => row.playerNum === 2).score, first * 2, 'but the live standings already count them');
-  assert.equal(live.cast.find(row => row.playerNum === 2).gained, first * 2);
-  assert.deepEqual(live.cast.find(row => row.playerNum === 2).lastLine, { ts: t0 + COOL, points: first });
-  assert.equal(E.view(state, 2).wl.me.lineReadyAt, t0 + COOL + COOL);
+  assert.equal(live.standings.find(row => row.playerNum === actor).score, first * 2, 'but the live standings already count them');
+  assert.equal(live.cast.find(row => row.playerNum === actor).gained, first * 2);
+  assert.deepEqual(live.cast.find(row => row.playerNum === actor).lastLine, { ts: t0 + COOL, points: first });
+  assert.equal(E.view(state, actor).wl.me.lineReadyAt, t0 + COOL + COOL);
   // After a swap, a line scores the new limit.
   state = ok(run(state, 1, 'tick', {}, state.deadline + 10));
   assert.equal(state.round.shuffles, 1);
-  const second = limitOf(2);
+  const second = limitOf(actor);
   assert.notEqual(second, first);
-  state = ok(run(state, 2, 'line', {}, state.lastChangeAt + COOL));
-  assert.equal(state.round.gained[2], first * 2 + second);
+  state = cycleTo(state, actor);
+  state = say(state);
+  assert.equal(state.round.gained[actor], first * 2 + second);
   // The host page has no seat; someone sitting out or watching cannot score.
   assert.equal(run(state, 0, 'line').error, 'not_available');
-  state = ok(run(state, 1, 'exclude', { playerNum: 4, active: false }));
-  assert.equal(run(state, 4, 'line', {}, state.lastChangeAt + COOL).error, 'not_available');
-  assert.equal(state.round.gained[3] > 0, true);
-  state = ok(run(state, 1, 'close'));
+  const excluded = state.round.players.find(n => n !== actor);
+  state = ok(run(state, actor, 'exclude', { playerNum: excluded, active: false }));
+  assert.equal(run(state, excluded, 'line', {}, state.lastChangeAt + COOL).error, 'not_available');
+  assert.equal(state.round.gained[excluded] > 0, true);
+  state = ok(run(state, actor, 'close'));
   assert.equal(state.phase, 'result');
   assert.deepEqual(state.scores, Object.fromEntries(Object.entries(state.round.gained).filter(([, v]) => v > 0)), 'every line counts once');
   const top = Math.max(...Object.values(state.round.gained));
   assert.deepEqual(state.round.outcome.best, Object.keys(state.round.gained).map(Number).filter(n => state.round.gained[n] === top));
-  assert.equal(E.view(state, 0).wl.standings.find(row => row.playerNum === 2).score, state.scores[2], 'nothing is counted twice after the result');
-  assert.equal(run(state, 2, 'line').error, 'not_available', 'the scene is over');
+  assert.equal(E.view(state, 0).wl.standings.find(row => row.playerNum === actor).score, state.scores[actor], 'nothing is counted twice after the result');
+  assert.equal(run(state, actor, 'line').error, 'not_available', 'the scene is over');
 });
 
 test('the points of every limit are a setting: partial changes keep the rest; they apply from the next scene', () => {
@@ -184,13 +196,14 @@ test('the points of every limit are a setting: partial changes keep the rest; th
   for (const bad of [{ 11: 3 }, { 2: -1 }, { 2: 1.5 }, { 2: 51 }, { 2: '' }, []]) assert.throws(() => E.parseSettings({ points: bad }), /invalid_options/, JSON.stringify(bad));
   let state = make(4, { points: { 1: 5, 2: 5, 3: 5, 4: 5, 5: 5, 6: 5 }, shuffles: 0 });
   state = toScene(state);
-  state = ok(run(state, 1, 'line'));
-  assert.equal(state.round.gained[1], 5, 'a flat table: every line is worth 5');
+  const actor = state.round.speaker;
+  state = say(state);
+  assert.equal(state.round.gained[actor], 5, 'a flat table: every line is worth 5');
   assert.deepEqual(E.view(state, 0).wl.values.map(item => [item.limit, item.points]), [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5]], 'the legend lists every limit from 1 to 6');
   assert.deepEqual(E.view(state, 0).wl.values.filter(item => item.held).map(item => item.limit), [...new Set(Object.values(state.round.limits))].sort((a, b) => a - b));
   state = ok(run(state, 2, 'settings', { settings: { points: { 1: 0 } } }));
-  state = ok(run(state, 1, 'line', {}, state.lastChangeAt + COOL));
-  assert.equal(state.round.gained[1], 10, 'the scene keeps the points it started with');
+  state = cycleTo(state, actor); state = say(state);
+  assert.equal(state.round.gained[actor], 10, 'the scene keeps the points it started with');
   assert.equal(run(state, 2, 'settings', { settings: { points: { 1: 99 } } }).error, 'invalid_options');
   state = ok(run(state, 1, 'void'));
   state = ok(run(state, 1, 'next'));
@@ -200,15 +213,16 @@ test('the points of every limit are a setting: partial changes keep the rest; th
 test('fouls: anyone can call one on an active player; the same caller waits a moment; no points are taken', () => {
   let state = toScene(make(4));
   const t0 = state.lastChangeAt + 10;
-  state = ok(run(state, 3, 'line', {}, t0 - 5));
-  state = ok(run(state, 1, 'foul', { target: 3 }, t0));
-  assert.equal(state.round.fouls[3], 1);
-  assert.deepEqual({ kind: state.round.event.kind, target: state.round.event.target, by: state.round.event.by }, { kind: 'foul', target: 3, by: 1 });
-  assert.equal(run(state, 1, 'foul', { target: 3 }, t0 + 1000).error, 'cooldown');
-  state = ok(run(state, 2, 'foul', { target: 3 }, t0 + 1000), 'a different caller is not blocked');
-  state = ok(run(state, 1, 'foul', { target: 3 }, t0 + E.CONFIG.foulCooldownMs + 1));
-  assert.equal(state.round.fouls[3], 3);
-  assert.equal(state.round.gained[3], state.round.limits[3], 'a foul only counts');
+  const target = state.round.speaker;
+  state = say(state, t0 - 5);
+  state = ok(run(state, 1, 'foul', { target }, t0));
+  assert.equal(state.round.fouls[target], 1);
+  assert.deepEqual({ kind: state.round.event.kind, target: state.round.event.target, by: state.round.event.by }, { kind: 'foul', target, by: 1 });
+  assert.equal(run(state, 1, 'foul', { target }, t0 + 1000).error, 'cooldown');
+  state = ok(run(state, 2, 'foul', { target }, t0 + 1000), 'a different caller is not blocked');
+  state = ok(run(state, 1, 'foul', { target }, t0 + E.CONFIG.foulCooldownMs + 1));
+  assert.equal(state.round.fouls[target], 3);
+  assert.equal(state.round.gained[target], state.round.limits[target], 'a foul only counts');
   assert.equal(run(state, 1, 'foul', { target: 9 }, t0 + 9000).error, 'not_available', 'only someone in the scene');
   state = ok(run(state, 2, 'exclude', { playerNum: 4, active: false }, t0 + 9000));
   assert.equal(run(state, 1, 'foul', { target: 4 }, t0 + 9500).error, 'not_available', 'not someone sitting out');
@@ -218,7 +232,7 @@ test('fouls: anyone can call one on an active player; the same caller waits a mo
 
 test('a cancelled scene scores nothing; ending the game mid-scene keeps the lines already said; next scene deals again', () => {
   let state = toScene(make(4));
-  state = ok(run(state, 2, 'line'));
+  state = say(state);
   state = ok(run(state, 1, 'void'));
   assert.equal(state.phase, 'result'); assert.equal(state.round.outcome.voided, true);
   assert.deepEqual(state.scores, {}); assert.deepEqual(state.round.outcome.best, []);
@@ -230,12 +244,13 @@ test('a cancelled scene scores nothing; ending the game mid-scene keeps the line
   assert.equal(run(state, 4, 'next').error, 'not_available', 'a seat sitting out cannot run the table');
   state = ok(run(state, 4, 'exclude', { playerNum: 4, active: true }), 'but can bring itself back');
   state = toScene(state);
-  state = ok(run(state, 3, 'line'));
-  const said = state.round.gained[3];
+  const actor = state.round.speaker;
+  state = say(state);
+  const said = state.round.gained[actor];
   state = ok(run(state, 1, 'stop'));
   assert.equal(state.phase, 'finished');
-  assert.equal(state.scores[3], said, 'an early end still counts the lines');
-  assert.equal(E.standings(state).find(row => row.playerNum === 3).score, said);
+  assert.equal(state.scores[actor], said, 'an early end still counts the lines');
+  assert.equal(E.standings(state).find(row => row.playerNum === actor).score, said);
 });
 
 test('table controls: pause floor, extend, settings, restart, stop and the Hub rename', () => {
@@ -270,7 +285,7 @@ test('commands are fenced to the stage a card showed, and a repeated id is ignor
   state = toScene(state);
   assert.equal(run(state, 2, 'line', { stage: stale }).error, 'stale_turn');
   assert.equal(run(state, 0, 'close', { stage: stale }).error, 'stale_turn', 'host buttons that advance are fenced too');
-  const input = { id: 'same-command-01', type: 'line', actor: 1, sessionId: state.sessionId, stage: state.stage, now: state.lastChangeAt + 5, seed: 1 };
+  const input = { id: 'same-command-01', type: 'line', actor: state.round.speaker, speakingTurn: state.round.speakingTurn, sessionId: state.sessionId, stage: state.stage, now: state.lastChangeAt + 5, seed: 1 };
   const once = E.apply(state, input);
   assert.notEqual(once, state);
   assert.equal(E.apply(once, Object.assign({}, input, { now: input.now + 9000 })), once, 'a retried line never scores twice');
@@ -289,7 +304,7 @@ test('the projection: roles, limits and points are public; a card adds only its 
   assert.equal(card.me.limit, state.round.limits[2]);
   assert.equal(card.me.worth, state.round.limits[2]);
   assert.equal(card.me.role.en, CONTENT.scene(state.round.sceneId).roles[state.round.roles[2]].en);
-  assert.equal(card.me.canLine, true); assert.equal(card.me.canFoul, true);
+  assert.equal(card.me.canLine, state.round.speaker === 2); assert.equal(card.me.canFoul, true);
   assert.ok(card.sceneEndsAt > 0 && card.sceneLeftMs === null);
   state = ok(run(state, 1, 'pause'));
   const paused = E.view(state, 2).wl;
@@ -314,6 +329,7 @@ test('a table saved by the earlier version keeps working: an old vote runs out i
   let state = make(3);
   state.settings = { sceneMinutes: 3, unit: 'words', twists: true, shuffle: false, vote: true };
   delete state.round.value; delete state.round.gained; delete state.round.lines; delete state.round.lastLine; delete state.round.planned;
+  delete state.round.speakingOrder; delete state.round.speaker; delete state.round.speakingTurn;
   state = toScene(state);
   state.round.pending = [{ type: 'twist', at: 63000 }];
   state.deadline = state.round.runSince + 63000;
@@ -331,4 +347,146 @@ test('a table saved by the earlier version keeps working: an old vote runs out i
   state = ok(run(state, 1, 'next'));
   assert.equal(state.settings.shuffles, 0, 'old “shuffle off” stays off'); assert.equal(state.round.planned, 0);
   assert.deepEqual(state.settings.points, E.defaultPoints());
+});
+
+test('2–9 actors each get one floor in the saved order; saying one line hands over without changing the scene clock', () => {
+  for (let count = 2; count <= 9; count++) {
+    let state = toScene(make(count, { shuffles: 0 }));
+    const order = state.round.speakingOrder.slice(), originalDeadline = state.deadline, scene = state.round.sceneId;
+    const firstStage = state.stage;
+    assert.deepEqual(order.slice().sort((a, b) => a - b), Array.from({ length: count }, (_, i) => i + 1));
+    for (let index = 0; index < count; index++) {
+      const actor = order[index];
+      assert.equal(state.round.speaker, actor);
+      assert.deepEqual(state.round.players.filter(n => E.view(state, n).wl.me.canLine), [actor]);
+      assert.equal(run(state, order[(index + 1) % count], 'line').error, 'not_available');
+      const worth = E.pointsFor(state.round, state.round.limits[actor]);
+      state = say(state);
+      assert.equal(state.round.lines[actor], 1);
+      assert.equal(state.round.gained[actor], worth);
+      assert.equal(state.deadline, originalDeadline);
+      assert.equal(state.round.sceneId, scene);
+      assert.equal(state.round.shuffles, 0);
+      assert.equal(state.phase, 'scene');
+    }
+    assert.equal(state.round.speaker, order[0]);
+    assert.equal(state.round.speakingTurn, count + 1);
+    assert.equal(state.stage, firstStage + count);
+    assert.deepEqual(state.round.speakingOrder, order);
+    assert.equal(state.used.scenes.length, 1, 'a handoff does not draw a scene');
+  }
+});
+
+test('a raced tap, replay or old speaking token cannot score or pass a later floor', () => {
+  let state = toScene(make(3, { shuffles: 0 }));
+  const firstActor = state.round.speaker, token = state.round.speakingTurn;
+  const input = { id: 'turn-race-original', type: 'line', actor: firstActor, sessionId: state.sessionId,
+    stage: state.stage, speakingTurn: token, now: state.lastChangeAt + 3000, seed: 22 };
+  const accepted = E.apply(state, input);
+  assert.equal(accepted.replies[firstActor].error, '');
+  assert.equal(E.apply(accepted, input), accepted, 'same receipt is idempotent');
+  const raced = E.apply(accepted, { ...input, id: 'turn-race-other' });
+  assert.equal(raced.replies[firstActor].error, 'stale_turn');
+  assert.equal(raced.round.speaker, accepted.round.speaker);
+  assert.deepEqual(raced.round.gained, accepted.round.gained);
+  state = cycleTo(accepted, firstActor);
+  const oldToken = run(state, firstActor, 'line', { speakingTurn: token }, state.lastChangeAt + 3000);
+  assert.equal(oldToken.error, 'stale_turn', 'a fresh table stage cannot rescue an old floor token');
+  assert.equal(oldToken.state.round.lines[firstActor], 1);
+  state = say(state);
+  assert.equal(state.round.lines[firstActor], 2);
+});
+
+test('pause, swaps, reconnect and non-speaker changes retain the floor; sitting out the speaker advances once without scoring', () => {
+  let state = toScene(make(4, { shuffles: 1, sceneMinutes: 2 }));
+  const speaker = state.round.speaker, order = state.round.speakingOrder.slice(), turn = state.round.speakingTurn;
+  const next = order[(order.indexOf(speaker) + 1) % order.length];
+  const elapsedAtPause = 20000;
+  state = ok(run(state, 2, 'pause', {}, state.round.runSince + elapsedAtPause));
+  const remaining = state.remainingMs, frozen = JSON.parse(JSON.stringify(state));
+  assert.equal(E.view(frozen, speaker).wl.speaker, speaker);
+  assert.equal(E.view(frozen, speaker).wl.me.canLine, false);
+  assert.equal(frozen.round.speakingTurn, turn);
+  state = ok(run(state, 0, 'exclude', { playerNum: speaker, active: false }, state.lastChangeAt + 5000));
+  assert.equal(state.phase, 'paused', 'a speaker leaving does not resume the scene');
+  assert.equal(state.remainingMs, remaining);
+  assert.equal(state.round.speaker, next);
+  assert.equal(state.round.speakingTurn, turn + 1);
+  assert.deepEqual(state.round.gained, {});
+  assert.equal(run(state, speaker, 'line').error, 'not_available');
+  state = ok(run(state, speaker, 'exclude', { playerNum: speaker, active: true }));
+  assert.equal(state.round.speaker, next, 'returning does not steal the next floor');
+  const resumeAt = state.lastChangeAt + 200000;
+  state = ok(run(state, next, 'resume', {}, resumeAt));
+  assert.equal(E.view(state, next).wl.sceneEndsAt, resumeAt + remaining);
+  const beforeSwap = [state.round.speaker, state.round.speakingTurn];
+  state = ok(run(state, next, 'tick', {}, state.deadline));
+  assert.deepEqual([state.round.speaker, state.round.speakingTurn], beforeSwap);
+  assert.equal(state.round.shuffles, 1);
+  assert.deepEqual(state.round.speakingOrder, order);
+  assert.equal(E.view(JSON.parse(JSON.stringify(state)), next).wl.me.canLine, true, 'reconnect reads the saved floor');
+});
+
+test('short limits repeat, six is rare rather than required, and no new draw exceeds six', () => {
+  const random = E.rng(20261026), counts = Array(7).fill(0);
+  for (let i = 0; i < 12000; i++) counts[E.drawLimits(1, random)[0]]++;
+  assert.equal(counts[0], 0);
+  assert.equal(counts.reduce((sum, n) => sum + n, 0), 12000);
+  assert.ok(counts[6] > 360 && counts[6] < 840, 'six is approximately 5%, not a mandatory seat');
+  for (let n = 1; n <= 5; n++) assert.ok(counts[n] > counts[6] * 2, `short limit ${n} is more common than six`);
+  let repeatedSmallCast = 0, noSix = 0;
+  for (let i = 0; i < 200; i++) {
+    let state = toScene(make(9));
+    const before = { ...state.round.limits };
+    assert.ok(Object.values(before).filter(n => n === 6).length <= 1);
+    const small = E.drawLimits(4, random);
+    if (new Set(small).size < 4) repeatedSmallCast++;
+    if (!small.includes(6)) noSix++;
+    state = ok(run(state, 1, 'tick', {}, state.deadline));
+    assert.ok(Object.values(state.round.limits).filter(n => n === 6).length <= 1);
+    for (const n of state.round.players) assert.notEqual(state.round.limits[n], before[n]);
+  }
+  assert.ok(repeatedSmallCast > 20, 'repeated short limits occur in real small casts');
+  assert.ok(noSix > 120, 'most small casts do not have a six-word role');
+});
+
+test('an inactive six is reserved during swaps, so returning cannot create two long roles', () => {
+  let state = toScene(make(4));
+  for (const n of state.round.players) state.round.limits[n] = n;
+  state.round.limits[1] = 6;
+  state = ok(run(state, 2, 'exclude', { playerNum: 1, active: false }));
+  state = ok(run(state, 2, 'tick', {}, state.deadline));
+  assert.equal(state.round.limits[1], 6);
+  assert.equal(state.round.players.filter(n => state.round.limits[n] === 6).length, 1);
+  state = ok(run(state, 1, 'exclude', { playerNum: 1, active: true }));
+  assert.equal(state.round.players.filter(n => state.round.limits[n] === 6).length, 1);
+});
+
+test('legacy scene migration preserves its deadline, old long limit, scores and scene memory until its ordinary next swap', () => {
+  let state = toScene(make(3));
+  delete state.round.speakingOrder; delete state.round.speaker; delete state.round.speakingTurn;
+  state.round.limits[1] = 9; state.round.gained[2] = 7; state.round.lines[2] = 1;
+  const before = JSON.stringify(state), deadline = state.deadline, memory = state.used.scenes.slice();
+  const view = E.view(state, 1).wl;
+  assert.equal(view.speaker, 1); assert.equal(view.me.canLine, true); assert.equal(view.me.limit, 9);
+  assert.equal(JSON.stringify(state), before, 'projecting an old table is pure');
+  state = ok(run(state, 3, 'settings', { settings: { unit: 'chars' } }));
+  assert.equal(state.deadline, deadline); assert.equal(state.round.limits[1], 9);
+  assert.deepEqual(state.used.scenes, memory); assert.equal(state.round.gained[2], 7);
+  state = say(state);
+  assert.equal(state.round.gained[1], 9, 'the saved nine-word role retains its points before the swap');
+  state = ok(run(state, 3, 'tick', {}, deadline));
+  assert.ok(Object.values(state.round.limits).every(limit => limit >= 1 && limit <= 6));
+});
+
+test('a late line processes the existing scene deadline once and cannot add a penalty or restart its clock', () => {
+  let state = toScene(make(3, { shuffles: 0, sceneMinutes: 2 }));
+  state = say(state);
+  const gained = { ...state.round.gained }, at = state.deadline;
+  const late = run(state, state.round.speaker, 'line', {}, at + 100);
+  assert.equal(late.error, 'not_available'); assert.equal(late.state.phase, 'result');
+  assert.deepEqual(late.state.round.gained, gained); assert.deepEqual(late.state.scores, gained);
+  assert.equal(late.state.history.length, 1);
+  assert.equal(run(late.state, 1, 'tick', {}, at + 200).error, 'unchanged');
+  assert.equal(late.state.deadline, null);
 });

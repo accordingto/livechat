@@ -24,10 +24,15 @@ host is sharing.
 | 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
 | 🖼️ Dixit / 妙語說書人 | 3–8 | Give spoken clues for 84 original pictures, submit decoys, secretly vote, and reveal the answer together |
 | 🎉 BLUFF PARTY | 3–9 | One strange topic, one real expert: make up explanations, question each other, and find the truth in one continuous conversation |
+| WORD WOLF | 3–9 | Describe your secret item, then privately vote for the one player holding a different item |
+| WHO KNOWS? | 4–9 | Insider or Werewolf roles with a secret word or number; optional broad starting clue |
+| WORD LIMIT THEATER | 2–9 | Take turns acting a scene with your own short word limit; short limits may repeat |
 
 ## How it works
 
-**BLUFF PARTY** is the final entry in the Hub game menu. It uses the existing room/player links, with 60 verified English topics, private roles, manual Spotlight, one public challenge, and automatic scoring. Keep the trusted host table open. See [`bluff-king-mode.md`](bluff-king-mode.md) for launch steps, rules, knowledge history, and the explicitly accepted host trust boundary. No new environment variables or backend credentials are required.
+**BLUFF PARTY** uses the existing room/player links, Classic and Halloween topics, private roles, Spotlight, and automatic scoring. Bluffers can open optional story starting points on their own cards and freely ignore them. Its independent executor keeps the game running after the host page closes. See [`bluff-king-mode.md`](bluff-king-mode.md) for modes, knowledge history and the accepted trust boundary. No new environment variables or backend credentials are required.
+
+**WORD WOLF**, **WORD LIMIT THEATER** and **WHO KNOWS?** also reuse the original player links. Their canonical tables run through the players' cards; the host page can close after starting. See [`word-wolf-mode.md`](word-wolf-mode.md), [`word-limit-mode.md`](word-limit-mode.md) and [`who-knows-mode.md`](who-knows-mode.md) for rules and privacy limits. WORD WOLF restores the original 80 pairs, with 42 clear SVG illustrations for the default 21 everyday-object pairs.
 
 **Dixit** retains its original Hub entry. Its prominent phase bar tells
 each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card
@@ -61,7 +66,7 @@ for everyone to tap Ready. Participants play from their own existing cards.
 `?demo=1` is a clearly labelled synthetic preview only.
 
 - `index.html` is the menu; each game has its own host page.
-- `play.html` is the single player card page shared by **the seven games and Let's Talk** — it
+- `play.html` is the single player card page shared by the Hub's linked-card games — it
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.

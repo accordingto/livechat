@@ -63,6 +63,45 @@ function cleanName(name) { const n = String(name || '').trim().replace(/[\u0000-
 function normalizeCode(code) { const c = String(code || '').toUpperCase().trim(); if (!/^[A-Z0-9]{4,12}$/.test(c)) fail('invalid_room', 'Use a room code with 4–12 letters or numbers.', 400); return c; }
 function target(room, targetId) { const p = room.members.find(p => p.id === targetId && currentPlayers(room).includes(p.id) && eligibleMember(p)); if (!p || p.id === room.round.thinkerId) fail('invalid_target', 'Choose a formal player other than the Thinker.', 400); return p; }
 function publicQuestion(q, hints) { return q ? { id: q.id, canonicalKnowledgeId: q.canonicalKnowledgeId, deck: deckOf(q), locale: q.locale, term: q.term, publicPrompt: q.publicPrompt, hintMode: q.hintMode, publicHints: hints || q.publicHints || [] } : null; }
+// Optional fiction scaffolds, never factual hints. This function accepts only
+// the public topic projection: answers, research and hidden roles cannot guide
+// the bluff. A seat/round key varies the starting points without drawing RNG,
+// changing the canonical game or changing them on a reconnect.
+const STORY_STARTS = {
+  classic: [
+    { en: 'A small everyday problem: invent who needed a solution, then give this topic an unexpected practical use.', zh: '從一個生活小麻煩開始：誰需要解決它？再替這個題目編一個意想不到的用途。' },
+    { en: 'A name that stuck: invent a misunderstanding, nickname or mix-up that made people call it this.', zh: '從名稱的由來開始：編一場誤會、一個綽號，或一次弄錯，讓這個名字流傳下來。' },
+    { en: 'A practical arrangement became a custom: decide what people originally needed and what later became a game.', zh: '從習俗的起點開始：原本是為了什麼實際需要，後來又怎麼變成大家玩的遊戲？' },
+    { en: 'One unusual detail has a simple reason: pick a shape, sound or feature and invent the inconvenience it solved.', zh: '抓一個奇怪的小細節：形狀、聲音或特色，然後編它原本解決了什麼不方便。' },
+    { en: 'Two ordinary things meet: invent how someone combined familiar objects or ideas and found a surprising result.', zh: '讓兩樣普通的東西碰在一起：有人怎麼組合它們，結果意外發現了什麼？' },
+    { en: 'Two places tell different versions: invent their disagreement, then explain why one version became popular.', zh: '讓兩個地方各說一個版本：差別在哪裡？再編為什麼其中一個說法特別流行。' },
+  ],
+  halloween: [
+    { en: 'After closing time, a caretaker notices the same small sound. Invent an ordinary object behind it and why the story spread.', zh: '打烊後，管理員總聽見同一個小聲音。編一樣和聲音有關的普通物件，再說故事為何傳開。' },
+    { en: 'A village custom began as a small favor. Choose one object, then invent how its purpose changed over generations.', zh: '村裡的習俗原本只是幫一個小忙。挑一樣物件，再編它的用途怎麼一代代變了。' },
+    { en: 'Two witnesses remember an ordinary event differently. Invent the two details that turned their disagreement into a mystery.', zh: '兩個人對一件普通小事記得不一樣。各編一個細節，讓這場爭論慢慢變成謎團。' },
+    { en: 'A harmless house rule became a spooky warning. Invent the rule and why the first person took it so seriously.', zh: '一條無害的家規變成了神祕警告。先編規矩，再說第一個人為什麼那麼在意。' },
+    { en: 'An annual gathering got its name from an unexpected visitor. Invent what the visitor wanted and what people copied later.', zh: '一年一度的聚會因為一位意外訪客而得名。編他想做什麼，以及後來的人模仿了什麼。' },
+    { en: 'An ordinary object passed between families with a changing story. Invent where its first owner found it and one detail later added.', zh: '一樣普通物件在幾個家庭間流傳，故事也跟著改。編第一個主人在哪找到它，再加一個後來的細節。' },
+  ],
+};
+function storyGuide(topic, seatRoundKey = '') {
+  if (!topic) return null;
+  const starts = STORY_STARTS[topic.deck === 'halloween' ? 'halloween' : 'classic'];
+  let seed = 2166136261;
+  for (const char of String(topic.id || '') + ':' + String(seatRoundKey)) seed = Math.imul(seed ^ char.charCodeAt(0), 16777619) >>> 0;
+  const first = seed % starts.length, second = (first + 1 + (seed >>> 8) % (starts.length - 1)) % starts.length;
+  return {
+    version: 1, optional: true, kind: 'fiction',
+    topic: String(topic.term || ''),
+    starts: [starts[first], starts[second]].map(value => ({ ...value })),
+    steps: [
+      { en: 'Pick one starting point, or ignore both.', zh: '挑一個起點，或兩個都不用。' },
+      { en: 'Add who, where and one concrete detail.', zh: '補上人物、地點和一個具體細節。' },
+      { en: 'Give your explanation a simple reason; change it freely as people ask.', zh: '替說法加一個簡單理由；被追問時可以自由修改。' },
+    ],
+  };
+}
 function availableQuestions(store, room, bank) { const known = new Set(room.roster.filter(pid => eligibleMember(room.members.find(p => p.id === pid))).flatMap(pid => Object.keys(identity(store, room.members.find(p => p.id === pid).identityId).known))); const used = new Set(room.usedKnowledgeIds); return deckBank(room, bank).filter(q => playable(q) && !known.has(q.canonicalKnowledgeId) && !used.has(q.canonicalKnowledgeId)); }
 function shuffled(values, rng) { const a = [...values]; for (let i = a.length - 1; i > 0; i--) { const j = rng(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function selectTopic(store, room, bank, ctx) { activatePending(room); const playerIds = activeRoster(room); const pool = availableQuestions(store, room, bank); room.availability = { remaining: pool.length, totalVerified: deckBank(room, bank).length, requiredRounds: room.roster.length - room.roundIndex, reason: pool.length ? null : 'All verified topics are already known by a formal player or have appeared in this game.' }; if (!pool.length) { room.round = { id: ctx.uuid(), playerIds: playerIds.slice(), mode: roomMode(room), thinkerId: roomMode(room) === 'vote' ? null : room.thinkerOrder[room.roundIndex], questionId: null, publicHints: [], truthfulId: null, spotlightOrder: [], spotlightIndex: -1, coveredIds: [], allCovered: false, challengeId: null, selectedId: null, votes: {}, readyIds: [], rules: { ...RULES }, createdAt: ctx.now }; room.phase = 'topic_check'; return; } const q = pool[ctx.rng(pool.length)]; room.usedKnowledgeIds.push(q.canonicalKnowledgeId); room.round = { id: ctx.uuid(), playerIds: playerIds.slice(), mode: roomMode(room), thinkerId: roomMode(room) === 'vote' ? null : room.thinkerOrder[room.roundIndex], questionId: q.id, publicHints: ['choices', 'options'].includes(q.hintMode) ? shuffled(q.publicHints, ctx.rng) : [...q.publicHints], truthfulId: null, spotlightOrder: [], spotlightIndex: -1, coveredIds: [], allCovered: false, challengeId: null, selectedId: null, votes: {}, readyIds: [], rules: { ...RULES }, createdAt: ctx.now }; room.availability.remaining = pool.length - 1; room.phase = 'topic_check'; }
@@ -153,7 +192,12 @@ function projectView(store, identityId, code, bank, options = {}) {
   const round = r ? { id: r.id, number: Math.min(room.roundIndex + 1, room.thinkerOrder.length), total: room.thinkerOrder.length, thinkerId: r.thinkerId, topic: publicQuestion(q, r.publicHints), spotlightOrder: [...r.spotlightOrder], currentSpotlightId: r.allCovered ? null : r.spotlightOrder[r.spotlightIndex] || null, coveredIds: [...r.coveredIds], pendingIds: r.spotlightOrder.filter(id => !r.coveredIds.includes(id) && id !== r.spotlightOrder[r.spotlightIndex]), allCovered: r.allCovered, challengeId: r.challengeId, readyCount: r.readyIds.filter(id => currentPlayers(room).includes(id)).length, allReady: currentPlayers(room).every(id => r.readyIds.includes(id)), prepareStartedAt: r.prepareStartedAt || null, discussionStartedAt: r.discussionStartedAt || null, rules: { ...r.rules }, mode: voteRound ? 'vote' : 'thinker', ...(voteRound ? { votedIds: Object.keys(r.votes || {}).filter(id => currentPlayers(room).includes(id)), voterCount: currentPlayers(room).filter(id => eligibleMember(room.members.find(p => p.id === id))).length, voteStartedAt: r.voteStartedAt || null, myVoteId: options.private && actor && room.phase === 'vote' ? (r.votes || {})[actor.id] || null : null } : {}) } : null;
   if (revealing && r && q) { round.reveal = { selectedId: r.selectedId, truthfulId: r.truthfulId, roles: Object.fromEntries(currentPlayers(room).map(id => [id, id === r.thinkerId ? 'thinker' : id === r.truthfulId ? 'truthful' : 'bluffer'])), secretAnswer: q.secretAnswer, supportingFacts: [...q.supportingFacts], revealExplanation: q.revealExplanation, sources: q.sources.map(s => ({ title: s.title, url: s.url })), result: r.result, revealedAt: r.revealedAt, ...(voteRound ? { votes: { ...(r.votes || {}) } } : {}) }; }
   let privateCard = null;
-  if (options.private && eligibleMember(actor) && r && currentPlayers(room).includes(actor.id) && ['prepare', 'discussion', 'vote', 'reveal', 'results'].includes(room.phase)) { const role = actor.id === r.thinkerId ? 'thinker' : actor.id === r.truthfulId ? 'truthful' : 'bluffer'; privateCard = { roundId: r.id, playerId: actor.id, role, ready: r.readyIds.includes(actor.id) }; if (role === 'truthful' && q) { privateCard.secretAnswer = q.secretAnswer; privateCard.supportingFacts = [...q.supportingFacts]; markKnown(store, identityId, q.canonicalKnowledgeId, 'answer_received', now); } }
+  if (options.private && eligibleMember(actor) && r && currentPlayers(room).includes(actor.id) && ['prepare', 'discussion', 'vote', 'reveal', 'results'].includes(room.phase)) {
+    const role = actor.id === r.thinkerId ? 'thinker' : actor.id === r.truthfulId ? 'truthful' : 'bluffer';
+    privateCard = { roundId: r.id, playerId: actor.id, role, ready: r.readyIds.includes(actor.id) };
+    if (role === 'truthful' && q) { privateCard.secretAnswer = q.secretAnswer; privateCard.supportingFacts = [...q.supportingFacts]; markKnown(store, identityId, q.canonicalKnowledgeId, 'answer_received', now); }
+    if (role === 'bluffer' && q && ['prepare', 'discussion'].includes(room.phase)) privateCard.storyGuide = storyGuide(publicQuestion(q, r.publicHints), r.id + ':' + actor.id);
+  }
   const pool = availableQuestions(store, room.phase === 'lobby' ? { ...room, roster: room.members.filter(p => p.seated).map(p => p.id), usedKnowledgeIds: [] } : room, bank);
   return { room: room.code, version: room.version, phase: room.phase, gameNumber: room.gameNumber, sharedControls: !!room.sharedControls, recovery: room.sharedControls ? { available: ['topic_check', 'prepare', 'discussion', 'vote'].includes(room.phase) && players.some(p => room.roster.includes(p.id) && now - (room.members.find(m => m.id === p.id)?.lastSeen || 0) > 60000), last: room.lastRecovery || null } : null, membership: { enabled: !!room.sharedControls, minPlayers: 3, maxPlayers: 9, activeCount: activeRoster(room).length, pendingCount: room.members.filter(p => p.pending === true && p.active !== false).length }, self: actor ? { playerId: actor.id, playerNum: Number(actor.playerNum) || 0, name: actor.name, isHost: room.hostIdentityId === identityId, isFormal: eligibleMember(actor) && (room.phase === 'lobby' ? actor.seated : currentPlayers(room).includes(actor.id)) } : null, players, roster: [...room.roster], scores: { ...room.scores }, round, privateCard, mode: roomMode(room), modes: MODES.slice(), deck: roomDeck(room), decks: deckSummary(bank), availability: { totalVerified: deckBank(room, bank).length, remaining: pool.length, requiredRounds: room.roster.length ? Math.max(0, room.roster.length - room.roundIndex - (q ? 1 : 0)) : room.members.filter(p => p.seated).length, reason: pool.length ? null : 'Every eligible verified topic is known by a formal player or has already appeared in this game.' }, rules: { ...RULES }, history: room.history.map(h => ({ mode: h.mode || 'thinker', ...(h.mode === 'vote' ? { votes: { ...(h.votes || {}) } } : {}), roundId: h.roundId, roundNumber: h.roundNumber, term: bank.find(q => q.id === h.questionId)?.term || h.questionId, thinkerId: h.thinkerId, truthfulId: h.truthfulId, selectedId: h.selectedId, challengeId: h.challengeId, result: h.result })), serverTime: now };
 }
@@ -202,7 +246,7 @@ function membership(store, changes = {}, options = {}) {
   }
   room.version++; return store;
 }
-return { RULES, DECKS, MODES, GameError, blankStore, deckBank, deckSummary, normalizeCode, applyCommand, projectView, membership, scoreRound, scoreVoteRound, availableQuestions, publicQuestion };
+return { RULES, DECKS, MODES, GameError, blankStore, deckBank, deckSummary, normalizeCode, applyCommand, projectView, membership, scoreRound, scoreVoteRound, availableQuestions, publicQuestion, storyGuide };
 
 });
 

@@ -835,3 +835,55 @@ test('everyone-votes mode: lobby choice, speaker turns, secret voting and the vo
   assert.doesNotMatch(reveal.html(), /The Thinker chose|Thinker:/);
   assert.ok(actions(reveal).includes('nextRound'));
 });
+
+test('bluffers have optional story starts below the primary preparation action, with no new command', async () => {
+  const state = fixture('prepare'), bluffer = state.rooms.UITEST.members.find(p => project(state, p.identityId).privateCard?.role === 'bluffer');
+  for (const deck of ['classic', 'halloween']) {
+    const view = project(state, bluffer.identityId);
+    view.round.topic.deck = deck;
+    view.privateCard.storyGuide = E.storyGuide(view.round.topic, view.round.id + ':' + view.self.playerId);
+    const h = await harness(view, { card: true }), guide = view.privateCard.storyGuide;
+    assert.match(h.html(), /<details id="bk-story-guide" class="bk-detail bk-story-guide" data-bk-story-guide="fiction">/);
+    assert.ok(h.html().indexOf('data-bk-action="ready"') < h.html().indexOf('id="bk-story-guide"'), 'ready remains before optional reading');
+    assert.match(h.html(), /Fiction prompts, not clues to the real answer/);
+    for (const start of guide.starts) assert.ok(h.html().includes(start.en));
+    assert.ok(!expandedMarkup(h.html()).includes(guide.starts[0].en), 'the optional guide does not crowd the initial card');
+    assert.equal(h.node('bk-story-guide').open, false);
+    h.node('bk-story-guide').open = true;
+    h.update({ ...view, version: view.version + 1 });
+    assert.equal(h.node('bk-story-guide').open, true, 'a sync refresh keeps the chosen guide open');
+    assert.equal(h.sent.length, 0, 'reading the guide never changes the room or requires acknowledgement');
+    await h.click('toggleRole');
+    assert.equal(h.node('bk-story-guide'), undefined, 'hiding the role also hides its bluffing scaffold');
+    assert.ok(!h.html().includes(guide.starts[0].en));
+    await h.click('toggleRole');
+    assert.match(h.html(), /id="bk-story-guide"/);
+    assert.equal(h.node('bk-story-guide').open, false);
+  }
+});
+
+test('story-start text is escaped, and old card projections without a guide keep working', async () => {
+  const state = fixture('discussion'), bluffer = state.rooms.UITEST.members.find(p => project(state, p.identityId).privateCard?.role === 'bluffer');
+  const view = project(state, bluffer.identityId), injected = '<button data-bk-action="identify">fake</button>';
+  view.privateCard.storyGuide.starts[0].en = injected;
+  const h = await harness(view, { card: true });
+  assert.ok(h.html().includes('&lt;button data-bk-action=&quot;identify&quot;&gt;fake&lt;/button&gt;'));
+  assert.ok(!h.html().includes(injected)); assert.equal(h.button('identify'), undefined);
+  const legacy = clone(view); delete legacy.privateCard.storyGuide;
+  const old = await harness(legacy, { card: true });
+  assert.equal(old.node('bk-story-guide'), undefined); assert.match(old.html(), /Bluffer/);
+  const shared = await harness(view);
+  assert.equal(shared.node('bk-story-guide'), undefined); assert.doesNotMatch(shared.html(), /Fiction prompts/);
+});
+
+test('active player cards put the full score roster below play in an optional panel; public tables keep it expanded', async () => {
+  const state = fixture('discussion'), view = project(state), card = await harness(view, { card: true });
+  assert.match(card.html(), /<details id="bk-card-players" class="bk-detail bk-card-roster">/);
+  assert.ok(card.html().indexOf('data-bk-action="nextSpotlight"') < card.html().indexOf('id="bk-card-players"'));
+  assert.equal(card.node('bk-card-players').open, false);
+  card.node('bk-card-players').open = true;
+  card.update({ ...view, version: view.version + 1 });
+  assert.equal(card.node('bk-card-players').open, true);
+  const table = await harness(view);
+  assert.equal(table.node('bk-card-players'), undefined); assert.match(table.html(), /class="bk-roster"/);
+});

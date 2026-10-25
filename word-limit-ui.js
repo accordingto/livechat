@@ -8,8 +8,8 @@ var WORD_LIMIT_UI = (() => {
   const { esc, list, pick } = C;
   const dict = {
     brand: ['WORD LIMIT THEATER', 'WORD LIMIT THEATER'],
-    subtitle: ['字數限定小劇場：每個人的台詞都有固定字數，一起把一場戲演完。', 'Every actor gets a word limit. Act out one scene together.'],
-    pitch: ['每個人抽一個角色和一個 1 到 6 的隨機字數。你說的每一句台詞都要剛好那麼多字：有人只能說一個字，有人得說滿六個。每說完一句，就在自己的卡片上按一下得分，字數越多分數越高。演出中大家會重新抽字數好幾次。', 'Everyone draws a role and a random word limit from 1 to 6. Every line you say must be exactly that long: one actor gets one word, another has to fill six. After each line, tap the button on your card to score. Longer limits score more. Everyone draws new limits a few times during the scene.'],
+    subtitle: ['輪流說一句，用你的字數接住這場戲。', 'One line each. Keep the scene going.'],
+    pitch: ['每個人抽一個角色和字數，照順序輪流說一句。1 到 5 字比較常見，可以和別人相同，6 字只會偶爾出現。輪到你時，說完剛好字數的台詞，再按卡片得分並交給下一位。演出中還會重新抽字數。', 'Draw a role and a line limit, then take turns saying one line. Limits of 1–5 are common and may repeat; six is occasional. On your turn, say exactly your limit, then tap your card to score and hand over. Limits change during the scene.'],
     hostNote: ['角色、字數和分數都是公開的，大家才能一起抓犯規。', 'Roles, limits and points are public, so everyone can catch a foul.'],
     start: ['開始第一場', 'Start the first scene'],
     sceneN: ['第 {n} 場', 'Scene {n}'],
@@ -21,13 +21,19 @@ var WORD_LIMIT_UI = (() => {
     youPlay: ['你演', 'You play'],
     castTitle: ['演員表', 'Cast'],
     curtainIn: ['開演倒數', 'Curtain up in'],
-    castHint: ['看清楚自己的角色和字數。開演後直接用說的演，每說完一句就在卡片上按一下得分。', 'Read your role and your limit. When the curtain goes up, just start talking, and tap your card after each line to score.'],
+    castHint: ['先看角色、字數和場景。開演後照順序輪流說一句，說完按卡片得分並交給下一位。', 'Read your role, limit and scene. Take turns saying one line, then tap your card to score and hand over.'],
     startNow: ['馬上開演', 'Start now'],
     rerollScene: ['換一個場景', 'Different scene'], rerollsLeft: ['還能換 {n} 次', '{n} left'],
     sceneLeft: ['這場還剩', 'left in the scene'],
-    lineButton: ['我說完一句了', 'I said a line'],
-    lineHint: ['每說完一句就按一下，得到你現在字數的分數。', 'Tap after each line you say. You score the points of your current limit.'],
-    stageScoreHint: ['每說完一句，就在自己的卡片上按「我說完一句了」得分。', 'After each line, tap “I said a line” on your own card to score.'],
+    lineButton: ['說完了，下一位', 'Line done · next actor'],
+    lineHint: ['說完剛好字數的一句，再按一下得分並交棒。', 'Say one line with exactly your limit, then tap to score and hand over.'],
+    stageScoreHint: ['輪到的人說完一句，在自己的卡片上按一下得分，接著換下一位。', 'The current actor says one line, then taps their card to score and hand over.'],
+    yourTurn: ['輪到你', 'Your turn'], speakingNow: ['現在發言', 'Speaking now'],
+    firstSpeaker: ['首先發言', 'First to speak'], nextSpeaker: ['下一位：{name}', 'Next: {name}'],
+    waitingTurn: ['先聽聽 {name}，接著輪流說。', 'Listen to {name}; your turn is coming.'],
+    noSpeaker: ['等待演員回來', 'Waiting for an actor'],
+    moreScene: ['演員與本場紀錄', 'Cast & scene details'],
+    optionalDetails: ['查看角色、分數與犯規操作', 'Roles, points and foul controls'],
     myScene: ['這場：{lines}、{points}', 'This scene: {lines}, {points}'],
     linesOne: ['1 句', '1 line'], linesN: ['{n} 句', '{n} lines'],
     nextSwap: ['下次換字數', 'Limits swap in'], noMoreSwaps: ['這場不會再換字數了', 'No more swaps in this scene'],
@@ -57,9 +63,9 @@ var WORD_LIMIT_UI = (() => {
     pointsFor: ['{n} 字台詞每句得分', 'Points for a line with a limit of {n}'],
     pointsUnit: ['分', 'pts'],
     setupTitle: ['開演前的設定', 'Before the curtain'],
-    rules_1: ['每一場抽一個場景，每個人分到一個角色和一個 1 到 6 的隨機字數。', 'Each scene deals everyone a role and a random word limit from 1 to 6.'],
-    rules_2: ['開演後用說的即興演出。你說的每一句台詞，都要剛好是你的字數。', 'Improvise out loud. Every line you say must be exactly your limit.'],
-    rules_3: ['每說完一句，就在自己的卡片上按「我說完一句了」，得到你現在字數的分數。預設幾個字就幾分，分數可以在設定裡改。', 'After each line, tap “I said a line” on your card to score your limit’s points: by default one point per word. The points can be changed in the settings.'],
+    rules_1: ['每場抽一個場景與角色。1 到 5 字較常見，可以重複；6 字偶爾出現，每次抽題最多一位。', 'Draw a scene and roles. Limits of 1–5 are common and may repeat; at most one actor occasionally draws six.'],
+    rules_2: ['照畫面順序輪流即興說一句，每句都要剛好是自己的字數。沒有個人倒數，整場時間會繼續跑。', 'Take turns improvising one line, exactly your limit. There is no individual countdown; the scene clock keeps running.'],
+    rules_3: ['輪到你說完一句，再按「說完了，下一位」，得到目前字數的分數並交棒。預設幾個字就幾分，可以在設定裡改。', 'On your turn, tap “Line done · next actor” after your line to score and hand over. By default one point per word; settings can change that.'],
     rules_4: ['演出中每個人會重新抽字數好幾次（預設 3 次），一定會換到不一樣的數字，換完記得看自己的新字數。', 'Everyone draws a new limit a few times during the scene (3 by default), always a different number. Check your new limit each time.'],
     rules_5: ['有人說錯字數，任何人都能在卡片上按他的「犯規」，只記次數不扣分。時間到就殺青，這場的分數加進總分。', 'If someone breaks their limit, anyone can tap Foul for them; it only counts. When time is up, the scene’s points go on the scoreboard.'],
     nobodyCast: ['等下一場開始…', 'Waiting for the next scene…'],
@@ -155,7 +161,8 @@ var WORD_LIMIT_UI = (() => {
     return `<section class="wl-values"><h4>${esc(t('valuesTitle'))}</h4><ul>${items.map(item => `<li><span class="wl-values-limit">${esc(limitText(item.limit, view.unit))}</span><b>+${Number(item.points)}</b></li>`).join('')}</ul></section>`;
   }
   function castList(view, { me = 0, foul = false, busy = false, big = false, points = false } = {}) {
-    const rows = list(view.cast).slice().sort((a, b) => (a.limit ?? 99) - (b.limit ?? 99) || a.playerNum - b.playerNum);
+    const order = list(view.speakingOrder);
+    const rows = list(view.cast).slice().sort((a, b) => order.indexOf(a.playerNum) - order.indexOf(b.playerNum) || a.playerNum - b.playerNum);
     if (!rows.length) return `<p class="ct-soft">${esc(t('nobodyCast'))}</p>`;
     const event = view.event, shuffled = event?.kind === 'shuffle' ? Number(event.ts) + WAS_MS : 0;
     return `<ol class="wl-cast${big ? ' is-big' : ''}">${rows.map(row => {
@@ -165,19 +172,32 @@ var WORD_LIMIT_UI = (() => {
       const score = points ? `<small class="wl-row-pts">${esc(pts(row.gained))}</small>` : '';
       const pop = points && row.lastLine ? `<small class="wl-pop" data-ct-until="${Number(row.lastLine.ts) + POP_MS}">+${Number(row.lastLine.points)}</small>` : '';
       const button = foul && row.active && !mine ? `<button type="button" class="wl-foul-btn" data-ct-action="foul" data-ct-arg-target="${n}"${busy ? ' disabled' : ''} aria-label="${esc(t('foulCall', { name: row.name || t('player', { n }) }))}">${ART.whistle}<span>${esc(t('foul'))}</span></button>` : '';
-      return `<li class="wl-cast-row${mine ? ' is-me' : ''}${row.active ? '' : ' is-out'}"><span class="wl-tile" aria-label="${esc(limitText(row.limit, view.unit))}"><b>${esc(row.limit ?? '–')}</b></span><span class="wl-cast-who"><strong>${esc(row.name || t('player', { n }))}${mine ? ` <em>${esc(t('you'))}</em>` : ''}${row.active ? '' : `<em class="wl-out-tag">${esc(t('sittingOut'))}</em>`}${score}${pop}${was}</strong><span>${esc(roleName(row.role))}<i> · ${esc(roleWant(row.role))}</i></span></span>${fouls}${button}</li>`;
+      return `<li class="wl-cast-row${mine ? ' is-me' : ''}${row.active ? '' : ' is-out'}${view.speaker === n && ['cast', 'scene', 'paused'].includes(view.phase) ? ' is-speaking' : ''}"><span class="wl-tile" aria-label="${esc(limitText(row.limit, view.unit))}"><b>${esc(row.limit ?? '–')}</b></span><span class="wl-cast-who"><strong>${esc(row.name || t('player', { n }))}${mine ? ` <em>${esc(t('you'))}</em>` : ''}${row.active ? '' : `<em class="wl-out-tag">${esc(t('sittingOut'))}</em>`}${score}${pop}${was}</strong><span>${esc(roleName(row.role))}<i> · ${esc(roleWant(row.role))}</i></span></span>${fouls}${button}</li>`;
     }).join('')}</ol>`;
   }
   // The letterboard: this seat's limit, as big as the screen allows.
   function board(view, me) {
     const unit = view.unit, limit = me.limit;
     const event = view.event, was = event?.kind === 'shuffle' && me.prev != null ? `<span class="wl-board-was" data-ct-until="${Number(event.ts) + WAS_MS}">${esc(t('wasLimit', { n: me.prev }))}</span>` : '';
-    return `<section class="wl-board${event?.kind === 'shuffle' ? ' just-shuffled' : ''}" aria-label="${esc(t('yourLines'))}"><p class="wl-board-label">${esc(t('everyLine'))}</p><div class="wl-board-num"><b>${esc(limit ?? '–')}</b>${was}</div><p class="wl-board-unit">${esc(unitWord(limit, unit))}</p><p class="wl-board-role"><span>${esc(t('youPlay'))}</span><strong>${esc(roleName(me.role))}</strong><em>${esc(roleWant(me.role))}</em></p></section>`;
+    return `<section class="wl-board${event?.kind === 'shuffle' ? ' just-shuffled' : ''}" aria-label="${esc(t('yourLines'))}"><div class="wl-board-limit"><p class="wl-board-label">${esc(t('everyLine'))}</p><div class="wl-board-num"><b>${esc(limit ?? '–')}</b>${was}</div><p class="wl-board-unit">${esc(unitWord(limit, unit))}</p></div><div class="wl-board-role"><span>${esc(t('youPlay'))}</span><strong>${esc(roleName(me.role))}</strong><em>${esc(roleWant(me.role))}</em></div></section>`;
+  }
+  function floor(view, me = 0) {
+    const live = view.phase === 'paused' ? view.pausedFrom : view.phase;
+    if (!['cast', 'scene'].includes(live)) return '';
+    const speaker = view.speaker, mine = speaker != null && speaker === me;
+    const title = live === 'cast' ? t('firstSpeaker') : mine ? t('yourTurn') : t('speakingNow');
+    const next = view.nextSpeaker && view.nextSpeaker !== speaker ? `<small>${esc(t('nextSpeaker', { name: nameOf(view, view.nextSpeaker) }))}</small>` : '';
+    return `<section class="wl-floor${mine && live === 'scene' ? ' is-mine' : ''}" data-wl-speaker="${speaker ?? ''}" data-wl-speaking-turn="${Number(view.speakingTurn) || 0}"><div><span>${esc(title)}</span><strong>${esc(speaker == null ? t('noSpeaker') : nameOf(view, speaker))}</strong>${next}</div><div class="wl-floor-clock"><span>${esc(t(live === 'cast' ? 'curtainIn' : 'sceneLeft'))}</span>${timer(view)}</div></section>`;
+  }
+  function sceneBrief(view) {
+    if (!view.scene) return '';
+    return `<article class="wl-scene-brief"><h3${lang() === 'zh' ? '' : ' lang="en"'}>${esc(pick(view.scene.title))}</h3><p${lang() === 'zh' ? '' : ' lang="en"'}>${esc(pick(view.scene.line))}</p></article>`;
   }
   // "I said a line": the actor's own scoring button, with a short cool-down.
   function lineZone(view, me, busy) {
     const live = view.phase === 'scene';
-    return `<section class="wl-score"><button type="button" class="ct-button ct-primary wl-line-btn" data-ct-action="line" data-ct-ready-at="${Number(me.lineReadyAt) || 0}"${busy || !me.canLine || !live ? ' disabled' : ''}>${ART.mic}<span>${esc(t('lineButton'))}</span><b>+${Number(me.worth) || 0}</b><small data-ct-cooldown></small></button><p class="wl-score-line">${esc(t('myScene', { lines: linesText(me.lines), points: pts(me.gained) }))}</p>${nextSwap(view)}<p class="wl-score-hint">${esc(t('lineHint'))}</p></section>`;
+    if (!me.isSpeaker) return `<p class="wl-waiting">${esc(t('waitingTurn', { name: nameOf(view, view.speaker) }))}</p>`;
+    return `<section class="wl-score"><button type="button" class="ct-button ct-primary wl-line-btn" data-ct-action="line" data-ct-arg-speaking-turn="${Number(view.speakingTurn) || 0}" data-ct-ready-at="${Number(me.lineReadyAt) || 0}"${busy || !me.canLine || !live ? ' disabled' : ''}>${ART.mic}<span>${esc(t('lineButton'))}</span><b>+${Number(me.worth) || 0}</b><small data-ct-cooldown></small></button><p class="wl-score-hint">${esc(t('lineHint'))}</p></section>`;
   }
   // A short-lived banner for the newest foul or shuffle (painted live by paintTimers).
   function flash(view, me = 0) {
@@ -218,8 +238,8 @@ var WORD_LIMIT_UI = (() => {
     }
     let left;
     if (live === 'vote') left = `<section class="wl-wrapup"><h2>${esc(t('wrapTitle'))}</h2><p>${esc(t('legacyVote'))}</p></section>`;
-    else if (live === 'cast') left = `${script(view, { lineOnly: true })}<p class="wl-stage-hint">${esc(t('castHint'))}</p>${values(view)}`;
-    else left = `${script(view, { lineOnly: true })}${nextSwap(view)}<p class="wl-stage-hint">${esc(t('stageScoreHint'))}</p>${values(view)}`;
+    else if (live === 'cast') left = `${floor(view)}${script(view, { lineOnly: true })}<p class="wl-stage-hint">${esc(t('castHint'))}</p>${values(view)}`;
+    else left = `${floor(view)}${script(view, { lineOnly: true })}${nextSwap(view)}<p class="wl-stage-hint">${esc(t('stageScoreHint'))}</p>${values(view)}`;
     return `<div class="wl-stage wl-phase-${esc(view.phase)}${view.phase === 'paused' ? ' wl-from-' + esc(view.pausedFrom) : ''}">${paused}${marquee}${flash(view)}<div class="wl-stage-main"><section class="wl-stage-left">${left}</section><section class="wl-stage-right"><h3 class="wl-section-title">${esc(t('castTitle'))}</h3>${castList(view, { big: true, points: live === 'scene' })}</section></div></div>`;
   }
 
@@ -228,12 +248,23 @@ var WORD_LIMIT_UI = (() => {
     constructor(element, options = {}) {
       super(element, Object.assign({ key: 'wl', prefix: 'wl', spec: controlsSpec }, options));
     }
+    mount() {
+      this.secondaryOpen = false;
+      this.moreToggle = event => {
+        if (event.target.matches?.('[data-wl-more]') && this.root.contains(event.target)) this.secondaryOpen = event.target.open;
+      };
+      this.root.addEventListener('toggle', this.moreToggle, true);
+    }
+    localKey() { return String(!!this.secondaryOpen); }
     theme(view) {
       if (view.phase === 'scene') return 'is-live';
       if (view.phase === 'result' && list(view.result?.best).includes(this.data.playerNum)) return 'is-top';
       return '';
     }
     onUpdate(previous, view) {
+      if (previous && previous.roundNo !== view.roundNo) this.secondaryOpen = false;
+      if (view.phase === 'scene' && view.me?.isSpeaker && previous &&
+        (previous.phase !== 'scene' || previous.speaker !== view.speaker)) vibrate([70]);
       const event = view.event;
       if (!previous || !event || previous.sessionId !== view.sessionId || previous.event?.serial === event.serial) {
         if (previous && previous.roundNo !== view.roundNo && view.phase === 'cast' && view.me?.inRound) vibrate([60]);
@@ -244,22 +275,25 @@ var WORD_LIMIT_UI = (() => {
     }
     head(data) {
       const view = data.wl;
-      return `${this.nameBanner(data)}<div class="wl-card-head"><span class="wl-card-brand">${ART.mark}<span>${esc(t('brand'))}</span></span>${view.phase !== 'finished' ? `<span class="wl-chip">${esc(t('sceneN', { n: view.roundNo }))}</span>` : ''}</div>`;
+      return `<div class="wl-card-head">${this.nameBanner(data)}${view.phase !== 'finished' ? `<span class="wl-chip">${esc(t('sceneN', { n: view.roundNo }))}</span>` : ''}</div>`;
+    }
+    secondary(view, me, number, busy) {
+      return `<details class="wl-more" data-wl-more${this.secondaryOpen ? ' open' : ''}><summary><span>${esc(t('moreScene'))}</span><small>${esc(t('optionalDetails'))}</small></summary><div class="wl-more-content"><p class="wl-score-line">${esc(t('myScene', { lines: linesText(me.lines), points: pts(me.gained) }))}</p>${nextSwap(view)}${values(view)}<h4 class="wl-section-title">${esc(t('castTitle'))}</h4><p class="wl-score-hint">${esc(t('foulHint'))}</p>${castList(view, { me: number, foul: me.canFoul && view.phase === 'scene', busy, points: true })}${this.scoreline(view, number)}</div></details>`;
     }
     main(data) {
       const view = data.wl, me = view.me || {}, n = data.playerNum, busy = !!this.pending;
       if (view.phase === 'finished') return `${C.standings(view, t, n)}${me.canControl ? `<button type="button" class="ct-button ct-primary ct-wide" data-ct-action="restart"${busy ? ' disabled' : ''}>${esc(t('newGame'))}</button><p class="ct-soft ct-center">${esc(t('anyoneCanRestart'))}</p>` : this.back()}`;
       if (view.phase === 'result') return `${wrapUp(view, n)}${foulRecap(view)}${me.canNext ? `<button type="button" class="ct-button ct-primary ct-wide wl-next" data-ct-action="next"${busy ? ' disabled' : ''}>${esc(t('nextScene'))}</button><p class="ct-soft ct-center">${esc(t('nextSceneHint'))}</p>` : this.back()}`;
-      if (!me.active) return `<div class="wl-note is-muted"><strong>${esc(t('sittingOutCard'))}</strong><span>${esc(t('sittingOutHint'))}</span></div>${this.back()}${script(view, { compact: true })}${castList(view, { me: n, points: view.phase === 'scene' })}`;
+      if (!me.active) return `<div class="wl-note is-muted"><strong>${esc(t('sittingOutCard'))}</strong><span>${esc(t('sittingOutHint'))}</span></div>${this.back()}${sceneBrief(view)}${this.secondary(view, me, n, busy)}`;
       const live = view.phase === 'paused' ? view.pausedFrom : view.phase;
       const paused = view.phase === 'paused' ? `<div class="wl-zone is-paused"><h3>${esc(t('paused'))}</h3>${timer(view)}<p>${esc(t('pausedHint'))}</p><button type="button" class="ct-button ct-primary" data-ct-action="resume"${busy ? ' disabled' : ''}>${esc(t('resume'))}</button></div>` : '';
       const mine = me.inRound ? board(view, me) : `<div class="wl-note is-muted"><strong>${esc(t('watching'))}</strong><span>${esc(t('watchingHint'))}</span></div>`;
       if (live === 'cast') {
-        const zone = view.phase === 'paused' ? '' : `<div class="wl-zone"><p class="wl-zone-label">${esc(t('curtainIn'))}</p>${timer(view, { big: true })}<p>${esc(t('castHint'))}</p><div class="wl-zone-row"><button type="button" class="ct-button ct-primary" data-ct-action="close"${busy || !me.canBegin ? ' disabled' : ''}>${esc(t('startNow'))}</button><button type="button" class="ct-button" data-ct-action="reroll"${busy || !me.canReroll ? ' disabled' : ''}>${esc(t('rerollScene'))} · ${esc(t('rerollsLeft', { n: view.rerollsLeft }))}</button></div></div>`;
-        return `${paused}${mine}${script(view)}${zone}<h4 class="wl-section-title">${esc(t('castTitle'))}</h4>${castList(view, { me: n })}`;
+        const zone = view.phase === 'paused' ? '' : `<div class="wl-zone-row"><button type="button" class="ct-button ct-primary" data-ct-action="close"${busy || !me.canBegin ? ' disabled' : ''}>${esc(t('startNow'))}</button><button type="button" class="ct-button" data-ct-action="reroll"${busy || !me.canReroll ? ' disabled' : ''}>${esc(t('rerollScene'))} · ${esc(t('rerollsLeft', { n: view.rerollsLeft }))}</button></div>`;
+        return `${paused}${floor(view, n)}${mine}${sceneBrief(view)}${zone}${this.secondary(view, me, n, busy)}`;
       }
       if (live === 'scene') {
-        return `${paused}${flash(view, n)}<div class="wl-status">${script(view, { compact: true })}<div class="wl-status-clock"><span>${esc(t('sceneLeft'))}</span>${timer(view)}</div></div>${mine}${me.inRound ? lineZone(view, me, busy) : ''}<h4 class="wl-section-title">${esc(t('castTitle'))}<small>${esc(t('foulHint'))}</small></h4>${castList(view, { me: n, foul: me.canFoul && view.phase === 'scene', busy, points: true })}`;
+        return `${paused}${flash(view, n)}${floor(view, n)}${mine}${sceneBrief(view)}${me.inRound ? lineZone(view, me, busy) : ''}${this.secondary(view, me, n, busy)}`;
       }
       // A table saved by the earlier version may still be in its MVP vote.
       if (live === 'vote') return `${paused}<section class="wl-zone"><h3 class="wl-wrap-title">${esc(t('wrapTitle'))}</h3><p>${esc(t('legacyVote'))}</p>${me.canEndVote ? `<button type="button" class="ct-button ct-primary" data-ct-action="close"${busy ? ' disabled' : ''}>${esc(t('showResult'))}</button>` : ''}</section>`;
@@ -268,12 +302,13 @@ var WORD_LIMIT_UI = (() => {
     tail(data) {
       const view = data.wl;
       if (view.phase === 'finished') return '';
-      return this.scoreline(view, data.playerNum);
+      return view.phase === 'result' ? this.scoreline(view, data.playerNum) : '';
     }
+    destroy() { this.root.removeEventListener('toggle', this.moreToggle, true); super.destroy(); }
   }
 
   const SYNC = typeof CARD_TABLE !== 'undefined'
-    ? CARD_TABLE.define({ game: 'wordlimit', key: 'wl', engine: () => WORD_LIMIT_ENGINE, extra: 'wordLimitControlToken', fields: ['target', 'settings', 'names', 'playerNum', 'active'] })
+    ? CARD_TABLE.define({ game: 'wordlimit', key: 'wl', engine: () => WORD_LIMIT_ENGINE, extra: 'wordLimitControlToken', fields: ['target', 'settings', 'names', 'playerNum', 'active', 'speakingTurn'] })
     : null;
   return { t, dict, ART, Card, stage, SYNC, controlsSpec, settingsForm, readSettings, pointsFields, readPoints, limitsFor, shufflesText, limitText, unitWord };
 })();
