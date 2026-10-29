@@ -37,7 +37,18 @@ cards now have similar heights. WORD LIMIT real host + 4 original play links
 (isolated fixture): 21 checks/72 captures, zero layout issues/page errors, with
 per-turn checks that listeners see the speaker's exact limit. The service smoke
 now also asserts Once profile 3 and Bluff v3 guides (4/4 offline harness).
-Publication results are recorded below when available.
+
+Frontend 089d860 is published; Vercel deployment J2esm5Ha4yyuxMhvc9r5gd6UB73t
+succeeded. Read back from production: bluff-king-ui.js (bluffStory, new labels,
+engine tag bluff-story-3, no follow-up panel), once-upon-a-time-deck.js
+(profile3/profile2 IDs) and -engine.js (INTERRUPT_PROFILE 3, savedInterruptIds),
+word-limit-ui.js (speaker limit tile). The independent service is NOT yet
+redeployed: this session has no shell on the user's computer. A one-click
+deploy is ready at work\hub-deploy-2026-10-30.cmd (fast-forward the clean
+work\livechat to main, full tests, package, CLI deploy with the existing login,
+sync service source, readiness/assets, service-modes smoke and three Once
+games; log hub-deploy-2026-10-30.log). Until it runs, service-run Once tables
+deal profile 2 and service Bluff tables show the older single start.
 
 ## CURRENT: Illustrated Word Wolf and clearer conversation cards — 2026-10-26
 
