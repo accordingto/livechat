@@ -27,8 +27,7 @@ limit as a small tile in the floor box; the speaker's own card does not. UI
 only; all WL assets `wl-6`. Engine/turn/score/timer unchanged.
 
 Once and Bluff are ENGINE changes: the independent service must be redeployed
-(scripts/hub-executor-package-service.cjs). Until then service-run Once tables
-deal profile 2 and service Bluff tables send v2 guides (shown as one start).
+(scripts/hub-executor-package-service.cjs). Both are now deployed (below).
 
 Validation: full Hub 2387/2387 (Once 200, Bluff incl. executor 176, WL/card
 table 32). Bluff real-page fixture 30 scenarios/30 captures EN/ZH 320/390/1280,
@@ -42,13 +41,24 @@ Frontend 089d860 is published; Vercel deployment J2esm5Ha4yyuxMhvc9r5gd6UB73t
 succeeded. Read back from production: bluff-king-ui.js (bluffStory, new labels,
 engine tag bluff-story-3, no follow-up panel), once-upon-a-time-deck.js
 (profile3/profile2 IDs) and -engine.js (INTERRUPT_PROFILE 3, savedInterruptIds),
-word-limit-ui.js (speaker limit tile). The independent service is NOT yet
-redeployed: this session has no shell on the user's computer. A one-click
-deploy is ready at work\hub-deploy-2026-10-30.cmd (fast-forward the clean
-work\livechat to main, full tests, package, CLI deploy with the existing login,
-sync service source, readiness/assets, service-modes smoke and three Once
-games; log hub-deploy-2026-10-30.log). Until it runs, service-run Once tables
-deal profile 2 and service Bluff tables show the older single start.
+word-limit-ui.js (speaker limit tile).
+
+Independent service deployed from the user's computer (work\hub-deploy-2026-10-30.cmd,
+run via desktop control): it downloaded exact commit 12bc54e from GitHub (no
+local edits), ran the full suite there 2387/2387, packaged 64 files and deployed
+with the existing login and `--scope willintaiwan` (a first attempt without the
+scope was "Not authorized" and changed nothing). Deployment
+dpl_6VButmN7RJbiuitazXw7c7cbg6Kk (icebreaker-youtube-search-mhkk1dwyh-willintaiwan
+.vercel.app) is READY and aliased to the stable URL. The 64 deployed files were
+copied back to the service source. Readback 64/64 executor assets; health 200,
+CORS, synthetic-ticket rejection, private runtime 404. Live service-modes smoke
+passed 34 checks (Bluff vote round with v3 story 20, Once profile 3 incl. every
+dealt card's flag 9, boundary incl. search 200/lyrics 410); 15 tracked nodes,
+14 deleted, 1 empty, 0 failures. Disposable Once games: Classic/auto 476,
+Modern/9 716, Halloween/9 716 checks, each 7 nodes cleaned, 0 failures. No
+existing room was used. Physical phones and human voice play are not verified.
+Deploy note for next time: the user's machine has no Git on PATH and Node only
+in the Codex runtime; the .cmd adds Node and the script uses the GitHub tarball.
 
 ## CURRENT: Illustrated Word Wolf and clearer conversation cards — 2026-10-26
 
