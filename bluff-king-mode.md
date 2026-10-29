@@ -337,9 +337,9 @@ supersedes the "two made-up ideas" panel above where it differs.
 - The **Need a follow-up idea?** panel, its local idea list and the
   `inspiration` action are removed from Thinker and Everyone-votes cards.
 - Cache: UI/engine `bluff-story-3`, CSS `v=11`; sync `vote-1` and topics `v=2`
-  unchanged. Engine change: the independent service must be redeployed for
-  service-run Hub tables; until then those tables keep the v2 two-start guide,
-  which the new card shows as one start.
+  unchanged. Engine change: deployed to the independent service on 2026-10-30
+  (dpl_6VButmN7RJbiuitazXw7c7cbg6Kk); the live smoke confirmed v3 stories for
+  Bluffers only, with all disposable nodes cleaned.
 
 ## Topic content and maintenance
 
