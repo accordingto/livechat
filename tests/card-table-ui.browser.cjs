@@ -516,6 +516,11 @@ const normKey = text => String(text || '').normalize('NFKC').toLowerCase().repla
       assert.equal(beforeFloor.round.speaker, actor);
       await allCards(view => view.speaker === actor && view.speakingTurn === beforeFloor.round.speakingTurn);
       for (const number of order) assert.equal(await card(number).locator('[data-ct-main] .wl-line-btn').count(), number === actor ? 1 : 0);
+      for (const number of order) {
+        const shown = card(number).locator('[data-ct-main] .wl-floor [data-wl-speaker-limit]');
+        if (number === actor) assert.equal(await shown.count(), 0, 'the speaker reads their own big board');
+        else assert.equal(await shown.getAttribute('data-wl-speaker-limit'), String(beforeFloor.round.limits[actor]), 'listeners see the speaker’s current limit');
+      }
       if (index === 0) await card(actor).locator('[data-ct-main] .wl-line-btn').dblclick({ delay: 35 });
       else await tap(card(actor), '[data-ct-main] .wl-line-btn');
       await wait(async () => (await state()).round.lines?.[actor] === 1, 'one line from seat ' + actor);

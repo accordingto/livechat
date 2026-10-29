@@ -34,6 +34,7 @@ var WORD_LIMIT_UI = (() => {
     firstSpeaker: ['首先發言', 'First to speak'], nextSpeaker: ['下一位：{name}', 'Next: {name}'],
     waitingTurn: ['先聽聽 {name}，接著輪流說。', 'Listen to {name}; your turn is coming.'],
     noSpeaker: ['等待演員回來', 'Waiting for an actor'],
+    speakerLimit: ['他這句：{limit}', 'Their limit: {limit}'], speakerLimitUnit: ['{unit}一句', '{unit} a line'],
     moreScene: ['演員與本場紀錄', 'Cast & scene details'],
     optionalDetails: ['查看角色、分數與犯規操作', 'Roles, points and foul controls'],
     myScene: ['這場：{lines}、{points}', 'This scene: {lines}, {points}'],
@@ -192,7 +193,11 @@ var WORD_LIMIT_UI = (() => {
     const speaker = view.speaker, mine = speaker != null && speaker === me;
     const title = live === 'cast' ? t('firstSpeaker') : mine ? t('yourTurn') : t('speakingNow');
     const next = view.nextSpeaker && view.nextSpeaker !== speaker ? `<small>${esc(t('nextSpeaker', { name: nameOf(view, view.nextSpeaker) }))}</small>` : '';
-    return `<section class="wl-floor${mine && live === 'scene' ? ' is-mine' : ''}" data-wl-speaker="${speaker ?? ''}" data-wl-speaking-turn="${Number(view.speakingTurn) || 0}"><div><span>${esc(title)}</span><strong>${esc(speaker == null ? t('noSpeaker') : nameOf(view, speaker))}</strong>${next}</div><div class="wl-floor-clock"><span>${esc(t(live === 'cast' ? 'curtainIn' : 'sceneLeft'))}</span>${timer(view)}</div></section>`;
+    // Someone else holds the floor: show the limit they are playing right now
+    // (public on every card), so listeners can follow and call a foul.
+    const row = speaker != null && !mine ? list(view.cast).find(item => item.playerNum === speaker) : null;
+    const theirs = row?.limit != null ? `<p class="wl-floor-limit" data-wl-speaker-limit="${Number(row.limit)}" aria-label="${esc(t('speakerLimit', { limit: limitText(row.limit, view.unit) }))}"><b class="wl-floor-tile">${esc(row.limit)}</b><span>${esc(t('speakerLimitUnit', { unit: unitWord(row.limit, view.unit) }))}</span></p>` : '';
+    return `<section class="wl-floor${mine && live === 'scene' ? ' is-mine' : ''}" data-wl-speaker="${speaker ?? ''}" data-wl-speaking-turn="${Number(view.speakingTurn) || 0}"><div><span>${esc(title)}</span><strong>${esc(speaker == null ? t('noSpeaker') : nameOf(view, speaker))}</strong>${theirs}${next}</div><div class="wl-floor-clock"><span>${esc(t(live === 'cast' ? 'curtainIn' : 'sceneLeft'))}</span>${timer(view)}</div></section>`;
   }
   function sceneBrief(view) {
     if (!view.scene) return '';

@@ -63,7 +63,7 @@ test('Halloween lobby selection is fenced, saved and public while cards remain u
   assert.equal(denied.replies[2].error, 'not_available'); assert.equal(denied.world, 'classic');
   const request = command(initial, 'configure', 0, { world: 'halloween', handSize: 4 });
   const saved = E.apply(initial, request);
-  assert.equal(saved.world, 'halloween'); assert.equal(saved.handSize, 4); assert.equal(saved.interruptProfile, 2);
+  assert.equal(saved.world, 'halloween'); assert.equal(saved.handSize, 4); assert.equal(saved.interruptProfile, 3);
   assert.equal(E.apply(saved, request), saved, 'retry reuses the one settings receipt');
   for (const seat of [0, 1, 6]) {
     const view = E.view(saved, seat).once;
@@ -91,12 +91,21 @@ test('Halloween supports every 2–6-player automatic or 3–9-card opening with
   }
 });
 
-test('all 40 Halloween Interrupts support the same category takeover and UI action in both saved profiles', () => {
-  for (const card of H.storyCards.filter(item => item.isInterrupt)) for (const legacy of [false, true]) {
-    let s = start(); if (legacy) delete s.interruptProfile;
+test('all 42 current Halloween Interrupts take over by category; saved profiles keep the released 40', () => {
+  const released = new Set(H.profile2InterruptIds);
+  for (const card of H.storyCards.filter(item => item.isInterrupt)) for (const profile of [3, 2, 1]) {
+    let s = start(); if (profile === 1) delete s.interruptProfile; else s.interruptProfile = profile;
     const normal = H.storyCards.find(item => item.category === card.category && !item.isInterrupt && item.id !== s.starterCard);
     give(s, 1, normal.id); give(s, 2, card.id); s = act(s, 'play', 1, { cardId: normal.id });
     const view = E.view(s, 2).once;
+    if (profile < 3 && !released.has(card.id)) {
+      // Only cards held alone can prove the saved mix: drop any other same-category Interrupt.
+      s.storyDiscard.push(...s.hands[2].filter(id => id !== card.id)); s.hands[2] = [card.id];
+      const saved = E.view(s, 2).once;
+      assert.equal(saved.hand[0].isInterrupt, false, card.id + ' is not an Interrupt in a profile-' + profile + ' game');
+      assert.equal(saved.actions.categoryInterrupt, false);
+      continue;
+    }
     assert.equal(view.hand.find(item => item.id === card.id).isInterrupt, true, card.id);
     assert.equal(view.actions.categoryInterrupt, true);
     const html = UI.tableHTML({ game: 'onceupon', once: view }, { selectedId: card.id });
@@ -128,7 +137,7 @@ test('Halloween restart clears previous match data, keeps world/size and safely 
   let s = start(6, 4); s = act(s, 'play', 1, { cardId: s.hands[1][0] }); s = act(s, 'challenge', 2);
   const old = clone(s), late = command(s, 'vote', 3, { voteId: s.vote.id, choice: 'lose' });
   s = act(s, 'restart'); assert.notEqual(s.sessionId, old.sessionId);
-  assert.equal(s.world, 'halloween'); assert.equal(s.handSize, 4); assert.equal(s.interruptProfile, 2);
+  assert.equal(s.world, 'halloween'); assert.equal(s.handSize, 4); assert.equal(s.interruptProfile, 3);
   assert.equal(s.phase, 'LOBBY'); assert.equal(s.vote, null); assert.deepEqual(s.history, []);
   assert.deepEqual(s.hands, {}); assert.deepEqual(s.endings, {}); assert.deepEqual(s.readiness, {});
   assert.equal(E.apply(s, late), s); const redealt = act(s, 'deal'); conservation(redealt);

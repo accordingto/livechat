@@ -8,7 +8,8 @@
   // Original Hub expansion: 150 Story cards and 20 light, funny Endings.
   // The world is separate: independent IDs, no cross-world dealing or history.
   // Explicit same-title art reuse is provenance, not an extra card in the source world.
-  // 40 category Interrupts (8 per category): a deck mix, not a guaranteed hand quota.
+  // 40 category Interrupts (8 per category) in profile 2; profile 3 (current new
+  // deals) adds Thief and Key: 42/150 = 28.0%. A deck mix, not a hand quota.
   // Rows: slug, title, meaning, Interrupt, art origin, source ID, main, thumb, art key, brief.
   const groups = [
     ["character", [
@@ -172,10 +173,14 @@
       ["pizza-delivery","Pizza Delivery","Someone arrives with food at just the right or wrong moment.",false,"new",null,"assets/once-upon-a-time/halloween/event/pizza-delivery-v1.webp","assets/once-upon-a-time/halloween/event/pizza-delivery-v1-thumb.webp","halloween.event.pizza-delivery","An adult delivery rider offering a stack of closed blank pizza boxes at a glowing castle doorway while a polite vampire answers, warm funny everyday contrast; no brand or text."]
     ]]
   ];
+  const profile3InterruptIds = new Set(['once-hw-character-thief', 'once-hw-thing-key']);
   const storyCards = Object.freeze(groups.flatMap(([category, rows]) => rows.map(([slug, title, description, isInterrupt, artOrigin, sourceCardId, imagePath, thumbnailPath, artKey, artBrief]) => Object.freeze({
     id: 'once-hw-' + category + '-' + slug, world: 'halloween', category, title, description,
-    isInterrupt: isInterrupt === true, artOrigin, sourceCardId, imagePath, thumbnailPath, artKey, artBrief
+    isInterrupt: isInterrupt === true || profile3InterruptIds.has('once-hw-' + category + '-' + slug), artOrigin, sourceCardId, imagePath, thumbnailPath, artKey, artBrief
   }))));
+  // The released 40 (rows marked true) serve both older saved profiles.
+  const profile2InterruptIds = Object.freeze(groups.flatMap(([category, rows]) =>
+    rows.filter(row => row[3] === true).map(([slug]) => 'once-hw-' + category + '-' + slug)));
   // Endings are playful payoffs, never gruesome or frightening final scenes.
   const endingRows = [
     ["snack","Just a Snack","And the monster only wanted a snack.","A huge fluffy purple monster sitting politely at a small kitchen table with a tiny plate of cookies, relieved adult adventurers offering tea; reassuring funny reveal, warm orange light, no threat."],
@@ -205,7 +210,7 @@
     imagePath: 'assets/once-upon-a-time/halloween/ending/' + slug + '-v1.webp',
     thumbnailPath: 'assets/once-upon-a-time/halloween/ending/' + slug + '-v1-thumb.webp', artBrief
   })));
-  // A newly introduced world has no older saved-card classification to migrate.
-  const legacyInterruptIds = Object.freeze(storyCards.filter(card => card.isInterrupt).map(card => card.id));
-  return Object.freeze({ id: 'halloween', title: 'Spooky Halloween', storyCards, endingCards, legacyInterruptIds });
+  // This world launched with profile 2, so its legacy pool is the same 40.
+  const legacyInterruptIds = profile2InterruptIds;
+  return Object.freeze({ id: 'halloween', title: 'Spooky Halloween', storyCards, endingCards, legacyInterruptIds, profile2InterruptIds });
 });

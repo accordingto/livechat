@@ -59,6 +59,23 @@ test('waiting actors keep their own role and limit but receive no other actor’
   }
 });
 
+test('listener cards show the current speaker’s limit next to their name; the speaker’s own card does not repeat it', () => {
+  const state = game(), speaker = state.round.speaker, listener = state.round.players.find(n => n !== speaker);
+  for (const language of ['en', 'zh']) {
+    const UI = ui(language), card = renderer(UI);
+    let html = card.main(E.view(state, listener));
+    const floor = html.slice(html.indexOf('data-wl-speaker='), html.indexOf('class="wl-board'));
+    assert.ok(floor.indexOf('Actor ' + speaker) < floor.indexOf('data-wl-speaker-limit'), 'name first, then their limit');
+    assert.match(floor, new RegExp(`data-wl-speaker-limit="${state.round.limits[speaker]}"`));
+    assert.match(floor, new RegExp(`<b class="wl-floor-tile">${state.round.limits[speaker]}</b>`));
+    assert.doesNotMatch(card.main(E.view(state, speaker)), /data-wl-speaker-limit/, 'the speaker already sees their own big board');
+    const swapped = JSON.parse(JSON.stringify(state)); swapped.round.limits[speaker] = state.round.limits[speaker] === 6 ? 1 : 6;
+    html = card.main(E.view(swapped, listener));
+    assert.match(html, new RegExp(`data-wl-speaker-limit="${swapped.round.limits[speaker]}"`), 'a limit swap shows the new limit');
+    assert.match(UI.stage(E.view(state, 0).wl), new RegExp(`data-wl-speaker-limit="${state.round.limits[speaker]}"`), 'the shared screen shows it too');
+  }
+});
+
 test('the shared screen shows the current floor without a host scoring action, and player names remain escaped', () => {
   const state = game();
   state.roster.find(row => row.playerNum === state.round.speaker).name = '<img src=x onerror=x>';

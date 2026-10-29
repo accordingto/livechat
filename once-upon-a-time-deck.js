@@ -167,8 +167,10 @@
     ]]
   ];
 
-  // Six Interrupts per category: 30/129 cards, up from 20/129. This is a
-  // fixed physical-card mix, never a guaranteed quota in each player's hand.
+  // Interrupt mixes are fixed physical-card pools, never a guaranteed quota
+  // in each player's hand. Profile 2 had six per category (30/129). Profile 3
+  // (current new deals) adds one more per category: 35/129 = 27.1%, a little
+  // above the official third-edition core deck (23 of 114 Story cards, 20.2%).
   const extraInterruptIds = new Set([
     'once-character-lost-heir', 'once-character-moon-cat',
     'once-thing-empty-crown', 'once-thing-old-map',
@@ -176,14 +178,21 @@
     'once-aspect-fearless', 'once-aspect-hungry',
     'once-event-search', 'once-event-return'
   ]);
+  const profile3InterruptIds = new Set([
+    'once-character-fox', 'once-thing-copper-mirror', 'once-place-seaside-cave',
+    'once-aspect-frozen', 'once-event-hidden-truth'
+  ]);
   const legacyInterruptIds = Object.freeze(storyGroups.flatMap(([category, rows]) =>
     rows.filter(([, , isInterrupt]) => isInterrupt).map(([slug]) => 'once-' + category + '-' + slug)));
+  const profile2InterruptIds = Object.freeze(storyGroups.flatMap(([category, rows]) =>
+    rows.filter(([slug, , isInterrupt]) => isInterrupt || extraInterruptIds.has('once-' + category + '-' + slug))
+      .map(([slug]) => 'once-' + category + '-' + slug)));
   const storyCards = Object.freeze(storyGroups.flatMap(([category, rows]) =>
     rows.map(([slug, title, isInterrupt]) => Object.freeze({
       id: 'once-' + category + '-' + slug,
       title,
       category,
-      isInterrupt: isInterrupt || extraInterruptIds.has('once-' + category + '-' + slug),
+      isInterrupt: isInterrupt || extraInterruptIds.has('once-' + category + '-' + slug) || profile3InterruptIds.has('once-' + category + '-' + slug),
       artKey: 'story.' + category + '.' + slug,
       imagePath: assetRoot + category + '/' + slug + '-v2.webp',
       thumbnailPath: assetRoot + category + '/' + slug + '-v2-thumb.webp'
@@ -252,7 +261,7 @@
     thumbnailPath: assetRoot + 'ending/' + slug + '-v2-thumb.webp'
   })));
 
-  const classic = Object.freeze({ id: 'classic', title: 'Classic fairy tales', storyCards, endingCards, legacyInterruptIds });
+  const classic = Object.freeze({ id: 'classic', title: 'Classic fairy tales', storyCards, endingCards, legacyInterruptIds, profile2InterruptIds });
   const worlds = Object.freeze([classic, ...(modernFuture?.id === 'modern-future' ? [modernFuture] : []), ...(halloween?.id === 'halloween' ? [halloween] : [])]);
   const getWorld = id => worlds.find(world => world.id === id) || null;
   const storyById = Object.freeze(Object.fromEntries(worlds.flatMap(world => world.storyCards.map(card => [card.id, card]))));

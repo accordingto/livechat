@@ -25,17 +25,21 @@ test('Halloween is a separate selectable 150 Story / 20 Ending world', () => {
   for (const value of [H, H.storyCards, H.endingCards, H.legacyInterruptIds]) assert.ok(Object.isFrozen(value));
 });
 
-test('Halloween has 30 Story cards and eight Interrupts per category without a hand guarantee', () => {
+test('Halloween has 30 Story cards and eight or nine Interrupts per category without a hand guarantee', () => {
   for (const category of categories) {
     const cards = H.storyCards.filter(card => card.category === category);
     assert.equal(cards.length, 30, category);
-    assert.equal(cards.filter(card => card.isInterrupt).length, 8, category);
+    assert.equal(cards.filter(card => card.isInterrupt).length, ['character', 'thing'].includes(category) ? 9 : 8, category);
+    assert.equal(cards.filter(card => H.profile2InterruptIds.includes(card.id)).length, 8, category + ' released mix');
     assert.equal(cards.filter(card => card.artOrigin === 'new').length, 18, category);
     assert.equal(cards.filter(card => card.artOrigin === 'reuse').length, 12, category);
   }
-  assert.equal(H.storyCards.filter(card => card.isInterrupt).length, 40);
-  assert.deepEqual([...H.legacyInterruptIds].sort(), H.storyCards.filter(card => card.isInterrupt).map(card => card.id).sort());
-  assert.equal(new Set(H.legacyInterruptIds).size, 40);
+  assert.equal(H.storyCards.filter(card => card.isInterrupt).length, 42);
+  assert.deepEqual(H.storyCards.filter(card => card.isInterrupt && !H.profile2InterruptIds.includes(card.id)).map(card => card.id).sort(),
+    ['once-hw-character-thief', 'once-hw-thing-key']);
+  assert.equal(H.legacyInterruptIds, H.profile2InterruptIds, 'this world launched with the profile-2 mix');
+  assert.equal(new Set(H.profile2InterruptIds).size, 40); assert.ok(Object.isFrozen(H.profile2InterruptIds));
+  assert.ok(H.profile2InterruptIds.every(id => H.storyCards.find(card => card.id === id).isInterrupt));
   assert.ok(H.storyCards.every(card => typeof card.isInterrupt === 'boolean'));
   assert.ok(H.endingCards.every(card => !Object.hasOwn(card, 'isInterrupt')));
 });

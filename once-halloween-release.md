@@ -28,7 +28,17 @@ timing, penalties, voting or win rules. There is no per-hand Interrupt quota.
 - Modern & Future: 10/60 → **15/60 (25%)**, three per category.
 - Spooky Halloween: **40/150 (26.7%)**, eight per category.
 
-New create/deal/restart uses saved `interruptProfile:2`. Already-running saved
+**2026-10-30 (profile 3, current):** Classic **35/129 (27.1%)**, seven per
+category (+Fox, Copper Mirror, Seaside Cave, Frozen, Hidden Truth); Modern &
+Future **17/60 (28.3%)** (+Stranger, Escape); Halloween **42/150 (28.0%)**
+(+Thief, Key). The official third-edition core deck has 23 Interrupts among 114
+Story cards (20.2%, counted from Atlas Games' card list
+https://www.atlas-games.com/pdf_storage/OUAT3CoreCardlistWEB.pdf); the Hub stays
+about seven to eight points above it by request. New create/deal/restart saves
+`interruptProfile:3`; a saved profile-2 game keeps `profile2InterruptIds` and a
+game without a profile keeps `legacyInterruptIds` until its next deal.
+
+The 2026-10-22 rule: new create/deal/restart used saved `interruptProfile:2`. Already-running saved
 games without a profile retain the original 20/10 flags and powers until their
 next game. Server validation and hand/starter/history/returnable-card projections
 use that same profile. Client commands cannot change it. IDs, words, original

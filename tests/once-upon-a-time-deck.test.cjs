@@ -34,9 +34,9 @@ test('expanded deck contains 129 story cards and 51 distinct endings with varied
   for (const [category, expected] of Object.entries(categoryCounts)) {
     const cards = DECK.storyCards.filter(card => card.category === category);
     assert.equal(cards.length, expected, category);
-    assert.equal(cards.filter(card => card.isInterrupt).length, 6, category + ' Interrupt cards');
+    assert.equal(cards.filter(card => card.isInterrupt).length, 7, category + ' Interrupt cards');
   }
-  assert.equal(DECK.storyCards.filter(card => card.isInterrupt).length, 30);
+  assert.equal(DECK.storyCards.filter(card => card.isInterrupt).length, 35);
 });
 
 test('15 original additions supply short story hooks without replacing released cards or adding Interrupts', () => {

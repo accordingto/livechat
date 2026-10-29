@@ -9,14 +9,15 @@ const digest=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const json=file=>JSON.parse(fs.readFileSync(path.join(repo,assetRoot,file),'utf8'));
 const slugOf=card=>card.id.replace('once-mf-'+(card.category||'ending')+'-','');
 
-test('Modern & Future is a separate 60 Story / 18 Ending world with 12 cards and three Interrupts per category',()=>{
+test('Modern & Future is a separate 60 Story / 18 Ending world with 12 cards and three or four Interrupts per category',()=>{
   assert.equal(M.id,'modern-future');assert.equal(M.title,'Modern & Future');
   assert.equal(M.storyCards.length,60);assert.equal(M.endingCards.length,18);
   for(const category of categories){
     const cards=M.storyCards.filter(card=>card.category===category);
-    assert.equal(cards.length,12,category);assert.equal(cards.filter(card=>card.isInterrupt).length,3,category);
+    assert.equal(cards.length,12,category);assert.equal(cards.filter(card=>card.isInterrupt).length,['character','event'].includes(category)?4:3,category);
+    assert.equal(cards.filter(card=>M.profile2InterruptIds.includes(card.id)).length,3,category+' profile-2 mix');
   }
-  assert.equal(M.storyCards.filter(card=>card.isInterrupt).length,15);
+  assert.equal(M.storyCards.filter(card=>card.isInterrupt).length,17);
   const world=D.getWorld('modern-future');assert.equal(world,M);
   assert.equal(D.getWorld('classic').storyCards,D.storyCards);
   assert.equal(D.getWorld('classic').endingCards,D.endingCards);

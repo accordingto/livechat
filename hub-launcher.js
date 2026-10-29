@@ -7,7 +7,7 @@
   else root.HUB_LAUNCHER = api;
 })(typeof globalThis === 'object' ? globalThis : this, function (root) {
   'use strict';
-  const VERSION = 'hub-launch-6';
+  const VERSION = 'hub-launch-7';
   const specs = Object.freeze({
     letstalk: { href:'lets-talk.html', min:2, max:9, sync:'TALK_SYNC', scripts:['talk-settings.js','talk-crazy.js','talk-vnext.js','talk-engine.js','talk-topics.js','talk-sync.js'] },
     onceupon: { href:'once-upon-a-time.html', min:2, max:6, sync:'ONCE_SYNC', scripts:['once-upon-a-time-modern-future-deck.js','once-upon-a-time-halloween-deck.js','once-upon-a-time-deck.js','once-upon-a-time-openings.js','once-upon-a-time-engine.js','talk-sync.js','once-upon-a-time-sync.js'] },

@@ -164,6 +164,12 @@ none adds a special ability. Legacy slugs are art identities, not display titles
 | Event | 28 | 4 |
 | Total | 129 | 20 |
 
+These are the released original flags (saved games without a profile). New
+deals now use Interrupt profile 3: 35/129 in Classic (seven per category),
+17/60 in Modern & Future and 42/150 in Spooky Halloween, about 27–28%, a little
+above the official core deck's 23/114 (20.2%). Profile-2 games keep 30/15/40.
+See once-halloween-release.md "Interrupts" for the card list and rules.
+
 Official reference, not a copied/licensed expansion: the [third-edition core
 product](https://www.atlas-games.com/product_tables/AG1030) has 114 Story and
 51 Ending cards. Counting its [official card list](https://www.atlas-games.com/pdf_storage/OUAT3CoreCardlistWEB.pdf)

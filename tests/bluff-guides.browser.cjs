@@ -34,13 +34,14 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
     response.writeHead(200, { 'content-type': mime[path.extname(file)] || 'application/octet-stream' }); response.end(fs.readFileSync(file));
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const base = 'http://127.0.0.1:' + server.address().port, browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const base = 'http://127.0.0.1:' + server.address().port, browser = await chromium.launch({ headless: true, ...(process.env.QA_NO_CHANNEL ? {} : { channel: 'chrome' }) });
   const report = { fixture: 'real HTML/CSS/art; engine projections; read-only stub transport; external network blocked; desktop Chrome viewport emulation, not physical phones', targetPolicy: '44px phone cards; 32px unchanged desktop host controls; 1px rounding tolerance', checks: [], views: [], captures: [], errors: [] };
   try {
     const scenarios = [];
     for (const role of ['bluffer', 'truthful', 'thinker']) for (const width of [320, 390]) for (const lang of ['en', 'zh']) scenarios.push({ deck: 'classic', mode: 'thinker', phase: 'prepare', role, width, lang });
     for (const role of ['bluffer', 'truthful']) for (const width of [320, 390]) for (const lang of ['en', 'zh']) scenarios.push({ deck: 'halloween', mode: 'vote', phase: 'discussion', role, width, lang });
     for (const width of [320, 390]) for (const lang of ['en', 'zh']) scenarios.push({ deck: 'classic', mode: 'vote', phase: 'discussion', role: 'bluffer', width, lang });
+    for (const width of [320, 390]) for (const lang of ['en', 'zh']) scenarios.push({ deck: 'classic', mode: 'thinker', phase: 'discussion', role: 'thinker', width, lang });
     for (const lang of ['en', 'zh']) scenarios.push({ deck: 'halloween', mode: 'vote', phase: 'discussion', role: 'host', width: 1280, lang, shared: true });
     for (const scenario of scenarios) {
       const { width, lang, shared = false } = scenario, view = fixture(scenario.deck, scenario.mode, scenario.phase, scenario.role, shared);
@@ -79,32 +80,27 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
           assert.equal(await page.locator('#bk-card-players').getAttribute('open'), null);
           assert.ok((await page.locator('#bk-room-label').innerText()).includes(view.self.name));
         }
+        assert.equal(await page.locator('#bk-followup,[data-bk-action="inspiration"]').count(), 0, tag + ' has no follow-up idea panel');
         if (scenario.role === 'bluffer') {
-          if (scenario.phase === 'discussion') {
-            const followup = page.locator('#bk-followup'); assert.equal(await followup.getAttribute('open'), null);
-            await followup.locator('summary').click(); await followup.locator('[data-bk-action="inspiration"]').click();
-            assert.equal(await followup.getAttribute('open'), '', 'a different idea does not close its optional panel');
-            await followup.locator('summary').click();
-          }
-          const guide = page.locator('#bk-story-guide'); assert.equal(await guide.getAttribute('open'), null);
-          await guide.locator('summary').click(); assert.equal(await guide.getAttribute('open'), '');
-          assert.equal(await guide.locator('.bk-guide-starts li').count(), 2);
-          assert.equal(await guide.locator('.bk-guide-steps,.bk-guide-topic').count(), 0, 'only two direct explanations, no repeated topic or long steps');
-          const expected = view.privateCard.storyGuide.starts[0][lang]; assert.ok((await guide.innerText()).includes(expected));
+          const roleCard = page.locator('.bk-role-card.has-story'), guide = roleCard.locator('#bk-story-guide'), story = view.privateCard.storyGuide.story;
+          assert.equal(await guide.count(), 1, tag + ' story sits on the role card');
+          assert.equal(await roleCard.locator('.bk-secret-answer').count(), 1, 'one made-up answer only');
+          assert.equal(await guide.locator('.bk-supporting-facts li').count(), 2, 'two made-up details, like the real card');
+          const text = await guide.innerText();
+          assert.ok(text.includes(story.answer[lang]), tag + ' answer'); for (const detail of story.details) assert.ok(text.includes(detail[lang]), tag + ' detail');
+          assert.ok(await guide.isVisible(), 'shown openly, without expanding');
           await page.evaluate(() => window.__bluffOptions.onView({ ...window.__bluffView, version: window.__bluffView.version + 1 }));
-          assert.equal(await guide.getAttribute('open'), '', 'sync preserves the optional panel');
-          await page.locator('[data-bk-action="toggleRole"]').click(); assert.equal(await guide.count(), 0, 'hiding role hides the optional guide');
-          await page.locator('[data-bk-action="toggleRole"]').click(); assert.equal(await guide.getAttribute('open'), null);
+          assert.equal(await guide.count(), 1, 'sync keeps the story');
+          await page.locator('[data-bk-action="toggleRole"]').click(); assert.equal(await page.locator('#bk-story-guide').count(), 0, 'hiding role hides the story');
+          await page.locator('[data-bk-action="toggleRole"]').click(); assert.equal(await page.locator('#bk-story-guide').count(), 1);
           assert.deepEqual(await page.evaluate(() => window.__bluffCommands), [], 'reading/toggling sends no game command');
-          await guide.locator('summary').click();
-          const opened = await audit(), guideHeight = await guide.evaluate(element => element.getBoundingClientRect().height);
-          report.views.push({ ...scenario, guideOpen: true, ...opened, guideHeight });
-          assert.ok(opened.overflow <= 1, tag + ' open guide horizontal overflow');
-          assert.deepEqual(opened.clipped, [], tag + ' open guide clipped text');
-          assert.deepEqual(opened.badTargets, [], tag + ' open guide tap targets');
-          assert.ok(guideHeight <= 450, tag + ' two concise ideas fit in one small panel');
-          await page.screenshot({ path: path.join(output, tag + '-guide-open.png'), fullPage: true }); report.captures.push(tag + '-guide-open.png');
-        } else assert.equal(await page.locator('#bk-story-guide').count(), 0);
+          const cardHeight = await roleCard.evaluate(element => element.getBoundingClientRect().height);
+          report.views.push({ ...scenario, storyCard: true, cardHeight });
+          assert.ok(cardHeight <= 620, tag + ' story card stays compact');
+        } else {
+          assert.equal(await page.locator('#bk-story-guide').count(), 0);
+          if (scenario.role === 'truthful') report.views.push({ ...scenario, truthCard: true, cardHeight: await page.locator('.bk-role-card').evaluate(element => element.getBoundingClientRect().height) });
+        }
         report.checks.push(tag);
       } finally { await context.close(); }
     }

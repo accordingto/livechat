@@ -1,3 +1,44 @@
+## CURRENT: Once Interrupt mix 3, one full Bluffer story, Word Limit speaker limit — 2026-10-30
+
+User request: nudge Once Interrupts up a little, referencing the official game
+(a bit higher is fine, not too much); remove BLUFF PARTY's follow-up ideas from
+player cards; give a Bluffer one more complete made-up story like the real card;
+in WORD LIMIT THEATER show the current speaker's limit on other players' cards.
+
+ONCE: official third-edition core deck is 23/114 Story Interrupts (20.2%, Atlas
+Games card list). New deals save `interruptProfile: 3`: Classic 35/129 (27.1%,
+7 per category: +Fox, Copper Mirror, Seaside Cave, Frozen, Hidden Truth),
+Modern & Future 17/60 (28.3%: +Stranger, Escape), Halloween 42/150 (28.0%:
++Thief, Key). Saved profile-2 games keep `profile2InterruptIds` (30/15/40);
+games without a profile keep `legacyInterruptIds` (20/10/40) until next deal.
+Commands cannot upgrade a profile. No hand quota, IDs, art or rules changed.
+Cache: decks/engine `once-interrupt-3`, launcher `hub-launch-7`.
+
+BLUFF: `STORY_GUIDES` keeps the 72 public-clue answers and adds two made-up
+details each (144 lines). `storyGuide` v3 = one `story {answer, details[2]}`,
+`starts: [answer]`, empty steps; public clues only, deterministic, no mutation.
+Shown open inside the Bluffer role card exactly like the Truth Teller block;
+Hide removes it; old v2 projections show only their first start. The follow-up
+idea panel/list/`inspiration` action are removed. Cache UI/engine
+`bluff-story-3`, CSS `v=11`. Read bluff-king-mode.md (2026-10-30 section).
+
+WORD LIMIT: listener cards (and host stage) show the current speaker's public
+limit as a small tile in the floor box; the speaker's own card does not. UI
+only; all WL assets `wl-6`. Engine/turn/score/timer unchanged.
+
+Once and Bluff are ENGINE changes: the independent service must be redeployed
+(scripts/hub-executor-package-service.cjs). Until then service-run Once tables
+deal profile 2 and service Bluff tables send v2 guides (shown as one start).
+
+Validation: full Hub 2387/2387 (Once 200, Bluff incl. executor 176, WL/card
+table 32). Bluff real-page fixture 30 scenarios/30 captures EN/ZH 320/390/1280,
+zero overflow/clipping/target issues or page errors; Bluffer and Truth Teller
+cards now have similar heights. WORD LIMIT real host + 4 original play links
+(isolated fixture): 21 checks/72 captures, zero layout issues/page errors, with
+per-turn checks that listeners see the speaker's exact limit. The service smoke
+now also asserts Once profile 3 and Bluff v3 guides (4/4 offline harness).
+Publication results are recorded below when available.
+
 ## CURRENT: Illustrated Word Wolf and clearer conversation cards — 2026-10-26
 
 User follow-up: replace every Word Wolf word's basic art with clear finished

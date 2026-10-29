@@ -21,10 +21,16 @@ var ONCE_ENGINE = (() => {
   const worldPool = id => typeof deck.getWorld === 'function' ? deck.getWorld(id) :
     id === 'classic' ? { id: 'classic', storyCards, endingCards } : null;
   // Interrupt membership is a per-game rule, not live library metadata. Saved
-  // games without a marker retain the original mix until their next deal.
-  const INTERRUPT_PROFILE = 2;
+  // games keep the mix they were dealt with until their next deal: no marker =
+  // the original mix (1), 2 = the 2026-10-22 mix, 3 = the current library flags.
+  const INTERRUPT_PROFILE = 3;
+  const savedInterruptIds = s => {
+    const pool = worldPool(s.world);
+    const ids = s.interruptProfile === 2 ? pool?.profile2InterruptIds : pool?.legacyInterruptIds;
+    return ids || list(pool?.storyCards).filter(c => c.isInterrupt).map(c => c.id);
+  };
   const isInterrupt = (s, card) => !!card && (s.interruptProfile === INTERRUPT_PROFILE ? card.isInterrupt === true :
-    (worldPool(s.world)?.legacyInterruptIds || list(worldPool(s.world)?.storyCards).filter(c => c.isInterrupt).map(c => c.id)).includes(card.id));
+    savedInterruptIds(s).includes(card.id));
   const projectedStoryCard = (s, id) => storyById[id] ? { ...copy(storyById[id]), isInterrupt: isInterrupt(s, storyById[id]) } : null;
   const validHandSize = value => value === null || Number.isInteger(value) && value >= 3 && value <= 9;
   const resolvedHandSize = s => s.handSize == null ? Math.max(5, 11 - activeRoster(s).length) : s.handSize;

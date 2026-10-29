@@ -1,5 +1,6 @@
-// Fresh disposable production QA for the 2026-10-25 service release:
-// BLUFF PARTY "Everyone votes" + Halloween pack, and Once opening stories.
+// Fresh disposable production QA for the service releases: BLUFF PARTY
+// "Everyone votes" + Halloween pack + one full Bluffer story (2026-10-30),
+// and Once opening stories + Interrupt profile 3 (2026-10-30).
 // Exact fresh nodes only (created where null, deleted only when still ours);
 // no room listing, no existing-room access, no secret loading or credential
 // output. Live execution requires --live. Also checks the public service
@@ -10,6 +11,7 @@ const BF = require('../bluff-king-engine.js');
 const BA = require('../runtime/bluff-executor.cjs').adapters.bluffking;
 const topics = require('../bluff-king-topics.js');
 const ONCE = require('../once-upon-a-time-engine.js');
+const ONCE_DECK = require('../once-upon-a-time-deck.js');
 const DATABASE = 'https://livechat-92f66-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ORIGIN = 'https://icebreaker-youtube-search.vercel.app';
 const SERVICE = ORIGIN + '/api/hub-executor';
@@ -187,7 +189,7 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now, games = ['blu
       for (let n = 1; n <= 3; n++) {
         const own = await card(f, n), privateCard = own.view.privateCard, guide = privateCard?.storyGuide;
         check(privateCard?.role === 'bluffer'
-          ? guide?.optional === true && guide.kind === 'fiction' && guide.topic === own.view.round.topic.term && guide.version === 2 && guide.starts?.length === 2 && guide.steps?.length === 0
+          ? guide?.optional === true && guide.kind === 'fiction' && guide.topic === own.view.round.topic.term && guide.version === 3 && guide.starts?.length === 1 && guide.story?.answer?.en === guide.starts[0].en && guide.story.details?.length === 2 && guide.steps?.length === 0
           : guide == null, g);
       }
       check(current.view.round.storyGuide == null && current.view.round.topic.storyGuide == null, g);
@@ -226,6 +228,10 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now, games = ['blu
       report.step = 'once:deal'; current = await command(f, 2, 'deal');
       check(current.view.phase === 'CHOOSING_FIRST' && current.view.opening && current.view.opening.id && current.view.starterCard == null, g);
       check(current.view.actions?.newOpening === true, g);
+      // 2026-10-30 mix: a fresh deal uses Interrupt profile 3, and every dealt
+      // card's projected Interrupt flag matches the current library.
+      report.step = 'once:interrupt-profile'; check(current.state.interruptProfile === 3, g);
+      for (let n = 1; n <= 3; n++) { const hand = list((await card(f, n)).view.hand); check(hand.length > 0 && hand.every(c => c.isInterrupt === ONCE_DECK.storyById[c.id]?.isInterrupt), g); }
       const first = current.view.opening.id;
       report.step = 'once:newOpening'; current = await command(f, 1, 'newOpening');
       check(current.view.opening?.id && current.view.opening.id !== first && list(current.state.recentOpenings).includes(first), g);

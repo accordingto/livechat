@@ -131,7 +131,11 @@ cycle, and a change while paused does not resume the scene clock. Settings
 capture scene duration, units, swap count and point values for the next scene.
 
 Cards place the theme title and situation at the top, above the current/next
-speaker, scene clock and large line limit. The current action follows those
+speaker, scene clock and large line limit. Since 2026-10-30 (cache `wl-6`),
+when someone else holds the floor, the floor box also shows that speaker's
+current public limit as a small letter tile ("4 words a line"), so listeners can
+follow and call a foul; the speaker's own card does not repeat it (their big
+board already shows it). The shared host stage shows it too. UI only. The current action follows those
 essentials. **Role inspiration · optional** starts folded and explicitly says
 players can ignore the role and play freely; the host's cast/role area starts
 folded too. Waiting actors retain their limit but have no other actor's scoring

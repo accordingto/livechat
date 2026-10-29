@@ -396,17 +396,22 @@
     ]
   ]
 ];
-  // Three Interrupts per category: 15/60 physical cards. Keep the original ten
-  // IDs for saved games; new games use this modestly livelier fixed pool.
+  // Profile 2: three Interrupts per category (15/60). Profile 3 (current new
+  // deals) adds Stranger and Escape: 17/60 = 28.3%, a little above the official
+  // core deck's 20.2%. The original ten and profile-2 IDs stay for saved games.
   const extraInterruptIds = new Set([
     'once-mf-character-astronaut', 'once-mf-thing-phone', 'once-mf-place-city',
     'once-mf-aspect-hidden', 'once-mf-event-rescue'
   ]);
+  const profile3InterruptIds = new Set(['once-mf-character-stranger', 'once-mf-event-escape']);
   const legacyInterruptIds = Object.freeze(groups.flatMap(([category, rows]) =>
     rows.filter(([, , , isInterrupt]) => isInterrupt).map(([slug]) => 'once-mf-' + category + '-' + slug)));
+  const profile2InterruptIds = Object.freeze(groups.flatMap(([category, rows]) =>
+    rows.filter(([slug, , , isInterrupt]) => isInterrupt === true || extraInterruptIds.has('once-mf-' + category + '-' + slug))
+      .map(([slug]) => 'once-mf-' + category + '-' + slug)));
   const storyCards = Object.freeze(groups.flatMap(([category, rows]) => rows.map(([slug, title, artBrief, isInterrupt]) => Object.freeze({
     id: 'once-mf-' + category + '-' + slug, world: 'modern-future', category, title,
-    isInterrupt: isInterrupt === true || extraInterruptIds.has('once-mf-' + category + '-' + slug), artKey: 'modern-future.' + category + '.' + slug,
+    isInterrupt: isInterrupt === true || extraInterruptIds.has('once-mf-' + category + '-' + slug) || profile3InterruptIds.has('once-mf-' + category + '-' + slug), artKey: 'modern-future.' + category + '.' + slug,
     imagePath: assetRoot + category + '/' + slug + '-v1.webp',
     thumbnailPath: assetRoot + category + '/' + slug + '-v1-thumb.webp', artBrief
   }))));
@@ -508,5 +513,5 @@
     imagePath: assetRoot + 'ending/' + slug + '-v1.webp',
     thumbnailPath: assetRoot + 'ending/' + slug + '-v1-thumb.webp', artBrief
   })));
-  return Object.freeze({ id: 'modern-future', title: 'Modern & Future', storyCards, endingCards, legacyInterruptIds });
+  return Object.freeze({ id: 'modern-future', title: 'Modern & Future', storyCards, endingCards, legacyInterruptIds, profile2InterruptIds });
 });

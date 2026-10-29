@@ -125,7 +125,8 @@ test('private cards show the owner role; only the Truth Teller receives answer d
   for (const identityId of ['identity-0', 'identity-1', 'identity-2']) {
     const view = project(state, identityId), h = await harness(view, { card: true });
     const ownerCard = privateMarkup(h.html());
-    assert.match(h.html(), /class="bk-private bk-role-card"/); assert.match(ownerCard, /class="bk-role-title"/);
+    assert.match(h.html(), /class="bk-private bk-role-card(?: has-story)?"/); assert.match(ownerCard, /class="bk-role-title"/);
+    assert.equal(/bk-role-card has-story/.test(h.html()), view.privateCard.role === 'bluffer', 'only a Bluffer card carries a made-up story');
     const roleTitle = ownerCard.match(/<h2\b[^>]*class="bk-role-title"[^>]*>([\s\S]*?)<\/h2>/)?.[1];
     assert.equal(textMarkup(roleTitle || ''), { thinker: 'Thinker', truthful: 'Truth Teller', bluffer: 'Bluffer' }[view.privateCard.role]);
     assert.match(ownerCard, /class="[^\"]*\bbk-role-art\b[^\"]*"/);
@@ -836,61 +837,72 @@ test('everyone-votes mode: lobby choice, speaker turns, secret voting and the vo
   assert.ok(actions(reveal).includes('nextRound'));
 });
 
-test('bluffers have optional story starts below the primary preparation action, with no new command', async () => {
+test('bluffers see one complete made-up story on their own role card, like the Truth Teller card, with no new command', async () => {
   const state = fixture('prepare'), bluffer = state.rooms.UITEST.members.find(p => project(state, p.identityId).privateCard?.role === 'bluffer');
   for (const deck of ['classic', 'halloween']) {
     const view = project(state, bluffer.identityId);
     view.round.topic.deck = deck;
     view.privateCard.storyGuide = E.storyGuide(view.round.topic, view.round.id + ':' + view.self.playerId);
-    const h = await harness(view, { card: true }), guide = view.privateCard.storyGuide;
-    assert.match(h.html(), /<details id="bk-story-guide" class="bk-detail bk-story-guide" data-bk-story-guide="fiction">/);
-    assert.ok(h.html().indexOf('data-bk-action="ready"') < h.html().indexOf('id="bk-story-guide"'), 'ready remains before optional reading');
-    assert.match(h.html(), /Two made-up ideas · optional/);
-    assert.match(h.html(), /Use either, change it, or ignore both/);
-    assert.doesNotMatch(h.html(), /bk-guide-steps|bk-guide-topic|A simple way to build it/);
-    for (const start of guide.starts) assert.ok(h.html().includes(start.en));
-    assert.ok(!expandedMarkup(h.html()).includes(guide.starts[0].en), 'the optional guide does not crowd the initial card');
-    assert.equal(h.node('bk-story-guide').open, false);
-    h.node('bk-story-guide').open = true;
-    h.update({ ...view, version: view.version + 1 });
-    assert.equal(h.node('bk-story-guide').open, true, 'a sync refresh keeps the chosen guide open');
-    assert.equal(h.sent.length, 0, 'reading the guide never changes the room or requires acknowledgement');
+    const h = await harness(view, { card: true }), guide = view.privateCard.storyGuide, html = h.html();
+    assert.match(html, /<section class="bk-private bk-role-card has-story" data-bk-role="bluffer">/);
+    assert.match(html, /<div class="bk-truth-info bk-bluff-info" id="bk-story-guide" data-bk-story-guide="fiction">/);
+    const card = html.slice(html.indexOf('bk-role-card has-story'), html.indexOf('</section>', html.indexOf('bk-role-card has-story')));
+    assert.ok(card.includes(guide.story.answer.en), 'the story sits inside the role card');
+    for (const detail of guide.story.details) assert.ok(card.includes(detail.en));
+    assert.match(card, /A made-up answer you can use/); assert.match(card, /Details you can add/); assert.match(card, /All made up/);
+    assert.ok(expandedMarkup(html).includes(guide.story.answer.en), 'shown openly, like the real answer');
+    assert.ok(html.indexOf('id="bk-story-guide"') < html.indexOf('data-bk-action="ready"'), 'read the story, then tap Ready, like the Truth Teller');
+    assert.equal((html.match(/class="bk-secret-answer"/g) || []).length, 1, 'one option only');
+    assert.doesNotMatch(html, /Two made-up ideas|Use either|bk-guide-starts|<details id="bk-story-guide"/);
+    assert.equal(h.sent.length, 0, 'reading the story never changes the room or requires acknowledgement');
     await h.click('toggleRole');
-    assert.equal(h.node('bk-story-guide'), undefined, 'hiding the role also hides its bluffing scaffold');
-    assert.ok(!h.html().includes(guide.starts[0].en));
+    assert.equal(h.node('bk-story-guide'), undefined, 'hiding the role also hides its made-up story');
+    assert.ok(!h.html().includes(guide.story.answer.en));
     await h.click('toggleRole');
     assert.match(h.html(), /id="bk-story-guide"/);
-    assert.equal(h.node('bk-story-guide').open, false);
   }
 });
 
-test('story-start text is escaped, and old card projections without a guide keep working', async () => {
+test('the made-up story stays through discussion, then leaves at the vote; follow-up idea panels are gone', async () => {
+  const state = fixture('discussion'), bluffer = state.rooms.UITEST.members.find(p => project(state, p.identityId).privateCard?.role === 'bluffer');
+  const view = project(state, bluffer.identityId), h = await harness(view, { card: true });
+  assert.ok(view.privateCard.storyGuide.story); assert.ok(h.html().includes(view.privateCard.storyGuide.story.answer.en));
+  for (const markup of [h.html(), (await harness(project(state), { card: true })).html()]) {
+    assert.doesNotMatch(markup, /bk-followup|Follow-up idea|Need a follow-up idea|data-bk-action="inspiration"/);
+  }
+  const voting = clone(view); voting.phase = 'vote';
+  assert.doesNotMatch((await harness(voting, { card: true })).html(), /id="bk-story-guide"/);
+});
+
+test('story text is escaped, and old card projections without a guide keep working', async () => {
   const state = fixture('discussion'), bluffer = state.rooms.UITEST.members.find(p => project(state, p.identityId).privateCard?.role === 'bluffer');
   const view = project(state, bluffer.identityId), injected = '<button data-bk-action="identify">fake</button>';
-  view.privateCard.storyGuide.starts[0].en = injected;
+  view.privateCard.storyGuide.story.answer.en = injected; view.privateCard.storyGuide.story.details[0].en = injected;
   const h = await harness(view, { card: true });
   assert.ok(h.html().includes('&lt;button data-bk-action=&quot;identify&quot;&gt;fake&lt;/button&gt;'));
   assert.ok(!h.html().includes(injected)); assert.equal(h.button('identify'), undefined);
   const legacy = clone(view); delete legacy.privateCard.storyGuide;
   const old = await harness(legacy, { card: true });
-  assert.equal(old.node('bk-story-guide'), undefined); assert.match(old.html(), /Bluffer/);
+  assert.equal(old.node('bk-story-guide'), undefined); assert.match(old.html(), /Bluffer/); assert.doesNotMatch(old.html(), /has-story/);
   const shared = await harness(view);
-  assert.equal(shared.node('bk-story-guide'), undefined); assert.doesNotMatch(shared.html(), /Two made-up ideas/);
+  assert.equal(shared.node('bk-story-guide'), undefined); assert.doesNotMatch(shared.html(), /A made-up answer/);
 });
 
-test('old or malformed guide projections stay safe and never restore long steps or extra blocks', async () => {
+test('older two-start guides show only their first start; malformed guides stay safe and never restore long steps', async () => {
   const state = fixture('discussion'), bluffer = state.rooms.UITEST.members.find(p => project(state, p.identityId).privateCard?.role === 'bluffer');
   const view = project(state, bluffer.identityId);
-  view.privateCard.storyGuide = { version: 1, kind: 'fiction', optional: true, topic: 'REPEATED_TOPIC_MARKER',
-    starts: [{ en: 'Legacy first start', zh: '舊版第一個起點' }, { en: 'Legacy second start', zh: '舊版第二個起點' }, { en: 'EXTRA_START_MUST_NOT_SHOW', zh: '多餘起點' }],
+  view.privateCard.storyGuide = { version: 2, kind: 'fiction', optional: true, topic: 'REPEATED_TOPIC_MARKER',
+    starts: [{ en: 'Legacy first start', zh: '舊版第一個起點' }, { en: 'SECOND_START_MUST_NOT_SHOW', zh: '舊版第二個起點' }],
     steps: [{ en: 'LONG_LEGACY_STEPS_MUST_NOT_SHOW', zh: '舊版長步驟' }] };
   const old = await harness(view, { card: true });
-  assert.match(old.html(), /Legacy first start/); assert.match(old.html(), /Legacy second start/);
-  assert.doesNotMatch(old.html(), /REPEATED_TOPIC_MARKER|EXTRA_START_MUST_NOT_SHOW|LONG_LEGACY_STEPS_MUST_NOT_SHOW|bk-guide-steps/);
+  assert.match(old.html(), /Legacy first start/);
+  assert.doesNotMatch(old.html(), /REPEATED_TOPIC_MARKER|SECOND_START_MUST_NOT_SHOW|LONG_LEGACY_STEPS_MUST_NOT_SHOW|Details you can add/);
   view.privateCard.storyGuide.starts = [null, {}, 123, { en: '' }];
   const malformed = await harness(view, { card: true }); assert.equal(malformed.node('bk-story-guide'), undefined);
   view.privateCard.storyGuide.starts = [{ en: 'English fallback remains available' }];
   const fallback = await harness(view, { card: true }); assert.match(fallback.html(), /English fallback remains available/);
+  view.privateCard.storyGuide = { version: 3, kind: 'fiction', story: { answer: { en: 'Story answer only' }, details: [null, { en: '' }] }, starts: [] };
+  const partial = await harness(view, { card: true }); assert.match(partial.html(), /Story answer only/); assert.doesNotMatch(partial.html(), /Details you can add/);
 });
 
 test('active player cards put the full score roster below play in an optional panel; public tables keep it expanded', async () => {

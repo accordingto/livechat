@@ -22,20 +22,27 @@ function fixture(deck = 'classic', mode = 'thinker') {
   } };
 }
 
-test('every real topic has two short sayable fictional explanations, without private answer evidence or extra steps', () => {
+const sayable = (item, maxWords, maxZh) => {
+  assert.ok(item.en.length > 20); assert.ok(item.zh.length > 8);
+  assert.ok(item.en.split(/\s+/).length <= maxWords, 'short simple English: ' + item.en);
+  assert.ok(item.zh.length <= maxZh, 'direct Chinese: ' + item.zh);
+  assert.match(item.en, /\.$/); assert.match(item.zh, /。$/);
+  assert.doesNotMatch(item.en, /\b(?:invent|choose|pick|imagine|decide|add|start by)\b/i, 'a proposed story, not instructions to invent one');
+};
+
+test('every real topic gives a Bluffer one complete made-up story, like the Truth Teller card, without private evidence', () => {
+  const seen = new Set();
   for (const question of bank) {
     const topic = E.publicQuestion(question), key = 'round:seat', guide = E.storyGuide(topic, key);
     assert.equal(guide.kind, 'fiction'); assert.equal(guide.optional, true);
-    assert.equal(guide.version, 2); assert.equal(guide.format, 'sayable');
-    assert.equal(guide.topic, topic.term); assert.equal(guide.starts.length, 2); assert.deepEqual(guide.steps, []);
-    assert.notDeepEqual(guide.starts[0], guide.starts[1]);
-    for (const item of guide.starts) {
-      assert.ok(item.en.length > 20); assert.ok(item.zh.length > 8);
-      assert.ok(item.en.split(/\s+/).length <= 24, 'one short sentence in simple English');
-      assert.ok(item.zh.length <= 55, 'one direct Chinese explanation');
-      assert.match(item.en, /\.$/); assert.match(item.zh, /。$/);
-      assert.doesNotMatch(item.en, /\b(?:invent|choose|pick|imagine|decide|add|start by)\b/i, 'a proposed explanation, not instructions to invent one');
-    }
+    assert.equal(guide.version, 3); assert.equal(guide.format, 'story');
+    assert.equal(guide.topic, topic.term); assert.deepEqual(guide.steps, []);
+    assert.equal(guide.starts.length, 1, 'one option only'); assert.deepEqual(guide.starts[0], guide.story.answer, 'older cards show the same one answer');
+    sayable(guide.story.answer, 24, 55);
+    assert.equal(guide.story.details.length, question.supportingFacts.length >= 2 ? 2 : guide.story.details.length, 'two details, like the two real supporting facts');
+    assert.notDeepEqual(guide.story.details[0], guide.story.details[1]);
+    for (const detail of guide.story.details) sayable(detail, 18, 40);
+    seen.add(guide.story.answer.en);
     const poisoned = { ...topic };
     for (const field of ['secretAnswer', 'supportingFacts', 'revealExplanation', 'sources', 'tags', 'truthfulId', 'roles']) {
       Object.defineProperty(poisoned, field, { get() { throw Error('Private evidence was read: ' + field); } });
@@ -44,14 +51,35 @@ test('every real topic has two short sayable fictional explanations, without pri
     assert.deepEqual(E.storyGuide({ ...topic, publicHints: topic.publicHints.slice().reverse() }, key), guide, 'public choice ordering does not indicate which category is true');
     for (const secret of [question.secretAnswer, question.revealExplanation, ...question.supportingFacts]) assert.ok(!JSON.stringify(guide).includes(secret));
   }
+  assert.ok(seen.size >= 20, 'the bank draws on many different stories');
 });
 
-test('fiction starts stay stable on reconnect, vary among seats, and never expose mutable shared data', () => {
+test('all 72 written stories, across the 18 public-clue families, are complete, sayable and distinct', () => {
+  const terms = { weather: 'Weather', light: 'Light', stone: 'Stone', plant: 'Plant', animal: 'Animal', container: 'Cup', clothing: 'Clothing',
+    writing: 'Book', craft: 'Craft', food: 'Food', performance: 'Dance', custom: 'Custom', person: 'Who is she', place: 'Castle',
+    creature: 'Creature', illusion: 'Illusion', mystery: 'Mystery', unknown: 'Zzq' };
+  const all = new Map();
+  for (const [family, term] of Object.entries(terms)) {
+    const found = new Map();
+    for (let n = 0; n < 300; n++) {
+      const guide = E.storyGuide({ id: 'family-' + family, term, deck: 'classic', publicHints: [] }, 'seat-' + n);
+      found.set(guide.story.answer.en, guide.story);
+    }
+    assert.equal(found.size, 4, family + ' has four stories');
+    for (const story of found.values()) all.set(story.answer.en, story);
+  }
+  assert.equal(all.size, 72);
+  const details = [...all.values()].flatMap(story => story.details);
+  assert.equal(details.length, 144); assert.equal(new Set(details.map(d => d.en)).size, 144, 'no repeated detail lines');
+  for (const story of all.values()) { sayable(story.answer, 24, 55); for (const detail of story.details) sayable(detail, 18, 40); }
+});
+
+test('fiction stories stay stable on reconnect, vary among seats, and never expose mutable shared data', () => {
   const topic = E.publicQuestion(bank[0]), guide = E.storyGuide(topic, 'round-1:seat-1');
   assert.deepEqual(E.storyGuide(topic, 'round-1:seat-1'), guide);
-  const variants = new Set(Array.from({ length: 20 }, (_, n) => JSON.stringify(E.storyGuide(topic, 'round-1:seat-' + n).starts)));
-  assert.ok(variants.size >= 4);
-  const saved = clone(guide); guide.starts[0].en = 'tampered'; guide.steps.push({ en: 'tampered', zh: 'changed' });
+  const variants = new Set(Array.from({ length: 20 }, (_, n) => JSON.stringify(E.storyGuide(topic, 'round-1:seat-' + n).story)));
+  assert.ok(variants.size >= 3);
+  const saved = clone(guide); guide.starts[0].en = 'tampered'; guide.story.answer.en = 'tampered'; guide.story.details[0].en = 'tampered'; guide.steps.push({ en: 'tampered', zh: 'changed' });
   assert.deepEqual(E.storyGuide(topic, 'round-1:seat-1'), saved);
 });
 
@@ -61,7 +89,7 @@ test('unfamiliar topics use all public category choices, including decoys, rathe
   for (let n = 0; n < 100; n++) {
     const key = 'round:seat-' + n, guide = E.storyGuide(topic, key);
     assert.deepEqual(E.storyGuide({ ...topic, publicHints: topic.publicHints.slice().reverse() }, key), guide);
-    for (const line of guide.starts) lines.add(line.en);
+    lines.add(guide.story.answer.en);
   }
   assert.ok([...lines].some(line => line.includes('warm rain')));
   assert.ok([...lines].some(line => line.includes('little bell')));

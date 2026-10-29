@@ -83,8 +83,9 @@ Teller with a second confirmation.
 
 **Call a bluff** is one irrevocable public challenge at any point in discussion.
 It does not expose a role, cancel someone's opportunity, prevent a final choice,
-mute, or eliminate them. Fixed follow-up suggestions use no secret answer and
-no AI. The discussion clock gives a Thinker-only reminder after five minutes.
+mute, or eliminate them. (The fixed follow-up suggestion panel was removed on
+2026-10-30 to keep cards simple.) The discussion clock gives a Thinker-only
+reminder after five minutes.
 
 Reveal shows the chosen role, the real Truth Teller, the answer, supporting
 facts, sources, and per-player point changes and reasons. It stays open until
@@ -312,6 +313,33 @@ the private v2 guides, original votes and scoring; all 15 exact QA nodes are
 deleted or empty. The published frontend also matches the release readback.
 See [current release acceptance](docs/cards-art-2026-10-26-acceptance.md).
 This does not establish physical-phone or human voice-session play coverage.
+
+## One complete made-up story for Bluffers (2026-10-30)
+
+User request: no follow-up idea panel on player cards; a Bluffer gets a more
+complete story, like the Truth Teller's card, and only one option. This
+supersedes the "two made-up ideas" panel above where it differs.
+
+- `STORY_GUIDES` in `bluff-king-engine.js` keeps the same 18 public-clue
+  families and the same 72 answers; each now has two made-up supporting details
+  (144 short bilingual lines), mirroring the real card's answer + two facts.
+- `storyGuide(publicTopic, roundAndSeatKey)` returns version 3,
+  `format: 'story'`, `story: { answer, details[2] }`, `starts: [answer]` and
+  empty `steps`. It picks one story with the same deterministic seed (the old
+  first start). It still reads only public title/categories/prompt, never the
+  answer, facts, research, roles or other private data, and does not mutate.
+- Only an eligible Bluffer in `prepare`/`discussion` receives it. The UI shows it
+  inside the role card, open, exactly like the Truth Teller block: "A made-up
+  answer you can use", "Details you can add", and "All made up. Say it your way,
+  change it, or tell your own story." Hide removes it. No new command.
+- An older v2 projection (two starts) shows only its first start; malformed
+  guides are skipped safely.
+- The **Need a follow-up idea?** panel, its local idea list and the
+  `inspiration` action are removed from Thinker and Everyone-votes cards.
+- Cache: UI/engine `bluff-story-3`, CSS `v=11`; sync `vote-1` and topics `v=2`
+  unchanged. Engine change: the independent service must be redeployed for
+  service-run Hub tables; until then those tables keep the v2 two-start guide,
+  which the new card shows as one start.
 
 ## Topic content and maintenance
 
