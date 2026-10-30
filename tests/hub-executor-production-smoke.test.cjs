@@ -149,3 +149,33 @@ test('Mode 2 smoke refuses to overwrite an opening collision', async () => {
  const f=harness({openingCollision:true}),report=await require('../scripts/cut-jump-production-smoke.cjs').run(f);
  assert.equal(report.ok,false);assert.equal(report.cleaned,0);assert.equal(f.deleteAttempts.length,0);assert.equal(f.registrations.length,0);
 });
+test('Halloween production smoke proves the edition-aware engine on ordinary seats and cleans four owned nodes', async () => {
+  const f = harness(), report = await require('../scripts/cut-halloween-production-smoke.cjs').run(f);
+  assert.equal(report.ok, true, JSON.stringify(report)); assert.equal(report.step, 'restart-keeps-edition');
+  assert.equal(report.cleaned, 4); assert.equal(report.cleanupFailed, 0);
+  assert.equal(f.nodes.size, 0); assert.equal(f.created.size, 4); assert.deepEqual(new Set(f.deleted), f.created); assert.deepEqual(f.pathsRead, f.created);
+  assert.ok(f.executions.every(body => body.token !== f.registrations[0].controlToken));
+  assert.deepEqual(report.topics.map(t => t.split(':')[0]), ['halloween/classic', 'halloween/classic', 'halloween/jump', 'classic/jump', 'halloween/classic', 'halloween/classic']);
+  const states = f.states.filter(s => s.game === 'cut').map(s => s.state.edition);
+  assert.ok(states.includes('classic') && states.at(-1) === 'halloween');
+});
+test('Halloween smoke fails (and still cleans up) against a service that drops the edition', async () => {
+  // Simulate the pre-release service: its projections carry no edition.
+  const f = harness();
+  const original = f.fetchImpl;
+  f.fetchImpl = async (url, options = {}) => {
+    const response = await original(url, options);
+    if (!String(url).includes('/rooms/') || (options.method && options.method !== 'GET')) return response;
+    const value = await response.json();
+    if (value?.cut) { delete value.cut.edition; delete value.cut.editions; }
+    return { ok: response.ok, status: response.status, headers: response.headers, json: async () => value };
+  };
+  const report = await require('../scripts/cut-halloween-production-smoke.cjs').run(f);
+  assert.equal(report.ok, false); assert.equal(report.step, 'halloween-opening');
+  assert.equal(report.cleaned, 4); assert.equal(report.cleanupFailed, 0); assert.equal(f.nodes.size, 0);
+});
+test('Halloween smoke refuses to overwrite an opening collision', async () => {
+  const f = harness({ openingCollision: true }), report = await require('../scripts/cut-halloween-production-smoke.cjs').run(f);
+  assert.equal(report.ok, false); assert.equal(report.cleaned, 0); assert.equal(f.deleteAttempts.length, 0); assert.equal(f.registrations.length, 0);
+  assert.equal(f.nodes.get(f.alteredPath()).foreign, true);
+});
