@@ -31,8 +31,19 @@ execution is not implemented for this game.
 Hub order now ends …WORD LIMIT THEATER → ROOM SURVEY → 雙選賓果 (👥 4–12);
 bluff-bank, cut-integration and card-table-integration tests were updated for
 the new last entry. Cache tag bp-1. Validation: tests/bingo-party-engine
-.test.cjs, tests/bingo-party.browser.cjs (see the mode doc). Not deployed from
-this session (no push access); no live Firebase, phone or voice playtest.
+.test.cjs, tests/bingo-party.browser.cjs (see the mode doc and
+docs/bingo-party-2026-10-30-acceptance.md): engine 30/30, isolated multiplayer
+browser runs 72/72 and 71/71 (0 page errors), full Hub 2417/2417.
+Published: feature commit df4ec17 on main (pushed after the user granted push
+access); Vercel Production jeoz9QD3HsFuz8Hqbf1oiowYyxom reports success. Read
+back from production: index.html ends with the 雙選賓果 card (👥 4–12),
+bingo-party.html title/h1, bingo-party-engine.js (speak_english, first-team
+alternation, spectator kept on new game), -ui.js (講英文, nomStrip, hostPick,
+userOpen) and -sync.js (takeover, bpInbox). The shell cannot reach the site,
+so no byte-hash comparison; the fetcher strips script tags, so play.html and
+the page's script tags were not read back. Frontend-only: no independent
+service deployment needed. No live-Firebase room, physical phone or human
+voice playtest has been run.
 
 ## CURRENT: Once Interrupt mix 3, one full Bluffer story, Word Limit speaker limit — 2026-10-30
 

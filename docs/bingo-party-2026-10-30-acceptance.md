@@ -48,8 +48,17 @@ host's browser), seat 7 = spectator, seat 6 = English interface.
 - Whole-run payload scan: player pages received only their own node; no denied
   read; the control-token path never reached a non-host browser.
 
+## Publication
+
+Feature commit df4ec17 pushed to main on 2026-10-31 after the user granted push
+access; its tree is identical to the tree that passed every run above. Vercel
+Production deployment jeoz9QD3HsFuz8Hqbf1oiowYyxom reports success. Production
+read-back (web fetcher): index.html lists 雙選賓果 last with 👥 4–12;
+bingo-party.html title/h1; bingo-party-engine.js, -ui.js and -sync.js contain
+this release's code. No byte-hash comparison (the shell cannot reach the site);
+play.html wiring and script tags were not read back (the fetcher strips them).
+
 ## Not verified
 
-Real Firebase project, physical phones, real Chinese IME hardware keyboards,
-screen readers, a human voice playtest, production deployment (no push access
-from this session).
+Real Firebase project in a live room, physical phones, real Chinese IME
+hardware keyboards, screen readers, a human voice playtest.
