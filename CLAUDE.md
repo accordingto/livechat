@@ -1,3 +1,39 @@
+## CURRENT: 雙選賓果 DUAL-PICK BINGO (new game, last in the Hub) — 2026-10-30
+
+Read bingo-party-mode.md. User request: implement the 2026-10-29 package's
+CODEX_FULL_IMPLEMENTATION_PROMPT.md as the only spec (first implementation, no
+older drafts) with its 60-card bilingual bank, plus a fourth public director
+button 講英文 that returns the scene to the English default. Three decisions
+were fixed by the user: song relay = same theme, teams alternate (default 4
+each), no repeats, title+link alternative kept, no guessing/lyric chains;
+director = live public 瞎說／講中文／講台語（＋講英文）on every card and the stage,
+plus private handwritten lines to a chosen opposing actor, no pre-picked twists;
+story = share → opponent follow-up → answer → opponent song → confirm / swap /
+own pick → sing, then swap teams, no penalty for swapping/skipping.
+
+Architecture: trusted-host browser authority on the existing per-token Firebase
+paths (no rules/service/secret change). Canonical state in the private control
+node `bingoPartyControlToken`; per-seat projections `bp.viewJson`; requests in
+each seat's own `bpInbox` with server timestamps, actor taken from the node
+path. The host seat's own card (same browser) can run the authority when the
+host page is closed; a visible host page reclaims it on use. play.html shows
+the bingo card before every other game (showCard → renderBingoCard) and only
+the host seat's card lazy-loads the engine and bank. Hub links are seats 1–9;
+a 9-link room may add bingo-only seats 10–12 on the bingo page
+(`bingoPartyExtraSeats`). Interface defaults to 繁中 when the device never
+chose a language; prompts are 繁中 or English (lobby setting).
+
+Trust boundary (told to the user): the host browser holds the full state, so a
+participating host could read secrets with developer tools; no screen or seat
+payload shows them. The card bank is a public static file. Independent-service
+execution is not implemented for this game.
+
+Hub order now ends …WORD LIMIT THEATER → ROOM SURVEY → 雙選賓果 (👥 4–12);
+bluff-bank, cut-integration and card-table-integration tests were updated for
+the new last entry. Cache tag bp-1. Validation: tests/bingo-party-engine
+.test.cjs, tests/bingo-party.browser.cjs (see the mode doc). Not deployed from
+this session (no push access); no live Firebase, phone or voice playtest.
+
 ## CURRENT: Once Interrupt mix 3, one full Bluffer story, Word Limit speaker limit — 2026-10-30
 
 User request: nudge Once Interrupts up a little, referencing the official game

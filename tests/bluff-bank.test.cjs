@@ -92,12 +92,14 @@ test('BLUFF PARTY, CUT, Open Mic Rescue and Sketch Relay keep their order before
   const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
   const cards = [...html.matchAll(/<a\b[^>]*\bclass="[^"]*\bgame-card\b[^"]*"[^>]*\bhref="([^"]+)"[^>]*>/g)];
   assert.ok(cards.length > 5);
-  assert.equal(cards.at(-6)[1], 'bluff-king-live-chat.html');
-  assert.equal(cards.at(-5)[1], 'cut.html');
-  assert.equal(cards.at(-4)[1], 'open-mic-rescue.html');
-  assert.equal(cards.at(-3)[1], 'sketch-relay.html');
-  assert.equal(cards.at(-2)[1], 'word-limit-theater.html');
-  assert.equal(cards.at(-1)[1], 'room-survey.html');
+  // 雙選賓果 (2026-10-30) was added last, after ROOM SURVEY, at the user's request.
+  assert.equal(cards.at(-7)[1], 'bluff-king-live-chat.html');
+  assert.equal(cards.at(-6)[1], 'cut.html');
+  assert.equal(cards.at(-5)[1], 'open-mic-rescue.html');
+  assert.equal(cards.at(-4)[1], 'sketch-relay.html');
+  assert.equal(cards.at(-3)[1], 'word-limit-theater.html');
+  assert.equal(cards.at(-2)[1], 'room-survey.html');
+  assert.equal(cards.at(-1)[1], 'bingo-party.html');
   assert.equal(cards.filter(match => match[1] === 'bluff-king-live-chat.html').length, 1);
 });
 

@@ -1,0 +1,2438 @@
+{
+  "schemaVersion": 2,
+  "gameId": "bingo-party",
+  "deckVersion": "2026-10-29-final",
+  "languages": [
+    "zh-TW",
+    "en"
+  ],
+  "notes": [
+    "Original starter content for the complete final first implementation. This file does not depend on any older package.",
+    "No lyrics, recordings, external music API or runtime AI are included.",
+    "Read CODEX_FULL_IMPLEMENTATION_PROMPT.md for authoritative rules. Valid room settings override centralized defaults; individual cards must not override the rules.",
+    "Secret answer allocations, teammate guesses and private director lines require role-scoped server payloads.",
+    "Room prompt language stays fixed during scored rounds. Live Mandarin/Taiwanese director commands change only the current scene performance language.",
+    "Story-song requests are supplied by the opposing team during play, with replacement, singer self-selection and pass paths. Do not add a prescribed song list.",
+    "No private story transcripts or cross-session personal profiles are included or required."
+  ],
+  "cards": [
+    {
+      "id": "guess-01",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "意外空出的一晚",
+        "en": "A free evening"
+      },
+      "prompt": {
+        "zh-TW": "今晚突然空出三小時，你最想怎麼用？",
+        "en": "You unexpectedly have three free hours tonight. How would you spend them?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "一個人好好放空",
+            "en": "Relax on my own"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "找朋友見面",
+            "en": "Meet a friend"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "做一直想做的事",
+            "en": "Do something I have been meaning to do"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "哪一種最近最缺？",
+        "en": "Which of these do you need most these days?"
+      }
+    },
+    {
+      "id": "guess-02",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "旅行中的空白",
+        "en": "A gap in the trip"
+      },
+      "prompt": {
+        "zh-TW": "旅行途中突然多出半天，你比較可能怎麼做？",
+        "en": "You have an unexpected free half-day on a trip. What would you do?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "隨意走走",
+            "en": "Wander without a plan"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "找一家想吃的店",
+            "en": "Find somewhere good to eat"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "回住處休息",
+            "en": "Go back and rest"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "你最近一次真的這樣做，是在哪裡？",
+        "en": "When was the last time you actually did that?"
+      }
+    },
+    {
+      "id": "guess-03",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "朋友遲到了",
+        "en": "A late friend"
+      },
+      "prompt": {
+        "zh-TW": "朋友晚到二十分鐘，你最可能先做什麼？",
+        "en": "A friend will be twenty minutes late. What would you do first?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "附近逛一下",
+            "en": "Explore nearby"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "滑手機等他",
+            "en": "Wait and use my phone"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "先買吃的喝的",
+            "en": "Get a snack or drink"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "等人的時候有發生過小插曲嗎？",
+        "en": "Has anything interesting happened while you were waiting for someone?"
+      }
+    },
+    {
+      "id": "guess-04",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "只留一項",
+        "en": "Keep just one"
+      },
+      "prompt": {
+        "zh-TW": "今天只能保留一種休閒，你選哪個？",
+        "en": "You can keep only one kind of entertainment for today. Which do you choose?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "音樂",
+            "en": "Music"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "影集或電影",
+            "en": "Shows or films"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "遊戲",
+            "en": "Games"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "你會立刻打開哪一個作品？",
+        "en": "What would you put on or play first?"
+      }
+    },
+    {
+      "id": "guess-05",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "陌生聚會",
+        "en": "An unfamiliar gathering"
+      },
+      "prompt": {
+        "zh-TW": "到一個只認識主人的聚會，你通常先怎麼做？",
+        "en": "At a gathering where you know only the host, what do you usually do first?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "找一個人慢慢聊",
+            "en": "Start a one-to-one conversation"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "先觀察大家",
+            "en": "Watch and listen first"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "幫忙做點事情",
+            "en": "Find something to help with"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "什麼會讓你比較快自在起來？",
+        "en": "What helps you feel comfortable there?"
+      }
+    },
+    {
+      "id": "guess-06",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "想學的小技能",
+        "en": "A small new skill"
+      },
+      "prompt": {
+        "zh-TW": "免費上一堂入門課，你最想選哪種？",
+        "en": "You can try one free beginner class. What would you choose?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "做一道好吃的菜",
+            "en": "Cooking a good dish"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "跳一小段舞",
+            "en": "Learning a short dance"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "做出一件小作品",
+            "en": "Making something by hand"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "你會想自己去，還是找誰一起？",
+        "en": "Would you go alone or bring someone?"
+      }
+    },
+    {
+      "id": "guess-07",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "突然改計畫",
+        "en": "A change of plans"
+      },
+      "prompt": {
+        "zh-TW": "原訂的週末活動取消了，你第一個念頭比較像哪個？",
+        "en": "Your weekend plan is cancelled. What is your first reaction?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "太好了可以休息",
+            "en": "Great, I can rest"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "趕快找替代活動",
+            "en": "Find another activity"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "有點可惜，先看看",
+            "en": "That is a shame; I will see what happens"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "哪一種臨時改變反而讓你很開心？",
+        "en": "Has a change of plans ever turned out well for you?"
+      }
+    },
+    {
+      "id": "guess-08",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "餐廳選擇",
+        "en": "Choosing a restaurant"
+      },
+      "prompt": {
+        "zh-TW": "朋友要你選晚餐，你最在意什麼？",
+        "en": "Your friends ask you to pick dinner. What matters most?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "想吃的味道",
+            "en": "The food I am craving"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "能舒服聊天",
+            "en": "A place where we can talk"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "交通方便",
+            "en": "An easy location"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "你心中的舒服餐廳有什麼特徵？",
+        "en": "What makes a restaurant comfortable for you?"
+      }
+    },
+    {
+      "id": "guess-09",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "喜歡的驚喜",
+        "en": "A welcome surprise"
+      },
+      "prompt": {
+        "zh-TW": "哪一種小驚喜比較容易讓你開心？",
+        "en": "Which small surprise would make you happiest?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "有人帶來喜歡的食物",
+            "en": "Someone brings my favourite food"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "突然空出一段時間",
+            "en": "I unexpectedly get some free time"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "朋友記得我說過的事",
+            "en": "A friend remembers something I said"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "最近收到過類似的小驚喜嗎？",
+        "en": "Have you had a small surprise like that recently?"
+      }
+    },
+    {
+      "id": "guess-10",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "桌上的東西",
+        "en": "Your desk"
+      },
+      "prompt": {
+        "zh-TW": "哪種桌面最接近你覺得舒服的樣子？",
+        "en": "Which desk feels most comfortable to you?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "乾淨只留必要的",
+            "en": "Clear, with only the essentials"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "常用的東西都伸手可及",
+            "en": "Everything useful within reach"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "有喜歡的小物或裝飾",
+            "en": "With favourite objects or decorations"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "你桌上最有個性的一件東西是什麼？",
+        "en": "What is the most distinctive thing on your desk?"
+      }
+    },
+    {
+      "id": "guess-11",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "相約出門",
+        "en": "Making plans"
+      },
+      "prompt": {
+        "zh-TW": "跟朋友約出門，你更喜歡哪種方式？",
+        "en": "When meeting friends, which style do you prefer?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "先把時間地點訂好",
+            "en": "Fix the time and place early"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "有個大方向就好",
+            "en": "Agree on a rough plan"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "當天看心情",
+            "en": "Decide on the day"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "這種習慣曾讓你遇到什麼好笑的狀況？",
+        "en": "Has that habit ever led to a funny situation?"
+      }
+    },
+    {
+      "id": "guess-12",
+      "type": "guess_person",
+      "title": {
+        "zh-TW": "重新當新手",
+        "en": "Being a beginner again"
+      },
+      "prompt": {
+        "zh-TW": "開始一個不熟悉的活動時，什麼最能幫你？",
+        "en": "When trying an unfamiliar activity, what helps you most?"
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "options": [
+        {
+          "id": "a",
+          "text": {
+            "zh-TW": "先看別人做",
+            "en": "Watch someone first"
+          }
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-TW": "有人帶著一起做",
+            "en": "Do it with someone"
+          }
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-TW": "自己試到會",
+            "en": "Experiment on my own"
+          }
+        }
+      ],
+      "followUp": {
+        "zh-TW": "你最近一次當新手是在做什麼？",
+        "en": "When were you last a beginner at something?"
+      }
+    },
+    {
+      "id": "music-01",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "出門旅行",
+        "en": "Going on a trip"
+      },
+      "prompt": {
+        "zh-TW": "選一首適合出發旅行時聽的歌。",
+        "en": "Choose a song for the start of a trip."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-02",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "雨天配樂",
+        "en": "Rainy-day soundtrack"
+      },
+      "prompt": {
+        "zh-TW": "選一首讓你想到雨天的歌。",
+        "en": "Choose a song that makes you think of a rainy day."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-03",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "需要一點勇氣",
+        "en": "A little courage"
+      },
+      "prompt": {
+        "zh-TW": "選一首適合鼓勵朋友的歌。",
+        "en": "Choose a song to encourage a friend."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-04",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "青春片尾曲",
+        "en": "The credits of your school days"
+      },
+      "prompt": {
+        "zh-TW": "選一首會讓你想到學生時代的歌。",
+        "en": "Choose a song that reminds you of your school days."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-05",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "忍不住動起來",
+        "en": "Hard to sit still"
+      },
+      "prompt": {
+        "zh-TW": "選一首讓你想跟著動一動的歌。",
+        "en": "Choose a song that makes you want to move."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-06",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "晚上回家的路",
+        "en": "The way home at night"
+      },
+      "prompt": {
+        "zh-TW": "選一首適合晚上回家路上聽的歌。",
+        "en": "Choose a song for your journey home at night."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-07",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "電影登場",
+        "en": "Your movie entrance"
+      },
+      "prompt": {
+        "zh-TW": "如果你是電影角色，選一首當你的登場曲。",
+        "en": "Choose a song for your entrance as a film character."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-08",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "慶祝小成功",
+        "en": "A small celebration"
+      },
+      "prompt": {
+        "zh-TW": "選一首慶祝完成一件小事的歌。",
+        "en": "Choose a song to celebrate a small achievement."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-09",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "想念某個地方",
+        "en": "Missing a place"
+      },
+      "prompt": {
+        "zh-TW": "選一首讓你想到某個地方的歌。",
+        "en": "Choose a song that reminds you of a place."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-10",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "大家一起",
+        "en": "Everyone joins in"
+      },
+      "prompt": {
+        "zh-TW": "選一首你覺得大家可能一起接上的歌。",
+        "en": "Choose a song that other people might join in with."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-11",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "沒想到你會聽",
+        "en": "An unexpected favourite"
+      },
+      "prompt": {
+        "zh-TW": "選一首別人可能想不到你會聽的歌。",
+        "en": "Choose a song people might not expect you to enjoy."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "music-12",
+      "type": "song_relay",
+      "title": {
+        "zh-TW": "週末開始了",
+        "en": "The weekend begins"
+      },
+      "prompt": {
+        "zh-TW": "選一首適合宣告週末開始的歌。",
+        "en": "Choose a song to announce the start of the weekend."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "validResponseRule": {
+        "zh-TW": "唱或哼一小段並說出歌名；不想唱時，可說歌名加一句與主題的連結。兩隊交替，預設每隊四次，不猜歌、不接歌詞、不比唱功。同一回合已接受的同一首歌不能重複。",
+        "en": "Sing or hum a short part and name the song, or name it and explain its link to the theme. Teams alternate for four turns each by default. No guessing, lyric chaining or singing-quality judging. Do not repeat a song already accepted this round."
+      }
+    },
+    {
+      "id": "improv-01",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "奇怪的餐廳",
+        "en": "A strange restaurant"
+      },
+      "prompt": {
+        "zh-TW": "一位客人點餐，服務生努力解釋今天的特殊菜單。",
+        "en": "A customer orders food while a server explains the unusual menu."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "客人",
+          "en": "Customer"
+        },
+        {
+          "zh-TW": "服務生",
+          "en": "Server"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-02",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "行李拿錯了",
+        "en": "The wrong suitcase"
+      },
+      "prompt": {
+        "zh-TW": "兩個人在車站發現自己的行李箱長得一模一樣。",
+        "en": "Two people at a station discover they have identical suitcases."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "旅客甲",
+          "en": "Traveller A"
+        },
+        {
+          "zh-TW": "旅客乙",
+          "en": "Traveller B"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-03",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "不尋常的面試",
+        "en": "An unusual interview"
+      },
+      "prompt": {
+        "zh-TW": "求職者來面試，卻還不清楚這份工作究竟做什麼。",
+        "en": "An applicant arrives for an interview without knowing what the job is."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "面試官",
+          "en": "Interviewer"
+        },
+        {
+          "zh-TW": "求職者",
+          "en": "Applicant"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-04",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "送錯的禮物",
+        "en": "The unexpected gift"
+      },
+      "prompt": {
+        "zh-TW": "朋友送來一份包裝非常隆重、內容卻難以理解的禮物。",
+        "en": "A friend gives an elaborately wrapped gift that is difficult to understand."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "送禮的人",
+          "en": "Gift giver"
+        },
+        {
+          "zh-TW": "收禮的人",
+          "en": "Recipient"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-05",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "第一次當導遊",
+        "en": "A first-time guide"
+      },
+      "prompt": {
+        "zh-TW": "導遊帶旅客介紹一個看起來非常普通的景點。",
+        "en": "A guide shows a visitor a very ordinary-looking attraction."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "導遊",
+          "en": "Guide"
+        },
+        {
+          "zh-TW": "旅客",
+          "en": "Visitor"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-06",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "鄰居的小請求",
+        "en": "A neighbourly request"
+      },
+      "prompt": {
+        "zh-TW": "一位鄰居敲門，想請另一位幫一個小忙。",
+        "en": "A neighbour knocks to ask for a small favour."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "來敲門的鄰居",
+          "en": "Visiting neighbour"
+        },
+        {
+          "zh-TW": "開門的鄰居",
+          "en": "Neighbour at home"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-07",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "旅行計畫",
+        "en": "Planning a trip"
+      },
+      "prompt": {
+        "zh-TW": "兩個朋友正在安排一趟週末旅行。",
+        "en": "Two friends plan a weekend trip."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "愛規劃的朋友",
+          "en": "Planner"
+        },
+        {
+          "zh-TW": "隨興的朋友",
+          "en": "Spontaneous friend"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-08",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "推銷普通商品",
+        "en": "Selling the ordinary"
+      },
+      "prompt": {
+        "zh-TW": "店員想把一件非常普通的商品介紹成限量新品。",
+        "en": "A salesperson presents an ordinary object as an exclusive new product."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "店員",
+          "en": "Salesperson"
+        },
+        {
+          "zh-TW": "顧客",
+          "en": "Customer"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-09",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "失物招領",
+        "en": "Lost and found"
+      },
+      "prompt": {
+        "zh-TW": "一個人來領失物，工作人員想確認物品真的屬於他。",
+        "en": "Someone claims a lost item while a staff member checks ownership."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "工作人員",
+          "en": "Staff member"
+        },
+        {
+          "zh-TW": "失主",
+          "en": "Owner"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-10",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "新社團招生",
+        "en": "A new club"
+      },
+      "prompt": {
+        "zh-TW": "社團負責人正在邀請一位同學加入新社團。",
+        "en": "A club organiser invites a student to join a new club."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "社團負責人",
+          "en": "Club organiser"
+        },
+        {
+          "zh-TW": "新同學",
+          "en": "New student"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-11",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "回到昨天",
+        "en": "Back to yesterday"
+      },
+      "prompt": {
+        "zh-TW": "一位旅客說自己來自明天，另一位想知道有什麼重要消息。",
+        "en": "A visitor says they are from tomorrow, and someone asks for important news."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "來自明天的人",
+          "en": "Visitor from tomorrow"
+        },
+        {
+          "zh-TW": "今天的人",
+          "en": "Person from today"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "improv-12",
+      "type": "improv_scene",
+      "title": {
+        "zh-TW": "開場白救援",
+        "en": "Rescuing an opening speech"
+      },
+      "prompt": {
+        "zh-TW": "主持人忘了開場白，搭檔想幫忙卻越幫越奇怪。",
+        "en": "A host forgets the opening speech while a co-host tries to help."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "roles": [
+        {
+          "zh-TW": "主持人",
+          "en": "Host"
+        },
+        {
+          "zh-TW": "搭檔",
+          "en": "Co-host"
+        }
+      ],
+      "directorRule": {
+        "zh-TW": "對手在演出中可公開按「瞎說！」「講中文」「講台語」，或私下送手寫台詞給指定演員。瞎說是立即改掉剛才那句的實質內容；語言指令作用於當前演出隊，不改題目語言。",
+        "en": "During the scene, the other team may publicly press New line!, Speak Mandarin or Speak Taiwanese, or privately send a custom line to a selected actor. New line! replaces what was just said. Language commands affect the current acting team, not the prompt language."
+      }
+    },
+    {
+      "id": "story-01",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "原本不想去",
+        "en": "Glad I went"
+      },
+      "prompt": {
+        "zh-TW": "分享一次原本不太想參加，去了卻覺得還不錯的小活動。",
+        "en": "Share a small activity you almost skipped but were glad you attended."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "什麼讓你的感覺開始改變？",
+        "en": "What changed your mind once you were there?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-02",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "有人記得",
+        "en": "Someone remembered"
+      },
+      "prompt": {
+        "zh-TW": "分享一次有人記得你的小喜好，讓你感到被注意到。",
+        "en": "Share a time someone remembered a small preference of yours."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "那個小細節為什麼讓你有印象？",
+        "en": "Why did that small detail stay with you?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-03",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "計畫之外",
+        "en": "An unexpected turn"
+      },
+      "prompt": {
+        "zh-TW": "分享一次行程改變，結果出現有趣插曲的經驗。",
+        "en": "Share a time a changed plan led to an interesting moment."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "你當時先覺得麻煩，還是覺得好玩？",
+        "en": "Did it feel annoying or fun at first?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-04",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "當新手的那天",
+        "en": "That beginner moment"
+      },
+      "prompt": {
+        "zh-TW": "分享最近一次當新手時，印象深刻的小片段。",
+        "en": "Share a memorable small moment from being a beginner."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "當時誰或什麼讓你比較放鬆？",
+        "en": "Who or what helped you relax?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-05",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "普通卻很喜歡",
+        "en": "Ordinary but special"
+      },
+      "prompt": {
+        "zh-TW": "分享一個看似普通、你卻很喜歡的小地方或日常時刻。",
+        "en": "Share an ordinary place or daily moment that you particularly enjoy."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "你通常會在什麼時候想到它？",
+        "en": "When do you tend to think of it?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-06",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "朋友的小習慣",
+        "en": "A friend’s little habit"
+      },
+      "prompt": {
+        "zh-TW": "分享朋友的一個可愛或有趣的小習慣，不用說姓名。",
+        "en": "Share a charming or funny habit of a friend. No names are needed."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "你第一次注意到時有什麼反應？",
+        "en": "How did you react when you first noticed it?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-07",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "自己也意外",
+        "en": "Surprising yourself"
+      },
+      "prompt": {
+        "zh-TW": "分享一次你做了平常不太會做的小事。",
+        "en": "Share a small time you did something unlike your usual self."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "是什麼讓你那次願意試試？",
+        "en": "What made you willing to try it that time?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-08",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "突然懂了",
+        "en": "It finally clicked"
+      },
+      "prompt": {
+        "zh-TW": "分享一件原本不懂，後來突然理解的小事。",
+        "en": "Share something small that finally made sense to you."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "是誰的解釋，或哪個經驗幫了你？",
+        "en": "What explanation or experience helped it click?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-09",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "舊物新回憶",
+        "en": "An object with a memory"
+      },
+      "prompt": {
+        "zh-TW": "挑一件普通物品，分享它讓你想到的小故事。",
+        "en": "Choose an ordinary object and share a small memory it brings back."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "這件物品現在還在嗎？",
+        "en": "Do you still have the object?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-10",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "一次小幫忙",
+        "en": "A small favour"
+      },
+      "prompt": {
+        "zh-TW": "分享一次你受到或給出的小幫忙。",
+        "en": "Share a small favour you received or did for someone."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "當時最讓你記得的是哪個細節？",
+        "en": "Which detail do you remember most?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-11",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "對人的第一印象",
+        "en": "A first impression changed"
+      },
+      "prompt": {
+        "zh-TW": "分享一次你對某人的第一印象，後來因小事而改變。不用說姓名。",
+        "en": "Share a time a small event changed your first impression of someone. No names are needed."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "你後來多看見了對方哪一面？",
+        "en": "What new side of the person did you discover?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "story-12",
+      "type": "story_exchange",
+      "title": {
+        "zh-TW": "值得重來的小事",
+        "en": "A small thing worth repeating"
+      },
+      "prompt": {
+        "zh-TW": "分享一件沒有多厲害，卻讓你願意再做一次的事。",
+        "en": "Share something modest that you would happily do again."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "suggestedFollowUp": {
+        "zh-TW": "你下次想跟誰一起做？",
+        "en": "Who would you like to do it with next time?"
+      },
+      "safetyNote": {
+        "zh-TW": "可說日常小事、假設情境、換題或跳過，不必交代私密資訊；點歌可更換、自選或略過，不比較故事或唱歌能力。",
+        "en": "Share a small everyday or imagined example, change the prompt, or pass. Private details are not required. Requested songs may be replaced, self-selected or skipped; neither storytelling nor singing skill is judged."
+      },
+      "songBridge": {
+        "zh-TW": "分享與追問後，由對手隊點一首歌給分享者唱一段。不會可請對手換歌，或自己選一首；也能略過唱歌，不影響兩隊共同叫號。",
+        "en": "After the story and follow-up, the opposing team requests a song for the storyteller to sing a short part of. The singer can ask for another song, choose their own, or pass without affecting the shared result."
+      }
+    },
+    {
+      "id": "taboo-01",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "日常救援",
+        "en": "Everyday essentials"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "雨傘",
+            "en": "umbrella"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "雨",
+              "撐"
+            ],
+            "en": [
+              "rain",
+              "open"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "鬧鐘",
+            "en": "alarm clock"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "時間",
+              "起床"
+            ],
+            "en": [
+              "time",
+              "wake"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "鑰匙",
+            "en": "key"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "門",
+              "開"
+            ],
+            "en": [
+              "door",
+              "unlock"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "錢包",
+            "en": "wallet"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "錢",
+              "卡"
+            ],
+            "en": [
+              "money",
+              "card"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-02",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "出門旅行",
+        "en": "Travel kit"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "行李箱",
+            "en": "suitcase"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "旅行",
+              "衣服"
+            ],
+            "en": [
+              "travel",
+              "clothes"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "護照",
+            "en": "passport"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "出國",
+              "證件"
+            ],
+            "en": [
+              "country",
+              "document"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "車票",
+            "en": "ticket"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "車",
+              "買"
+            ],
+            "en": [
+              "train",
+              "buy"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "地圖",
+            "en": "map"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "路",
+              "方向"
+            ],
+            "en": [
+              "road",
+              "direction"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-03",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "舒服的家",
+        "en": "A comfortable home"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "枕頭",
+            "en": "pillow"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "睡",
+              "頭"
+            ],
+            "en": [
+              "sleep",
+              "head"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "沙發",
+            "en": "sofa"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "坐",
+              "客廳"
+            ],
+            "en": [
+              "sit",
+              "living room"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "冰箱",
+            "en": "fridge"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "冷",
+              "食物"
+            ],
+            "en": [
+              "cold",
+              "food"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "窗簾",
+            "en": "curtain"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "窗",
+              "光"
+            ],
+            "en": [
+              "window",
+              "light"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-04",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "小小科技",
+        "en": "Small technology"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "耳機",
+            "en": "headphones"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "耳朵",
+              "音樂"
+            ],
+            "en": [
+              "ears",
+              "music"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "遙控器",
+            "en": "remote control"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "電視",
+              "按"
+            ],
+            "en": [
+              "television",
+              "button"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "充電器",
+            "en": "charger"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "電",
+              "手機"
+            ],
+            "en": [
+              "power",
+              "phone"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "鍵盤",
+            "en": "keyboard"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "打字",
+              "電腦"
+            ],
+            "en": [
+              "type",
+              "computer"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-05",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "吃東西",
+        "en": "Something to eat"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "筷子",
+            "en": "chopsticks"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "吃",
+              "兩根"
+            ],
+            "en": [
+              "eat",
+              "sticks"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "湯匙",
+            "en": "spoon"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "湯",
+              "舀"
+            ],
+            "en": [
+              "soup",
+              "scoop"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "盤子",
+            "en": "plate"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "食物",
+              "圓"
+            ],
+            "en": [
+              "food",
+              "round"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "餐巾紙",
+            "en": "napkin"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "擦",
+              "嘴"
+            ],
+            "en": [
+              "wipe",
+              "mouth"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-06",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "出去玩",
+        "en": "Going out"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "電影院",
+            "en": "cinema"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "電影",
+              "看"
+            ],
+            "en": [
+              "film",
+              "watch"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "圖書館",
+            "en": "library"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "書",
+              "安靜"
+            ],
+            "en": [
+              "book",
+              "quiet"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "遊樂園",
+            "en": "amusement park"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "玩",
+              "雲霄飛車"
+            ],
+            "en": [
+              "ride",
+              "roller coaster"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "博物館",
+            "en": "museum"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "展覽",
+              "歷史"
+            ],
+            "en": [
+              "exhibition",
+              "history"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-07",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "移動中",
+        "en": "Getting around"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "腳踏車",
+            "en": "bicycle"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "騎",
+              "輪子"
+            ],
+            "en": [
+              "ride",
+              "wheels"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "電梯",
+            "en": "lift"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "樓",
+              "上"
+            ],
+            "en": [
+              "floor",
+              "up"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "公車",
+            "en": "bus"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "站",
+              "司機"
+            ],
+            "en": [
+              "stop",
+              "driver"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "手扶梯",
+            "en": "escalator"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "樓梯",
+              "移動"
+            ],
+            "en": [
+              "stairs",
+              "moving"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-08",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "休閒時間",
+        "en": "Free time"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "拼圖",
+            "en": "jigsaw puzzle"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "片",
+              "圖案"
+            ],
+            "en": [
+              "pieces",
+              "picture"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "吉他",
+            "en": "guitar"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "弦",
+              "彈"
+            ],
+            "en": [
+              "strings",
+              "play"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "相機",
+            "en": "camera"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "照片",
+              "拍"
+            ],
+            "en": [
+              "photo",
+              "take"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "桌遊",
+            "en": "board game"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "遊戲",
+              "桌子"
+            ],
+            "en": [
+              "game",
+              "table"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-09",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "桌上文具",
+        "en": "On the desk"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "橡皮擦",
+            "en": "eraser"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "擦",
+              "鉛筆"
+            ],
+            "en": [
+              "rub",
+              "pencil"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "剪刀",
+            "en": "scissors"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "剪",
+              "紙"
+            ],
+            "en": [
+              "cut",
+              "paper"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "膠帶",
+            "en": "tape"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "黏",
+              "貼"
+            ],
+            "en": [
+              "sticky",
+              "attach"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "筆記本",
+            "en": "notebook"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "寫",
+              "紙"
+            ],
+            "en": [
+              "write",
+              "paper"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-10",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "穿戴用品",
+        "en": "Things we wear"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "帽子",
+            "en": "hat"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "頭",
+              "戴"
+            ],
+            "en": [
+              "head",
+              "wear"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "圍巾",
+            "en": "scarf"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "脖子",
+              "冷"
+            ],
+            "en": [
+              "neck",
+              "cold"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "手套",
+            "en": "gloves"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "手",
+              "保暖"
+            ],
+            "en": [
+              "hands",
+              "warm"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "眼鏡",
+            "en": "glasses"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "眼睛",
+              "看"
+            ],
+            "en": [
+              "eyes",
+              "see"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-11",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "戶外小物",
+        "en": "Outdoor items"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "風箏",
+            "en": "kite"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "飛",
+              "線"
+            ],
+            "en": [
+              "fly",
+              "string"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "帳篷",
+            "en": "tent"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "露營",
+              "睡"
+            ],
+            "en": [
+              "camping",
+              "sleep"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "手電筒",
+            "en": "torch"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "光",
+              "黑"
+            ],
+            "en": [
+              "light",
+              "dark"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "指南針",
+            "en": "compass"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "北",
+              "方向"
+            ],
+            "en": [
+              "north",
+              "direction"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "taboo-12",
+      "type": "taboo_description",
+      "title": {
+        "zh-TW": "咖啡館角落",
+        "en": "At the café"
+      },
+      "prompt": {
+        "zh-TW": "不用目標詞或禁詞，讓隊友猜出指定物品。",
+        "en": "Help your teammate guess the object without using its name or the forbidden words."
+      },
+      "intensity": "light",
+      "enabledByDefault": true,
+      "targets": [
+        {
+          "id": "w1",
+          "answer": {
+            "zh-TW": "杯墊",
+            "en": "coaster"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "杯",
+              "下面"
+            ],
+            "en": [
+              "cup",
+              "under"
+            ]
+          }
+        },
+        {
+          "id": "w2",
+          "answer": {
+            "zh-TW": "菜單",
+            "en": "menu"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "點餐",
+              "食物"
+            ],
+            "en": [
+              "order",
+              "food"
+            ]
+          }
+        },
+        {
+          "id": "w3",
+          "answer": {
+            "zh-TW": "吸管",
+            "en": "straw"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "喝",
+              "管子"
+            ],
+            "en": [
+              "drink",
+              "tube"
+            ]
+          }
+        },
+        {
+          "id": "w4",
+          "answer": {
+            "zh-TW": "托盤",
+            "en": "tray"
+          },
+          "forbidden": {
+            "zh-TW": [
+              "端",
+              "盤"
+            ],
+            "en": [
+              "carry",
+              "plate"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "rulesVersion": "dual-choice-final-2026-10-29",
+  "rulesDefaults": {
+    "boardSize": 5,
+    "numberCount": 25,
+    "targetLines": 3,
+    "quickTargetLines": 2,
+    "nominationsSeconds": 15,
+    "singingContentEnabled": true,
+    "songRelay": {
+      "turnsPerTeam": 4,
+      "minTurnsPerTeam": 2,
+      "maxTurnsPerTeam": 6,
+      "secondsPerTurn": 20,
+      "allowTitleAndConnectionAlternative": true
+    },
+    "improvScene": {
+      "secondsPerTeam": 60,
+      "publicCommands": [
+        "new_line",
+        "speak_mandarin",
+        "speak_taiwanese"
+      ],
+      "publicCommandMinIntervalMs": 2000,
+      "languageScope": "current_acting_team_until_next_language_command_or_segment_end",
+      "customLineMaxCharacters": 120,
+      "activeLinesPerActor": 1,
+      "waitingLinesPerActor": 2,
+      "customLineVisibility": "author_and_recipient_only",
+      "hostExtensionSeconds": 30
+    },
+    "storyExchange": {
+      "secondsPerStory": 45,
+      "secondsPerReply": 20,
+      "songSelectionReminderSeconds": 20,
+      "singingReminderSeconds": 30,
+      "perSpeakerOrder": [
+        "share",
+        "follow_up",
+        "reply",
+        "opponent_song_selection",
+        "singer_confirmation",
+        "singing",
+        "done"
+      ],
+      "allowOpponentReplacement": true,
+      "allowSingerSelfSelection": true,
+      "allowSingingPass": true,
+      "normalOutcome": "BOTH"
+    },
+    "tabooDescription": {
+      "secondsPerTeam": 35,
+      "targetsPerTeam": 2
+    }
+  }
+}

@@ -19,7 +19,10 @@
     "test:bluff": "node --test tests/bluff-*.test.cjs",
     "dev:bluff": "node scripts/bluff-dev-server.cjs",
     "build:bluff-topics": "node scripts/bluff-compile-topics.cjs",
-    "validate:bluff-topics": "node scripts/bluff-compile-topics.cjs --check"
+    "validate:bluff-topics": "node scripts/bluff-compile-topics.cjs --check",
+    "test:bingo-party": "node --test tests/bingo-party-*.test.cjs",
+    "test:bingo-party:browser": "node tests/bingo-party.browser.cjs",
+    "validate:bingo-party-cards": "node scripts/bingo-party-build-content.cjs --check"
   },
   "engines": {
     "node": ">=20"

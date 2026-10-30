@@ -72,7 +72,8 @@ test('original player links follow either table: play.html loads the rules and t
 test('the Hub lists both new games at the bottom, after Sketch Relay, with bilingual copy', () => {
   const hub = read('index.html');
   const links = [...hub.matchAll(/<a class="game-card[^"]*" href="([^"]+)"/g)].map(match => match[1]);
-  assert.deepEqual(links.slice(-3), ['sketch-relay.html', 'word-limit-theater.html', 'room-survey.html']);
+  // 雙選賓果 (2026-10-30) was added after them as the last entry.
+  assert.deepEqual(links.slice(-4), ['sketch-relay.html', 'word-limit-theater.html', 'room-survey.html', 'bingo-party.html']);
   for (const game of GAMES) assert.equal(links.filter(link => link === game.page).length, 1);
   assert.match(hub, /<h2>WORD LIMIT THEATER<\/h2>/); assert.match(hub, /<h2>ROOM SURVEY<\/h2>/);
   assert.match(hub, /assets\/word-limit-theater\/mark\.svg/); assert.match(hub, /assets\/room-survey\/mark\.svg/);

@@ -27,12 +27,15 @@ host is sharing.
 | WORD WOLF | 3–9 | Describe your secret item, then privately vote for the one player holding a different item |
 | WHO KNOWS? | 4–9 | Insider or Werewolf roles with a secret word or number; optional broad starting clue |
 | WORD LIMIT THEATER | 2–9 | Take turns acting a scene with your own short word limit; short limits may repeat |
+| 🎯 雙選賓果 DUAL-PICK BINGO | 4–12 | Two teams secretly nominate a number, play one of five short challenges, and the result decides whose number is called on both boards |
 
 ## How it works
 
 **BLUFF PARTY** uses the existing room/player links, Classic and Halloween topics, private roles, Spotlight, and automatic scoring. Bluffers can open optional story starting points on their own cards and freely ignore them. Its independent executor keeps the game running after the host page closes. See [`bluff-king-mode.md`](bluff-king-mode.md) for modes, knowledge history and the accepted trust boundary. No new environment variables or backend credentials are required.
 
 **WORD WOLF**, **WORD LIMIT THEATER** and **WHO KNOWS?** also reuse the original player links. Their canonical tables run through the players' cards; the host page can close after starting. See [`word-wolf-mode.md`](word-wolf-mode.md), [`word-limit-mode.md`](word-limit-mode.md) and [`who-knows-mode.md`](who-knows-mode.md) for rules and privacy limits. WORD WOLF restores the original 80 pairs, with a dedicated gouache-style illustration for each of the 160 words across all 80 pairs.
+
+**雙選賓果 DUAL-PICK BINGO** reuses the room and player links. The host page (or the host's own card in the same browser) runs the match and writes each card only what that seat may see; see [`bingo-party-mode.md`](bingo-party-mode.md) for rules, the trust boundary and tests.
 
 **Dixit** retains its original Hub entry. Its prominent phase bar tells
 each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card

@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="word-limit-theater.css?v=wl-6">
   <link rel="stylesheet" href="word-wolf.css?v=ww-art-2">
   <link rel="stylesheet" href="room-survey.css?v=rs-3">
+  <link rel="stylesheet" href="bingo-party.css?v=bp-1">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -922,6 +923,8 @@
   <script src="room-survey-content.js?v=rs-3"></script>
   <script src="room-survey-engine.js?v=rs-3"></script>
   <script src="room-survey-ui.js?v=rs-3"></script>
+  <script src="bingo-party-sync.js?v=bp-1"></script>
+  <script src="bingo-party-ui.js?v=bp-1"></script>
   <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
   <script src="open-mic-ui.js?v=om-cards-1"></script>
@@ -2617,7 +2620,75 @@
     }
     // Read-only, for the browser checks: what this seat currently sees.
     window.CARD_TABLE_CARD = { view: () => ctTable?.view() || null, game: () => ctGame };
+    // 雙選賓果 (DUAL-PICK BINGO): this link reads only its own projection and
+    // writes requests into its own node. The host seat's card, opened in the
+    // browser that owns the Hub room, can also run the trusted authority; its
+    // engine and card bank are loaded only then, never on other cards.
+    let bpCard = null, bpSeat = null, bpBridge = null;
+    function closeBingo() {
+      if (bpCard) { bpCard.destroy(); bpCard = null; }
+      bpSeat = null;
+      if (bpBridge) { bpBridge.close(); bpBridge = null; }
+      document.body.classList.remove('bp-card-page');
+    }
+    function loadBingoScripts(files) {
+      return files.reduce((ready, file) => ready.then(() => new Promise((resolve, reject) => {
+        if (document.querySelector(`script[data-bp="${file}"]`)) return resolve();
+        const script = document.createElement('script');
+        script.src = file; script.dataset.bp = file; script.onload = resolve; script.onerror = reject;
+        document.head.appendChild(script);
+      })), Promise.resolve());
+    }
+    function bingoBridge(view) {
+      if (view?.me?.host !== true) { if (bpBridge) { bpBridge.close(); bpBridge = null; } return; }
+      if (bpBridge) return;
+      const saved = BINGO_SYNC.savedRoom(session);
+      const mine = BINGO_SYNC.seatsFrom(saved).some(seat => seat.playerNum === view.me.playerNum && seat.token === token);
+      if (!mine || !BINGO_SYNC.controlToken(session, localStorage, false)) return;
+      const bridge = bpBridge = { closed: false, authority: null, close() { this.closed = true; this.authority?.close(); } };
+      loadBingoScripts(['bingo-party-content.js?v=bp-1', 'bingo-party-engine.js?v=bp-1']).then(() => {
+        if (bridge.closed) return;
+        bridge.authority = new BINGO_SYNC.Authority({ db, code: session, label: 'card' });
+        bridge.authority.connect();
+      }).catch(() => {});
+    }
+    function renderBingoCard(data) {
+      const isBingo = data?.game === 'bingoparty' && data.bp?.version === 1;
+      if (!isBingo) { if (bpCard || bpSeat || bpBridge) closeBingo(); return false; }
+      document.body.classList.add('bp-card-page');
+      document.body.classList.remove('ct-card-page', 'wl-card-page', 'rs-card-page', 'ww-card-page', 'wk-card-page', 'sketch-relay-card-page', 'bomb-card-page', 'open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
+      closeCt();
+      if (wkCard) { wkCard.destroy(); wkCard = null; }
+      if (wkTable) { wkTable.close(); wkTable = null; }
+      if (relayCard) { relayCard.destroy(); relayCard = null; }
+      if (bombCard) { bombCard.destroy(); bombCard = null; }
+      if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
+      if (cutCard) { cutCard.destroy(); cutCard = null; }
+      if (talkCard) { talkCard.destroy(); talkCard = null; }
+      if (onceCard) { onceCard.destroy(); onceCard = null; }
+      if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
+      if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
+      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
+      if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
+      document.title = `${data.name || urlName || 'Player'} · 雙選賓果`;
+      if (!bpSeat) bpSeat = new BINGO_SYNC.Seat({ db, code: session, token });
+      const view = bpSeat.update(data);
+      if (!bpCard) bpCard = new BINGO_UI.Card(el, {
+        banner: () => nameBanner(latestData || data),
+        send: (type, extra) => bpSeat ? bpSeat.send(type, extra) : Promise.resolve({ error: 'offline' }),
+        now: () => Date.now() + talkClockOffset,
+        connected: () => talkConnected,
+      });
+      bpCard.setLive(data.bp.live);
+      bpCard.update(view);
+      bingoBridge(view);
+      return true;
+    }
+    // Read-only, for the browser checks: what this seat currently sees.
+    window.BINGO_CARD = { view: () => bpSeat?.view || null, bridge: () => !!bpBridge?.authority };
     function showCard(data) {
+      // 雙選賓果 renders (and tears down) before every other game's card.
+      if (renderBingoCard(data)) return;
       renderCard(data);
       fitCardWords();
     }
@@ -3118,6 +3189,7 @@
       if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
       document.body.classList.remove('bluff-king-card');
       document.body.classList.remove('chat-wolf-card');
+      closeBingo();
       document.body.classList.remove('once-card-page');
       document.body.classList.remove('dixit-card-page');
       lastErrorKey = key;
@@ -3131,8 +3203,8 @@
     let db = null;
     let latestData = null;
     document.addEventListener('visibilitychange', () => { dixitHostBridge?.setActive(!document.hidden); wkTable?.setVisible(!document.hidden); ctTable?.setVisible(!document.hidden); });
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; wkTable?.close(); wkTable = null; closeCt(); openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; });
-    window.addEventListener('pageshow', () => { if (['dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows', 'wordlimit', 'roomsurvey', 'wordwolf'].includes(latestData?.game)) tryRenderCard(); });
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; wkTable?.close(); wkTable = null; closeCt(); openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; closeBingo(); });
+    window.addEventListener('pageshow', () => { if (['bingoparty', 'dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows', 'wordlimit', 'roomsurvey', 'wordwolf'].includes(latestData?.game)) tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
@@ -3151,7 +3223,7 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); if (wkCard) wkCard.paint(); if (ctCard) ctCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); if (wkCard) wkCard.paint(); if (ctCard) ctCard.paint(); if (bpCard) bpCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();

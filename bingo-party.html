@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>雙選賓果 DUAL-PICK BINGO · IceBreak Hub</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#15142e">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="bingo-party.css?v=bp-1">
+  <style>
+    body.bp-page { --accent: #ffd166; --accent-text: #ffd166; align-items: stretch; }
+    .bp-page [hidden] { display: none !important; }
+    .bp-page .header { text-align: center; padding: 10px 16px 4px; }
+    .bp-page .header h1 { font-size: clamp(1.6rem, 5vw, 2.4rem); letter-spacing: .02em; }
+    .bp-page .header h1 span { display: block; font-size: .5em; color: #a3a1c8; letter-spacing: .12em; }
+    .bp-page .bp-mark { display: inline-grid; grid-template-columns: repeat(3, 14px); gap: 3px; margin-bottom: 6px; }
+    .bp-page .bp-mark i { width: 14px; height: 14px; border-radius: 4px; background: #2b2955; }
+    .bp-page .bp-mark i.a { background: #ff8a5b; } .bp-page .bp-mark i.b { background: #4cc3ff; } .bp-page .bp-mark i.c { background: #ffd166; }
+    .bp-setup { background: #15142e; border: 1px solid #2b2955; border-radius: 18px; padding: 18px; display: grid; gap: 12px; color: #f1f0ff; }
+    .bp-setup h2 { font-size: 1.1rem; margin: 0; }
+    .bp-setup p { margin: 0; color: #d6d4f0; font-size: .92rem; line-height: 1.55; }
+    .bp-setup ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+    .bp-setup li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 10px; background: #1d1b3d; }
+    .bp-setup input[type="text"] { font: inherit; font-size: 16px; background: #0f0e24; color: #f1f0ff; border: 1px solid #3c3a70; border-radius: 10px; padding: 8px 10px; min-width: 0; flex: 1 1 140px; }
+    .bp-setup .bp-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .bp-setup .bp-btn { font: inherit; font-weight: 650; min-height: 46px; padding: 10px 16px; border-radius: 12px; border: 1px solid #3c3a70; background: #24224a; color: #f1f0ff; cursor: pointer; }
+    .bp-setup .bp-btn.bp-primary { background: #ffd166; border-color: #ffd166; color: #1a1300; }
+    .bp-setup .bp-btn:disabled { opacity: .45; }
+    .bp-setup a.bp-btn { text-decoration: none; display: inline-flex; align-items: center; }
+    .bp-setup .bp-soft { color: #a3a1c8; font-size: .86rem; }
+  </style>
+</head>
+<body class="bp-page">
+  <div class="topbar">
+    <a class="back" href="index.html?step=2" data-i18n="common.backToHub">← Back to Hub</a>
+    <span class="bp-soft" id="bp-room-label"></span>
+  </div>
+  <header class="header">
+    <div class="bp-mark" aria-hidden="true"><i class="a"></i><i></i><i class="b"></i><i></i><i class="c"></i><i></i><i class="b"></i><i></i><i class="a"></i></div>
+    <h1>雙選賓果<span>DUAL-PICK BINGO</span></h1>
+    <p class="bp-soft" data-i18n="bingo.tagline"></p>
+  </header>
+  <main class="bp-host-shell">
+    <p class="bp-host-status" id="bp-status" role="status"></p>
+
+    <section class="bp-setup" id="bp-setup-needed" hidden>
+      <h2 data-i18n="bingohost.setupNeeded"></h2>
+      <p data-i18n="bingohost.setupNeededText"></p>
+      <div class="bp-actions"><a class="bp-btn bp-primary" href="index.html?step=1" data-i18n="bingohost.setUpRoom"></a></div>
+    </section>
+
+    <section class="bp-setup" id="bp-open" hidden>
+      <h2 data-i18n="bingohost.seatsTitle"></h2>
+      <p data-i18n="bingohost.seatsText"></p>
+      <ul id="bp-seats"></ul>
+      <div id="bp-extra" hidden>
+        <p data-i18n="bingohost.extraText"></p>
+        <ul id="bp-extra-list"></ul>
+        <div class="bp-actions"><button type="button" class="bp-btn" id="bp-extra-add" data-i18n="bingohost.extraAdd"></button><button type="button" class="bp-btn" id="bp-extra-remove" data-i18n="bingohost.extraRemove"></button></div>
+      </div>
+      <p class="bp-soft" data-i18n="bingohost.hostNote"></p>
+      <div class="bp-actions">
+        <button type="button" class="bp-btn bp-primary" id="bp-open-lobby" data-i18n="bingohost.openLobby"></button>
+        <button type="button" class="bp-btn" id="bp-sync-roster" hidden data-i18n="bingohost.syncRoster"></button>
+        <button type="button" class="bp-btn" id="bp-reclaim" hidden data-i18n="bingohost.reclaim"></button>
+        <button type="button" class="bp-btn" id="bp-takeover" hidden data-i18n="bingohost.takeover"></button>
+      </div>
+      <p class="bp-soft" id="bp-open-note" role="status"></p>
+    </section>
+
+    <div id="bp-stage" aria-label="雙選賓果"></div>
+
+    <details class="bp-setup bp-rules">
+      <summary data-i18n="bingohost.rules"></summary>
+      <ol>
+        <li data-i18n="bingohost.rule1"></li><li data-i18n="bingohost.rule2"></li><li data-i18n="bingohost.rule3"></li>
+        <li data-i18n="bingohost.rule4"></li><li data-i18n="bingohost.rule5"></li><li data-i18n="bingohost.rule6"></li>
+      </ol>
+    </details>
+  </main>
+  <div id="room-mount" hidden></div>
+  <script src="qrcode.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="room.js?v=life-story-1"></script>
+  <script src="bingo-party-content.js?v=bp-1"></script>
+  <script src="bingo-party-engine.js?v=bp-1"></script>
+  <script src="bingo-party-sync.js?v=bp-1"></script>
+  <script src="bingo-party-ui.js?v=bp-1"></script>
+  <script src="bingo-party-host.js?v=bp-1"></script>
+</body>
+</html>
