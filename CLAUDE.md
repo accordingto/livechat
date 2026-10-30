@@ -78,6 +78,27 @@ CUT" (default on, localStorage). Cards get the Halloween look and spooky cues;
 an edition select only when the view lists editions. Read cut-mode.md
 "🎃 萬聖節版".
 
+Validation: full Hub 2430/2430 at 5b03969, 2433/2433 at 32c2816 (one of four
+local runs had a single failure that did not recur and was not captured).
+Frontend 5b03969 published (Vercel DaC6b1XrLzhA8MYKh4fmJDvu1kw7). New public
+files ~63 KB (Creepster woff2 28 KB + OFL, audio 22 KB, topics 8 KB); Vercel
+Usage was not accessible, so capacity headroom is unverified.
+Independent service deployed from the user's computer (work\hub-deploy-
+2026-10-31.cmd via desktop control) from exact commit 32c2816: full suite
+2433/2433 there, 65 packaged files (cut-halloween-topics.js added), deployment
+dpl_97PhLL2vW9qmh4Rbs82FnVXpyWDM READY and aliased to the stable URL, files
+copied back to the service source. The first attempt stopped at Vercel "Not
+authorized" (nothing deployed); a read-only login check (whoami/teams/project
+ls) then passed and the re-run deployed. Checks: readiness, CORS, synthetic
+ticket rejection, private runtime 404; service-modes smoke 34 (search 200,
+lyrics 410, cleanup 15 tracked/0 failed); CUT Mode 2 smoke 22, cleaned 4/4;
+new scripts/cut-halloween-production-smoke.cjs 27 checks (edition on every
+card, Halloween topics in both modes, classic switch, invalid edition refused,
+restart keeps edition), cleaned 4/4. The asset verifier reported index.html
+and play.html as not current only because Codex's later 56698bd (DOUBLE TAKE,
+frontend-only, no service file) was already live. No existing room, physical
+phone, human voice session or human listening test of the synthesized audio.
+
 ## CURRENT: 雙選賓果 DUAL-PICK BINGO (new game, last in the Hub) — 2026-10-30
 
 Read bingo-party-mode.md. User request: implement the 2026-10-29 package's
