@@ -261,6 +261,31 @@ test('recorded ambience schedules crossfaded loops and stopping cancels every so
   f.finishTimeouts(); b.close();
 });
 
+test('late ambience joins use the shared epoch and include download/decode elapsed time', async () => {
+  const f = fixture({ waitDecode: ['wind'] }), b = f.board(); await b.unlock();
+  const joining = b.startMusic('wind', { offsetSeconds: 8 }); await flush();
+  const ctx = f.contexts[0]; ctx.currentTime = 1.25;
+  f.decodeGates.get('wind').resolve(); await joining;
+  const first = ctx.nodes.find(n => n.kind === 'bufferSource');
+  const period = 4 - .7, expectedOffset = 9.25 % period;
+  assert.ok(Math.abs(first.starts[0][1] - expectedOffset) < 1e-9);
+  assert.ok(Math.abs(first.stops[0][0] - first.starts[0][0] - (4 - expectedOffset)) < 1e-9);
+  assert.ok([...b.musicVoices].every(n => n.starts[0][0] >= ctx.currentTime));
+  b.close();
+});
+
+test('late joins to optional synth tracks align upcoming notes to their shared musical phase', async () => {
+  for (const track of ['musicbox', 'crawl']) {
+    const f = fixture(), b = f.board(); await b.unlock();
+    await b.startMusic(track, { offsetSeconds: 10.1 });
+    const ctx = f.contexts[0];
+    assert.ok(b.step > 0, track + ' skips past notes');
+    assert.ok(b.nextTime > ctx.currentTime && b.nextTime < ctx.currentTime + 3);
+    assert.ok(ctx.nodes.filter(n => n.starts.length).every(n => (n.starts[0][0] ?? ctx.currentTime) >= ctx.currentTime));
+    b.stopMusic(); assert.equal(f.intervals.size, 0); b.close();
+  }
+});
+
 test('a throttled background scheduler resumes near now instead of replaying missed loops or notes', async () => {
   for (const track of ['rain', 'musicbox', 'crawl']) {
     const f = fixture(), b = f.board(); await b.unlock(); await b.startMusic(track);

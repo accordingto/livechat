@@ -364,7 +364,8 @@ var HUB_EXECUTOR = (() => {
             const snapshot = await this.ref.once('value'), raw = snapshot.val();
             if (raw) this.doc = { ...raw, state: raw.state || (raw.stateJson ? JSON.parse(raw.stateJson) : null) };
           }
-          const error = this.doc.state?.replies?.[0]?.error;
+          const audioCommand = game === 'cut' && (type === 'audioSettings' || type === 'audioEffect');
+          const error = audioCommand ? this.doc.state?.audioReplies?.[0]?.error : this.doc.state?.replies?.[0]?.error;
           if (error) throw new Error(error);
           return this.doc.state;
         });

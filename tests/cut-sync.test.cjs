@@ -107,6 +107,32 @@ test('host start forwards the chosen story style into canonical state and every 
   for (let n = 1; n <= 4; n++) assert.equal(f.card(n).cut.topic.id, f.state().topic.id);
 });
 
+test('legacy host audio commands project one setting/event to every card without replacing pending gameplay or advancing a turn', async t => {
+  const f = setup(), h = f.host(); t.after(() => f.hosts.forEach(host => host.close()));
+  await settle(h); await h.start({ edition: 'halloween', audio: { music: 'rain', musicVolume: .4 } }); await settle(h);
+  assert.equal(f.state().audio.music, 'rain'); assert.equal(f.state().audio.musicStartedAt, f.now);
+  await h.command('begin'); await settle(h); await f.advance(h, h.latest.phaseUntil);
+  const turnId = h.latest.turnId, deadline = h.latest.deadline, topic = h.latest.topic.id;
+  await h.command('audioSettings', { musicVolume: .2, cutEffect: 'door' }); await settle(h);
+  await h.command('audioEffect', { key: 'laugh' }); await settle(h);
+  const audio = f.state().audio;
+  assert.equal(h.latest.turnId, turnId); assert.equal(h.latest.deadline, deadline); assert.equal(h.latest.topic.id, topic);
+  for (let n = 1; n <= 4; n++) {
+    assert.deepEqual(f.card(n).cut.audio, audio); assert.equal(f.card(n).cut.canControlAudio, false);
+    assert.equal(f.card(n).cut.audioSeen, undefined); assert.equal(f.card(n).cut.audioReplies, undefined);
+  }
+  await assert.rejects(h.command('audioSettings', { effectsVolume: -1 }), /invalid_options/);
+  await h.command('audioSettings', { effectsVolume: .1 }); await settle(h);
+  assert.equal(h.latest.audio.effectsVolume, .1);
+  const gameplayReply = f.card(2).cut.reply;
+  const forged = await f.action(2, 'audioSettings', { actor: 0, music: 'wind' }); await settle(h);
+  assert.equal(h.latest.audioReplies[2].id, forged.id); assert.equal(h.latest.audioReplies[2].error, 'not_available');
+  assert.equal(h.latest.audio.music, 'rain'); assert.equal(h.latest.turnId, turnId);
+  assert.deepEqual(f.card(2).cut.reply, gameplayReply, 'audio denial cannot replace normal player gameplay acknowledgement');
+  const rev = h.doc.revision; h.receive(2, f.card(2)); await settle(h);
+  assert.equal(h.doc.revision, rev, 'acknowledged audio mailbox is ignored rather than reprocessed');
+});
+
 test('exact canonical JSON and filtered cards wait for Begin, then keep CUT and NEXT until manual speaking starts', async () => {
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   const raw = f.db.values.get(`rooms/CUTTEST/players/${f.extras.cutControlToken}`);

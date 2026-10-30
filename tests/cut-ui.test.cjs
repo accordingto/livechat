@@ -255,9 +255,11 @@ function hostDemo() {
     });
     return elements.get(id);
   }
+  const sounds = [];
   class QuietSound {
-    constructor() { this.enabled = false; this.context = null; }
-    unlock() { return Promise.resolve(false); } update() {} silence() {} close() {} toggle() {}
+    constructor() { this.enabled = false; this.context = null; this.unlocks = 0; sounds.push(this); }
+    unlock() { this.unlocks++; return Promise.resolve(false); } update() {} silence() {} close() {}
+    toggle() { this.enabled = !this.enabled; return this.enabled ? this.unlock() : Promise.resolve(false); }
   }
   const boards = [];
   class QuietBoard {
@@ -276,14 +278,14 @@ function hostDemo() {
     I18N: { applyStatic() {}, onChange() {} }, location: { search: '?demo=1' },
     document: { getElementById: element, querySelectorAll: () => [], body: { classList: { toggle(name, on) { if (on) bodyClasses.add(name); else bodyClasses.delete(name); } } } },
     URLSearchParams, crypto: { getRandomValues: array => { array[0] = 314; return array; } },
-    Date: class extends Date { static now() { return time; } }, setInterval: fn => { interval = fn; return 1; }, clearInterval() {},
+    Date: class extends Date { static now() { return time; } }, setInterval: fn => { interval = fn; return 1; }, clearInterval() {}, setTimeout, clearTimeout,
     window: { addEventListener() {} },
   };
   vm.runInNewContext(fs.readFileSync(require.resolve('../cut-host.js'), 'utf8'), context);
   const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
   const click = async id => { element('cut-' + id).events.click?.({ target: { closest: () => null } }); await settle(); };
   const submit = async () => { element('cut-setup').events.submit({ preventDefault() {} }); await settle(); };
-  return { element, click, submit, creations, commands, topicNodes, boards, bodyClasses, scene: () => element('cut-scene').innerHTML,
+  return { element, click, submit, creations, commands, topicNodes, boards, sounds, bodyClasses, scene: () => element('cut-scene').innerHTML,
     advance: milliseconds => { time += milliseconds; interval(); },
     change: (id, value) => { const node = element('cut-' + id); node.value = value; node.events.change?.(); node.events.input?.(); },
   };
@@ -707,14 +709,17 @@ test('shared settings show minute errors, disable invalid saves and retain typed
 
 test('host Halloween edition: picks the edition, themes the page, shows the board and keeps it through restart', async () => {
   const H = require('../cut-halloween-topics.js');
-  const { element, click, submit, scene, creations, boards, bodyClasses } = hostDemo();
+  const { element, click, submit, scene, creations, boards, sounds, bodyClasses } = hostDemo();
   assert.equal(element('cut-hw-board').hidden, true); assert.equal(bodyClasses.has('cut-hw-page'), false);
   await click('edition-halloween');
   assert.equal(element('cut-edition-halloween').attributes['aria-pressed'], 'true');
   assert.equal(element('cut-hw-board').hidden, false, 'the sound board appears while choosing the edition');
   assert.equal(element('cut-category-field').hidden, true); assert.equal(element('cut-category-note').hidden, false);
   assert.ok(bodyClasses.has('cut-hw-page')); assert.equal(element('cut-hw-tag').hidden, false);
-  assert.ok(boards[0].unlocks >= 1, 'choosing Halloween asks the browser for sound in that tap');
+  assert.equal(boards[0].unlocks, 0, 'choosing an edition does not start a separate local audio board');
+  await click('hw-unlock');
+  assert.equal(sounds[0].enabled, true); assert.equal(sounds[0].edition, 'halloween');
+  assert.equal(sounds[0].unlocks, 1, 'the explicit local sound gesture unlocks the common room follower');
   await submit();
   assert.equal(creations.at(-1).edition, 'halloween');
   assert.match(scene(), /cut-stage cut-hw/);

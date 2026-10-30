@@ -10,7 +10,10 @@ const SERVICE = 'https://icebreaker-youtube-search.vercel.app/api/hub-executor';
 const clone = value => value == null ? null : structuredClone(value);
 function firebaseValue(value) {
   if (value == null || typeof value !== 'object') return value;
-  const entries = Object.entries(value).map(([key, child]) => [key, firebaseValue(child)]).filter(([, child]) => child != null);
+  // Real RTDB serializes object keys lexically, including nested audio events.
+  // Canonical stateJson preserves its JSON insertion order instead.
+  const entries = Object.entries(value).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+    .map(([key, child]) => [key, firebaseValue(child)]).filter(([, child]) => child != null);
   if (!entries.length) return null;
   if (Array.isArray(value)) { const result = []; for (const [key, child] of entries) result[Number(key)] = child; return result; }
   return Object.fromEntries(entries);
@@ -149,12 +152,16 @@ test('Mode 2 smoke refuses to overwrite an opening collision', async () => {
  const f=harness({openingCollision:true}),report=await require('../scripts/cut-jump-production-smoke.cjs').run(f);
  assert.equal(report.ok,false);assert.equal(report.cleaned,0);assert.equal(f.deleteAttempts.length,0);assert.equal(f.registrations.length,0);
 });
-test('Halloween production smoke proves the edition-aware engine on ordinary seats and cleans four owned nodes', async () => {
+test('Halloween production smoke proves both topic styles and host-only room audio, then cleans four owned nodes', async () => {
   const f = harness(), report = await require('../scripts/cut-halloween-production-smoke.cjs').run(f);
-  assert.equal(report.ok, true, JSON.stringify(report)); assert.equal(report.step, 'style-compare-complete');
+  assert.equal(report.ok, true, JSON.stringify(report)); assert.equal(report.step, 'room-audio-complete');
   assert.equal(report.cleaned, 4); assert.equal(report.cleanupFailed, 0);
   assert.equal(f.nodes.size, 0); assert.equal(f.created.size, 4); assert.deepEqual(new Set(f.deleted), f.created); assert.deepEqual(f.pathsRead, f.created);
-  assert.ok(f.executions.every(body => body.token !== f.registrations[0].controlToken));
+  const hostAudio = f.executions.filter(body => body.token === f.registrations[0].controlToken);
+  assert.equal(hostAudio.length, 6);
+  assert.equal(hostAudio[1].command.id, hostAudio[2].command.id, 'repeated manual effect uses the same bounded dedup ID');
+  assert.ok(hostAudio.every(body => ['audioSettings', 'audioEffect'].includes(body.command?.type)));
+  assert.ok(hostAudio.every(body => body.command.turnId === -1), 'audio control does not depend on a gameplay turn fence');
   assert.deepEqual(report.topics.slice(0, 6).map(t => t.split(':')[0]), ['halloween/classic', 'halloween/classic', 'halloween/jump', 'classic/jump', 'halloween/classic', 'halloween/classic']);
   assert.equal(report.topics.length, 13); assert.equal(report.topicStyles.length, 13);
   assert.deepEqual(report.topicStyles.slice(0, 6), Array(6).fill('situations'));
@@ -162,6 +169,20 @@ test('Halloween production smoke proves the edition-aware engine on ordinary sea
   assert.equal(report.topicStyles.at(-1), 'situations');
   const states = f.states.filter(s => s.game === 'cut').map(s => s.state.edition);
   assert.ok(states.includes('classic') && states.at(-1) === 'halloween');
+});
+
+test('Halloween smoke fails and cleans up if the service strips public room audio support', async () => {
+  const f = harness(), original = f.fetchImpl;
+  f.fetchImpl = async (url, options = {}) => {
+    const response = await original(url, options);
+    if (!String(url).includes('/rooms/') || (options.method && options.method !== 'GET')) return response;
+    const value = await response.json();
+    if (value?.cut) { delete value.cut.audio; delete value.cut.canControlAudio; }
+    return { ok: response.ok, status: response.status, headers: response.headers, json: async () => value };
+  };
+  const report = await require('../scripts/cut-halloween-production-smoke.cjs').run(f);
+  assert.equal(report.ok, false); assert.equal(report.step, 'host-room-audio');
+  assert.equal(report.cleaned, 4); assert.equal(report.cleanupFailed, 0); assert.equal(f.nodes.size, 0);
 });
 test('Halloween smoke fails (and still cleans up) against a service that drops the edition', async () => {
   // Simulate the pre-release service: its projections carry no edition.

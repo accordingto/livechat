@@ -25,10 +25,10 @@ var CUT_UI = (() => {
     finalCut: ['這題到這裡！', 'THAT’S IT FOR THIS TOPIC!'], paused: ['已暫停', 'PAUSED'], pausedHint: ['繼續聊天，主持人準備好就恢復。', 'Keep chatting. The host will resume when you’re ready.'],
     finished: ['今天的話先說到這裡！', 'THAT’S A WRAP!'], finishedHint: ['想繼續玩，請主持人重新開始。', 'Ask the host to restart for more CUT!'],
     sittingOut: ['你目前先休息，仍然可以自由聊天。', 'You’re sitting out of the draw. Keep chatting freely.'],
-    soundOn: ['🔊 音效開啟', '🔊 Sound on'], soundOff: ['🔇 音效關閉', '🔇 Sound off'], enableSound: ['🔊 啟用音效', '🔊 Enable sound'],
-    soundHint: ['音效由這個主持頁播放。共用畫面時請分享電腦音訊。', 'This host screen plays the cues. Share computer audio when sharing your screen.'],
-    cardSoundHint: ['音效只在你的裝置播放。', 'Cues play only on this device.'],
-    soundBlocked: ['按「啟用音效」讓瀏覽器播放提示音。', 'Tap “Enable sound” to allow the browser to play cues.'],
+    soundOn: ['🔊 聲音開啟', '🔊 Sound on'], soundOff: ['🔇 聲音關閉', '🔇 Sound off'], enableSound: ['🔊 啟用聲音', '🔊 Enable sound'],
+    soundHint: ['主持人設定全桌聲音。玩家需在自己的裝置啟用一次，也能隨時靜音。', 'The host sets room audio. Players enable sound once on their own device and can mute any time.'],
+    cardSoundHint: ['開啟後，從你的裝置播放主持人選的音樂與音效；可隨時靜音。', 'Enable to hear the host’s music and effects on this device. You can mute any time.'],
+    soundBlocked: ['按「啟用聲音」讓這個裝置播放音樂與提示音。', 'Tap “Enable sound” to allow music and cues on this device.'],
     soundUnsupported: ['這個瀏覽器無法播放提示音，請依畫面接棒。', 'This browser can’t play cues. Follow the screen to pass the turn.'],
     rules: ['怎麼玩', 'How to play'],
     rule1: ['先看話題，主持人或玩家按「開始說話」後才倒數。看到 GO 就開口，CUT 一出現立刻停下。', 'Read the topic, then the host or a player taps “Start talking” to start the countdown. Speak on GO and stop on CUT.'],
@@ -95,11 +95,15 @@ var CUT_UI = (() => {
     halloween: ['萬聖節', 'Halloween'], halloweenTake: ['🎃 萬聖節 · 模式 1', '🎃 Halloween · Mode 1'], halloweenJump: ['🎃 萬聖節 · 模式 2', '🎃 Halloween · Mode 2'],
     topicHalloween: ['今晚的怪談', 'TONIGHT’S SPOOKY TALE'], hwOpening: ['🕯️ 可以這樣開頭：', '🕯️ Start with:'], hwTag: ['🎃 萬聖節版', '🎃 HALLOWEEN EDITION'],
     hwCategoryNote: ['萬聖節版只用萬聖節題庫，不分題目類型。', 'The Halloween edition uses its own topics, with no topic types.'],
-    hwBoard: ['🎃 萬聖節音效台', '🎃 Halloween sound board'], hwBoardHint: ['只在這個主持頁播放。分享畫面時，請一起分享電腦音訊。', 'Plays on this host page. Share your computer audio when you share the screen.'],
+    hwBoard: ['🎃 萬聖節音效台', '🎃 Halloween sound board'], hwBoardHint: ['主持人選擇後，各玩家在自己的裝置播放。玩家需先按一次開啟聲音。', 'The host controls music and effects for everyone. Each player first enables sound on their own device.'],
     hwMusic: ['背景氛圍', 'Background ambience'], hwTrack_wind: ['窗邊夜風', 'Wind at the window'], hwTrack_rain: ['雨夜', 'Rainy night'],
     hwLegacyMusic: ['其他配樂（合成）', 'Other music (synthesized)'], hwTrack_musicbox: ['🎹 鬼屋音樂盒', '🎹 Haunted music box'], hwTrack_crawl: ['🕷️ 躡手躡腳', '🕷️ Creepy crawl'],
-    hwStop: ['⏹ 停止背景聲', '⏹ Stop background'], hwMusicVolume: ['背景音量', 'Background volume'], hwEffects: ['音效 · 點一下試聽', 'Sound effects · tap to preview'], hwEffectsVolume: ['音效音量', 'Effects volume'],
-    hwAutoScare: ['每次 CUT 隨機播放驚嚇音效', 'Random scare sound at every CUT'], hwAutoScareHint: ['需要開啟上方的音效。不勾選時，CUT 只有短短的詭異音。', 'Needs the main sound on. When off, each CUT plays a short spooky sting.'],
+    hwStop: ['⏹ 停止背景聲', '⏹ Stop background'], hwMusicVolume: ['背景音量', 'Background volume'], hwEffects: ['音效 · 按一下播放給全桌', 'Sound effects · play for everyone'], hwEffectsVolume: ['音效音量', 'Effects volume'],
+    hwAutoScare: ['CUT 時播放驚嚇音效', 'Play a scare at each CUT'], hwAutoScareHint: ['依下方選擇播放；關閉時只播放短鐘聲。', 'Uses the selected effect; when off, CUT uses a short bell.'],
+    hwCutEffect: ['CUT 音效', 'CUT effect'], hwFx_random: ['隨機（避免連續相同）', 'Random (avoid repeats)'],
+    hwRoomNotStarted: ['顯示題目後即可控制全桌聲音。', 'Show a topic to control room audio.'],
+    hwRoomSending: ['正在同步全桌聲音…', 'Updating room audio…'],
+    hwRoomError: ['聲音設定尚未同步，請再試一次。', 'Audio settings were not synced. Try again.'],
     hwUnlock: ['🔊 按一下啟用音效台', '🔊 Tap to enable the sound board'], hwUnsupported: ['這個瀏覽器無法播放音效。', 'This browser can’t play these sounds.'],
     hwLoading: ['正在載入音效…遊戲可以照常進行。', 'Loading sounds… the game can continue.'], hwLoadError: ['音效載入失敗，請再按一次啟用。', 'Sounds could not load. Tap enable to retry.'],
     hwFx_scream: ['😱 尖叫', '😱 Scream'], hwFx_laugh: ['😈 邪惡笑聲', '😈 Evil laugh'], hwFx_ghost: ['👻 鬼魂', '👻 Ghost'], hwFx_howl: ['🐺 狼嚎', '🐺 Wolf howl'],
@@ -329,7 +333,7 @@ var CUT_UI = (() => {
       const previous = this.data?.cut;
       this.data = data;
       const cut = data.cut;
-      if (cut.sharedControls === true) {
+      if (cut.sharedControls === true || cut.audio?.version === 1) {
         if (!this.sound) { this.sound = new Sound(() => this.paintSound()); this.sound.enabled = false; }
         if (previous?.sessionId !== cut.sessionId) { this.sound.previous = null; this.sound.seen.clear(); }
       } else if (this.sound) { this.sound.close(); this.sound = null; }
@@ -341,14 +345,14 @@ var CUT_UI = (() => {
       const request = data.cutAction;
       if (!this.pending && (['begin', 'done', 'skip', 'extend'].includes(request?.type) || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
       const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topicMinutes, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster,
-        cut.mode, cut.mainMinutes, cut.mainOptions, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd, cut.canExtend, cut.edition, cut.editions, cut.topicStyle, cut.topicStyles]);
+        cut.mode, cut.mainMinutes, cut.mainOptions, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd, cut.canExtend, cut.edition, cut.editions, cut.topicStyle, cut.topicStyles, cut.audio?.version === 1]);
       if (this.renderKey !== key) {
         this.renderKey = key;
         const managementOpen = this.element.querySelector('[data-cut-management]')?.open;
         const cutKey = ['cut', 'interrupt'].includes(cut.phase) ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
         const animate = !cutKey || cutKey !== this.animatedCut;
         if (cutKey) this.animatedCut = cutKey;
-        this.element.innerHTML = `<div class="secret-card cut-player${isHalloween(cut) ? ' cut-hw' : ''}">${this.nameBanner(data)}<span class="cut-kicker cut-brand">${isHalloween(cut) ? '🎃 CUT!' : '✂️ CUT!'}</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}${this.sound ? `<div class="cut-controls"><button type="button" class="cut-button cut-sound" data-cut-sound title="${esc(t('cardSoundHint'))}" aria-pressed="false">${esc(t('soundOff'))}</button></div><p class="cut-feedback" data-cut-sound-status role="status"></p>` : ''}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
+        this.element.innerHTML = `<div class="secret-card cut-player${isHalloween(cut) ? ' cut-hw' : ''}">${this.nameBanner(data)}<span class="cut-kicker cut-brand">${isHalloween(cut) ? '🎃 CUT!' : '✂️ CUT!'}</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}${this.sound ? `<div class="cut-controls"><button type="button" class="cut-button cut-sound" data-cut-sound title="${esc(t('cardSoundHint'))}" aria-pressed="false">${esc(t('soundOff'))}</button></div><p class="cut-feedback" data-cut-sound-hint>${esc(t('cardSoundHint'))}</p><p class="cut-feedback" data-cut-sound-status role="status"></p>` : ''}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
         if (managementOpen && this.element.querySelector('[data-cut-management]')) this.element.querySelector('[data-cut-management]').open = true;
       }
       this.paint();
@@ -415,7 +419,7 @@ var CUT_UI = (() => {
       const feedback = this.element.querySelector('[data-cut-action-status]');
       if (feedback) feedback.textContent = this.error || (this.pending ? t('sending') : '');
       if (this.sound) {
-        const audible = this.sound.enabled && this.sound.context?.state === 'running' && this.connected() &&
+        const audible = this.connected() &&
           (typeof document === 'undefined' || document.hidden !== true);
         if (!audible) this.sound.silence();
         this.sound.update(cut, now, false, audible);
@@ -431,6 +435,8 @@ var CUT_UI = (() => {
       button.setAttribute('aria-pressed', String(sound.enabled));
       const status = this.element.querySelector('[data-cut-sound-status]');
       if (status) status.textContent = sound.unsupported ? t('soundUnsupported') : sound.assetError ? t('hwLoadError') : sound.assetLoading ? t('hwLoading') : waiting ? t('soundBlocked') : '';
+      const hint = this.element.querySelector('[data-cut-sound-hint]');
+      if (hint) hint.hidden = sound.enabled && sound.context?.state === 'running' && !sound.blocked;
     }
     settingsInput(form) {
       const speed = form.querySelector('[name="speed"]')?.value;
@@ -516,7 +522,7 @@ var CUT_UI = (() => {
     halloweenAudioLoad = new Promise((resolve, reject) => {
       if (typeof document === 'undefined' || !document.createElement) return reject(new Error('audio_unavailable'));
       const script = document.createElement('script');
-      script.src = 'cut-halloween-audio.js?v=cut-14';
+      script.src = 'cut-halloween-audio.js?v=cut-15';
       script.onload = () => typeof CUT_HALLOWEEN_AUDIO !== 'undefined' ? resolve(CUT_HALLOWEEN_AUDIO) : reject(new Error('audio_unavailable'));
       script.onerror = () => { script.remove(); reject(new Error('audio_unavailable')); };
       document.head.appendChild(script);
@@ -534,6 +540,9 @@ var CUT_UI = (() => {
       this.edition = 'classic'; this.onCut = null;
       this.halloweenBoard = null; this.halloweenOwned = false;
       this.assetLoading = false; this.assetError = false; this.closed = false; this.unlockEpoch = 0;
+      this.roomSnapshot = null; this.roomSessionId = null; this.roomEventId = null; this.roomAudible = false; this.roomMusicKey = '';
+      this.visibilityHandler = () => { if (document.hidden) this.silence(); };
+      if (typeof document !== 'undefined') document.addEventListener?.('visibilitychange', this.visibilityHandler);
     }
     useHalloweenBoard(board) { this.halloweenBoard = board; this.halloweenOwned = false; }
     async unlock() {
@@ -567,12 +576,22 @@ var CUT_UI = (() => {
       }
       finally { if (epoch === this.unlockEpoch) this.assetLoading = false; }
       if (cancelled()) return false;
+      if (this.halloweenBoard?.track !== this.roomSnapshot?.cut.audio.music) this.roomMusicKey = '';
+      if (this.roomSnapshot) {
+        const latest = this.roomSnapshot;
+        this.syncRoom(latest.cut, latest.now + Math.max(0, Date.now() - latest.receivedAt), latest.audible);
+      }
       this.onChange(); return !this.blocked && !!this.context;
     }
-    silence() {
+    stopCues() {
       for (const voice of this.voices) { try { voice.stop(); voice.disconnect(); } catch (e) {} }
       this.voices.clear();
       this.halloweenBoard?.stopEffects?.();
+    }
+    silence() {
+      this.stopCues();
+      if (this.halloweenBoard?.track) this.halloweenBoard.stopMusic?.();
+      this.roomMusicKey = ''; this.roomAudible = false;
     }
     toggle() {
       if (this.enabled && !this.unsupported && (this.blocked || !this.context)) return this.unlock();
@@ -582,6 +601,8 @@ var CUT_UI = (() => {
     }
     tone(frequency, length, delay = 0, type = 'sine', volume = .08) {
       if (!this.enabled || !this.context || this.context.state !== 'running') return;
+      volume *= this.roomSnapshot ? this.roomSnapshot.cut.audio.effectsVolume / .65 : 1;
+      if (!(volume > 0)) return;
       const ctx = this.context, start = ctx.currentTime + delay;
       const oscillator = ctx.createOscillator(), gain = ctx.createGain();
       oscillator.type = type; oscillator.frequency.setValueAtTime(frequency, start);
@@ -604,11 +625,64 @@ var CUT_UI = (() => {
     }
     spooky(key) {
       // No synthetic scream/voice fallback. A load error leaves the visual CUT usable.
+      if (key === 'cut' && this.roomSnapshot && this.halloweenBoard?.ready) {
+        const { cut } = this.roomSnapshot, audio = cut.audio;
+        const scare = typeof cut.cutEvent?.audioScare === 'boolean' ? cut.cutEvent.audioScare : audio.autoScare;
+        if (!scare) return (this.halloweenBoard.sting?.() || 0) > 0;
+        const choices = ['scream', 'laugh', 'ghost', 'howl', 'thunder'];
+        let hash = 2166136261;
+        for (const ch of String(cut.cutEvent?.id || cut.sessionId)) hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619) >>> 0;
+        const effect = cut.cutEvent?.audioKey || (audio.cutEffect !== 'random' ? audio.cutEffect : choices[hash % choices.length]);
+        return (this.halloweenBoard.play?.(effect) || 0) > 0;
+      }
       return this.halloweenBoard?.cue?.(key) || false;
     }
+    syncRoom(cut, now, audible = true) {
+      const audio = cut?.audio;
+      if (!audio || audio.version !== 1) {
+        if (this.roomSnapshot) this.silence();
+        this.roomSnapshot = null; this.roomSessionId = null; this.roomEventId = null;
+        return;
+      }
+      const newSession = this.roomSessionId !== cut.sessionId;
+      const wasAudible = this.roomAudible;
+      const newEvent = audio.event?.id && audio.event.id !== this.roomEventId;
+      this.roomSessionId = cut.sessionId; this.roomEventId = audio.event?.id || null;
+      this.roomSnapshot = { cut, now, audible, receivedAt: Date.now() };
+      const canPlay = audible && (typeof document === 'undefined' || document.hidden !== true) && this.enabled && !this.closed && this.context?.state === 'running' && !['stopped', 'finished'].includes(cut.phase);
+      this.roomAudible = canPlay && (cut.edition !== 'halloween' || this.halloweenBoard?.ready === true);
+      const board = this.halloweenBoard;
+      if (!canPlay || cut.edition !== 'halloween') {
+        if (board?.track) board.stopMusic?.();
+        if (!canPlay || this.edition !== 'halloween') board?.stopEffects?.();
+        this.roomMusicKey = '';
+        return;
+      }
+      if (!board?.ready) return;
+      this.assetError = board.assetError === true;
+      if (this.assetError) this.blocked = true;
+      if (board.musicVolume !== audio.musicVolume) board.setMusicVolume?.(audio.musicVolume);
+      if (board.effectsVolume !== audio.effectsVolume) board.setEffectsVolume?.(audio.effectsVolume);
+      if (board.autoScare !== audio.autoScare) board.setAutoScare?.(audio.autoScare);
+      const track = ['wind', 'rain', 'musicbox', 'crawl'].includes(audio.music) ? audio.music : null;
+      const musicKey = `${cut.sessionId}:${track}:${audio.musicStartedAt}`;
+      if (musicKey !== this.roomMusicKey) {
+        this.roomMusicKey = musicKey;
+        if (track) {
+          const offsetSeconds = Number.isFinite(audio.musicStartedAt) ? Math.max(0, (now - audio.musicStartedAt) / 1000) : 0;
+          Promise.resolve(board.startMusic?.(track, { offsetSeconds })).catch(() => {});
+        } else if (board.track) board.stopMusic?.();
+      }
+      // Treat the first snapshot, muted/hidden/offline periods and old events as
+      // consumed. Unlock/reconnect follows current music without replaying a scare.
+      if (!newSession && wasAudible && newEvent && Number.isFinite(audio.event.at) && now - audio.event.at >= -1000 && now - audio.event.at <= 3000) {
+        board.play?.(audio.event.key);
+      }
+    }
     update(cut, now, fresh = false, audible = true) {
-      if (!cut) { this.previous = null; this.silence(); return; }
+      if (!cut) { this.previous = null; this.silence(); this.roomSnapshot = null; return; }
       this.edition = cut.edition === 'halloween' ? 'halloween' : 'classic';
+      this.syncRoom(cut, now, audible);
       const previous = this.previous;
       const phaseKey = `${cut.sessionId}:${cut.turnId}:${cut.phase}`;
       if (fresh) { this.previous = null; this.seen.clear(); }
@@ -630,7 +704,9 @@ var CUT_UI = (() => {
           else if (cut.phase === 'timeup') this.cue('time');
           else if (cut.phase === 'speaking' && ['countdown', 'handoff', 'cut'].includes(previous?.phase)) this.cue('go');
           else if (cut.phase === 'countdown' && (fresh || previous?.phase !== 'countdown' || previous?.sessionId !== cut.sessionId)) this.cue('round');
-          else if (['setup', 'ready', 'paused', 'finished', 'stopped'].includes(cut.phase)) this.silence();
+          else if (['setup', 'ready', 'paused', 'finished', 'stopped'].includes(cut.phase)) {
+            if (this.roomSnapshot) this.stopCues(); else this.silence();
+          }
         }
       }
       const seconds = countdown(cut, now);
@@ -642,7 +718,7 @@ var CUT_UI = (() => {
       if (this.context && this.enabled && this.context.state !== 'running') { this.blocked = true; this.onChange(); }
       if (this.seen.size > 300) this.seen = new Set([...this.seen].slice(-120));
     }
-    close() { this.closed = true; this.unlockEpoch++; this.assetLoading = false; this.silence(); this.previous = null; if (this.halloweenOwned) this.halloweenBoard?.close(); this.halloweenBoard = null; this.context?.close().catch(() => {}); this.context = null; }
+    close() { this.closed = true; this.unlockEpoch++; this.assetLoading = false; this.silence(); this.previous = null; this.roomSnapshot = null; if (typeof document !== 'undefined') document.removeEventListener?.('visibilitychange', this.visibilityHandler); if (this.halloweenOwned) this.halloweenBoard?.close(); this.halloweenBoard = null; this.context?.close().catch(() => {}); this.context = null; }
   }
   const jumpTimingDefaults = { firstCutMinSeconds: 25, firstCutMaxSeconds: 45, cutIntervalMinSeconds: 30, cutIntervalMaxSeconds: 55 };
   const jumpTimingKeys = Object.keys(jumpTimingDefaults);

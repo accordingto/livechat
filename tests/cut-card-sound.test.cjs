@@ -60,7 +60,7 @@ test('shared cards begin muted with no AudioContext; legacy cards never instanti
     f.card.update(view({ sharedControls: undefined }));
     assert.equal(f.card.sound, null); assert.doesNotMatch(f.element.innerHTML, /data-cut-sound/);
     f.card.update(view()); assert.equal(f.card.sound.enabled, false);
-    assert.match(f.element.innerHTML, /data-cut-sound/); assert.match(f.button.textContent, /音效關閉/);
+    assert.match(f.element.innerHTML, /data-cut-sound/); assert.match(f.button.textContent, /聲音關閉/);
     assert.equal(f.button.attributes['aria-pressed'], 'false');
     f.card.update(view({ phase: 'cut', turnId: 2, nextSpeaker: 2, cutEvent: { id: 'first-cut' } }));
     f.paint(); assert.equal(f.audio.length, 0); assert.equal(f.tones.length, 0); assert.equal(f.sent.length, 0);
@@ -73,7 +73,7 @@ test('an explicit card gesture enables cues locally without replaying the curren
     const first = view({ phase: 'cut', turnId: 2, nextSpeaker: 2, cutEvent: { id: 'already-revealed' } });
     f.card.update(first); f.clickSound(); await flush();
     assert.equal(f.audio.length, 1); assert.equal(f.audio[0].resumed, 1); assert.equal(f.card.sound.enabled, true);
-    assert.equal(f.button.attributes['aria-pressed'], 'true'); assert.match(f.button.textContent, /音效開啟/);
+    assert.equal(f.button.attributes['aria-pressed'], 'true'); assert.match(f.button.textContent, /聲音開啟/);
     assert.equal(f.tones.length, 0); f.paint(); assert.equal(f.tones.length, 0);
     f.card.update(view({ turnId: 3, speaker: 2 })); assert.equal(f.tones.length, 2, 'GO uses two local oscillator tones');
     const next = view({ phase: 'cut', turnId: 4, nextSpeaker: 1, cutEvent: { id: 'new-cut' } });
@@ -128,8 +128,8 @@ test('blocked or unsupported audio reports locally and leaves all game actions u
       f.clickSound(); await flush(); f.paint();
       assert.equal(f.tones.length, 0); assert.equal(f.card.canBegin(), true);
       assert.equal(f.card.canAction('settings'), true); assert.equal(f.sent.length, 0);
-      assert.match(f.soundStatus.textContent, options.unsupported ? /無法播放提示音/ : /啟用音效/);
-      if (options.blocked) assert.match(f.button.textContent, /啟用音效/);
+      assert.match(f.soundStatus.textContent, options.unsupported ? /無法播放提示音/ : /啟用聲音/);
+      if (options.blocked) assert.match(f.button.textContent, /啟用聲音/);
     } finally { f.card.destroy(); }
   }
 });

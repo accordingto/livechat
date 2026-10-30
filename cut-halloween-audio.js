@@ -171,21 +171,37 @@ var CUT_HALLOWEEN_AUDIO = (() => {
       return true;
     }
     toggleMusic(track) {if(this.track===track||!TRACKS.includes(track)){this.stopMusic();return;}return this.startMusic(track);}
-    async startMusic(track) {
+    async startMusic(track, {offsetSeconds=0}={}) {
       if(!this.ready||!TRACKS.includes(track))return;
+      const requestedAt=this.context.currentTime;
+      offsetSeconds=Number.isFinite(offsetSeconds)?Math.max(0,offsetSeconds):0;
       this.stopMusic(true);const epoch=this.trackEpoch;this.track=track;this.onChange();
       try {
         const buffer=AMBIENCE.includes(track)?await this.load(track):null;
         if(this.closed||epoch!==this.trackEpoch||this.track!==track)return;
         const ctx=this.context;
+        const elapsed=offsetSeconds+Math.max(0,ctx.currentTime-requestedAt);
         this.musicGain=this.gain(0,this.musicBus);
         this.musicGain.gain.setValueAtTime(0,ctx.currentTime);
         this.musicGain.gain.linearRampToValueAtTime(1,ctx.currentTime+.6);
         this.nextTime=ctx.currentTime+.04;this.step=0;
         if(buffer) {
           this.ambienceBuffer=buffer;
+          this.ambienceOffset=elapsed%(buffer.duration-Math.min(.7,buffer.duration/4));
           this.scheduler=setInterval(()=>this.scheduleAmbience(),160);this.scheduleAmbience();
         } else {
+          if(elapsed>0) {
+            if(track==='crawl') {
+              const beat=60/CRAWL.bpm/2;
+              this.step=Math.floor(elapsed/beat)+1;this.nextTime+=this.step*beat-elapsed;
+            } else {
+              const beat=60/MUSIC_BOX.bpm,cycle=MUSIC_BOX.melody.reduce((n,row)=>n+row[1],0),position=(elapsed/beat)%cycle;
+              let beats=0,index=0;
+              while(index<MUSIC_BOX.melody.length&&beats+MUSIC_BOX.melody[index][1]<=position){beats+=MUSIC_BOX.melody[index][1];index++;}
+              const boundary=beats+MUSIC_BOX.melody[index][1];
+              this.step=index+1;this.nextTime+=(boundary-position)*beat;
+            }
+          }
           this.musicGain.connect(this.reverb);
           if(track==='musicbox')this.startDrone();
           this.scheduler=setInterval(()=>this.schedule(),60);this.schedule();
@@ -198,13 +214,13 @@ var CUT_HALLOWEEN_AUDIO = (() => {
       const ctx=this.context, buffer=this.ambienceBuffer, duration=buffer.duration, fade=Math.min(.7,duration/4);
       if(this.nextTime<ctx.currentTime-.1)this.nextTime=ctx.currentTime+.03;
       while(this.nextTime<ctx.currentTime+.8) {
-        const at=this.nextTime, source=ctx.createBufferSource(), envelope=this.gain(0,this.musicGain);
+        const at=this.nextTime,offset=this.ambienceOffset||0,length=duration-offset, source=ctx.createBufferSource(), envelope=this.gain(0,this.musicGain);
         source.buffer=buffer;source.connect(envelope);
-        envelope.gain.setValueAtTime(0,at);envelope.gain.linearRampToValueAtTime(1,at+fade);
-        envelope.gain.setValueAtTime(1,at+duration-fade);envelope.gain.linearRampToValueAtTime(0,at+duration);
+        envelope.gain.setValueAtTime(0,at);envelope.gain.linearRampToValueAtTime(1,at+Math.min(fade,length/3));
+        envelope.gain.setValueAtTime(1,at+length-fade);envelope.gain.linearRampToValueAtTime(0,at+length);
         this.musicVoices.add(source);
         source.onended=()=>{this.musicVoices.delete(source);try{source.disconnect();envelope.disconnect();}catch(e){}};
-        source.start(at);source.stop(at+duration);this.nextTime+=duration-fade;
+        source.start(at,offset);source.stop(at+length);this.nextTime+=duration-fade-offset;this.ambienceOffset=0;
       }
     }
     stopEffects() {

@@ -7,6 +7,8 @@
   let state = null, sync = null, status = demo ? 'ready' : 'connecting';
   let busy = false, error = '', sceneKey = '', rosterKey = '', closed = false, timer = null;
   let startingSession = null, editing = false, animatedCut = '', customError = false, topicError = false, jumpError = false, endTarget = null;
+  let audioWork = Promise.resolve(), audioPending = 0, audioError = false, audioSession = '', audioVolumeTimer = null;
+  let audioDraft = {}, audioVolumePatch = {};
   // Mode 1 (classic) is the original takeover game; Mode 2 (jump) keeps one Main Speaker.
   let mode = 'classic';
   // Classic or 🎃 Halloween: its own topic pools, look and host sound board.
@@ -38,10 +40,12 @@
   sound.useHalloweenBoard?.(board);
   // The edition on screen: the one being chosen in setup, otherwise the game's.
   const shownEdition = () => (!state || editing || status === 'switched') ? edition : editionOf(state);
-  // In the Halloween edition the sound board takes over each CUT moment.
-  sound.onCut = () => shownEdition() === 'halloween' && board.ready ? board.cut() : false;
-  const unlockAudio = () => { sound.edition = shownEdition(); if (sound.enabled) sound.unlock(); if (shownEdition() === 'halloween') board.unlock(); };
+  // The host follows the same room audio state as every original player card.
+  const unlockAudio = () => { sound.edition = shownEdition(); if (sound.enabled) sound.unlock(); };
   const view = () => state ? CUT_ENGINE.view(state, 0, now()).cut : null;
+  const audioKeys = ['music', 'musicVolume', 'effectsVolume', 'autoScare', 'cutEffect'];
+  const audioSettings = current => Object.fromEntries(audioKeys.map(key => [key, current?.audio?.[key] ?? ({ music: null, musicVolume: .28, effectsVolume: .65, autoScare: true, cutEffect: 'random' })[key]]));
+  const canControlAudio = () => canControl() && view()?.canControlAudio === true && view()?.audio?.version === 1;
   const knownError = message => message === 'invalid_setup' ? 'invalid_roster' : message === 'invalid_player' ? 'not_available'
     : ['offline', 'other_host', 'not_enough_players', 'invalid_roster', 'invalid_options', 'not_available', 'stale_turn'].includes(message) ? message : 'error';
 
@@ -52,24 +56,67 @@
     byId('sound-status').textContent = sound.unsupported ? t('soundUnsupported') : sound.assetError ? t('hwLoadError') : sound.assetLoading ? t('hwLoading') : waiting ? t('soundBlocked') : '';
   }
   function paintBoard() {
+    if (closed) return;
     const show = shownEdition() === 'halloween';
     document.body.classList.toggle('cut-hw-page', show);
     byId('hw-tag').hidden = !show;
     byId('hw-board').hidden = !show;
-    if (!show) { if (board.track) board.stopMusic(); if (board.fxVoices?.size) board.stopEffects(); return; }
+    const cut = view(), session = cut?.sessionId || '';
+    if (audioSession !== session) {
+      audioSession = session; audioDraft = {}; audioVolumePatch = {}; audioError = false;
+      clearTimeout(audioVolumeTimer); audioVolumeTimer = null;
+    }
+    if (!show) return;
+    for (const key of audioKeys) if (!Object.hasOwn(audioVolumePatch, key) && cut?.audio?.[key] === audioDraft[key]) delete audioDraft[key];
+    const settings = { ...audioSettings(cut), ...audioDraft }, allowed = canControlAudio();
     const waiting = !board.unsupported && !board.ready;
     byId('hw-unlock').hidden = !waiting;
     byId('hw-unlock').disabled = board.loading > 0;
-    byId('hw-status').textContent = board.unsupported ? t('hwUnsupported') : board.assetError ? t('hwLoadError') : board.loading > 0 ? t('hwLoading') : '';
+    byId('hw-status').textContent = audioError ? t('hwRoomError') : audioPending ? t('hwRoomSending') : !allowed ? t('hwRoomNotStarted') : board.unsupported ? t('hwUnsupported') : board.assetError ? t('hwLoadError') : board.loading > 0 ? t('hwLoading') : '';
     for (const button of document.querySelectorAll('[data-hw-track]')) {
-      button.setAttribute('aria-pressed', String(board.track === button.dataset.hwTrack));
-      button.disabled = board.unsupported || board.loading > 0;
+      button.setAttribute('aria-pressed', String(settings.music === button.dataset.hwTrack));
+      button.disabled = !allowed || audioPending > 0;
     }
-    byId('hw-stop').disabled = !board.track;
-    for (const button of document.querySelectorAll('[data-hw-fx]')) button.disabled = board.unsupported || board.loading > 0;
-    byId('hw-music-volume').value = String(Math.round(board.musicVolume * 100));
-    byId('hw-effects-volume').value = String(Math.round(board.effectsVolume * 100));
-    byId('hw-auto').checked = board.autoScare;
+    byId('hw-stop').disabled = !allowed || audioPending > 0 || !settings.music;
+    for (const button of document.querySelectorAll('[data-hw-fx]')) button.disabled = !allowed || audioPending > 0;
+    for (const [id, key] of [['hw-music-volume', 'musicVolume'], ['hw-effects-volume', 'effectsVolume']]) {
+      byId(id).value = String(Math.round(settings[key] * 100)); byId(id).disabled = !allowed;
+    }
+    byId('hw-auto').checked = settings.autoScare; byId('hw-auto').disabled = !allowed || audioPending > 0;
+    byId('hw-cut-effect').value = settings.cutEffect; byId('hw-cut-effect').disabled = !allowed || audioPending > 0;
+  }
+  function sendRoomAudio(type, patch) {
+    if (!canControlAudio()) return Promise.resolve(false);
+    const session = state.sessionId;
+    let applied = false;
+    audioPending++; audioError = false; paintBoard();
+    const work = audioWork.then(async () => {
+      if (closed || state?.sessionId !== session || !canControlAudio()) return false;
+      if (demo) {
+        const id = uid();
+        const next = CUT_ENGINE.apply(state, { ...patch, id, type, actor: 0, sessionId: session, turnId: state.turnId, now: now(), seed: seed() });
+        if (next.audioReplies?.[0]?.id !== id || next.audioReplies[0].error) throw new Error('audio_failed');
+        state = next; render();
+      } else await sync.command(type, patch);
+      applied = true; return true;
+    }).catch(() => { if (!closed && state?.sessionId === session) audioError = true; return false; }).finally(() => {
+      audioPending--;
+      if (!applied && type === 'audioSettings') for (const [key, value] of Object.entries(patch)) if (audioDraft[key] === value) delete audioDraft[key];
+      paintBoard();
+    });
+    audioWork = work;
+    return work;
+  }
+  function updateRoomAudio(patch) {
+    if (!canControlAudio()) return;
+    Object.assign(audioDraft, patch); unlockAudio();
+    // Publishing is independent of local media download and autoplay permission.
+    return sendRoomAudio('audioSettings', patch);
+  }
+  function flushAudioVolume() {
+    clearTimeout(audioVolumeTimer); audioVolumeTimer = null;
+    const patch = audioVolumePatch; audioVolumePatch = {};
+    if (Object.keys(patch).length) updateRoomAudio(patch);
   }
   function renderEdition() {
     const halloween = edition === 'halloween';
@@ -197,7 +244,7 @@
   async function endTopic() {
     const cut = view();
     if (!sameEndTarget(cut) || !cut.canEndTopic) { closeEndDialog(); return; }
-    if (await command('endTopic')) { sound.silence(); closeEndDialog(); }
+    if (await command('endTopic')) { sound.stopCues?.(); closeEndDialog(); }
   }
   function render() {
     const cut = view();
@@ -283,11 +330,11 @@
   async function start(restart = false) {
     const allowed = () => editing && !restart ? canControl() : canStart();
     if (busy || !allowed()) return;
-    const options = restart && state ? { ...jumpTimingOf(state), mode: modeOf(state), edition: editionOf(state), topicStyle: topicStyleOf(state), mainMinutes: mainMinutesOf(state.mainMinutes), speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
+    const options = restart && state ? { ...jumpTimingOf(state), mode: modeOf(state), edition: editionOf(state), topicStyle: topicStyleOf(state), audio: audioSettings(state), mainMinutes: mainMinutesOf(state.mainMinutes), speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
     if (!options) return;
     // This call runs inside the Show-topic click gesture, allowing Web Audio on mobile.
+    sound.edition = shownEdition();
     const audioReady = sound.enabled ? sound.unlock() : Promise.resolve(false);
-    if (options.edition === 'halloween') board.unlock();
     if (editing && !restart) {
       const saved = await command('configure', options);
       if (saved) { editing = false; render(); }
@@ -309,7 +356,7 @@
   async function openSettings() {
     if (await command('settings')) {
       restoreOptions(state);
-      editing = true; byId('manage').close(); sound.silence(); render();
+      editing = true; byId('manage').close(); sound.stopCues?.(); render();
       byId('speed').focus();
     }
   }
@@ -319,7 +366,6 @@
   for (const id of ['edition-classic', 'edition-halloween']) byId(id).addEventListener('click', () => {
     if (busy) return;
     edition = id === 'edition-halloween' ? 'halloween' : 'classic';
-    if (edition === 'halloween') board.unlock();
     render();
   });
   byId('topic-style').addEventListener('change', () => {
@@ -327,17 +373,29 @@
     topicStyle = byId('topic-style').value;
     render();
   });
-  byId('hw-unlock').addEventListener('click', () => board.unlock());
-  for (const button of document.querySelectorAll('[data-hw-track]')) button.addEventListener('click', async () => {
-    if (await board.unlock()) board.toggleMusic(button.dataset.hwTrack);
+  byId('hw-unlock').addEventListener('click', () => {
+    sound.edition = shownEdition();
+    if (!sound.enabled) sound.toggle(); else sound.unlock();
   });
-  byId('hw-stop').addEventListener('click', () => board.stopMusic());
-  for (const button of document.querySelectorAll('[data-hw-fx]')) button.addEventListener('click', async () => {
-    if (await board.unlock()) board.play(button.dataset.hwFx);
+  for (const button of document.querySelectorAll('[data-hw-track]')) button.addEventListener('click', () => {
+    const selected = audioDraft.music ?? view()?.audio?.music;
+    updateRoomAudio({ music: selected === button.dataset.hwTrack ? null : button.dataset.hwTrack });
   });
-  byId('hw-music-volume').addEventListener('input', event => board.setMusicVolume(Number(event.target.value) / 100));
-  byId('hw-effects-volume').addEventListener('input', event => board.setEffectsVolume(Number(event.target.value) / 100));
-  byId('hw-auto').addEventListener('change', event => board.setAutoScare(event.target.checked));
+  byId('hw-stop').addEventListener('click', () => updateRoomAudio({ music: null }));
+  for (const button of document.querySelectorAll('[data-hw-fx]')) button.addEventListener('click', () => {
+    unlockAudio(); sendRoomAudio('audioEffect', { key: button.dataset.hwFx });
+  });
+  for (const [id, key] of [['hw-music-volume', 'musicVolume'], ['hw-effects-volume', 'effectsVolume']]) {
+    byId(id).addEventListener('input', event => {
+      if (!canControlAudio()) return;
+      const value = Number(event.target.value) / 100;
+      audioDraft[key] = value; audioVolumePatch[key] = value;
+      clearTimeout(audioVolumeTimer); audioVolumeTimer = setTimeout(flushAudioVolume, 250);
+    });
+    byId(id).addEventListener('change', flushAudioVolume);
+  }
+  byId('hw-auto').addEventListener('change', event => updateRoomAudio({ autoScare: event.target.checked }));
+  byId('hw-cut-effect').addEventListener('change', event => updateRoomAudio({ cutEffect: event.target.value }));
   for (const id of ['mode-classic', 'mode-jump']) byId(id).addEventListener('click', () => {
     if (busy) return;
     mode = id === 'mode-jump' ? 'jump' : 'classic'; customError = false; topicError = false; render();
@@ -419,7 +477,8 @@
     paint();
   }, 100);
   function close() {
-    closed = true; clearInterval(timer); sync?.close(); sound.close(); board.close(); closeEndDialog();
+    closed = true; clearInterval(timer); clearTimeout(audioVolumeTimer); audioVolumePatch = {}; audioDraft = {};
+    sync?.close(); sound.close(); board.close(); closeEndDialog();
   }
   window.addEventListener('storage', event => {
     if (!demo && event.key === 'room-last-session' && event.newValue !== roomCode) {

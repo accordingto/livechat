@@ -278,3 +278,39 @@ test('Talk setup cannot release autonomous authority or cut a pending mission', 
   assert.equal(f.state(host).crazy.prompts[2].id,prompt.id);assert.equal(f.card(2).talk.crazy.prompt.status,'pending');
   await f.playerCommand(2,'crazyDone',{promptId:prompt.id});assert.equal(f.state(host).scores[2],1);
 });
+
+test('CUT manager audio uses independent acknowledgements and authenticated host authority through the real executor', async t => {
+  const f = fixture(t, 'cut'), host = f.manager(); await flush();
+  await host.start({ edition: 'halloween' }); await flush(); f.assertIndependent(host);
+  await assert.rejects(host.command('next'), /not_available/); await flush();
+  const before = f.state(host), turn = before.turnId, topic = before.topic.id, normalReply = clone(before.replies[0]);
+  await host.command('audioSettings', { music: 'wind', musicVolume: .21, effectsVolume: .43, cutEffect: 'door' }); await flush();
+  assert.equal(f.state(host).audioReplies[0].error, '');
+  assert.deepEqual(f.state(host).replies[0], normalReply, 'a successful audio RPC ignores and preserves a prior gameplay error');
+  assert.equal(f.state(host).turnId, turn); assert.equal(f.state(host).lastChangeAt, before.lastChangeAt);
+  assert.equal(f.state(host).topic.id, topic); assert.deepEqual(f.state(host).topicHistory, before.topicHistory);
+  const epoch = f.state(host).audio.musicStartedAt;
+  for (const n of [1, 2, 3]) {
+    const cut = f.card(n).cut;
+    assert.equal(cut.audio.music, 'wind'); assert.equal(cut.audio.musicVolume, .21); assert.equal(cut.audio.effectsVolume, .43);
+    assert.equal(cut.canControlAudio, false); assert.equal(cut.audioSeen, undefined); assert.equal(cut.audioReplies, undefined);
+  }
+  await assert.rejects(host.command('audioSettings', { effectsVolume: -1 }), /invalid_options/);
+  f.setClock(f.now() + 10);
+  await host.command('audioSettings', { effectsVolume: .1 }); await flush();
+  assert.equal(f.state(host).audio.effectsVolume, .1); assert.equal(f.state(host).audio.musicStartedAt, epoch);
+  const saved = clone(f.state(host).audio), reply = clone(f.card(2).cut.reply);
+  await f.playerCommand(2, 'audioSettings', { actor: 0, music: 'rain' }); await flush();
+  assert.equal(f.state(host).audioReplies[2].error, 'not_available'); assert.deepEqual(f.state(host).audio, saved);
+  assert.deepEqual(f.card(2).cut.reply, reply, 'rejected player audio does not overwrite that player gameplay acknowledgement');
+  await host.command('audioEffect', { key: 'laugh' }); await flush();
+  const effect = f.state(host).audio.event, revision = f.state(host).audio.revision;
+  for (const n of [1, 2, 3]) assert.deepEqual(f.card(n).cut.audio.event, effect);
+  const replay = f.calls.filter(call => call.command?.type === 'audioEffect').at(-1);
+  await f.service.execute(replay); await flush();
+  assert.equal(f.state(host).audio.revision, revision); assert.deepEqual(f.state(host).audio.event, effect);
+  host.close(); const reopened = f.manager(); await flush(); f.assertIndependent(reopened);
+  assert.equal(f.state(reopened).audio.musicStartedAt, epoch); assert.equal(f.state(reopened).turnId, turn);
+  await reopened.command('audioSettings', { music: null }); await flush();
+  assert.equal(f.state(reopened).audio.music, null); assert.equal(f.state(reopened).audio.musicStartedAt, null);
+});

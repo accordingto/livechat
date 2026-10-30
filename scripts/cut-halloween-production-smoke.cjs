@@ -7,6 +7,8 @@
 // modes, changing the edition opens the other pool, invalid editions are
 // refused, and a restart keeps the edition. It also proves both selectable
 // topic styles, their real next-topic pools and both style-preserving restarts.
+// Room audio adds six narrowly scoped host RPCs on the same owned fixture;
+// ordinary player attempts must be denied without changing game acknowledgements.
 'use strict';
 const { randomBytes } = require('node:crypto');
 const CUT = require('../cut-engine.js');
@@ -84,7 +86,7 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     const serialized = JSON.stringify(value);
     must(!serialized.includes(JSON.stringify(f.controlToken)));
     for (const other of f.seats.filter(seat => seat.playerNum !== num)) must(!serialized.includes(JSON.stringify(other.token)));
-    for (const field of ['deadline', 'speakingDurationMs', 'pendingDurationMs', 'stats', 'recent', 'topicHistory', 'jumpTopicHistory']) must(!Object.hasOwn(s, field));
+    for (const field of ['deadline', 'speakingDurationMs', 'pendingDurationMs', 'stats', 'recent', 'topicHistory', 'jumpTopicHistory', 'audioSeen', 'audioReplies', 'audioLastScare', 'audioUpdatedAt']) must(!Object.hasOwn(s, field));
     report.phase = 'cut:' + s.phase; return value;
   }
   async function command(f, num, type, extra = {}, expectedError = '') {
@@ -92,7 +94,27 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     const action = { id: uid(), type, sessionId: s.sessionId, turnId: s.turnId, ...extra };
     await write(f, num, old => ({ ...old, cutAction: action }));
     await api({ operation: 'execute', capsule: value.hubExecutor.capsule, token: f.seats[num - 1].token });
-    const next = await card(f, num); check(next.cut.reply?.id === action.id && (next.cut.reply.error || '') === expectedError); return next;
+    const next = await card(f, num), reply = ['audioSettings', 'audioEffect'].includes(type) ? next.cut.audioReply : next.cut.reply;
+    check(reply?.id === action.id && (reply.error || '') === expectedError); return next;
+  }
+  const audioSnapshot = audio => ({ version: audio?.version, revision: audio?.revision,
+    music: audio?.music ?? null, musicStartedAt: audio?.musicStartedAt ?? null,
+    musicVolume: audio?.musicVolume, effectsVolume: audio?.effectsVolume, autoScare: audio?.autoScare,
+    cutEffect: audio?.cutEffect, event: audio?.event ? { id: audio.event.id, at: audio.event.at, key: audio.event.key } : null });
+  function withoutAudio(state) {
+    const copy = JSON.parse(JSON.stringify(state));
+    for (const key of Object.keys(copy)) if (key.startsWith('audio')) delete copy[key];
+    return copy;
+  }
+  async function hostAudio(f, type, extra = {}, expectedError = '') {
+    const value = await card(f, 1), before = (await read(f, 0)).value;
+    must(f.owned(before, 0)); const prior = JSON.parse(before.stateJson);
+    const action = { id: uid(), type, sessionId: value.cut.sessionId, turnId: -1, ...extra };
+    await api({ operation: 'execute', capsule: value.hubExecutor.capsule, token: f.controlToken, command: action });
+    const after = (await read(f, 0)).value; must(f.owned(after, 0)); const next = JSON.parse(after.stateJson);
+    check(next.audioReplies?.[0]?.id === action.id && (next.audioReplies[0].error || '') === expectedError);
+    check(JSON.stringify(withoutAudio(next)) === JSON.stringify(withoutAudio(prior)));
+    return next;
   }
   const note = value => {
     report.topics.push(value.cut.edition + '/' + (value.cut.mode || 'classic') + ':' + value.cut.topic?.id);
@@ -168,7 +190,44 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     value = await command(cut, 3, 'configure', { topicStyle: 'situations' }); note(value);
     check(value.cut.topicStyle === 'situations' && value.cut.phase === 'ready' && takeIds.has(value.cut.topic.id));
     for (const seat of cut.seats) { const other = await card(cut, seat.playerNum); check(other.cut.topicStyle === 'situations' && other.cut.topic.id === value.cut.topic.id); }
-    report.step = 'style-compare-complete';
+    report.step = 'host-room-audio';
+    let canonical = await hostAudio(cut, 'audioSettings', { music: 'wind', musicVolume: .21, effectsVolume: .43, cutEffect: 'door', autoScare: true });
+    check(canonical.audio?.version === 1 && canonical.audio.music === 'wind' && Number.isFinite(canonical.audio.musicStartedAt));
+    const musicEpoch = canonical.audio.musicStartedAt;
+    for (const seat of cut.seats) {
+      const other = await card(cut, seat.playerNum);
+      check(other.cut.canControlAudio === false && JSON.stringify(audioSnapshot(other.cut.audio)) === JSON.stringify(canonical.audio));
+    }
+    report.step = 'host-room-audio-effect';
+    canonical = await hostAudio(cut, 'audioEffect', { key: 'laugh' });
+    check(canonical.audio.event?.key === 'laugh' && Number.isFinite(canonical.audio.event.at));
+    for (const seat of cut.seats) {
+      const other = await card(cut, seat.playerNum);
+      check(JSON.stringify(audioSnapshot(other.cut.audio)) === JSON.stringify(canonical.audio));
+    }
+    const onceOnlyAudio = JSON.stringify(canonical.audio), repeatedId = canonical.audio.event.id;
+    canonical = await hostAudio(cut, 'audioEffect', { key: 'laugh', id: repeatedId });
+    check(JSON.stringify(canonical.audio) === onceOnlyAudio);
+    report.step = 'room-audio-player-denied';
+    const audioBeforePlayer = JSON.stringify(canonical.audio), gameplayBeforePlayer = withoutAudio(canonical);
+    const gameplayReply = (await card(cut, 2)).cut.reply;
+    await command(cut, 2, 'audioSettings', { music: 'rain', actor: 0 }, 'not_available');
+    await command(cut, 3, 'audioEffect', { key: 'scream', actor: 0 }, 'not_available');
+    canonical = JSON.parse((await read(cut, 0)).value.stateJson);
+    check(JSON.stringify(canonical.audio) === audioBeforePlayer && JSON.stringify(withoutAudio(canonical)) === JSON.stringify(gameplayBeforePlayer));
+    check(JSON.stringify((await card(cut, 2)).cut.reply) === JSON.stringify(gameplayReply));
+    report.step = 'room-audio-validation-and-stop';
+    canonical = await hostAudio(cut, 'audioSettings', { effectsVolume: -1 }, 'invalid_options');
+    check(JSON.stringify(canonical.audio) === audioBeforePlayer);
+    canonical = await hostAudio(cut, 'audioSettings', { musicVolume: .35, effectsVolume: 0 });
+    check(canonical.audio.musicStartedAt === musicEpoch && canonical.audio.effectsVolume === 0 && canonical.audio.musicVolume === .35);
+    canonical = await hostAudio(cut, 'audioSettings', { music: null });
+    check(canonical.audio.music === null && canonical.audio.musicStartedAt === null);
+    for (const seat of cut.seats) {
+      const other = await card(cut, seat.playerNum);
+      check(other.cut.phase === 'ready' && !other.cut.audio.music && JSON.stringify(audioSnapshot(other.cut.audio)) === JSON.stringify(canonical.audio));
+    }
+    report.step = 'room-audio-complete';
     report.ok = true;
   } catch (_) { report.ok = false; }
   finally {

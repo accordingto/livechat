@@ -203,7 +203,7 @@ test('failed recording load reports blocked and assetError while actions stay us
       f.card.update(view({ phase: 'ready', canBegin: true })); f.clickSound(); await flush();
       assert.equal(f.card.sound.blocked, true); assert.equal(f.card.sound.assetError, true);
       assert.equal(f.card.sound.assetLoading, false); assert.match(f.soundStatus.textContent, /載入失敗/);
-      assert.match(f.button.textContent, /啟用音效/); assert.equal(f.card.canBegin(), true);
+      assert.match(f.button.textContent, /啟用聲音/); assert.equal(f.card.canBegin(), true);
       f.card.update(view({ phase: 'cut', turnId: 2, nextSpeaker: 2, cutEvent: { id: 'load-failed-cut' } }));
       assert.deepEqual(f.boards[0].cues, []); assert.equal(f.tones.length, 0); assert.equal(f.sent.length, 0);
     } finally { f.card.destroy(); }

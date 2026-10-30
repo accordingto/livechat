@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cut-14">
+  <link rel="stylesheet" href="cut.css?v=cut-15">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="cut-page">
@@ -119,7 +119,7 @@
     <section class="cut-panel cut-hw-board" id="cut-hw-board" hidden aria-labelledby="cut-hw-board-title">
       <div class="cut-hw-board-head">
         <h2 id="cut-hw-board-title" data-i18n="cut.hwBoard">🎃 萬聖節音效台</h2>
-        <p class="cut-soft" data-i18n="cut.hwBoardHint">只在這個主持頁播放。分享畫面時，請一起分享電腦音訊。</p>
+        <p class="cut-soft" data-i18n="cut.hwBoardHint">主持人選擇後，各玩家在自己的裝置播放。玩家需先按一次開啟聲音。</p>
       </div>
       <button type="button" class="cut-button cut-primary" id="cut-hw-unlock" hidden data-i18n="cut.hwUnlock">🔊 按一下啟用音效台</button>
       <p class="cut-feedback" id="cut-hw-status" role="status"></p>
@@ -137,7 +137,7 @@
         <label class="cut-field cut-hw-range"><span data-i18n="cut.hwMusicVolume">背景音量</span><input type="range" id="cut-hw-music-volume" min="0" max="100" step="1" value="28"></label>
       </div>
       <div class="cut-hw-group">
-        <p class="cut-kicker" data-i18n="cut.hwEffects">音效</p>
+        <p class="cut-kicker" data-i18n="cut.hwEffects">音效・按一下播放給全桌</p>
         <div class="cut-hw-fx">
           <button type="button" class="cut-button cut-hw-fx-btn" data-hw-fx="scream" data-i18n="cut.hwFx_scream">😱 尖叫</button>
           <button type="button" class="cut-button cut-hw-fx-btn" data-hw-fx="laugh" data-i18n="cut.hwFx_laugh">😈 邪惡笑聲</button>
@@ -148,9 +148,20 @@
           <button type="button" class="cut-button cut-hw-fx-btn" data-hw-fx="heartbeat" data-i18n="cut.hwFx_heartbeat">💓 心跳</button>
           <button type="button" class="cut-button cut-hw-fx-btn" data-hw-fx="bell" data-i18n="cut.hwFx_bell">🔔 午夜鐘聲</button>
         </div>
-        <label class="cut-field cut-hw-range"><span data-i18n="cut.hwEffectsVolume">音效音量</span><input type="range" id="cut-hw-effects-volume" min="0" max="100" step="5" value="65"></label>
-        <label class="cut-hw-check"><input type="checkbox" id="cut-hw-auto" checked> <span data-i18n="cut.hwAutoScare">每次 CUT 隨機播放驚嚇音效</span></label>
-        <p class="cut-soft" data-i18n="cut.hwAutoScareHint">需要開啟上方的音效。不勾選時，CUT 只有短短的詭異音。</p>
+        <label class="cut-field cut-hw-range"><span data-i18n="cut.hwEffectsVolume">音效音量</span><input type="range" id="cut-hw-effects-volume" min="0" max="100" step="1" value="65"></label>
+        <label class="cut-hw-check"><input type="checkbox" id="cut-hw-auto" checked> <span data-i18n="cut.hwAutoScare">CUT 時播放驚嚇音效</span></label>
+        <label class="cut-field"><span data-i18n="cut.hwCutEffect">CUT 音效</span><select id="cut-hw-cut-effect">
+          <option value="random" data-i18n="cut.hwFx_random">隨機（避免連續相同）</option>
+          <option value="scream" data-i18n="cut.hwFx_scream">😱 尖叫</option>
+          <option value="laugh" data-i18n="cut.hwFx_laugh">😈 邪惡笑聲</option>
+          <option value="ghost" data-i18n="cut.hwFx_ghost">👻 鬼魂</option>
+          <option value="howl" data-i18n="cut.hwFx_howl">🐺 狼嚎</option>
+          <option value="door" data-i18n="cut.hwFx_door">🚪 吱嘎開門</option>
+          <option value="thunder" data-i18n="cut.hwFx_thunder">⚡ 打雷</option>
+          <option value="heartbeat" data-i18n="cut.hwFx_heartbeat">💓 心跳</option>
+          <option value="bell" data-i18n="cut.hwFx_bell">🔔 午夜鐘聲</option>
+        </select></label>
+        <p class="cut-soft" data-i18n="cut.hwAutoScareHint">依下方選擇播放；關閉時只播放短鐘聲。</p>
       </div>
     </section>
     <p class="cut-feedback" id="cut-error" role="status"></p>
@@ -215,16 +226,16 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="cut-config.js?v=cut-14"></script>
-  <script src="cut-random.js?v=cut-14"></script>
-  <script src="cut-topics.js?v=cut-14"></script>
-  <script src="cut-jump-topics.js?v=cut-14"></script>
-  <script src="cut-halloween-topics.js?v=cut-14"></script>
-  <script src="cut-engine.js?v=cut-14"></script>
-  <script src="cut-ui.js?v=cut-14"></script>
-  <script src="cut-halloween-audio.js?v=cut-14"></script>
-  <script src="cut-sync.js?v=cut-14"></script>
-  <script src="hub-executor.js?v=life-story-1"></script><script>HUB_EXECUTOR.install();</script>
-<script src="cut-host.js?v=cut-14"></script>
+  <script src="cut-config.js?v=cut-15"></script>
+  <script src="cut-random.js?v=cut-15"></script>
+  <script src="cut-topics.js?v=cut-15"></script>
+  <script src="cut-jump-topics.js?v=cut-15"></script>
+  <script src="cut-halloween-topics.js?v=cut-15"></script>
+  <script src="cut-engine.js?v=cut-15"></script>
+  <script src="cut-ui.js?v=cut-15"></script>
+  <script src="cut-halloween-audio.js?v=cut-15"></script>
+  <script src="cut-sync.js?v=cut-15"></script>
+  <script src="hub-executor.js?v=cut-15"></script><script>HUB_EXECUTOR.install();</script>
+<script src="cut-host.js?v=cut-15"></script>
 </body>
 </html>

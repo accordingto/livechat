@@ -22,6 +22,78 @@ var CUT_ENGINE = (() => {
     ? halloweenTopics.storyOpenings[mode].items : halloweenTopics[mode].items;
   const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
+  const AUDIO_TRACKS = ['wind', 'rain', 'musicbox', 'crawl'];
+  const AUDIO_EFFECTS = ['scream', 'laugh', 'ghost', 'howl', 'door', 'thunder', 'heartbeat', 'bell'];
+  const AUDIO_SCARES = ['scream', 'laugh', 'ghost', 'howl', 'thunder'];
+  const audioKeys = ['music', 'musicVolume', 'effectsVolume', 'autoScare', 'cutEffect'];
+  const volume = value => Number.isFinite(value) && value >= 0 && value <= 1;
+  const audioSettingsValid = value => value && typeof value === 'object' && !Array.isArray(value) &&
+    (!Object.hasOwn(value, 'music') || value.music === null || AUDIO_TRACKS.includes(value.music)) &&
+    (!Object.hasOwn(value, 'musicVolume') || volume(value.musicVolume)) &&
+    (!Object.hasOwn(value, 'effectsVolume') || volume(value.effectsVolume)) &&
+    (!Object.hasOwn(value, 'autoScare') || typeof value.autoScare === 'boolean') &&
+    (!Object.hasOwn(value, 'cutEffect') || value.cutEffect === 'random' || AUDIO_EFFECTS.includes(value.cutEffect));
+  function audioOf(state) {
+    const audio = state?.audio || {}, music = AUDIO_TRACKS.includes(audio.music) ? audio.music : null;
+    const event = audio.event && typeof audio.event.id === 'string' && audio.event.id.length <= 100 &&
+      AUDIO_EFFECTS.includes(audio.event.key) && Number.isFinite(audio.event.at) && audio.event.at >= 0
+      ? { id: audio.event.id, at: audio.event.at, key: audio.event.key } : null;
+    return { version: 1, revision: Number.isSafeInteger(audio.revision) && audio.revision >= 0 ? audio.revision : 0,
+      music, musicStartedAt: music && Number.isFinite(audio.musicStartedAt) && audio.musicStartedAt >= 0 ? audio.musicStartedAt : null,
+      musicVolume: volume(audio.musicVolume) ? audio.musicVolume : .28,
+      effectsVolume: volume(audio.effectsVolume) ? audio.effectsVolume : .65,
+      autoScare: typeof audio.autoScare === 'boolean' ? audio.autoScare : true,
+      cutEffect: audio.cutEffect === 'random' || AUDIO_EFFECTS.includes(audio.cutEffect) ? audio.cutEffect : 'random', event };
+  }
+  function initialAudio(settings, now) {
+    const audio = audioOf(null);
+    for (const key of audioKeys) if (Object.hasOwn(settings, key)) audio[key] = settings[key];
+    if (audio.music) audio.musicStartedAt = now;
+    return audio;
+  }
+  function applyAudio(current, input, actor) {
+    if (list(current.audioSeen?.[actor]).includes(input.id)) return current;
+    const state = copy(current), now = input.now;
+    let error = '';
+    if (actor !== 0) error = 'not_available';
+    else if (!Number.isFinite(now) || now < current.lastChangeAt || now < (current.audioUpdatedAt || 0)) error = 'invalid_time';
+    else if (input.type === 'audioSettings') {
+      if (!audioSettingsValid(input) || !audioKeys.some(key => Object.hasOwn(input, key))) error = 'invalid_options';
+      else {
+        const audio = audioOf(current), next = { ...audio };
+        for (const key of audioKeys) if (Object.hasOwn(input, key)) next[key] = input[key];
+        if (next.music !== audio.music) next.musicStartedAt = next.music ? now : null;
+        if (audioKeys.some(key => next[key] !== audio[key])) next.revision++;
+        state.audio = next; state.audioUpdatedAt = now;
+      }
+    } else if (!AUDIO_EFFECTS.includes(input.key)) error = 'invalid_options';
+    else {
+      const audio = audioOf(current);
+      state.audio = { ...audio, revision: audio.revision + 1, event: { id: input.id, at: now, key: input.key } };
+      state.audioUpdatedAt = now;
+    }
+    // Audio has its own acknowledgements and dedup history. It never advances a
+    // gameplay fence, clock, fairness draw, topic or pending player command.
+    state.audioSeen ||= {}; state.audioReplies ||= {};
+    state.audioSeen[actor] = [...list(state.audioSeen[actor]), input.id].slice(-32);
+    state.audioReplies[actor] = { id: input.id, error };
+    return state;
+  }
+  function captureCutAudio(state) {
+    const audio = audioOf(state), event = state.cutEvent;
+    let key = 'bell';
+    if (audio.autoScare) {
+      if (audio.cutEffect !== 'random') key = audio.cutEffect;
+      else {
+        const choices = AUDIO_SCARES.filter(candidate => candidate !== state.audioLastScare);
+        let hash = 2166136261;
+        for (const char of event.id) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+        key = choices[(hash >>> 0) % choices.length];
+      }
+      state.audioLastScare = key;
+    }
+    event.audioKey = key; event.audioScare = audio.autoScare;
+  }
   const active = state => list(state.roster).filter(player => player.active !== false && player.pending !== true);
   const isActive = (state, number) => active(state).some(player => player.playerNum === number);
   // 'back' belongs to Mode 2 only: the short beat that returns to the Main Speaker.
@@ -458,7 +530,9 @@ var CUT_ENGINE = (() => {
         if (state.sharedControls !== true) return 'not_available';
         if (active(state).length < config.minPlayers) return 'not_enough_players';
         Object.assign(state, create({ id: state.sessionId, roster: state.roster, ...settingsOf(state), now, seed: input.seed }),
-          { turnId: current.turnId + 1, seen: state.seen, replies: state.replies });
+          { turnId: current.turnId + 1, seen: state.seen, replies: state.replies,
+            audio: { ...audioOf(current), event: null }, audioSeen: current.audioSeen || {},
+            audioReplies: current.audioReplies || {}, audioUpdatedAt: Math.max(current.audioUpdatedAt || 0, now) });
         return '';
       case 'stop':
         if (state.phase === 'stopped') return 'not_available';
@@ -540,14 +614,14 @@ var CUT_ENGINE = (() => {
     state.turnId++; state.lastChangeAt = now;
     return state;
   }
-  function create({ id, roster, speed = 'normal', category = 'mixed', edition = 'classic', topicStyle = 'situations',
+  function create({ id, roster, speed = 'normal', category = 'mixed', edition = 'classic', topicStyle = 'situations', audio = {},
     customMinSeconds = config.customTiming.defaultMinSeconds, customMaxSeconds = config.customTiming.defaultMaxSeconds,
     topicMinutes = config.topicTiming.defaultMinutes, mode = 'classic', mainMinutes = config.jump.mainMinutes.default,
     firstCutMinSeconds = jumpTimingDefaults.firstCutMinSeconds, firstCutMaxSeconds = jumpTimingDefaults.firstCutMaxSeconds, cutIntervalMinSeconds = jumpTimingDefaults.cutIntervalMinSeconds, cutIntervalMaxSeconds = jumpTimingDefaults.cutIntervalMaxSeconds, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(roster) || roster.length < config.minPlayers || roster.length > config.maxPlayers) throw new Error('invalid_setup');
     if (roster.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1) || new Set(roster.map(player => player.playerNum)).size !== roster.length) throw new Error('invalid_roster');
     if (!validSpeed(speed) || !topics.categories.includes(category) || !validTiming(customMinSeconds, customMaxSeconds) || !validTopicMinutes(topicMinutes)) throw new Error('invalid_options');
-    if (!validEdition(edition) || !validTopicStyle(topicStyle) || !validMode(mode) || !validMainMinutes(mainMinutes) || !validJumpTiming({ firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds })) throw new Error('invalid_options');
+    if (!validEdition(edition) || !validTopicStyle(topicStyle) || !audioSettingsValid(audio) || !validMode(mode) || !validMainMinutes(mainMinutes) || !validJumpTiming({ firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds })) throw new Error('invalid_options');
     const state = {
       version: 1, rulesVersion: 2, sessionId: String(id), turnId: 0, mode, edition, topicStyle,
       speed, category, customMinSeconds, customMaxSeconds, topicMinutes, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds,
@@ -561,6 +635,7 @@ var CUT_ENGINE = (() => {
       topic: null, topicHistory: [], stats: {}, recent: [], speakerSequence: 0,
       previousDurationMs: 0, speakingDurationMs: null, pendingDurationMs: null, countOnGo: true,
       pause: null, pauseReason: '', seen: {}, replies: {},
+      audio: initialAudio(audio, now), audioSeen: {}, audioReplies: {}, audioUpdatedAt: now,
     };
     if (active(state).length < config.minPlayers) throw new Error('not_enough_players');
     startRound(state, now, random.create(seed));
@@ -570,6 +645,7 @@ var CUT_ENGINE = (() => {
     if (!current || !input || input.sessionId !== current.sessionId || typeof input.id !== 'string' || !input.id || input.id.length > 100) return current;
     const actor = Number(input.actor);
     if (actor !== 0 && !list(current.roster).some(player => player.playerNum === actor)) return current;
+    if (input.type === 'audioSettings' || input.type === 'audioEffect') return applyAudio(current, input, actor);
     if (list((current.seen || {})[actor]).includes(input.id)) return current;
     const host = actor === 0;
     // Idle ticks and ticks already consumed by another transaction perform no
@@ -707,7 +783,9 @@ var CUT_ENGINE = (() => {
             customMaxSeconds: state.customMaxSeconds, topicMinutes: state.topicMinutes,
             ...jumpTimingOf(state), mainMinutes: settingsOf(state).mainMinutes, now, seed: input.seed });
           Object.assign(state, restarted, { turnId: current.turnId + 1,
-            seen: state.seen, replies: state.replies });
+            seen: state.seen, replies: state.replies,
+            audio: { ...audioOf(current), event: null }, audioSeen: current.audioSeen || {},
+            audioReplies: current.audioReplies || {}, audioUpdatedAt: Math.max(current.audioUpdatedAt || 0, now) });
         }
         break;
       case 'stop':
@@ -750,6 +828,7 @@ var CUT_ENGINE = (() => {
       }
       default: error = 'not_available';
     }
+    if (!error && halloween(state) && state.cutEvent && state.cutEvent.id !== current.cutEvent?.id) captureCutAudio(state);
     state.seen[actor] = [...list(state.seen[actor]), input.id].slice(-32);
     state.replies[actor] = { id: input.id, error };
     return state;
@@ -793,6 +872,7 @@ var CUT_ENGINE = (() => {
       version: 1, rulesVersion: state.rulesVersion || 1, sessionId: state.sessionId, turnId: state.turnId,
       speed: state.speed, category: state.category, phase: state.phase,
       edition: editionOf(state), editions: EDITIONS.slice(), topicStyle: topicStyleOf(state), topicStyles: TOPIC_STYLES.slice(),
+      audio: audioOf(state), canControlAudio: playerNum === 0, audioReply: state.audioReplies?.[playerNum] || null,
       customMinSeconds: state.customMinSeconds ?? config.customTiming.defaultMinSeconds,
       customMaxSeconds: state.customMaxSeconds ?? config.customTiming.defaultMaxSeconds,
       topicMinutes: validTopicMinutes(state.topicMinutes) ? state.topicMinutes : config.topicTiming.defaultMinutes,

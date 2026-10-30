@@ -66,6 +66,8 @@ function instrumentAudio() {
       await until(() => p.evaluate(() => window.__qaBoards[0]?.ready), 'all eight effects decode');
       const decoded = await p.evaluate(() => window.__audioQA.decoded);
       assert.equal(decoded.length, 8); assert.ok(decoded.every(clip => clip.channels === 1 && clip.sampleRate > 0 && clip.frames > 0));
+      await p.click('#cut-start');
+      await until(() => p.locator('[data-hw-fx="door"]').isEnabled(), 'topic opens authoritative room mixer');
       for (const key of effects) {
         const before = await p.evaluate(() => window.__audioQA.starts.length);
         await p.click(`[data-hw-fx="${key}"]`);
@@ -85,12 +87,12 @@ function instrumentAudio() {
       assert.equal(await p.evaluate(() => window.__audioQA.decoded.length), 10);
       await p.click('[data-hw-fx="door"]');
       await until(() => p.evaluate(() => window.__qaBoards[0]?.fxVoices.size > 0), 'effect active before hiding');
-      await p.click('#cut-edition-classic');
-      assert.equal(await p.evaluate(() => window.__qaBoards[0].fxVoices.size), 0, 'hiding the board stops active effects');
+      await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+      assert.equal(await p.evaluate(() => window.__qaBoards[0].fxVoices.size), 0, 'hiding the page stops active effects');
       assert.equal(await p.evaluate(() => window.__qaBoards[0].track), null);
-      report.checks.push(`${width}: first enable decodes eight mono effects; each plays a real buffer; wind/rain decode and play; hiding stops effects`);
+      report.checks.push(`${width}: first enable decodes eight mono effects; room commands play each real buffer; wind/rain decode and play; hiding stops effects`);
       const metrics = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); assert.ok(metrics <= 1);
-      await p.click('#cut-edition-halloween');
+      await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
       await p.screenshot({ path: path.join(output, `${width}-recorded-audio-board.png`), fullPage: true });
       report.views.push({ width, decoded: await p.evaluate(() => window.__audioQA.decoded), starts: await p.evaluate(() => window.__audioQA.starts.length), requests: host.requests, screenshot: `${width}-recorded-audio-board.png` });
       await host.context.close();

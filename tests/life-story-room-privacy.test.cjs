@@ -44,7 +44,7 @@ test('reenabling after known original lobby replacement resumes original behavio
   const normal=fixture();normal.context.attach();normal.context.setPrivateReads(false);normal.context.setPrivateReads(true);for(const n of [1,2,3])normal.deliver(n,plain(n));assert.equal(normal.received.length,3);assert.equal(normal.context.privateReads,true);
 });
 test('current Hub manager entry pages bust cached private-reading Room and old private host bridge scripts',()=>{
-  for(const path of fs.readdirSync(require.resolve('../package.json').replace(/package\.json$/,'' )).filter(file=>file.endsWith('.html'))){const text=fs.readFileSync(require.resolve('../'+path),'utf8');if(/<script src="room\.js/.test(text))assert.match(text,/<script src="room\.js\?v=life-story-1"><\/script>/,path);if(/<script src="hub-executor\.js/.test(text))assert.match(text,/<script src="hub-executor\.js\?v=life-story-1"><\/script>/,path);}
+  for(const path of fs.readdirSync(require.resolve('../package.json').replace(/package\.json$/,'' )).filter(file=>file.endsWith('.html'))){const text=fs.readFileSync(require.resolve('../'+path),'utf8');if(/<script src="room\.js/.test(text))assert.match(text,/<script src="room\.js\?v=life-story-1"><\/script>/,path);if(/<script src="hub-executor\.js/.test(text))assert.match(text,['cut.html','play.html'].includes(path)?/<script src="hub-executor\.js\?v=cut-15"><\/script>/:/<script src="hub-executor\.js\?v=life-story-1"><\/script>/,path);}
   assert.match(fs.readFileSync(require.resolve('../play.html'),'utf8'),/dixit-card-host\.js\?v=life-story-1/);
 });
 test('frontend HTTP denies server question module and bank/prompt files while keeping service bundling dependencies',()=>{

@@ -1,3 +1,46 @@
+## CURRENT: CUT room audio — music/effects on every device — 2026-10-31
+
+User requested players hear music/effects on their own devices, with host
+selection and volume control. Read cut-mode.md and
+docs/cut-room-audio-2026-10-31-acceptance.md. CUT assets and CUT/play executor
+URLs now use cut-15; existing audio pack v1 is unchanged. The original host
+board controls four tracks, eight manual effects, both volumes, fixed/random
+CUT effects and Stop. Every original card (legacy or shared executor) opts in
+once and retains local mute. Host also follows canonical room audio, avoiding
+double playback; host local mute does not silence players.
+
+state.audio is authoritative, including a server-time music epoch and latest
+timed manual event. Authenticated actor 0 alone changes it. Separate audio
+dedup/acks preserve pending gameplay actions and turn/topic/fairness/timing;
+normal due runtime pulses continue. New CUT events seal one common cue without
+consuming gameplay RNG. Late enable/reconnect resumes current music without
+old effects; mute/hide/disconnect/teardown cancel playback. Music stays
+continuous through settings/ready/pause/topic breaks. Playback can differ by
+network/decoder/device latency; sample-perfect synchronization is not claimed.
+
+Validation: full Hub 2517/2517, focused authority/host/follower/real-manager
+51/51, real host plus three separate original cards at 390/1280: 18 checks,
+4 captures, no page errors/overflow. Original audio harness also passes all
+6 groups with ten real recordings decoded at each width. Physical phones,
+speaker listening and a real spoken group remain unverified.
+
+Existing service READY dpl_7mHFen8vYoCRz9VExEWy2CK4qUAw; expanded production
+CUT smoke passes 89 checks, 13 topic draws and host/player audio authority,
+all 4/4 owned nodes cleaned. Its first run stopped at 67 due solely to nested
+Firebase key ordering in the smoke's JSON comparison; normalized comparison
+and sorted-Firebase regression pass 12/12, then the live rerun passed. Boundary
+readiness/CORS/invalid tickets/private runtime/search 200/lyrics 410 pass.
+
+No new media/font/dependency; existing media pack remains 547,229 bytes.
+Nine changed public runtime files add 16,528 normalized source bytes. CLI
+source is 65 files/2,659,025 bytes; only cut-engine differs semantically from
+the previous service package. Cloud reports four function bundles totalling
+1,835,715 bytes (+2,938); this is not billed storage or account Usage. Hobby
+confirmed; frontend/team headroom remains inaccessible. No plan/policy change.
+Publish the frontend once and verify committed bytes at the stable URLs;
+final identity/readback reports remain outside output in
+../cut-room-audio-review/.
+
 ## CURRENT: CUT Halloween — recorded sound and separate story openings — 2026-10-31
 
 User found the synthetic Halloween audio unrealistic and requested a separate

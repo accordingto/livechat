@@ -412,7 +412,7 @@ function hostDemo() {
     I18N: { applyStatic() {}, onChange() {} }, location: { search: '?demo=1' }, URLSearchParams,
     document: { getElementById: element, querySelectorAll: () => [], body: { classList: { toggle() {} } } },
     crypto: { getRandomValues: array => { array[0] = 2718 + serial; return array; } }, Date: class extends Date { static now() { return time; } },
-    setInterval: fn => { interval = fn; return 1; }, clearInterval() {}, window: { addEventListener() {} } });
+    setInterval: fn => { interval = fn; return 1; }, clearInterval() {}, setTimeout, clearTimeout, window: { addEventListener() {} } });
   const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
   return { element, creations, commands, scene: () => element('cut-scene').innerHTML,
     click: async id => { element('cut-' + id).events.click?.({ target: { closest: () => null } }); await settle(); },

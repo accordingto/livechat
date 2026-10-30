@@ -113,7 +113,7 @@
       if (!result.committed && !noChange) throw new Error('not_available');
       return stateOf(result.snapshot.val());
     }
-    start({ speed = 'normal', category = 'mixed', edition = 'classic', topicStyle = 'situations', customMinSeconds, customMaxSeconds, topicMinutes, mode, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds } = {}) {
+    start({ speed = 'normal', category = 'mixed', edition = 'classic', topicStyle = 'situations', audio, customMinSeconds, customMaxSeconds, topicMinutes, mode, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds } = {}) {
       return this.enqueue(async () => {
         await this.cardsReady; await this.outgoing;
         if (!this.sameRoom() || this.stopped) throw new Error('not_available');
@@ -121,7 +121,7 @@
         const opening = { sessionId: id, baselines: Object.fromEntries(this.playerRefs.map((_, i) => [i + 1, stamp(this.cardValues.get(i + 1))])) };
         const roster = Array.from({ length: this.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) }));
         const priorSuspended = this.suspended; this.suspended = false; this.seenCards.clear();
-        try { return await this.change(() => root.CUT_ENGINE.create({ id, roster, speed, category, edition, topicStyle, customMinSeconds, customMaxSeconds, topicMinutes, mode, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds, now, seed: randomSeed }), { opening, allowSwitched: true }); }
+        try { return await this.change(() => root.CUT_ENGINE.create({ id, roster, speed, category, edition, topicStyle, audio, customMinSeconds, customMaxSeconds, topicMinutes, mode, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds, now, seed: randomSeed }), { opening, allowSwitched: true }); }
         catch (error) { this.suspended = priorSuspended; throw error; }
       });
     }
@@ -131,7 +131,8 @@
       const input = Object.assign({}, extra, { id: uid(), type, actor: 0, sessionId: state.sessionId, turnId: state.turnId, now: this.now(), seed: seed() });
       return this.enqueue(async () => {
         const next = await this.change(current => root.CUT_ENGINE.apply(current, input));
-        const error = next?.replies?.[0]?.id === input.id && next.replies[0].error;
+        const reply = (type === 'audioSettings' || type === 'audioEffect') ? next?.audioReplies?.[0] : next?.replies?.[0];
+        const error = reply?.id === input.id && reply.error;
         if (error) throw new Error(error);
         return next;
       });
@@ -155,7 +156,9 @@
       this.seenCards.add(playerNum);
       const action = data.cutAction;
       if (!action || typeof action.id !== 'string' || action.id.length < 8 || action.id.length > 100 || action.sessionId !== state.sessionId || JSON.stringify(action).length > 4000) return;
-      if (seen(state.seen?.[playerNum]).includes(action.id) || state.replies?.[playerNum]?.id === action.id) return;
+      const audioAction = action.type === 'audioSettings' || action.type === 'audioEffect';
+      const history = audioAction ? state.audioSeen : state.seen, replies = audioAction ? state.audioReplies : state.replies;
+      if (seen(history?.[playerNum]).includes(action.id) || replies?.[playerNum]?.id === action.id) return;
       const key = playerNum + ':' + action.id; if (this.incoming.has(key)) return;
       this.incoming.add(key);
       const input = Object.assign({}, action, { actor: playerNum, now: this.now(), seed: seed() });
