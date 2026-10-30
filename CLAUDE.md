@@ -1,3 +1,40 @@
+## CURRENT: CUT Halloween — recorded sound and separate story openings — 2026-10-31
+
+User found the synthetic Halloween audio unrealistic and requested a separate
+story-opening choice. Read cut-mode.md and
+docs/cut-halloween-2026-10-31-acceptance.md. CUT assets now use cut-14. Original
+40/30 situations remain unchanged/default; new 40/30 narrative openings are
+selected independently with authoritative topicStyle situations|story_openings.
+Both modes, host settings, original player cards and the browse library use
+the same pools. Style changes deliberately open a ready topic; same-style
+saves/reconnect retain the exact topic and clocks. Manual Start, classic CUT,
+all timing/fairness rules and existing restart-history semantics are unchanged.
+
+Eight local CC0 recordings replace simulated scares, with optional recorded
+wind/rain ambience. The old two synth tunes remain folded as extra choices.
+Sources, honest voice/foley limitations, hashes and measurements are in
+assets/cut-halloween/audio-v1/{manifest.json,LICENSES.md}. All 12 media-pack
+files total 547,229 bytes (10 MP3s 523,917 bytes); raw originals/tools/QA stay
+outside the repository. Cards load audio only after their own gesture. Mute,
+hide, failed-load retry, pending-work cancellation and teardown are covered;
+no synthetic scare fallback, recording/microphone API or new dependency.
+
+Full Hub 2480/2480; focused 48/48; independent search-service 39/39. Isolated
+real host + three original cards at 390/1280: 24 workflow checks/12 captures
+and 6 real Web Audio groups/2 captures, no page errors. All ten MP3s decode,
+start/stop correctly; subjective listening, physical-phone speakers and a
+real spoken group session remain unverified.
+
+Both deployments are required. Existing independent service is READY as
+dpl_D971DLjZp7xx9uGab3shVwVVAqFo; CUT production smoke 58 checks/13 draws,
+cleaned 4/4 owned nodes. Other-service smoke 34 checks, search 200/lyrics 410,
+cleanup 15 tracked/0 failed. CLI source 65 files/2,653,615 bytes, no MP3s;
+cloud API reports four function bundles totalling 1,832,777 bytes. Hobby plan
+confirmed, but actual account Usage/headroom remains unavailable. No policy,
+alert or plan change. Publish one consolidated frontend release, then verify
+stable assets/media against Git; final deployment/readback evidence lives in
+../cut-halloween-review/ outside the deployed output.
+
 ## CURRENT: DOUBLE TAKE — clearer UI and comfortable pacing — 2026-10-31
 
 User requested a substantial UI cleanup, more time for the tasks and an

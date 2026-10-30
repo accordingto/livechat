@@ -4,16 +4,17 @@
 
 ## 🎃 萬聖節版 Halloween edition（2026-10-31）
 
-使用者要求：CUT 做一個萬聖節版本，介面要有感覺；主持人可以播放應景音樂與尖叫等增加效果的音效；故事開場也要有萬聖節感覺。
+本次依使用者回饋，把不自然的驚嚇音改成錄音素材，並新增獨立的「故事開頭」選項供比較。驗收與發布狀態見 [本次驗收紀錄](docs/cut-halloween-2026-10-31-acceptance.md)。
 
-- **版本 `edition`**：`classic`（預設，舊存檔沒有欄位也是 classic）或 `halloween`。設定畫面最上方多一組「版本」卡片（經典版／🎃 萬聖節版），兩種模式都能用；`cut.html?edition=halloween` 會預先選好萬聖節版。規則、節奏、時鐘、公平抽選、分享控制完全不變。
-- **題庫**：新檔 `cut-halloween-topics.js`（`CUT_HALLOWEEN_TOPICS`），**不混入** `cut-topics.js`／`cut-jump-topics.js`。`take` 40 題給模式 1（題目＋半句開場，ID `cut-halloween-01…40`），`jump` 30 題給模式 2（ID `jump-halloween-01…30`）。簡單英文、鬼屋／南瓜／午夜怪談，不血腥（測試擋 blood/kill/corpse 等字）。萬聖節版不分題目類型，類型選單會隱藏並說明；原本的 category 保留，回到經典版時沿用。
-- **引擎**：`create({ edition })` 驗證；`chooseTopic`／`chooseJumpTopic` 在萬聖節版改從對應萬聖節池抽（沿用 topicHistory／jumpTopicHistory 避免重複）。設定中改版本與改模式一樣走 `switchMode`，一定開新話題；同版本同模式的設定照舊保留話題。Restart 保留版本。`view` 公開 `edition` 與 `editions`。卡片設定只有在 view 帶 `editions` 時才顯示版本選單（舊服務不會收到 edition）。
-- **畫面**：`.cut-hw`（舞台／卡片）與 `body.cut-hw-page`（主持頁）。紫黑夜空、橘色南瓜主色、綠色 GO、月亮、蜘蛛網、飛舞蝙蝠；標題、CUT!、倒數用自架的 Creepster 字型（SIL OFL，`assets/cut-halloween/`）。題目卡標題改為 TONIGHT’S SPOOKY TALE／今晚的怪談，模式 1 在題目下方顯示「🕯️ Start with: …」開場句；CUT 畫面加南瓜、休息畫面是蠟燭、結束是蝙蝠。320–1280px 無水平溢出，主要文字對比 ≥7:1。
-- **主持音效台**：新檔 `cut-halloween-audio.js`（`CUT_HALLOWEEN_AUDIO.Board`），只在主持頁、只在萬聖節版顯示。全部用 Web Audio 即時合成，沒有錄音檔、下載、麥克風或外部媒體。兩首原創循環音樂（🎹 鬼屋音樂盒：D 小調音樂盒華爾滋＋低音嗡鳴；🕷️ 躡手躡腳：斷奏低音＋高音叮噹）、八個音效（尖叫、邪惡笑聲、鬼魂、狼嚎、吱嘎開門、打雷、心跳、午夜鐘聲）、音樂／音效音量、以及「每次 CUT 隨機播放驚嚇音效」（預設開，存 `cut-halloween-sound.v1`）。關掉時每次 CUT 是短詭異音。自動 CUT 音效仍受主持頁的「🔊 音效」開關控制。播放給語音聊天室時，主持人分享畫面要一起分享電腦音訊。
-- **玩家卡**：開啟卡片音效的玩家，萬聖節版的提示音也換成詭異版本（`CUT_UI.Sound.spooky`）；卡片沒有音樂與音效台。
-- **快取與部署**：所有 CUT 資產 `cut-13`；`hub-launcher.js` 在 engine 前載入萬聖節題庫。這是引擎＋題庫變更，前端與獨立執行服務都要部署（打包腳本會依 require 自動帶入新題庫檔）。
-- **服務驗證**：`scripts/cut-halloween-production-smoke.cjs`（`tests/hub-executor-production-smoke.test.cjs` 用假 HTTP 邊界測它）在正式服務上建一個全新、帶標記的 3 人 CUT 桌（4 個節點），只用一般座位操作：每張卡都收到 `edition: 'halloween'`、下一題仍抽萬聖節題、改到模式 2 抽模式 2 萬聖節題、改回經典版、拒絕無效版本、再改回萬聖節版、Restart 保留版本；最後只刪除自己建立且標記相符的節點。舊服務（投影沒有 edition）會在第一步失敗。2026-10-31 正式服務部署 dpl_97PhLL2vW9qmh4Rbs82FnVXpyWDM 後實測通過 27 項並清除 4/4 節點；模式 2 smoke 22 項也通過。
+- **版本與外觀**：`edition: classic | halloween`，舊存檔缺欄位仍視為 classic；兩種玩法都能選萬聖節版，`cut.html?edition=halloween` 可預選。沿用紫黑／南瓜橘介面、Creepster 自架字型（SIL OFL）、月亮／蝙蝠／蜘蛛網。接話、插話、手動 Start、計時與公平抽選規則不因題目風格或音效改變。
+- **兩個獨立題目風格**：`topicStyle: situations | story_openings`。原情境 70 題完整保留（模式 1 `take` 40＋模式 2 `jump` 30），新增故事開頭 70 題（`storyOpenings.take` 40＋`storyOpenings.jump` 30），共 140 個不同 ID。權威來源都是 `cut-halloween-topics.js`；新 ID 為 `cut-hw-story-01…40`／`jump-hw-story-01…30`。故事從已發生的怪事接下去，模式 1另有未完半句；簡單英文、萬聖節氛圍、不血腥。兩風格不混抽，也不混入經典題庫；頁尾 Browse topics 可分開瀏覽、搜尋，不換當前題目。
+- **權威狀態與相容性**：未指定風格的舊房間仍用 situations，讀取不重抽題、不重設 deadline／已用時間。設定中改萬聖節風格走既有 `switchMode`，新題停在 ready 等手動 Start；同風格儲存及取消保留當前題與已用時間。模式切換、下一題與 Restart 保留風格；一般 Restart 沿用既有清除本局歷史的規則。`topicHistory`／`jumpTopicHistory` 仍由原房間權威保存，改風格不另清空。投影公開 `topicStyle`／`topicStyles`，不公開抽題歷史及隱藏時限；舊服務未提供 `topicStyles` 時，卡片不顯示新選項。
+- **主持音效台**：`CUT_HALLOWEEN_AUDIO.Board` 的八種音效（尖叫、邪惡笑聲、鬼魂、狼嚎、開門、雷聲、心跳、鐘聲）改由自架 MP3 解碼播放；背景可選窗邊風聲／雨聲，各 18 秒循環。舊音樂盒／躡手躡腳合成旋律仍是另外兩個可選背景。每次 CUT 隨機音效預設開、不連續重複同一驚嚇聲；關掉隨機改用短錄音鐘聲，避免再疊一次 reveal 音。GO／時間到用輕鐘聲，準備 tick 用短心跳。音量與 autoScare 沿用 `cut-halloween-sound.v1`，不儲存／自動續播背景。自動 CUT 仍受主持頁音效開關控制；分享給聊天室需分享電腦音訊。
+- **載入與生命週期**：初始安靜畫面不建 AudioContext、不下載錄音；使用者操作啟用後才讀 `assets/cut-halloween/audio-v1/manifest.json?v=1`，八種效果各下載／解碼一次，背景首次選取才載入。失敗顯示可重試狀態，不用合成假尖叫替代，遊戲仍可操作。背景有淡入淡出與循環交疊，切換／停止會取消未完成的舊播放；音效最多三個同時播放。頁面隱藏、斷線及離開卡片清理音效；靜音／關閉後完成的舊 unlock 不得重新播聲、繪製狀態或復活。
+- **玩家卡**：仍預設靜音，每台裝置須自己按開啟，才延遲載入音效模組與錄音。Halloween 的 `CUT_UI.Sound` 委派同一 Board；經典音效保持原樣。卡片無音效台或背景音樂；初次恢復／重連不補播舊 CUT。卡片擁有的 Board 隨卡片銷毀；主持頁借用的 Board 由主持頁管理，Sound.close 不代為關閉它。
+- **素材、授權與容量**：全部十個音檔 CC0，精確來源、原始檔／輸出 SHA256、處理與量測以 `assets/cut-halloween/audio-v1/manifest.json` 為準，附 `LICENSES.md`。尖叫／笑聲為人聲，鬼魂為處理後呼吸；NaturesTemper 狼嚎是人聲模仿，非野生動物實錄；心跳來源未說明真實心臟或擬音，不宣稱生物錄音。檔案為 mono／44.1 kHz／64 kbps，MP3 共 **523,917 bytes**，加 manifest 與授權檔共 **547,229 bytes**。原始檔、ZIP、FFmpeg、QA 截圖均留在 repo 外。這是本機實際新增素材量，非 Vercel Usage／保留儲存用量；未做主觀聆聽或實體手機驗證。
+- **快取與雙端部署**：CUT 腳本／樣式版本 `cut-14`，媒體 pack v1；主持頁、首頁 launcher 與 `play.html` 保持一致。題庫與引擎變更須部署前端和獨立執行服務；服務只需執行題庫／規則，不需音訊解碼。正式 smoke 擴充為兩風格、兩模式、下一題、Restart、無效風格與三張卡一致，只清除自己建立且標記／ETag 相符的四個節點。
+- **發布紀錄**：舊 `cut-13` 服務部署 `dpl_97PhLL2vW9qmh4Rbs82FnVXpyWDM` 的 Halloween smoke 27 項、模式 2 smoke 22 項及清理 4/4 節點已通過；這不代表本次 story／recorded-audio 已上線。本次 `cut-14` 正式發布、素材讀回與擴充 smoke **待發布時填入驗收紀錄**。
 
 ## 模式 2 · 插話 Jump In（2026-10-11）
 

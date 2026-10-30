@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="cut.css?v=cut-13">
+  <link rel="stylesheet" href="cut.css?v=cut-14">
 <link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body class="cut-page">
@@ -36,6 +36,14 @@
           <button type="button" class="cut-mode cut-mode-hw" id="cut-edition-halloween" aria-pressed="false"><strong data-i18n="cut.halloweenEdition">🎃 萬聖節版</strong><span data-i18n="cut.halloweenEditionDesc">鬼屋、南瓜和午夜怪談：專屬話題與萬聖節畫面，主持頁還有音樂和音效。</span></button>
         </div>
         <p class="cut-soft cut-settings-hint" id="cut-edition-switch-hint" hidden data-i18n="cut.editionSwitchHint">換版本會開始一個新話題。</p>
+      </div>
+      <div class="cut-hw-topic-style" id="cut-topic-style-field" hidden>
+        <label class="cut-field"><span data-i18n="cut.topicStyle">萬聖節題目版本</span><select id="cut-topic-style" aria-describedby="cut-topic-style-description">
+          <option value="situations" selected data-i18n="cut.situations">情境話題（原版）</option>
+          <option value="story_openings" data-i18n="cut.story_openings">故事開頭（新版）</option>
+        </select></label>
+        <p class="cut-soft" id="cut-topic-style-description"></p>
+        <p class="cut-soft cut-settings-hint" id="cut-topic-style-switch-hint" hidden data-i18n="cut.topicStyleSwitchHint">換題目版本會開始一個新話題，等待手動開始。</p>
       </div>
       <div class="cut-modes" role="group" aria-labelledby="cut-mode-label">
         <p class="cut-kicker" id="cut-mode-label" data-i18n="cut.mode">遊戲模式</p>
@@ -116,13 +124,17 @@
       <button type="button" class="cut-button cut-primary" id="cut-hw-unlock" hidden data-i18n="cut.hwUnlock">🔊 按一下啟用音效台</button>
       <p class="cut-feedback" id="cut-hw-status" role="status"></p>
       <div class="cut-hw-group">
-        <p class="cut-kicker" data-i18n="cut.hwMusic">背景音樂</p>
+        <p class="cut-kicker" data-i18n="cut.hwMusic">背景氛圍</p>
         <div class="cut-hw-row">
-          <button type="button" class="cut-button cut-hw-track" data-hw-track="musicbox" aria-pressed="false" data-i18n="cut.hwTrack_musicbox">🎹 鬼屋音樂盒</button>
-          <button type="button" class="cut-button cut-hw-track" data-hw-track="crawl" aria-pressed="false" data-i18n="cut.hwTrack_crawl">🕷️ 躡手躡腳</button>
+          <button type="button" class="cut-button cut-hw-track" data-hw-track="wind" aria-pressed="false" data-i18n="cut.hwTrack_wind">窗邊夜風</button>
+          <button type="button" class="cut-button cut-hw-track" data-hw-track="rain" aria-pressed="false" data-i18n="cut.hwTrack_rain">雨夜</button>
           <button type="button" class="cut-button" id="cut-hw-stop" data-i18n="cut.hwStop">⏹ 停止音樂</button>
         </div>
-        <label class="cut-field cut-hw-range"><span data-i18n="cut.hwMusicVolume">音樂音量</span><input type="range" id="cut-hw-music-volume" min="0" max="100" step="5" value="50"></label>
+        <details class="cut-hw-legacy"><summary data-i18n="cut.hwLegacyMusic">其他配樂（合成）</summary><div class="cut-hw-row">
+          <button type="button" class="cut-button cut-hw-track" data-hw-track="musicbox" aria-pressed="false" data-i18n="cut.hwTrack_musicbox">🎹 鬼屋音樂盒</button>
+          <button type="button" class="cut-button cut-hw-track" data-hw-track="crawl" aria-pressed="false" data-i18n="cut.hwTrack_crawl">🕷️ 躡手躡腳</button>
+        </div></details>
+        <label class="cut-field cut-hw-range"><span data-i18n="cut.hwMusicVolume">背景音量</span><input type="range" id="cut-hw-music-volume" min="0" max="100" step="1" value="28"></label>
       </div>
       <div class="cut-hw-group">
         <p class="cut-kicker" data-i18n="cut.hwEffects">音效</p>
@@ -136,7 +148,7 @@
           <button type="button" class="cut-button cut-hw-fx-btn" data-hw-fx="heartbeat" data-i18n="cut.hwFx_heartbeat">💓 心跳</button>
           <button type="button" class="cut-button cut-hw-fx-btn" data-hw-fx="bell" data-i18n="cut.hwFx_bell">🔔 午夜鐘聲</button>
         </div>
-        <label class="cut-field cut-hw-range"><span data-i18n="cut.hwEffectsVolume">音效音量</span><input type="range" id="cut-hw-effects-volume" min="0" max="100" step="5" value="80"></label>
+        <label class="cut-field cut-hw-range"><span data-i18n="cut.hwEffectsVolume">音效音量</span><input type="range" id="cut-hw-effects-volume" min="0" max="100" step="5" value="65"></label>
         <label class="cut-hw-check"><input type="checkbox" id="cut-hw-auto" checked> <span data-i18n="cut.hwAutoScare">每次 CUT 隨機播放驚嚇音效</span></label>
         <p class="cut-soft" data-i18n="cut.hwAutoScareHint">需要開啟上方的音效。不勾選時，CUT 只有短短的詭異音。</p>
       </div>
@@ -170,6 +182,8 @@
           <option value="jump" data-i18n="cut.jump">模式 2 · 插話</option>
           <option value="halloween-take" data-i18n="cut.halloweenTake">🎃 萬聖節 · 模式 1</option>
           <option value="halloween-jump" data-i18n="cut.halloweenJump">🎃 萬聖節 · 模式 2</option>
+          <option value="halloween-story-take" data-i18n="cut.halloweenStoryTake">🎃 故事開頭 · 模式 1</option>
+          <option value="halloween-story-jump" data-i18n="cut.halloweenStoryJump">🎃 故事開頭 · 模式 2</option>
         </select></label>
         <label class="cut-field"><span data-i18n="cut.libraryFilter">分類</span><select id="cut-library-category"></select></label>
         <label class="cut-field"><span data-i18n="cut.librarySearch">搜尋題目或開場句</span><input id="cut-library-search" type="search" autocomplete="off"></label>
@@ -201,16 +215,16 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="room.js?v=life-story-1"></script>
-  <script src="cut-config.js?v=cut-13"></script>
-  <script src="cut-random.js?v=cut-13"></script>
-  <script src="cut-topics.js?v=cut-13"></script>
-  <script src="cut-jump-topics.js?v=cut-13"></script>
-  <script src="cut-halloween-topics.js?v=cut-13"></script>
-  <script src="cut-engine.js?v=cut-13"></script>
-  <script src="cut-ui.js?v=cut-13"></script>
-  <script src="cut-halloween-audio.js?v=cut-13"></script>
-  <script src="cut-sync.js?v=cut-13"></script>
+  <script src="cut-config.js?v=cut-14"></script>
+  <script src="cut-random.js?v=cut-14"></script>
+  <script src="cut-topics.js?v=cut-14"></script>
+  <script src="cut-jump-topics.js?v=cut-14"></script>
+  <script src="cut-halloween-topics.js?v=cut-14"></script>
+  <script src="cut-engine.js?v=cut-14"></script>
+  <script src="cut-ui.js?v=cut-14"></script>
+  <script src="cut-halloween-audio.js?v=cut-14"></script>
+  <script src="cut-sync.js?v=cut-14"></script>
   <script src="hub-executor.js?v=life-story-1"></script><script>HUB_EXECUTOR.install();</script>
-<script src="cut-host.js?v=cut-13"></script>
+<script src="cut-host.js?v=cut-14"></script>
 </body>
 </html>

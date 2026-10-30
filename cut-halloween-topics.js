@@ -81,6 +81,88 @@ var CUT_HALLOWEEN_TOPICS = (() => {
     'Which is scarier: the dark, being alone, or big spiders? Make your case.',
     'Tell us about a festival night or holiday night you will never forget.',
   ];
+  // Story-opening style v1: actual narrative incidents and open hooks.
+  // Kept separate from the original situation pools; no runtime generation.
+  const storyTake = [
+    ["On Halloween night, Mina found a pumpkin outside her door with her name carved into it. When she carried it inside, someone knocked from inside the pumpkin.","Mina leaned closer and heard…"],
+    ["The last train was empty except for a boy in a paper crown. At the next stop, he pointed out of the window and said the station had disappeared years ago.","On the platform, somebody was…"],
+    ["We were taking down the school’s Halloween decorations when the old clock struck thirteen. Every classroom door opened at once, except the room we were in.","At the end of the hall, we heard…"],
+    ["Leo tried on a mask from a box marked FREE outside the Halloween fair. In the mirror, the mask smiled before he did. Then it softly said his name.","But the reflection suddenly began…"],
+    ["We had never seen anyone enter the house next door. On Halloween, a small hand pushed an invitation through the wall between our homes. It had tomorrow’s date on it.","On the back, the invitation said…"],
+    ["The lanterns along the forest path went out one by one behind us. Ahead, a door stood between two trees, with our family name on it and light underneath.","The door opened, and behind it…"],
+    ["At our Halloween dinner, we set one extra place as a joke. Halfway through the meal, the empty chair moved closer to the table, and somebody took a breath.","Under the empty chair, we noticed…"],
+    ["I borrowed a book of local ghost stories. When I opened it at home, a new chapter described exactly what I had done that afternoon, in my own handwriting.","The next paragraph slowly appeared…"],
+    ["The lift stopped at floor thirteen, though our building had only twelve floors. My own voice called from the other side of the doors, asking me to hurry.","The lift doors opened onto…"],
+    ["Every October, we covered the old family portrait with a sheet before Halloween. This year, something knocked on the glass underneath it. Grandma asked us not to answer yet.","Grandma quietly reached under the table for…"],
+    ["A woman at the last house gave us a sweet wrapped in a map of our town. The red cross on the map was moving towards our street, though nobody touched it.","The moving cross stopped beside…"],
+    ["A paper boat floated out of the town well during the Halloween fair. Inside was a note asking us to return something we had not found yet. It was signed with our names.","On the other side, the note said…"],
+    ["My shadow stayed on the wall after I left the room. When I came back, it was pointing at the locked cupboard our landlord had told us never to open.","The cupboard handle slowly began…"],
+    ["We recorded a silly ghost message on my phone for the Halloween party. When we played it back, another voice answered every question we had asked.","Then the voice on the recording…"],
+    ["We lit twelve candles around the Halloween cake. When the lights went out, a thirteenth flame appeared under the table. It moved whenever someone spoke.","Under the table, somebody had left…"],
+    ["The scarecrow had always faced the road. On Halloween morning, it was facing our house, holding a letter from the postbox that had vanished last October.","Dad read the first line and…"],
+    ["A black cat followed me home through the Halloween crowd. At my front door, it stood on two legs and handed me a key with my full name written on it.","The cat pressed the key into…"],
+    ["The music box at the market played only when nobody watched it. That night, tiny wet footprints led from it to my bedroom door. The music had stopped.","The wet footprints ended beside…"],
+    ["Rain began falling inside our tent, though the Halloween sky was clear. Every drop landed in the shape of the same small word, even on our hands.","In the torchlight, the word became…"],
+    ["A bus arrived at our village just after the Halloween parade. Its sign showed a town none of us could find on a map. All the people inside turned towards us.","The driver held out a ticket for…"],
+    ["At midnight, every clock in our hotel stopped, and the lights in reception went out. A guest in an old coat came downstairs and asked which year it was.","The guest heard the year and…"],
+    ["A witch left a paper bag at the bakery and forgot to return. All evening, a tiny moon glowed through the paper, moving whenever the baker looked away.","Inside the bag, the baker found…"],
+    ["We found an old Halloween photograph in the attic. Every person in it was looking at the camera except one, who was looking straight at our attic window.","Beside our attic window, we noticed…"],
+    ["A new shop opened for one night only during the Halloween fair. There were no prices, just labels such as ONE SECRET and A HAPPY MEMORY. One box had my name on it.","The shopkeeper held up the box and…"],
+    ["Our Halloween party was in a house with seven rooms. When we went back for our coats, there was an eighth door. Somebody inside was humming our party song.","The note in my handwriting said…"],
+    ["I planted a pumpkin seed from the Halloween fair before breakfast. By evening, a vine had grown through the window and was tying a parcel to my bed.","Under the leaves, the parcel contained…"],
+    ["During the Halloween parade, everyone froze except us and a girl carrying a broken lantern. She asked us to help before the music started again.","Inside the lantern, something was…"],
+    ["A little monster knocked at our door and offered us sweets. It looked worried when we gave the usual Halloween greeting, then quickly opened a notebook.","The monster’s notebook was full of…"],
+    ["My costume was a copy of an old town statue. At the party, someone sent me a photo of the statue’s empty place. My shoes suddenly felt very heavy.","Under my costume, I could feel…"],
+    ["We ordered paper bats for our Halloween party. At midnight, one of them unfolded its wings and asked to see the moon. The others began moving in the box.","At the window, all the bats…"],
+    ["The mirror at the haunted-house stall showed an empty room behind me. In that empty room, a phone began to ring. Then my own phone rang, with no battery.","The caller on my phone said…"],
+    ["Our dog brought home a Halloween invitation tied to a silver ribbon. It was addressed to every animal in our street. At sunset, they all gathered outside.","The animals all turned towards…"],
+    ["Someone rang every doorbell in our street at midnight. At each door stood the same small pumpkin, still warm. None of our cameras had recorded anyone.","Each pumpkin had a small…"],
+    ["The old cinema reopened for a Halloween show. The first scene showed us taking our seats. Then the camera in the film began moving towards our row.","On the screen, our cinema doors…"],
+    ["A sign on the cemetery gate read PLEASE CLOSE THE DOOR. There was no door until we touched the gate. Through it, we could hear the Halloween parade.","Behind us, the path had become…"],
+    ["We found a lost glove after the Halloween fair. Whenever someone put it on, it tried to write a different person’s name. Then the fingers pointed at me.","The glove began to write…"],
+    ["The town’s Halloween bell had not worked for a hundred years. Tonight, it rang once for every person in our group, then once more. We counted again.","Behind the last person, we saw…"],
+    ["At the costume party, a stranger handed me a photo of tomorrow’s parade. In it, I stood beside him wearing a costume I had never seen, with a key around my neck.","He pointed to the photo and whispered…"],
+    ["The fog outside our window began to form a face. It breathed on the glass and wrote our street’s name backwards. Then it waited, as if it wanted an answer.","In the mirror, the writing now said…"],
+    ["We left a bowl of sweets outside for Halloween. By morning, every sweet had returned, each with a tiny thank-you note from a different year. One was dated next Halloween.","The note from next Halloween said…"],
+  ];
+  const storyJump = [
+    "The Halloween fair closed an hour ago, but a lost-property stall was still lit. I went over to collect my scarf and found a box filled with things I had only ever lost in dreams. The woman behind the counter said she had been expecting me.",
+    "My grandmother left one rule for Halloween: never answer a knock after the candles go out. That night, the electricity failed just as someone began knocking. The voice outside sounded exactly like her, though she was sitting beside me.",
+    "We hired an old bus to take us to a Halloween party in the hills. On the way home, the driver found another group waiting at the same stop. They had our faces, our costumes, and tickets for the following night.",
+    "I bought a second-hand camera to photograph the Halloween parade. In every picture, the same person stood a little closer to me. In the final photo, taken before I turned the camera off, that person was holding the back of my coat.",
+    "The museum offered a prize to anyone who could spend Halloween night inside. At midnight, the paintings became windows into the places they showed. One window looked into my bedroom, where somebody was opening my desk.",
+    "A child in a ghost costume gave me a jar of tiny lights. She said they were lost stars and asked me to take them home. When I opened the lid, the lights arranged themselves into a map of our neighbourhood.",
+    "Our town held a silent Halloween parade every year, but nobody would explain why. This time, my friend dropped a metal cup. At the sound, every mask in the parade turned towards us, though the people wearing them did not move.",
+    "I agreed to feed my neighbour’s cat while she was away for Halloween. On the first evening, the cat placed three keys beside its bowl. On the second, it began pointing to a door that had never been there before.",
+    "The invitations to our Halloween party arrived one day late. Each included a photograph of the party, with one seat circled in red. When we compared the photos, a different person was missing from every one.",
+    "The pumpkin I carved looked ordinary in daylight. At sunset, its face changed to match the last person who had touched it. Just before the party, it began to look like somebody none of us knew.",
+    "We found a tiny village inside a broken music box. The people there were decorating for Halloween and seemed terrified when our shadows crossed their sky. Then one of them held up a sign with my name on it.",
+    "I was helping at the town’s Halloween maze when a visitor asked for the exit. I showed him the path, but he said the maze had been following him for years. He opened his notebook, and every page showed the same map.",
+    "A parcel arrived with no address, just a drawing of our front door. Inside was an old phone that rang only when the moon was hidden. When I finally answered, a nervous voice asked whether our Halloween party had started yet.",
+    "The hotel receptionist gave us a lantern instead of a room key. She said our room would appear when the light turned blue. We waited all evening, until someone knocked from inside the lantern.",
+    "We made up a friendly ghost story for the children at the Halloween fair. The next morning, the details of our story had appeared around town. A new bridge crossed the river, and a small house stood at the end of it.",
+    "I found a note in the pocket of my Halloween costume: PLEASE RETURN BEFORE SUNRISE. I thought it was part of the decoration until the clothes began walking me towards the old station. Someone there was holding a costume that looked like me.",
+    "The baker made one extra cake every Halloween and left it by the back door. This year, I stayed to find out who collected it. A small carriage arrived, and the driver asked me to help deliver the cake to a party below the town.",
+    "Our village scarecrow disappeared on Halloween afternoon. That evening, a polite stranger wearing its coat knocked at our door. He asked for directions to a place that was shown only on our oldest family map.",
+    "We booked a Halloween escape room in a closed cinema. The game began with an ordinary film of our street. When the screen showed a door opening in our own house, we stopped solving the puzzles and started looking for the exit.",
+    "The little bell above the antique shop rang after the shopkeeper locked up. Through the window, I saw all the objects turn towards the front door. A clock with no hands was waiting on the counter, beside a note saying TAKE ME BACK.",
+    "My friend sent me a Halloween voice message with no words, only footsteps. Each time I played it, the footsteps came closer to the microphone. Then I heard the same footsteps outside my flat, keeping exactly the same rhythm.",
+    "We were the last visitors at the Halloween lantern garden. One lantern had gone dark, so I carried it to the keeper. He looked at its shape, closed the gate, and asked whether anyone had followed us through the trees.",
+    "The town library lent out a special book every Halloween. It contained the reader’s best memory, followed by a blank page. When it was my turn, the page already held a warning in my handwriting. The ink was still wet.",
+    "I followed a trail of paper bats from the Halloween parade into an empty shop. Inside, somebody was building a model of our town. A tiny version of me stood outside the tiny shop, looking through its window.",
+    "My grandfather’s radio could pick up only one station on Halloween. Every year, the presenter read the names of people who had lost something. Tonight, the first name was mine, and the thing I had lost was something I still held.",
+    "We promised to look after a neighbour’s house during the Halloween festival. The house had a different front door when we returned. Through its new letterbox, a small voice asked whether we had brought the correct year.",
+    "A girl at the Halloween fair sold tickets for a ride on the moon. Everyone laughed until a ladder appeared behind her stall. My younger brother handed over his ticket and began climbing before I could stop him.",
+    "The old theatre put on the same Halloween play every year. This time, an actor forgot his line, and the story began changing around us. The painted forest grew real leaves, and one of the paths led straight out of the stage.",
+    "We found a box of Halloween decorations in our new home. At the bottom was a list of our names, followed by one more name nobody recognised. Just as we finished reading it, someone called from upstairs that we had forgotten their room.",
+    "A black cat waited outside our house with a small suitcase. It came inside when I opened the door and carefully set out a photograph of our family. In the picture, the cat was a person, and I was the one sitting on the windowsill.",
+  ];
+  const storyTakeItems = Object.freeze(storyTake.map(([question, starter], index) => Object.freeze({
+    id: 'cut-hw-story-' + String(index + 1).padStart(2, '0'), category: 'halloween', question, starter,
+  })));
+  const storyJumpItems = Object.freeze(storyJump.map((question, index) => Object.freeze({
+    id: 'jump-hw-story-' + String(index + 1).padStart(2, '0'), category: 'halloween', question,
+  })));
   const takeItems = Object.freeze(take.map(([question, starter], index) => Object.freeze({
     id: 'cut-halloween-' + String(index + 1).padStart(2, '0'), category: 'halloween', question, starter,
   })));
@@ -90,6 +172,10 @@ var CUT_HALLOWEEN_TOPICS = (() => {
   return Object.freeze({
     take: Object.freeze({ items: takeItems, categories: Object.freeze(['mixed', 'halloween']) }),
     jump: Object.freeze({ items: jumpItems, categories: Object.freeze(['mixed', 'halloween']) }),
+    storyOpenings: Object.freeze({
+      take: Object.freeze({ items: storyTakeItems, categories: Object.freeze(['mixed', 'halloween']) }),
+      jump: Object.freeze({ items: storyJumpItems, categories: Object.freeze(['mixed', 'halloween']) }),
+    }),
   });
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_HALLOWEEN_TOPICS;

@@ -5,7 +5,8 @@
 // It proves the deployed service runs the edition-aware engine: the edition is
 // projected to every card, new topics come from the Halloween pools in both
 // modes, changing the edition opens the other pool, invalid editions are
-// refused, and a restart keeps the edition.
+// refused, and a restart keeps the edition. It also proves both selectable
+// topic styles, their real next-topic pools and both style-preserving restarts.
 'use strict';
 const { randomBytes } = require('node:crypto');
 const CUT = require('../cut-engine.js');
@@ -19,11 +20,13 @@ const fail = () => { throw new Error('smoke_failed'); };
 const must = value => { if (!value) fail(); };
 const takeIds = new Set(H.take.items.map(topic => topic.id));
 const jumpIds = new Set(H.jump.items.map(topic => topic.id));
+const storyTakeIds = new Set(H.storyOpenings.take.items.map(topic => topic.id));
+const storyJumpIds = new Set(H.storyOpenings.jump.items.map(topic => topic.id));
 const classicTakeIds = new Set(T.items.map(topic => topic.id));
 const classicJumpIds = new Set(J.items.map(topic => topic.id));
 async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
   const fixtures = [], attempted = new Set();
-  const report = { ok: false, passed: 0, step: 'initial', phase: 'initializing', topics: [], cleaned: 0, cleanupFailed: 0 };
+  const report = { ok: false, passed: 0, step: 'initial', phase: 'initializing', topics: [], topicStyles: [], cleaned: 0, cleanupFailed: 0 };
   const check = value => { must(value); report.passed++; };
   async function http(url, options = {}) {
     return fetchImpl(url, { credentials: 'omit', signal: AbortSignal.timeout(20000), ...options });
@@ -91,7 +94,10 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     await api({ operation: 'execute', capsule: value.hubExecutor.capsule, token: f.seats[num - 1].token });
     const next = await card(f, num); check(next.cut.reply?.id === action.id && (next.cut.reply.error || '') === expectedError); return next;
   }
-  const note = value => report.topics.push(value.cut.edition + '/' + (value.cut.mode || 'classic') + ':' + value.cut.topic?.id);
+  const note = value => {
+    report.topics.push(value.cut.edition + '/' + (value.cut.mode || 'classic') + ':' + value.cut.topic?.id);
+    report.topicStyles.push(value.cut.topicStyle);
+  };
   try {
     const readiness = await http(SERVICE); must(readiness.ok && (await readiness.json()).ready === true);
     const serverTime = Date.parse(readiness.headers.get('date'));
@@ -100,6 +106,7 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     for (const seat of cut.seats) {
       const value = await card(cut, seat.playerNum);
       check(value.cut.edition === 'halloween' && JSON.stringify(value.cut.editions) === '["classic","halloween"]');
+      check(value.cut.topicStyle === 'situations' && JSON.stringify(value.cut.topicStyles) === '["situations","story_openings"]');
       check(takeIds.has(value.cut.topic.id) && /…$/.test(value.cut.topic.starter || ''));
     }
     let value = await card(cut, 2); note(value); const first = value.cut.topic.id;
@@ -128,6 +135,40 @@ async function run({ fetchImpl = globalThis.fetch, now = Date.now } = {}) {
     value = await command(cut, 2, 'restart'); note(value);
     check(value.cut.edition === 'halloween' && takeIds.has(value.cut.topic.id));
     for (const seat of cut.seats) { const other = await card(cut, seat.playerNum); check(other.cut.edition === 'halloween' && other.cut.topic.id === value.cut.topic.id); }
+    report.step = 'story-openings-mode-1';
+    await command(cut, 2, 'settings');
+    value = await command(cut, 3, 'configure', { topicStyle: 'story_openings' }); note(value);
+    check(value.cut.topicStyle === 'story_openings' && value.cut.phase === 'ready' && storyTakeIds.has(value.cut.topic.id));
+    for (const seat of cut.seats) { const other = await card(cut, seat.playerNum); check(other.cut.topicStyle === 'story_openings' && other.cut.topic.id === value.cut.topic.id); }
+    const firstStory = value.cut.topic.id;
+    report.step = 'story-openings-next-topic';
+    await command(cut, 2, 'endTopic');
+    value = await command(cut, 3, 'next'); note(value);
+    check(value.cut.topicStyle === 'story_openings' && storyTakeIds.has(value.cut.topic.id) && value.cut.topic.id !== firstStory);
+    report.step = 'story-openings-mode-2';
+    await command(cut, 2, 'settings');
+    value = await command(cut, 3, 'configure', { mode: 'jump' }); note(value);
+    check(value.cut.topicStyle === 'story_openings' && value.cut.mode === 'jump' && value.cut.phase === 'ready' && storyJumpIds.has(value.cut.topic.id));
+    report.step = 'restart-keeps-story-style-mode-2';
+    value = await command(cut, 2, 'restart'); note(value);
+    check(value.cut.topicStyle === 'story_openings' && value.cut.mode === 'jump' && storyJumpIds.has(value.cut.topic.id));
+    report.step = 'restart-keeps-story-style-mode-1';
+    await command(cut, 2, 'settings');
+    value = await command(cut, 3, 'configure', { mode: 'classic' }); note(value);
+    value = await command(cut, 2, 'restart'); note(value);
+    check(value.cut.topicStyle === 'story_openings' && value.cut.mode === 'classic' && storyTakeIds.has(value.cut.topic.id));
+    report.step = 'invalid-topic-style';
+    const storyBeforeInvalid = value.cut.topic.id;
+    await command(cut, 2, 'settings');
+    await command(cut, 3, 'configure', { topicStyle: 'automatic_mix' }, 'invalid_options');
+    value = await command(cut, 2, 'cancelSettings');
+    check(value.cut.topicStyle === 'story_openings' && value.cut.topic.id === storyBeforeInvalid);
+    report.step = 'back-to-original-situations';
+    await command(cut, 2, 'settings');
+    value = await command(cut, 3, 'configure', { topicStyle: 'situations' }); note(value);
+    check(value.cut.topicStyle === 'situations' && value.cut.phase === 'ready' && takeIds.has(value.cut.topic.id));
+    for (const seat of cut.seats) { const other = await card(cut, seat.playerNum); check(other.cut.topicStyle === 'situations' && other.cut.topic.id === value.cut.topic.id); }
+    report.step = 'style-compare-complete';
     report.ok = true;
   } catch (_) { report.ok = false; }
   finally {

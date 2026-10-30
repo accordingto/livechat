@@ -754,14 +754,50 @@ test('cards show the Halloween look, the opening line and an edition setting onl
   card.destroy();
 });
 
-test('the shared Sound plays spooky cues in the Halloween edition and lets the host board take over CUT', () => {
+test('host story style is a separate choice in both modes, keeps its choice on restart and browses each new pool', async () => {
+  const H = require('../cut-halloween-topics.js');
+  const h = hostDemo();
+  await h.click('edition-halloween');
+  h.change('topic-style', 'story_openings');
+  assert.equal(h.element('cut-topic-style-field').hidden, false);
+  await h.submit();
+  assert.equal(h.creations.at(-1).topicStyle, 'story_openings');
+  const question = h.scene().match(/<h2>(.*?)<\/h2>/s)[1];
+  assert.ok(H.storyOpenings.take.items.some(t => UI.esc(t.question) === question));
+  await h.click('restart'); assert.equal(h.creations.at(-1).topicStyle, 'story_openings');
+  await h.click('settings-open');
+  h.change('topic-style', 'situations');
+  assert.equal(h.element('cut-topic-style-switch-hint').hidden, false);
+  await h.click('setup-close');
+  assert.equal(h.element('cut-topic-style').value, 'story_openings', 'cancel restores the canonical choice');
+  await h.click('settings-open'); await h.click('mode-jump'); await h.submit();
+  assert.equal(h.commands.at(-1).topicStyle, 'story_openings');
+  const jumpQuestion = h.scene().match(/<h2>(.*?)<\/h2>/s)[1];
+  assert.ok(H.storyOpenings.jump.items.some(t => UI.esc(t.question) === jumpQuestion));
+  for (const [name, pool] of [['halloween-story-take', H.storyOpenings.take], ['halloween-story-jump', H.storyOpenings.jump]]) {
+    h.change('library-mode', name);
+    assert.ok(h.element('cut-library-list').innerHTML.includes(UI.esc(pool.items[0].question)));
+    assert.equal(h.element('cut-library-count').textContent, UI.t('libraryCount', { shown: pool.items.length, total: pool.items.length }));
+  }
+});
+
+test('the shared Sound delegates Halloween recordings to its board and leaves classic cues unchanged', () => {
   const sound = new UI.Sound();
   const played = [];
   sound.tone = (...args) => played.push(args);
   sound.cue('cut'); const classic = played.splice(0);
-  sound.edition = 'halloween'; sound.cue('cut'); const spooky = played.splice(0);
-  assert.notDeepEqual(classic, spooky); assert.ok(spooky.length >= 2);
+  assert.equal(classic.length, 2, 'classic CUT retains both existing synthesized tones');
+  const recorded = [];
+  sound.useHalloweenBoard({ cue: key => (recorded.push(key), true), stopEffects() {} });
+  sound.edition = 'halloween'; sound.cue('cut'); sound.cue('tick');
+  assert.deepEqual(recorded, ['cut', 'tick']); assert.equal(played.length, 0, 'Halloween uses recorded cues without synthetic fallback');
   let calls = 0; sound.onCut = () => { calls++; return true; };
-  sound.cue('cut'); assert.equal(calls, 1); assert.equal(played.length, 0, 'the board played the CUT sound instead');
-  sound.onCut = () => false; sound.cue('cut'); assert.ok(played.length > 0, 'falls back to the sting when the board is not ready');
+  sound.cue('cut'); assert.equal(calls, 1); assert.equal(recorded.length, 2, 'host board handles CUT once');
+  sound.onCut = () => { calls++; return false; }; sound.cue('cut');
+  assert.deepEqual(recorded, ['cut', 'tick', 'cut'], 'a non-handling host hook delegates to the recorded board');
+  sound.enabled = false; sound.cue('cut');
+  assert.equal(calls, 2, 'muting also suppresses the host onCut hook');
+  assert.equal(recorded.length, 3); assert.equal(played.length, 0);
+  sound.enabled = true; sound.useHalloweenBoard(null); sound.cue('cut');
+  assert.equal(played.length, 0, 'missing recordings do not fall back to old synthetic spooky sounds');
 });

@@ -91,6 +91,22 @@ async function firstCut(f, host) {
   assert.equal(host.latest.phase, 'cut'); assert.equal(host.latest.cutEvent.final, false);
 }
 
+test('host start forwards the chosen story style into canonical state and every original player card', async t => {
+  const H = require('../cut-halloween-topics.js'), take = new Set(H.storyOpenings.take.items.map(t => t.id)), jump = new Set(H.storyOpenings.jump.items.map(t => t.id));
+  const f = setup(), h = f.host(); t.after(() => f.hosts.forEach(host => host.close()));
+  await settle(h); await h.start({ edition: 'halloween', topicStyle: 'story_openings' }); await settle(h);
+  assert.equal(f.state().topicStyle, 'story_openings'); assert.ok(take.has(f.state().topic.id));
+  for (let n = 1; n <= 4; n++) {
+    const view = f.card(n).cut;
+    assert.equal(view.topicStyle, 'story_openings'); assert.deepEqual(view.topicStyles, ['situations', 'story_openings']);
+    assert.equal(view.topic.id, f.state().topic.id); assert.equal(view.deadline, undefined);
+  }
+  await h.command('settings'); await settle(h);
+  await h.command('configure', { mode: 'jump' }); await settle(h);
+  assert.equal(f.state().topicStyle, 'story_openings'); assert.ok(jump.has(f.state().topic.id));
+  for (let n = 1; n <= 4; n++) assert.equal(f.card(n).cut.topic.id, f.state().topic.id);
+});
+
 test('exact canonical JSON and filtered cards wait for Begin, then keep CUT and NEXT until manual speaking starts', async () => {
   const f = setup(), h = f.host(); await settle(h); await h.start(); await settle(h);
   const raw = f.db.values.get(`rooms/CUTTEST/players/${f.extras.cutControlToken}`);
