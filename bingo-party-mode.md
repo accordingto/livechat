@@ -1,4 +1,39 @@
-# 雙選賓果 DUAL-PICK BINGO — mode notes (2026-10-30)
+# DOUBLE TAKE / BINGO CLUB — mode notes (2026-10-31)
+
+## Interface and pacing revision — 2026-10-31
+
+The user requested a much clearer, more refined UI, an English-only game
+name and more time to perform/share. Public branding is now DOUBLE TAKE,
+with BINGO CLUB as a small subtitle. URLs, `bingoparty`, protocol version,
+room/seat identities, boards and existing saves are unchanged.
+
+Warm paper/forest-green styling is scoped to this game's host/card. Primary
+actions lead each screen. Ready/start are near the top; other rosters, room
+management, called-number history, boards during challenges, song order and
+private-line composition use named native disclosures. A three-step round
+indicator stays visible. Current story/taboo turns precede completed/upcoming
+turns. Inputs/IME/focus/disclosure choices retain the existing preservation.
+No new bitmap, font, API, package, audio or permission was added.
+
+New defaults (seconds): nomination 20, teammate answers 45, each song 60,
+each scene 180, story sharing 120, follow-up answer 60, song pick 45,
+singing 90, taboo 60. Scene extension remains 30. The lobby's timer controls
+use 5-second nomination steps and 15-second other steps, plus a host-only
+"Use recommended times" action. Optional maximums: scenes/stories 300,
+replies/singing 180, guesses/song turns/song picks/taboo 120. Minimums and
+integer validation still apply.
+
+Saved custom settings are NOT migrated silently. Live deadlines, pause,
+remaining time, reconnects and host authority do not reset. Recommended
+defaults apply to new lobbies; existing lobbies can opt in. Reminder stages
+remain reminders and do not auto-skip the story/song. Scoring, private
+projections and atomic calls are unchanged. These are first-play pacing
+choices, not a human-validated duration guarantee. The spoken follow-up question
+itself remains untimed.
+
+Cache tags: UI/CSS/host/engine `bp-2`; unchanged content/sync `bp-1`.
+This engine is run by the bingo host/card, not the independent executor;
+no executor package, rules or service deployment is required.
 
 Spec: `CODEX_FULL_IMPLEMENTATION_PROMPT.md` (2026-10-29 package, treated as the
 only rules source) plus the user's 2026-10-30 addition: the director stage has
@@ -27,7 +62,7 @@ type) → `bingo-party-content.js` via `scripts/bingo-party-build-content.cjs`
   the authority from the match seed; refresh never redraws). One shared
   `called` list; 12 lines (5 rows, 5 columns, 2 diagonals). Standard 3 lines,
   quick 2 lines, chosen in the lobby only.
-- Round: type announced → 15 s secret nomination (own team sees its tally, the
+- Round: type announced → 20 s secret nomination (own team sees its tally, the
   other team only "voted x/y"; all voted → locks 3 s later; host can extend or
   lock) → simultaneous reveal → card + roles → the type's own flow → result
   preview → host confirms → numbers join `called` together, then both boards
@@ -42,7 +77,7 @@ type) → `bingo-party-content.js` via `scripts/bingo-party-build-content.cjs`
   is off), never the same type twice in a row. Cards don't repeat in a match
   until a type's deck is exhausted.
 - 默契猜人: protagonists answer privately, eligible teammates (snapshot at start,
-  away players excluded) guess; locks at 25 s or 3 s after everyone answered;
+  away players excluded) guess; locks at 45 s or 3 s after everyone answered;
   ratios compared by cross-multiplication; a missing protagonist answer blocks
   (extend / swap / restart without revealing). Reveal shows answers, guesses,
   follow-up prompt; nothing can change the score afterwards.
@@ -73,7 +108,7 @@ type) → `bingo-party-content.js` via `scripts/bingo-party-build-content.cjs`
   answer. Stale confirmations are refused by song version. Optional single
   "我也有類似經驗" relay afterwards. Result is always BOTH. Singing off keeps
   story and follow-up and never enters the song steps.
-- 禁詞傳話: four items per card, shuffled two per team; 35 s per describer, up
+- 禁詞傳話: four items per card, shuffled two per team; 60 s per describer, up
   to two items; hit 1 / foul or skip 0; each item settles once and its answer
   becomes public then; after time only the host settles the open item. A team
   with fewer than two present players waits.

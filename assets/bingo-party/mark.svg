@@ -1,9 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" role="img" aria-label="DUAL-PICK BINGO">
-  <rect x="2" y="2" width="52" height="52" rx="12" fill="#15142e" stroke="#ffd166" stroke-width="2"/>
-  <g font-family="Segoe UI, system-ui, sans-serif" font-weight="800" font-size="10" text-anchor="middle">
-    <rect x="8" y="8" width="12" height="12" rx="3" fill="#ff8a5b"/><rect x="22" y="8" width="12" height="12" rx="3" fill="#2b2955"/><rect x="36" y="8" width="12" height="12" rx="3" fill="#4cc3ff"/>
-    <rect x="8" y="22" width="12" height="12" rx="3" fill="#2b2955"/><rect x="22" y="22" width="12" height="12" rx="3" fill="#ffd166"/><rect x="36" y="22" width="12" height="12" rx="3" fill="#2b2955"/>
-    <rect x="8" y="36" width="12" height="12" rx="3" fill="#4cc3ff"/><rect x="22" y="36" width="12" height="12" rx="3" fill="#2b2955"/><rect x="36" y="36" width="12" height="12" rx="3" fill="#ff8a5b"/>
-    <text x="28" y="31.5" fill="#1a1300">7</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56" role="img" aria-label="DOUBLE TAKE">
+  <rect width="56" height="56" rx="13" fill="#eeefe4"/>
+  <g transform="rotate(-12 22 27)">
+    <rect x="8" y="7" width="30" height="39" rx="6" fill="#fffefa" stroke="#b5bfa7"/>
+    <path d="M13 16h20M13 37h20" stroke="#d8ddcf" stroke-dasharray="2 2"/>
+    <text x="23" y="32" text-anchor="middle" font-family="Segoe UI,system-ui,sans-serif" font-size="18" font-weight="700" fill="#b96848">7</text>
+  </g>
+  <g transform="rotate(10 34 31)">
+    <rect x="22" y="12" width="27" height="37" rx="6" fill="#2d5744"/>
+    <path d="M27 21h17M27 41h17" stroke="#8fa182" stroke-dasharray="2 2"/>
+    <text x="35.5" y="36" text-anchor="middle" font-family="Segoe UI,system-ui,sans-serif" font-size="17" font-weight="650" fill="#fffefa">12</text>
   </g>
 </svg>

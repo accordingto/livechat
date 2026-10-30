@@ -31,8 +31,10 @@ var BINGO_ENGINE = (() => {
   const ALL_DONE_GRACE_MS = 3000;   // everyone answered → lock shortly after
   const DEFAULTS = Object.freeze({
     qLang: 'en', targetLines: 3, songTurns: 4, singing: true, sceneLang: 'en',
-    t: Object.freeze({ nominate: 15, guess: 25, songTurn: 20, improv: 60, improvExtend: 30, story: 45, reply: 20, pick: 20, sing: 30, taboo: 35 }),
+    // More room to perform and share. Existing settings/deadlines are kept.
+    t: Object.freeze({ nominate: 20, guess: 45, songTurn: 60, improv: 180, improvExtend: 30, story: 120, reply: 60, pick: 45, sing: 90, taboo: 60 }),
   });
+  const TIMER_LIMITS = Object.freeze({ nominate: [10, 60], guess: [15, 120], songTurn: [10, 120], improv: [30, 300], improvExtend: [15, 60], story: [20, 300], reply: [10, 180], pick: [10, 120], sing: [15, 180], taboo: [20, 120] });
   const LINES = (() => {
     const out = [];
     for (let r = 0; r < 5; r++) out.push({ id: 'r' + r, cells: [0, 1, 2, 3, 4].map(c => r * 5 + c) });
@@ -176,14 +178,14 @@ var BINGO_ENGINE = (() => {
     const s = clone(base || DEFAULTS);
     s.t = Object.assign({}, DEFAULTS.t, s.t || {});
     if (!input) return s;
+    if (input.resetTimers === true) s.t = clone(DEFAULTS.t);
     if (input.qLang === 'zh' || input.qLang === 'en') s.qLang = input.qLang;
     if (input.targetLines === 2 || input.targetLines === 3) s.targetLines = input.targetLines;
     if (Number.isInteger(input.songTurns)) s.songTurns = clampInt(input.songTurns, 2, 6, s.songTurns);
     if (typeof input.singing === 'boolean') s.singing = input.singing;
     if (['en', 'zh', 'tw'].includes(input.sceneLang)) s.sceneLang = input.sceneLang;
     if (input.t && typeof input.t === 'object') {
-      const limits = { nominate: [10, 60], guess: [15, 90], songTurn: [10, 60], improv: [30, 180], improvExtend: [15, 60], story: [20, 120], reply: [10, 60], pick: [10, 60], sing: [15, 90], taboo: [20, 90] };
-      for (const [key, [lo, hi]] of Object.entries(limits)) if (Number.isInteger(input.t[key])) s.t[key] = clampInt(input.t[key], lo, hi, s.t[key]);
+      for (const [key, [lo, hi]] of Object.entries(TIMER_LIMITS)) if (Number.isInteger(input.t[key])) s.t[key] = clampInt(input.t[key], lo, hi, s.t[key]);
     }
     return s;
   }
@@ -1325,6 +1327,7 @@ var BINGO_ENGINE = (() => {
       out.history = list(state.history).map(h => ({ no: h.no, type: h.type, result: h.result, called: h.called, picks: h.picks, fallbackTeam: h.fallbackTeam, lines: h.lines }));
     } else {
       out.startProblem = startCheck(state);
+      out.timerLimits = clone(TIMER_LIMITS);
     }
     const key = viewer === 'host' ? '0' : actorKey(playerNum);
     if (state.replies?.[key]) out.reply = clone(state.replies[key]);

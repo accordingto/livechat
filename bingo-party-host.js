@@ -11,7 +11,7 @@
     setupNeeded: ['先在 Hub 設定房間', 'Set up the room in the Hub first'],
     setupNeededText: ['這款遊戲沿用 Hub 的房號與玩家連結。請先回首頁設定人數並把連結傳給大家。', 'This game reuses the Hub room code and player links. Set the player count and send the links from the Hub first.'],
     setUpRoom: ['前往設定房間', 'Set up the room'],
-    seatsTitle: ['參加的座位', 'Seats'],
+    seatsTitle: ['玩家連結與房間管理', 'Player links & room'],
     seatsText: ['大家用原本的玩家連結就能進來；開大廳後在下方分隊、選設定再開始。中途加入的人先當觀眾，下局再參賽。', 'Everyone joins with their usual player link. Open the lobby, then set teams and options below. Late arrivals watch first and play next game.'],
     extraText: ['Hub 最多 9 個連結。要 10–12 人時，在這裡加開本遊戲專用座位，把連結私訊給對方。', 'The Hub has up to 9 links. For 10–12 players, add bingo-only seats here and send each link privately.'],
     extraAdd: ['＋ 加開一個座位', '+ Add a seat'], extraRemove: ['－ 移除最後一個', '− Remove the last'], copy: ['複製連結', 'Copy link'], copied: ['已複製', 'Copied'],
@@ -40,7 +40,7 @@
   try { if (!localStorage.getItem('site-lang') && typeof I18N !== 'undefined') { I18N.setLang('zh'); localStorage.removeItem('site-lang'); } } catch (e) {}
   const ht = (key, vars) => { let s = I18N.t('bingohost', key); if (vars) for (const [k, v] of Object.entries(vars)) s = s.split('{' + k + '}').join(String(v)); return s; };
 
-  let code = null, saved = null, authority = null, stage = null, state = null, status = 'connecting';
+  let code = null, saved = null, authority = null, stage = null, state = null, status = 'connecting', setupCollapsed = false;
   try { code = localStorage.getItem('room-last-session'); } catch (e) {}
   saved = code ? S.savedRoom(code) : null;
 
@@ -85,8 +85,10 @@
   function saveExtra(all) { ROOM.setExtra(S.EXTRA_KEY, all); renderSeats(); }
 
   function renderPanels() {
+    if (state && !setupCollapsed) { $('bp-open').open = false; setupCollapsed = true; }
     const playing = state?.phase === 'playing';
     const needsAction = status === 'switched' || status === 'other_host';
+    if (needsAction) $('bp-open').open = true;
     // During play the shared stage stays clean unless the host must act here.
     $('bp-open').hidden = !authority || (playing && !needsAction && !seats().some(s => !E.list(state?.roster).some(p => p.playerNum === s.playerNum)));
     $('bp-open-lobby').textContent = state ? ht('reopenLobby') : ht('openLobby');
@@ -110,7 +112,7 @@
 
   function boot() {
     if (!code || !saved?.tokens?.length || Number(saved.playerCount || saved.tokens.length) < 2) { $('bp-setup-needed').hidden = false; return; }
-    ROOM.init({ mount: 'room-mount', hideSetup: true, accent: '#ffd166', counts: [2, 3, 4, 5, 6, 7, 8, 9], defaultCount: 5 });
+    ROOM.init({ mount: 'room-mount', hideSetup: true, accent: '#2d5744', counts: [2, 3, 4, 5, 6, 7, 8, 9], defaultCount: 5 });
     $('bp-room-label').textContent = ht('room', { code });
     if (!ROOM.enabled) { $('bp-status').textContent = ht('noFirebase'); return; }
     authority = new S.Authority({ db: firebase.database(), code, label: 'page',

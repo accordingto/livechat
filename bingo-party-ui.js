@@ -13,7 +13,15 @@
 var BINGO_UI = (() => {
   'use strict';
   const D = {
-    title: ['雙選賓果', 'DUAL-PICK BINGO'],
+    title: ['DOUBLE TAKE', 'DOUBLE TAKE'],
+    lobbyHeading: ['先分隊，準備開玩', 'Pick your side. Get ready.'],
+    pickStep: ['秘密選號', 'Pick a number'], playStep: ['一起玩關卡', 'Play a challenge'], markStep: ['圈號連線', 'Make a line'],
+    teamsHeading: ['隊伍名單', 'The teams'], settingsHeading: ['本局設定', 'Game setup'],
+    otherPlayers: ['其他隊伍與觀眾', 'Other players'], moreSettings: ['更多設定與主持座位', 'More settings & host seat'],
+    timingSummary: ['演出 {scene} · 分享 {story}', 'Scenes {scene} · stories {story}'],
+    resetTimers: ['套用建議時間', 'Use recommended times'], optionalSong: ['補充歌手與理由（選填）', 'Artist & a note (optional)'],
+    currentTask: ['現在進行', 'Happening now'], nextUp: ['接下來', 'Up next'], roundDetails: ['回合資訊', 'Round details'],
+    storyTopic: ['這次的話題', 'Story topic'],
     tagline: ['各隊秘密選一號 → 一起玩短關卡 → 結果決定叫誰的號 → 兩邊一起圈 → 達到線數獲勝。', 'Each team secretly picks a number → play a short challenge → the result decides whose number is called → both boards mark it → first to the target lines wins.'],
     teamA: ['A 隊', 'Team A'], teamB: ['B 隊', 'Team B'], both: ['兩隊', 'Both teams'], neither: ['都沒過', 'Neither'],
     spectator: ['觀眾', 'Spectator'], host: ['主持', 'Host'], you: ['你', 'You'], away: ['暫離', 'Away'],
@@ -26,9 +34,9 @@ var BINGO_UI = (() => {
     typeHint_taboo_description: ['描述者看私密答案與禁詞，隊友口頭猜。', 'The describer sees a secret word and two taboo words; teammates guess out loud.'],
     round: ['第 {n} 回合', 'Round {n}'], lines: ['{n} 條線', '{n} lines'], target: ['先達 {n} 條線獲勝', 'First to {n} lines wins'],
     linesShort: ['線', 'lines'], called: ['已叫號', 'Called'], none: ['尚無', 'None yet'],
-    yourBoard: ['我們的棋盤', 'Our board'], showBoard: ['我們的棋盤（點開）', 'Our board (open)'], boardPrivate: ['只有你們隊看得到這張棋盤。', 'Only your team can see this board.'],
+    yourBoard: ['我們的棋盤', 'Our board'], showBoard: ['我們的棋盤', 'Our board'], boardPrivate: ['只有你們隊看得到這張棋盤。', 'Only your team can see this board.'],
     // lobby
-    lobbyTitle: ['大廳', 'Lobby'], ready: ['我準備好了', "I'm ready"], notReady: ['取消準備', 'Not ready'], readyMark: ['已準備', 'Ready'],
+    lobbyTitle: ['準備大廳', 'Lobby'], ready: ['我準備好了', "I'm ready"], notReady: ['已準備 · 取消', 'Ready · undo'], readyMark: ['已準備', 'Ready'],
     waitingStart: ['等主持人開始…', 'Waiting for the host to start…'], qLang: ['題目語言', 'Prompt language'], zh: ['繁中', '中文'], en: ['英文', 'English'],
     standard: ['標準：3 條線', 'Standard: 3 lines'], quick: ['快玩：2 條線', 'Quick: 2 lines'], songTurns: ['接歌每隊次數', 'Song turns per team'],
     singing: ['啟用唱歌內容', 'Singing content'], on: ['開', 'On'], off: ['關', 'Off'], sceneLang: ['導演關預設演出語言', 'Default scene language'],
@@ -337,7 +345,7 @@ var BINGO_UI = (() => {
           const settings = {};
           if (d.key.startsWith('t.')) settings.t = { [d.key.slice(2)]: Number(d.value) };
           else if (d.key === 'targetLines' || d.key === 'songTurns') settings[d.key] = Number(d.value);
-          else if (d.key === 'singing') settings.singing = d.value === '1';
+          else if (d.key === 'singing' || d.key === 'resetTimers') settings[d.key] = d.value === '1';
           else settings[d.key] = d.value;
           return this.act('setSettings', { settings }, 'host');
         }
@@ -354,6 +362,8 @@ var BINGO_UI = (() => {
         else if (f.type === 'radio' || f.type === 'checkbox') keep[k] = { checked: f.checked, focus: f === active };
         else if ('value' in f) keep[k] = { value: f.value, focus: f === active, s: f.selectionStart, e: f.selectionEnd };
       }
+      this.el.dataset.surface = this.stage ? 'stage' : 'player';
+      this.el.dataset.phase = this.view?.phase || '';
       this.body.innerHTML = this.html();
       for (const f of this.body.querySelectorAll('[data-keep]')) {
         const k = f.dataset.keep, saved = keep[k];
@@ -377,7 +387,7 @@ var BINGO_UI = (() => {
         let left = null;
         if (clock) left = clock.frozen != null ? clock.frozen : clock.endsAt != null ? Math.max(0, clock.endsAt - this.now()) : null;
         const secs = left == null ? '' : Math.ceil(left / 1000);
-        node.textContent = secs === '' ? '' : String(secs);
+        node.textContent = secs === '' ? '' : this.timeLabel(secs);
         node.closest('.bp-clock')?.classList.toggle('bp-clock-out', left === 0 || clock?.expired === true);
       }
       for (const node of this.body.querySelectorAll('[data-cooldown]')) {
@@ -402,7 +412,7 @@ var BINGO_UI = (() => {
       if (v.phase === 'lobby') parts.push(this.lobby());
       else if (v.phase === 'finished') parts.push(this.finished());
       else parts.push(this.round());
-      if (this.isHost()) parts.push(this.hostTools());
+      if (this.isHost() && v.phase !== 'playing') parts.push(this.hostTools());
       return parts.join('');
     }
     isHost() { return this.hostPage || this.view?.me?.host === true; }
@@ -412,9 +422,15 @@ var BINGO_UI = (() => {
         <span class="bp-score-team bp-team-A">${TEAM_ICON.A} A <b>${v.lines.A}</b></span><span class="bp-score-target">/${v.settings.targetLines}</span>
         <span class="bp-score-team bp-team-B">${TEAM_ICON.B} B <b>${v.lines.B}</b></span></div>` : '';
       const who = me ? `<div class="bp-me">${teamChip(me.team)}${me.host ? `<span class="bp-tag">${esc(t('host'))}</span>` : ''}${me.away ? `<span class="bp-tag">${esc(t('away'))}</span>` : ''}</div>` : '';
-      const round = v.round ? `<span class="bp-round-no">${esc(t('round', { n: v.round.no }))} · ${esc(t('type_' + v.round.type))}</span>` : `<span class="bp-round-no">${esc(t('title'))}</span>`;
-      return `<header class="bp-head">${round}${who}${lines}</header>`;
+      const round = v.round ? `<span class="bp-round-no">${esc(t('round', { n: v.round.no }))} <span>/ ${esc(t('type_' + v.round.type))}</span></span>` : `<span class="bp-round-no">DOUBLE TAKE <span>/ ${esc(t('lobbyTitle'))}</span></span>`;
+      return `<header class="bp-head">${round}${who}${lines}</header>${v.phase === 'playing' ? this.journey() : ''}`;
     }
+    journey() {
+      const stage = this.view.round?.stage;
+      const index = stage === 'nominating' ? 0 : ['revealed', 'challenge'].includes(stage) ? 1 : 2;
+      return `<ol class="bp-journey" aria-label="${esc(t('roundDetails'))}">${['pickStep', 'playStep', 'markStep'].map((key, i) => `<li class="${i === index ? 'is-current' : i < index ? 'is-done' : ''}" ${i === index ? 'aria-current="step"' : ''}><span>${String(i + 1).padStart(2, '0')}</span>${esc(t(key))}</li>`).join('')}</ol>`;
+    }
+    timeLabel(seconds) { return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`; }
     board(opts = {}) {
       const v = this.view, board = opts.board || v.board;
       if (!board) return '';
@@ -448,7 +464,7 @@ var BINGO_UI = (() => {
       const me = this.view.me?.playerNum === n;
       return `<span class="bp-who bp-who-${p.team || 'x'}">${esc(p.name)}${me ? ` <small>(${esc(t('you'))})</small>` : ''}</span>`;
     }
-    clock(label) { return `<span class="bp-clock"><span aria-hidden="true">⏱</span> <span data-clock></span>${label ? ` <small>${esc(label)}</small>` : ''}</span>`; }
+    clock(label) { return `<span class="bp-clock"><span data-clock></span>${label ? ` <small>${esc(label)}</small>` : ''}</span>`; }
     /* ── lobby ── */
     lobby() {
       const v = this.view, me = v.me, host = this.isHost(), s = v.settings;
@@ -456,27 +472,36 @@ var BINGO_UI = (() => {
         <li><span>${esc(p.name)}${p.ready ? ` <span class="bp-ok" aria-label="${esc(t('readyMark'))}">✓</span>` : ''}${p.away ? ` <small>${esc(t('away'))}</small>` : ''}${v.hostPlayerNum === p.playerNum ? ` <small class="bp-tag">${esc(t('host'))}</small>` : ''}</span>
         ${host ? `<span class="bp-mini">${['A', 'B', '-'].filter(x => (x === '-' ? null : x) !== team).map(x => `<button type="button" class="bp-btn bp-xs" data-act="setTeam" data-player="${p.playerNum}" data-team="${x}">${esc(x === '-' ? t('toWatch') : t(x === 'A' ? 'toA' : 'toB'))}</button>`).join('')}</span>` : ''}</li>`).join('') || '<li class="bp-soft">—</li>'}</ul></div>`;
       const opt = (key, value, label, current) => `<button type="button" class="bp-btn bp-seg ${String(current) === String(value) ? 'is-on' : ''}" aria-pressed="${String(current) === String(value)}" data-act="setting" data-key="${key}" data-value="${value}">${esc(label)}</button>`;
-      const settings = host ? `<div class="bp-settings">
-          <div class="bp-setrow"><span>${esc(t('qLang'))}</span>${opt('qLang', 'zh', t('zh'), s.qLang)}${opt('qLang', 'en', t('en'), s.qLang)}</div>
-          <div class="bp-setrow"><span>${esc(t('target', { n: s.targetLines }))}</span>${opt('targetLines', 3, t('standard'), s.targetLines)}${opt('targetLines', 2, t('quick'), s.targetLines)}</div>
-          <div class="bp-setrow"><span>${esc(t('songTurns'))}</span>${[2, 3, 4, 5, 6].map(n => opt('songTurns', n, String(n), s.songTurns)).join('')}</div>
-          <div class="bp-setrow"><span>${esc(t('singing'))}</span>${opt('singing', '1', t('on'), s.singing ? '1' : '0')}${opt('singing', '0', t('off'), s.singing ? '1' : '0')}</div>
+      const timers = `<details class="bp-sub" data-keep="timers"><summary>${esc(t('timers'))}</summary><p class="bp-soft">${esc(t('timersHint'))}</p>
+        <button type="button" class="bp-btn bp-xs" data-act="setting" data-key="resetTimers" data-value="1">${esc(t('resetTimers'))}</button>
+        ${['nominate', 'guess', 'songTurn', 'improv', 'story', 'reply', 'pick', 'sing', 'taboo'].map(k => {
+          const step = k === 'nominate' ? 5 : 15;
+          const [min, max] = v.timerLimits?.[k] || [0, 3600];
+          const lower = Math.max(min, s.t[k] - step), upper = Math.min(max, s.t[k] + step);
+          return `<div class="bp-setrow bp-timer"><span>${esc(t('timer_' + k))} <b>${this.timeLabel(s.t[k])}</b></span>
+            <button type="button" class="bp-btn bp-xs" data-act="setting" data-key="t.${k}" data-value="${lower}" ${lower === s.t[k] ? 'disabled' : ''} aria-label="${esc(t('timer_' + k))} −${s.t[k] - lower}">−${s.t[k] - lower}s</button>
+            <button type="button" class="bp-btn bp-xs" data-act="setting" data-key="t.${k}" data-value="${upper}" ${upper === s.t[k] ? 'disabled' : ''} aria-label="${esc(t('timer_' + k))} +${upper - s.t[k]}">+${upper - s.t[k]}s</button></div>`;
+        }).join('')}</details>`;
+      const settings = host ? `<div class="bp-settings"><h3>${esc(t('settingsHeading'))}</h3>
+        <div class="bp-setrow"><span>${esc(t('qLang'))}</span>${opt('qLang', 'zh', t('zh'), s.qLang)}${opt('qLang', 'en', t('en'), s.qLang)}</div>
+        <div class="bp-setrow"><span>${esc(t('target', { n: s.targetLines }))}</span>${opt('targetLines', 3, t('standard'), s.targetLines)}${opt('targetLines', 2, t('quick'), s.targetLines)}</div>
+        <div class="bp-setrow"><span>${esc(t('songTurns'))}</span>${[2, 3, 4, 5, 6].map(n => opt('songTurns', n, String(n), s.songTurns)).join('')}</div>
+        <div class="bp-setrow"><span>${esc(t('singing'))}</span>${opt('singing', '1', t('on'), s.singing ? '1' : '0')}${opt('singing', '0', t('off'), s.singing ? '1' : '0')}</div>
+        <p class="bp-soft">${esc(t('timingSummary', { scene: this.timeLabel(s.t.improv), story: this.timeLabel(s.t.story) }))}</p>
+        ${timers}
+        <details class="bp-sub" data-keep="lobby-admin"><summary>${esc(t('moreSettings'))}</summary>
           <div class="bp-setrow"><span>${esc(t('sceneLang'))}</span>${['en', 'zh', 'tw'].map(l => opt('sceneLang', l, t('lang_' + l), s.sceneLang)).join('')}</div>
-          <details class="bp-sub" data-keep="timers"><summary>${esc(t('timers'))}</summary><p class="bp-soft">${esc(t('timersHint'))}</p>
-            ${['nominate', 'guess', 'songTurn', 'improv', 'story', 'reply', 'pick', 'sing', 'taboo'].map(k => `<div class="bp-setrow bp-timer"><span>${esc(t('timer_' + k))}：<b>${s.t[k]}</b> ${esc(t('sec', { n: '' }).trim())}</span>
-              <button type="button" class="bp-btn bp-xs" data-act="setting" data-key="t.${k}" data-value="${s.t[k] - 5}" aria-label="${esc(t('timer_' + k))} −5">−5</button>
-              <button type="button" class="bp-btn bp-xs" data-act="setting" data-key="t.${k}" data-value="${s.t[k] + 5}" aria-label="${esc(t('timer_' + k))} +5">+5</button></div>`).join('')}</details>
           <div class="bp-setrow"><span>${esc(t('hostSeat'))}</span>${[{ playerNum: 0, name: t('hostOnly') }, ...v.roster].map(p => `<button type="button" class="bp-btn bp-seg ${v.hostPlayerNum === p.playerNum ? 'is-on' : ''}" aria-pressed="${v.hostPlayerNum === p.playerNum}" data-act="setHost" data-player="${p.playerNum}">${esc(p.name)}</button>`).join('')}</div>
-        </div>` : `<ul class="bp-facts"><li>${esc(t('qLang'))}：${esc(s.qLang === 'zh' ? t('zh') : t('en'))}</li><li>${esc(t('target', { n: s.targetLines }))}</li>
-          <li>${esc(t('songTurns'))}：${s.songTurns}</li><li>${esc(t('singing'))}：${esc(s.singing ? t('on') : t('off'))}</li></ul>`;
-      const problem = v.startProblem ? `<p class="bp-note bp-bad">${esc(t('startProblem_' + v.startProblem))}</p>` : '';
+        </details>
+        ${v.startProblem ? `<p class="bp-note bp-bad">${esc(t('startProblem_' + v.startProblem))}</p>` : ''}${this.note('host')}
+      </div>` : `<ul class="bp-facts"><li>${esc(t('target', { n: s.targetLines }))}</li><li>${esc(t('qLang'))} · ${esc(s.qLang === 'zh' ? t('zh') : t('en'))}</li><li>${esc(t('songTurns'))} · ${s.songTurns}</li><li>${esc(t('singing'))} · ${esc(s.singing ? t('on') : t('off'))}</li></ul>`;
+      const teams = host || !me?.team
+        ? `<div class="bp-teams">${teamList('A')}${teamList('B')}${v.roster.some(p => !p.team) ? teamList(null) : ''}</div>`
+        : `<div class="bp-teams">${teamList(me.team)}</div><details class="bp-sub" data-keep="other-teams"><summary>${esc(t('otherPlayers'))}</summary><div class="bp-teams">${teamList(me.team === 'A' ? 'B' : 'A')}${v.roster.some(p => !p.team) ? teamList(null) : ''}</div></details>`;
       return `<section class="bp-panel bp-lobby">
-        <h2>${esc(t('title'))}</h2><p class="bp-tagline">${esc(t('tagline'))}</p>
-        <div class="bp-teams">${teamList('A')}${teamList('B')}${v.roster.some(p => !p.team) ? teamList(null) : ''}</div>
-        ${settings}
-        ${me ? `<div class="bp-actions"><button type="button" class="bp-btn ${me.ready ? '' : 'bp-primary'}" data-act="ready" data-value="${me.ready ? '0' : '1'}">${esc(me.ready ? t('notReady') : t('ready'))}</button></div>` : ''}
-        ${host ? `<div class="bp-actions"><button type="button" class="bp-btn" data-act="autoTeams">${esc(t('shuffle'))}</button><button type="button" class="bp-btn bp-primary bp-wide" data-act="start" ${v.startProblem ? 'disabled' : ''}>${esc(t('start'))}</button></div>${problem}${this.note('host')}`
-          : `<p class="bp-soft bp-center">${esc(t('waitingStart'))}</p>`}
+        <div class="bp-lobby-top"><h2>${esc(t('lobbyHeading'))}</h2>${host ? `<button type="button" class="bp-btn bp-primary bp-lobby-start" data-act="start" ${v.startProblem ? 'disabled' : ''}>${esc(t('start'))} →</button>` : ''}<ol class="bp-howto">${['pickStep', 'playStep', 'markStep'].map((key, i) => `<li><span>0${i + 1}</span>${esc(t(key))}</li>`).join('')}</ol></div>
+        ${me?.team ? `<div class="bp-lobby-action"><button type="button" class="bp-btn ${me.ready ? '' : 'bp-primary'}" data-act="ready" data-value="${me.ready ? '0' : '1'}">${me.ready ? '✓ ' : ''}${esc(me.ready ? t('notReady') : t('ready'))}</button><span class="bp-soft">${esc(t('waitingStart'))}</span></div>` : ''}
+        <div class="bp-lobby-layout"><div class="bp-lobby-roster"><div class="bp-section-head"><h3>${esc(t('teamsHeading'))}</h3>${host ? `<button type="button" class="bp-btn bp-xs bp-quiet" data-act="autoTeams">↻ ${esc(t('shuffle'))}</button>` : ''}</div>${teams}</div>${settings}</div>
       </section>`;
     }
     /* ── a round ── */
@@ -489,17 +514,20 @@ var BINGO_UI = (() => {
       else {
         // Full reveal only before the challenge; afterwards one compact line so
         // prompts, lines and songs keep the space.
-        parts.push(r.stage === 'revealed' ? this.reveal(typeLine) : this.nomStrip());
+        if (r.stage === 'revealed') parts.push(this.reveal(typeLine));
         if (r.stage === 'challenge') parts.push(this.challenge());
         if (r.stage === 'result') parts.push(this.result());
         if (r.stage === 'summary') parts.push(this.summary());
       }
+      const supporting = [];
+      if (!['nominating', 'revealed'].includes(r.stage)) supporting.push(this.nomStrip());
       if (v.board && r.stage !== 'nominating') {
-        const open = r.stage === 'summary' || r.stage === 'revealed';
-        parts.push(`<details class="bp-panel bp-boardbox" data-keep="board-${r.stage === 'summary' ? 'summary' : 'play'}" ${open ? 'open' : ''}><summary>${esc(t('showBoard'))} · ${esc(t('lines', { n: (v.myLines || []).length }))}</summary>${this.board()}<p class="bp-soft">${esc(t('boardPrivate'))}</p></details>`);
+        const open = r.stage === 'summary';
+        supporting.push(`<details class="bp-panel bp-boardbox" data-keep="board-${r.stage === 'summary' ? 'summary' : 'play'}" ${open ? 'open' : ''}><summary>${esc(t('showBoard'))} · ${esc(t('lines', { n: (v.myLines || []).length }))}</summary>${this.board()}<p class="bp-soft">${esc(t('boardPrivate'))}</p></details>`);
       }
-      parts.push(this.calledStrip());
-      return parts.join('');
+      supporting.push(`<details class="bp-sub bp-calledbox" data-keep="called-history"><summary>${esc(t('called'))} · ${v.called.length}</summary>${this.calledStrip()}</details>`);
+      if (this.isHost()) supporting.push(this.hostTools());
+      return `<div class="bp-game-layout"><div class="bp-main-column">${parts.join('')}</div><aside class="bp-round-aside" aria-label="${esc(t('roundDetails'))}">${supporting.join('')}</aside></div>`;
     }
     nominating(typeLine) {
       const v = this.view, r = v.round, me = v.me, nom = r.nominations;
@@ -509,13 +537,13 @@ var BINGO_UI = (() => {
       }
       const mine = nom[me.team], opp = nom[me.team === 'A' ? 'B' : 'A'];
       return `<section class="bp-panel bp-nominate">
-        <h2>${esc(t('nominateTitle'))} ${this.clock()}</h2>${typeLine}
+        <h2>${esc(t('nominateTitle'))} ${this.clock()}</h2>
         <p class="bp-help">${esc(t('nominateHelp'))}</p>
         ${this.board({ vote: true })}
         <div class="bp-pills"><span class="bp-pill bp-pill-me">${esc(mine.mine ? t('myVote', { n: mine.mine }) : t('noVote'))}</span>
           <span class="bp-pill bp-team-${me.team}">${esc(t('teamVoted', { v: mine.voted, of: mine.of }))}</span>
           <span class="bp-pill">${esc(t('oppVoted', { v: opp.voted, of: opp.of }))}</span></div>
-        ${this.note('vote')}
+        ${this.note('vote')}${typeLine}
       </section>`;
     }
     reveal(typeLine) {
@@ -622,7 +650,7 @@ var BINGO_UI = (() => {
       return `<section class="bp-panel bp-challenge bp-song"><h2>${esc(t('type_song_relay'))}</h2>
         <div class="bp-cardtext"><span class="bp-label">${esc(t('songTheme'))}</span><p class="bp-prompt">${esc(r.card.prompt)}</p><p class="bp-soft">${esc(r.card.rule)}</p></div>
         <div class="bp-pills"><span class="bp-pill bp-team-A">${TEAM_ICON.A} A ${esc(t('score', { n: sub.scores.A }))}</span><span class="bp-pill bp-team-B">${TEAM_ICON.B} B ${esc(t('score', { n: sub.scores.B }))}</span></div>
-        <ol class="bp-turns" aria-label="${esc(t('turnOrder'))}">${strip}</ol>${body}${accepted}${host ? this.songCorrections() : ''}</section>`;
+        ${body}<details class="bp-sub" data-keep="turn-order"><summary>${esc(t('turnOrder'))} · ${sub.cur + 1}/${sub.turns.length}</summary><ol class="bp-turns" aria-label="${esc(t('turnOrder'))}">${strip}</ol>${accepted}</details>${host ? this.songCorrections() : ''}</section>`;
     }
     songCorrections() {
       const sub = this.view.round.sub, done = sub.turns.filter(x => ['valid', 'invalid', 'skipped'].includes(x.status));
@@ -681,18 +709,22 @@ var BINGO_UI = (() => {
       const closing = seg.stage === 'wrapup';
       return `<div class="bp-director">
         <div class="bp-cmds">${buttons}</div>${this.note('imCmd')}
-        <p class="bp-soft">${esc(t('newLineHelp'))}</p>
-        <div class="bp-linebox"><label class="bp-field"><span>${esc(t('writeLine'))}</span>
+        <details class="bp-sub bp-line-composer" data-keep="line-composer"><summary>${esc(t('writeLine'))}</summary><div class="bp-linebox"><label class="bp-field"><span>${esc(t('writeLine'))}</span>
           <textarea maxlength="120" rows="2" data-keep="line-text" data-count="line" ${closing ? 'disabled' : ''}></textarea><small class="bp-counter" data-counter="line">0/120</small></label>
           <fieldset class="bp-radios"><legend>${esc(t('recipient'))}</legend>${targets}</fieldset>
           <button type="button" class="bp-btn bp-primary" data-act="imLine" data-seg="${esc(seg.segmentId)}" ${closing || v.paused ? 'disabled' : ''} ${this.busy('imLine')}>🔒 ${esc(t('sendLine'))}</button>${this.note('imLine')}
-          ${sent ? `<details class="bp-sub" data-keep="sent-lines" open><summary>${esc(t('yourLines'))}</summary><ul class="bp-corr">${sent}</ul></details>` : ''}</div>
+          ${sent ? `<details class="bp-sub" data-keep="sent-lines" open><summary>${esc(t('yourLines'))}</summary><ul class="bp-corr">${sent}</ul></details>` : ''}</div></details>
+        <details class="bp-sub" data-keep="director-rules"><summary>${esc(t('rulesLine'))}</summary><p class="bp-soft">${esc(t('newLineHelp'))}</p></details>
       </div>`;
     }
     /* ── story_exchange ── */
     story() {
       const v = this.view, r = v.round, sub = r.sub, me = v.me, host = this.isHost();
       const steps = sub.singing ? ['share', 'ask', 'reply', 'pick', 'confirm', 'sing'] : ['share', 'ask', 'reply'];
+      const activeCycle = sub.cycles.find(c => c.current);
+      const sharing = activeCycle?.stage === 'share';
+      const topic = sharing ? `<div class="bp-cardtext"><h3>${esc(r.card.title)}</h3><p class="bp-prompt">${esc(r.card.prompt)}</p><p class="bp-soft">${esc(r.card.safety)}</p></div>`
+        : `<details class="bp-sub bp-story-context" data-keep="story-topic-${activeCycle?.cycleId || 'echo'}"><summary>${esc(t('storyTopic'))} · ${esc(r.card.title)}</summary><p class="bp-prompt">${esc(r.card.prompt)}</p><p class="bp-soft">${esc(r.card.safety)}</p></details>`;
       let body = '';
       if (sub.stage === 'echo' || sub.stage === 'done') {
         const echo = sub.echo || {};
@@ -703,7 +735,7 @@ var BINGO_UI = (() => {
           ${mine || (host && echo.by) ? `<button type="button" class="bp-btn bp-primary" data-act="stEcho" data-done="1">${esc(t('echoDone'))}</button>` : ''}
           ${host ? `<button type="button" class="bp-btn" data-act="stEchoSkip">${esc(t('echoSkip'))}</button>` : ''}</div>${this.note('echo')}${this.note('host')}</div>`;
       }
-      const cycles = sub.cycles.map(c => {
+      const cycles = sub.cycles.slice().sort((a, b) => Number(b.current) - Number(a.current)).map(c => {
         const current = c.current;
         const stepper = `<ol class="bp-steps">${steps.map(s => `<li class="${s === c.stage ? 'is-cur' : steps.indexOf(s) < steps.indexOf(c.stage) || c.stage === 'done' ? 'is-done' : ''}">${esc(t('step_' + s))}</li>`).join('')}</ol>`;
         const head = `<div class="bp-cycle-head bp-team-${c.team}">${teamChip(c.team)} ${esc(t('sharer'))}：${this.who(c.sharer)} · ${esc(t('interviewer'))}：${this.who(c.interviewer)}</div>`;
@@ -711,7 +743,7 @@ var BINGO_UI = (() => {
           <p class="bp-songtitle">♪ ${esc(c.song.title)}${c.song.artist ? ` <small>／${esc(c.song.artist)}</small>` : ''}</p>${c.song.reason ? `<p class="bp-soft">“${esc(c.song.reason)}”</p>` : ''}</div>` : '';
         if (!current) {
           const outcome = c.stage === 'done' ? `<p class="bp-soft">${c.singResult === 'sang' ? '♪ ' + esc(c.song?.title || '') : c.singResult === 'skipped' ? esc(t('skipSinging')) : ''}</p>` : '';
-          return `<div class="bp-cycle ${c.stage === 'done' ? 'is-done' : ''}">${head}${stepper}${c.stage === 'done' ? songCard + outcome : ''}</div>`;
+          return `<details class="bp-sub bp-cycle-secondary" data-keep="cycle-${c.cycleId}"><summary><span>${teamChip(c.team)} ${this.who(c.sharer)} · ${esc(t(c.stage === 'done' ? 'step_done' : 'nextUp'))}</span></summary>${head}${c.stage === 'done' ? songCard + outcome : ''}</details>`;
         }
         const isSharer = me?.playerNum === c.sharer, isInterviewer = me?.playerNum === c.interviewer;
         const picker = me?.team && me.team !== c.team && !me.away;
@@ -772,8 +804,7 @@ var BINGO_UI = (() => {
         return `<div class="bp-cycle is-cur">${head}${stepper}${inner}${this.note('st')}</div>`;
       }).join('');
       return `<section class="bp-panel bp-challenge bp-story"><h2>${esc(t('type_story_exchange'))}</h2>
-        <div class="bp-cardtext"><h3>${esc(r.card.title)}</h3><p class="bp-prompt">${esc(r.card.prompt)}</p><p class="bp-soft">${esc(r.card.safety)}</p></div>
-        <p class="bp-soft">${esc(sub.singing ? t('storyBoth') : t('singingOff'))}</p>${cycles}${body}</section>`;
+        ${topic}${sharing ? `<p class="bp-soft">${esc(sub.singing ? t('storyBoth') : t('singingOff'))}</p>` : ''}${cycles}${body}</section>`;
     }
     selfPick(c, folded) {
       return `<details class="bp-sub bp-self" data-keep="self-${c.cycleId}" ${folded ? '' : ''}><summary>${esc(t('selfPick'))}</summary>
@@ -785,7 +816,7 @@ var BINGO_UI = (() => {
     /* ── taboo ── */
     taboo() {
       const v = this.view, r = v.round, sub = r.sub, me = v.me, host = this.isHost();
-      const segs = sub.segs.map(seg => {
+      const segs = sub.segs.slice().sort((a, b) => Number(b.current) - Number(a.current)).map(seg => {
         const isMe = me?.playerNum === seg.describer, mate = me?.team === seg.team && !isMe;
         const items = seg.targets.map(x => `<li class="is-${x.result || 'open'}">${esc(t('item', { n: x.idx + 1 }))}${x.result ? ` · ${esc(t('result_' + x.result))}${x.answer ? `：<b>${esc(x.answer)}</b>` : ''}` : ''}${host && seg.stage === 'done' && x.result ? ` ${['hit', 'foul', 'skip'].filter(k => k !== x.result).map(k => `<button type="button" class="bp-btn bp-xs" data-act="tbCorrect" data-seg="${esc(seg.segmentId)}" data-idx="${x.idx}" data-result="${k}">${esc(t(k === 'skip' ? 'tabooSkip' : k))}</button>`).join('')}` : ''}</li>`).join('');
         let inner = '';
@@ -804,7 +835,8 @@ var BINGO_UI = (() => {
             if (host) inner += `<div class="bp-actions"><button type="button" class="bp-btn bp-xs" data-act="tbFinish" data-seg="${esc(seg.segmentId)}">${esc(t('finishSeg'))}</button></div>`;
           }
         }
-        return `<div class="bp-tseg ${seg.current ? 'is-cur' : ''} bp-team-${seg.team}"><div class="bp-cycle-head">${teamChip(seg.team)} ${esc(t('describer'))}：${this.who(seg.describer)} · ${esc(t('score', { n: seg.score }))} ${seg.current && seg.stage !== 'ready' ? this.clock() : ''}</div>
+        if (!seg.current) return `<details class="bp-sub" data-keep="taboo-${seg.segmentId}"><summary><span>${teamChip(seg.team)} ${this.who(seg.describer)} · ${esc(seg.stage === 'done' ? t('score', { n: seg.score }) : t('nextUp'))}</span></summary><ul class="bp-items">${items}</ul></details>`;
+        return `<div class="bp-tseg is-cur bp-team-${seg.team}"><div class="bp-cycle-head">${teamChip(seg.team)} ${esc(t('describer'))}：${this.who(seg.describer)} · ${esc(t('score', { n: seg.score }))} ${seg.stage !== 'ready' ? this.clock() : ''}</div>
           ${inner}${this.note('tb')}<ul class="bp-items">${items}</ul></div>`;
       }).join('');
       return `<section class="bp-panel bp-challenge bp-taboo"><h2>${esc(t('type_taboo_description'))}</h2><p class="bp-prompt">${esc(r.card.prompt)}</p>${segs}</section>`;
@@ -868,7 +900,7 @@ var BINGO_UI = (() => {
       const hostSeat = `<div class="bp-actions"><span class="bp-label">${esc(t('hostSeat'))}</span>${[{ playerNum: 0, name: t('hostOnly') }, ...v.roster].map(p => `<button type="button" class="bp-btn bp-xs ${v.hostPlayerNum === p.playerNum ? 'is-on' : ''}" data-act="setHost" data-player="${p.playerNum}">${esc(p.name)}</button>`).join('')}</div>`;
       const logItems = list(v.log).slice().reverse().slice(0, 12).map(x => `<li>#${x.round} ${esc(x.kind)}${x.info ? ' ' + esc(JSON.stringify(x.info)) : ''}</li>`).join('');
       const blocked = r?.type === 'guess_person' && r.sub?.stage === 'blocked';
-      return `<details class="bp-panel bp-hosttools" data-keep="hosttools" ${blocked ? 'open' : ''}><summary>🛠 ${esc(t('hostTools'))}</summary>
+      return `<details class="bp-panel bp-hosttools" data-keep="hosttools" ${blocked ? 'open' : ''}><summary>${esc(t('hostTools'))}</summary>
         ${playing ? `<div class="bp-actions"><button type="button" class="bp-btn" data-act="pause">${esc(v.paused ? t('resume') : t('pause'))}</button>
           ${r?.clock || blocked ? `<button type="button" class="bp-btn" data-act="extend">${esc(t('plus15'))}</button>` : ''}
           ${r?.stage === 'nominating' || (r?.type === 'guess_person' && r.sub?.stage === 'answer') ? `<button type="button" class="bp-btn" data-act="lockNow">${esc(t('lockNow'))}</button>` : ''}

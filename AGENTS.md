@@ -16,3 +16,15 @@ disposable nodes with ownership-checked cleanup; never alter existing user rooms
 
 Report actual results and any deployment failure. Do not claim unexecuted tests
 or an unverified publication succeeded.
+
+## Capacity before publication
+
+Follow `.cursor/rules/hub-capacity.mdc` for every Hub change. The user requested
+capacity-conscious work on 2026-10-29, especially for occasional image batches.
+Measure added assets and check the applicable upload/output/storage limits
+before publication. Batch asset creation and review; do not assume multiple
+deployments reduce the final output or retained storage. Preserve game features,
+valid content and required runtime dependencies.
+
+Capacity research and read-only audits do not authorize a push, deployment,
+deletion, retention-policy change or paid upgrade. Respect the latest task scope.

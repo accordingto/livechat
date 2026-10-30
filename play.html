@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="word-limit-theater.css?v=wl-7">
   <link rel="stylesheet" href="word-wolf.css?v=ww-art-2">
   <link rel="stylesheet" href="room-survey.css?v=rs-3">
-  <link rel="stylesheet" href="bingo-party.css?v=bp-1">
+  <link rel="stylesheet" href="bingo-party.css?v=bp-2">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -924,7 +924,7 @@
   <script src="room-survey-engine.js?v=rs-3"></script>
   <script src="room-survey-ui.js?v=rs-3"></script>
   <script src="bingo-party-sync.js?v=bp-1"></script>
-  <script src="bingo-party-ui.js?v=bp-1"></script>
+  <script src="bingo-party-ui.js?v=bp-2"></script>
   <script src="open-mic-content.js?v=next-1"></script>
   <script src="open-mic-discovery.js?v=om-2"></script>
   <script src="open-mic-ui.js?v=om-cards-1"></script>
@@ -2646,7 +2646,7 @@
       const mine = BINGO_SYNC.seatsFrom(saved).some(seat => seat.playerNum === view.me.playerNum && seat.token === token);
       if (!mine || !BINGO_SYNC.controlToken(session, localStorage, false)) return;
       const bridge = bpBridge = { closed: false, authority: null, close() { this.closed = true; this.authority?.close(); } };
-      loadBingoScripts(['bingo-party-content.js?v=bp-1', 'bingo-party-engine.js?v=bp-1']).then(() => {
+      loadBingoScripts(['bingo-party-content.js?v=bp-1', 'bingo-party-engine.js?v=bp-2']).then(() => {
         if (bridge.closed) return;
         bridge.authority = new BINGO_SYNC.Authority({ db, code: session, label: 'card' });
         bridge.authority.connect();
@@ -2670,7 +2670,7 @@
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
       if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-      document.title = `${data.name || urlName || 'Player'} · 雙選賓果`;
+      document.title = `${data.name || urlName || 'Player'} · DOUBLE TAKE`;
       if (!bpSeat) bpSeat = new BINGO_SYNC.Seat({ db, code: session, token });
       const view = bpSeat.update(data);
       if (!bpCard) bpCard = new BINGO_UI.Card(el, {

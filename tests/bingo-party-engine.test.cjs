@@ -51,6 +51,52 @@ test('card bank: 60 bilingual cards, 12 per type, no legacy director fields', ()
   }
 });
 
+test('comfortable pacing: acting still live after a minute, ends at three; story reminder is two minutes', () => {
+  let s = started();
+  assert.equal(s.round.clock.endsAt - clock, 20_000);
+  s = toChallenge(forceType(s, 'guess_person'));
+  assert.equal(s.round.clock.endsAt - clock, 45_000);
+  s = toChallenge(forceType(started(), 'improv_scene'));
+  const segmentId = s.round.sub.segs[0].segmentId;
+  s = ok(s, 0, 'imStart', { segmentId });
+  const began = clock;
+  assert.equal(s.round.clock.endsAt - began, 180_000);
+  s = tickTo(s, began + 61_000);
+  assert.equal(s.round.sub.segs[0].stage, 'live', 'one minute no longer cuts a scene short');
+  s = tickTo(s, began + 180_000);
+  assert.equal(s.round.sub.segs[0].stage, 'wrapup');
+  s = toChallenge(forceType(started(), 'story_exchange'));
+  const cycleId = s.round.sub.cycles[0].cycleId;
+  const storyBegan = clock;
+  assert.equal(s.round.clock.endsAt - storyBegan, 120_000);
+  s = tickTo(s, storyBegan + 120_000);
+  assert.equal(s.round.sub.cycles[0].cycleId, cycleId);
+  assert.equal(s.round.sub.cycles[0].stage, 'share', 'a reminder never auto-advances the story');
+});
+
+test('pacing: custom/saved values stay intact; only a lobby host can restore recommended times', () => {
+  let legacy = started(6, { t: { songTurn: 10, story: 20, reply: 10, pick: 10 } });
+  legacy = ok(ok(legacy, 0, 'endGame'), 0, 'newGame');
+  assert.deepEqual([legacy.settings.t.songTurn, legacy.settings.t.story, legacy.settings.t.reply, legacy.settings.t.pick], [10, 20, 10, 10], 'old legal lower bounds survive a new game');
+  let s = lobby(6, { targetLines: 2, qLang: 'zh', songTurns: 6, t: { improv: 60, story: 45, songTurn: 20 } });
+  assert.deepEqual([s.settings.t.improv, s.settings.t.story, s.settings.t.songTurn], [60, 45, 20]);
+  assert.equal(err(s, 1, 'setSettings', { settings: { resetTimers: true } }), 'host_only');
+  s = ok(s, 0, 'setSettings', { settings: { resetTimers: true } });
+  assert.deepEqual([s.settings.t.improv, s.settings.t.story, s.settings.t.songTurn, s.settings.t.sing], [180, 120, 60, 90]);
+  assert.deepEqual([s.settings.targetLines, s.settings.qLang, s.settings.songTurns], [2, 'zh', 6]);
+  s = ok(s, 0, 'setSettings', { settings: { t: { improv: 300, story: 300, reply: 180, songTurn: 120 } } });
+  assert.equal(s.settings.t.improv, 300);
+  assert.deepEqual(E.view(s, 'host').timerLimits.improv, [30, 300], 'UI uses the authority\'s legal range');
+  s = toChallenge(forceType(ok(s, 0, 'start'), 'improv_scene'));
+  s = ok(s, 0, 'imStart', { segmentId: s.round.sub.segs[0].segmentId });
+  const deadline = s.round.clock.endsAt;
+  assert.equal(deadline - clock, 300_000);
+  const denied = cmd(s, 0, 'setSettings', { settings: { resetTimers: true } });
+  assert.ok(denied.replies['0'].error);
+  assert.equal(denied.round.clock.endsAt, deadline, 'live settings cannot reset a deadline');
+  assert.equal(E.view(JSON.parse(JSON.stringify(s)), 'host').round.clock.endsAt, deadline, 'reconnection keeps the deadline');
+});
+
 test('boards hold 1–25 once each, differ between teams, and survive re-reads', () => {
   for (let seed = 1; seed < 40; seed++) {
     const { A, B } = E.makeBoards(seed);

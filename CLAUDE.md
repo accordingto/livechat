@@ -1,3 +1,45 @@
+## CURRENT: DOUBLE TAKE — clearer UI and comfortable pacing — 2026-10-31
+
+User requested a substantial UI cleanup, more time for the tasks and an
+English-only game name. The existing bingo game is now DOUBLE TAKE / BINGO
+CLUB. The original bingo-party.html entry, bingoparty ID, private seat links,
+saved boards, nominations, called numbers, scores and trusted-host authority
+are preserved. Read bingo-party-mode.md and
+docs/double-take-2026-10-31-acceptance.md.
+
+Paper/forest-green styling is scoped to bingo; no shared-theme change. Ready
+and Start lead the lobby. Current tasks precede board/history/host tools.
+Director commands use one primary action and three quiet language buttons;
+private-line writing has a named disclosure. Story tasks show the current
+cycle first and fold the long topic after sharing, so song/confirm actions
+stay prominent. Room management folds after setup and automatically opens
+when reclaim/takeover requires attention. Native disclosures, input/focus/IME
+preservation, private payloads and reduced-motion support remain intact.
+
+New seconds: nomination 20, answers 45, each song 60, each scene 180, story
+120, follow-up answer 60, song pick 45, singing 90, taboo 60. Asking a follow-up
+remains untimed; scene extension stays 30. Expanded upper bounds and lobby
+timer controls (authority-provided limits) allow adjustment. Saved settings
+and live deadlines are not silently migrated; a lobby host may select
+"Use recommended times". No timer, scoring or privacy change outside bingo.
+
+Cache UI/CSS/host/engine bp-2; content/sync remain bp-1. This game executes in
+its trusted host/card, not the independent executor: no service deployment.
+No new bitmap/font/package/API. Changed public runtime files add about 10 KB
+of normalized Git content; this is not a Vercel Usage measurement. Frontend
+account headroom remains inaccessible. Carry forward the user's capacity
+rules from the previous workspace. Publish one consolidated frontend release.
+
+Validation: full Hub 2435/2435; bingo engine 32/32 including actual 3-minute
+deadline, 2-minute soft story reminder, saved lower bounds/new-game settings,
+host-only recommended reset and live/reconnect deadline preservation. Latest
+isolated original-host/player-link browser run 72/72, six players plus one
+watcher, separate contexts, all five challenges, standard and quick games,
+singing off, private payloads, stale requests, IME, reconnect and host-card
+takeover; 390px/1280px and English/long names; zero page errors. QA captures
+and logs are outside the repo in ../bingo-ui-final/ and ../bingo-ui-*-results.txt.
+No live-Firebase room, physical-phone or human voice test was performed.
+
 ## CURRENT: Sketch Relay circle, WORD LIMIT bell curve, CUT 🎃 Halloween edition — 2026-10-31
 
 User request: research 傳情畫意 (Telestrations) and check our Sketch Relay rules;

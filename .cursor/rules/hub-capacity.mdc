@@ -1,0 +1,44 @@
+---
+description: Check deployment capacity before Hub publication, especially image batches
+alwaysApply: true
+---
+
+# Hub capacity
+
+The user requested capacity-first maintenance on 2026-10-29. Large image work
+is occasional; optimize the current workflow before adding new infrastructure.
+
+- Before publishing, distinguish the Git frontend from the independent CLI
+  executor. Confirm each project's plan, deployment method, Root/Build/Output
+  and current limits when accessible; explicitly report any missing access.
+- For new/replaced art, measure file count, total added bytes, largest files
+  and the resulting output. Use display-appropriate dimensions and compatible
+  optimized formats. Keep generation originals, ZIPs and QA recordings outside
+  production output; preserve all required final artwork and licenses.
+- Batch image creation, compression and review, then consolidate validated
+  changes into as few releases as practical. Splitting one final site across
+  repeated full deployments does not shrink it and may retain more output.
+- Check actual team Usage for Deployment Storage and Functions Storage,
+  plus transfer/image-processing usage when relevant. Do not substitute source
+  folder size, public URL totals or size multiplied by deployment count.
+- Leave headroom below the verified applicable limit. Aim for at least 20%
+  remaining where measurable; this is an internal goal, NOT a Vercel email
+  threshold. Never claim capacity is safe when current Usage is inaccessible.
+- If a verified proposed release would exceed a limit, optimize or reduce
+  unnecessary output first and report unresolved capacity before publishing.
+  Do not silently remove games, valid banks, required images or runtime files.
+- Verify each exclusion against actual deployment output and game/backend
+  references. A 404 does not prove packaging exclusion. Avoid blanket prompt,
+  Markdown, runtime or old-art exclusions: some are active dependencies.
+- Keep upload caps, retained storage, traffic and spend alerts separate.
+  Notification thresholds vary by metric, plan and recipient preferences;
+  never invent a universal project-MB email trigger. Recheck official docs.
+- Do not delete history, change cloud retention, disable alerts, upgrade the
+  plan or move assets to paid storage without explicit task authorization.
+- Report capacity before/after and verified limits for asset-heavy releases;
+  optimize only what is needed and preserve unrelated games and service routes.
+
+References: https://vercel.com/docs/limits
+https://vercel.com/docs/deployment-storage
+https://vercel.com/docs/notifications
+https://vercel.com/docs/spend-management

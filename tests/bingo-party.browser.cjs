@@ -34,7 +34,7 @@ function check(name, ok, detail = '') { results.push({ name, ok: !!ok, detail })
     const st = JSON.parse(value.stateJson);
     controlWrites.push({ id, rev: value.revision, owner: String(value.owner).slice(0, 6), no: st.round?.no, stage: st.round?.stage, votes: st.round ? Object.keys(st.round.nominations.A.votes).length + Object.keys(st.round.nominations.B.votes).length : 0 });
   };
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({ executablePath: process.env.BP_BROWSER_EXECUTABLE || undefined });
   const errors = [];
   const pages = {};
   const roomStorage = { ['room-session-' + CODE]: JSON.stringify({ tokens: TOKENS, playerCount: TOKENS.length, names: NAMES }), 'room-last-session': CODE, 'site-lang': 'zh' };
@@ -73,7 +73,17 @@ function check(name, ok, detail = '') { results.push({ name, ok: !!ok, detail })
   }
   const eventually = (fn, ms = 6000) => until(fn, 'eventually', ms).then(() => true, () => false);
   const click = (page, selector) => page.locator(selector).first().click();
-  async function shot(page, name) { await page.screenshot({ path: path.join(output, name + '.png'), fullPage: true }); }
+  async function openFold(page, key) {
+    const fold = page.locator(`details[data-keep="${key}"]`);
+    if (!(await fold.evaluate(node => node.open))) await fold.locator(':scope > summary').click();
+  }
+  async function shot(page, name) {
+    const size = page.viewportSize();
+    const phoneShot = name.includes('phone') && size?.width !== 390;
+    if (phoneShot) await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: path.join(output, name + '.png'), fullPage: true });
+    if (phoneShot) await page.setViewportSize(size);
+  }
   async function hostDo(selector) { await click(host, selector); }
   const allSeats = [1, 2, 3, 4, 5, 6, 7];
 
@@ -134,8 +144,17 @@ function check(name, ok, detail = '') { results.push({ name, ok: !!ok, detail })
     await until(async () => (await hostView()).roster.find(p => p.playerNum === 7).team === null, 'seat 7 spectator');
     await hostDo('[data-act="autoTeams"]'); // re-balance the six players; the watcher stays out
     await until(async () => { const v = await hostView(); return v.roster.filter(p => p.team === 'A').length === 3 && v.roster.filter(p => p.team === 'B').length === 3; }, 'balanced teams');
+    await openFold(host, 'lobby-admin');
     await hostDo('[data-act="setHost"][data-player="1"]');
     await until(async () => (await hostView()).hostPlayerNum === 1, 'host seat');
+    await host.locator('details[data-keep="lobby-admin"] > summary').click();
+    await openFold(host, 'timers');
+    await hostDo('[data-act="setting"][data-key="t.improv"][data-value="195"]');
+    await until(async () => (await hostView()).settings.t.improv === 195, 'custom scene time');
+    await hostDo('[data-act="setting"][data-key="resetTimers"]');
+    await until(async () => (await hostView()).settings.t.improv === 180 && (await hostView()).settings.t.story === 120, 'recommended pacing');
+    check('lobby: custom timers and recommended pacing work through the real host controls', true);
+    await host.locator('details[data-keep="timers"] > summary').click();
     let lv = await hostView();
     const teamOf = n => lv.roster.find(p => p.playerNum === n).team;
     let A = lv.roster.filter(p => p.team === 'A').map(p => p.playerNum), B = lv.roster.filter(p => p.team === 'B').map(p => p.playerNum);
@@ -143,6 +162,9 @@ function check(name, ok, detail = '') { results.push({ name, ok: !!ok, detail })
     for (const n of [2, 3]) { await click(P(n), '[data-act="ready"]'); }
     await until(async () => (await hostView()).roster.filter(p => p.ready).length === 2, 'ready marks');
     await shot(P(2), '01-phone-lobby');
+    await shot(host, '01-desktop-lobby');
+    const readyPosition = await P(2).locator('[data-act="ready"]').boundingBox();
+    check('lobby: the ready action is in the first phone viewport', readyPosition && readyPosition.y + readyPosition.height < 844);
     await hostDo('[data-act="setting"][data-key="songTurns"][data-value="4"]');
     await hostDo('[data-act="setting"][data-key="qLang"][data-value="zh"]');
     await until(async () => (await hostView()).settings.qLang === 'zh', 'prompt language');
@@ -287,6 +309,7 @@ function check(name, ok, detail = '') { results.push({ name, ok: !!ok, detail })
           // private line
           const SECRET = 'SECRET-LINE-' + Math.floor(Math.random() * 1e6) + ' 我其實是海盜';
           // Chinese IME: while a composition is open, live updates must not rebuild the field
+          for (const n of dirs) await openFold(P(n), 'line-composer');
           const box = P(dirs[0]).locator('[data-keep="line-text"]');
           await box.click(); await box.fill('我其實');
           await box.evaluate(el => el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true })));
@@ -331,7 +354,7 @@ function check(name, ok, detail = '') { results.push({ name, ok: !!ok, detail })
           await until(async () => (await cardView(dirs[0])).replies.some(x => x.id === 'aaaaaaaaaaaaaaaa1111' && x.error === 'too_late'), 'too_late');
           check('director: a stale command is refused (too_late), not played out of context', true);
           // time up → wrap-up; extension reopens commands
-          await db.setSkew(db.state.skew + 65000);
+          await db.setSkew(db.state.skew + Math.max(0, (await cur()).clock.endsAt - db.now()) + 1000);
           await until(async () => (await cardView(dirs[0])).round.sub.segs[0].stage === 'wrapup', 'wrap-up');
           check('director: time up stops new commands (buttons disabled)', await P(dirs[0]).locator('[data-act="imCmd"]').first().isDisabled());
           await click(H, `[data-act="imExtend"][data-seg="${seg.segmentId}"]`);
@@ -446,7 +469,7 @@ function check(name, ok, detail = '') { results.push({ name, ok: !!ok, detail })
         await until(async () => (await cur()).sub.segs[k].idx === 1, 'first item settled');
         if (first && k === 0) check('taboo: an item’s answer becomes public once it is settled', await eventually(async () => (await cardView(7)).round.sub.segs[0].targets[0].answer === word));
         if (first && k === 1) {
-          await db.setSkew(db.state.skew + 40000);
+          await db.setSkew(db.state.skew + Math.max(0, (await cur()).clock.endsAt - db.now()) + 1000);
           await until(async () => (await cur()).sub.segs[1].stage === 'timeup', 'taboo time up');
           check('taboo: after time, the describer can no longer score', await eventually(async () => (await P(d).locator('[data-act="tbMark"]').count()) === 0 && (await cardView(d)).round.sub.segs[1].stage === 'timeup'));
           await click(H, `[data-act="tbFinish"][data-seg="${seg.segmentId}"]`);
