@@ -81,6 +81,20 @@ var CUT_UI = (() => {
     stale_turn: ['畫面已更新，請再操作一次。', 'The turn has changed. Try again.'],
     not_available: ['這個動作目前無法使用，請依最新畫面操作。', 'This action isn’t available right now. Follow the current screen.'],
     error: ['同步暫時失敗，請檢查連線後再試。', 'Could not sync. Check your connection and try again.'],
+    edition: ['版本', 'Edition'], classicEdition: ['經典版', 'Classic'], halloweenEdition: ['🎃 萬聖節版', '🎃 Halloween'],
+    classicEditionDesc: ['原本的話題和畫面。', 'The original topics and look.'],
+    halloweenEditionDesc: ['鬼屋、南瓜和午夜怪談：專屬話題與萬聖節畫面，主持頁還有音樂和音效。', 'Haunted houses, pumpkins and midnight tales: its own topics and look, plus music and sound effects on the host page.'],
+    editionSwitchHint: ['換版本會開始一個新話題。', 'Changing the edition starts a new topic.'],
+    halloween: ['萬聖節', 'Halloween'], halloweenTake: ['🎃 萬聖節 · 模式 1', '🎃 Halloween · Mode 1'], halloweenJump: ['🎃 萬聖節 · 模式 2', '🎃 Halloween · Mode 2'],
+    topicHalloween: ['今晚的怪談', 'TONIGHT’S SPOOKY TALE'], hwOpening: ['🕯️ 可以這樣開頭：', '🕯️ Start with:'], hwTag: ['🎃 萬聖節版', '🎃 HALLOWEEN EDITION'],
+    hwCategoryNote: ['萬聖節版只用萬聖節題庫，不分題目類型。', 'The Halloween edition uses its own topics, with no topic types.'],
+    hwBoard: ['🎃 萬聖節音效台', '🎃 Halloween sound board'], hwBoardHint: ['只在這個主持頁播放。分享畫面時，請一起分享電腦音訊。', 'Plays on this host page. Share your computer audio when you share the screen.'],
+    hwMusic: ['背景音樂', 'Background music'], hwTrack_musicbox: ['🎹 鬼屋音樂盒', '🎹 Haunted music box'], hwTrack_crawl: ['🕷️ 躡手躡腳', '🕷️ Creepy crawl'],
+    hwStop: ['⏹ 停止音樂', '⏹ Stop music'], hwMusicVolume: ['音樂音量', 'Music volume'], hwEffects: ['音效', 'Sound effects'], hwEffectsVolume: ['音效音量', 'Effects volume'],
+    hwAutoScare: ['每次 CUT 隨機播放驚嚇音效', 'Random scare sound at every CUT'], hwAutoScareHint: ['需要開啟上方的音效。不勾選時，CUT 只有短短的詭異音。', 'Needs the main sound on. When off, each CUT plays a short spooky sting.'],
+    hwUnlock: ['🔊 按一下啟用音效台', '🔊 Tap to enable the sound board'], hwUnsupported: ['這個瀏覽器無法播放音效。', 'This browser can’t play these sounds.'],
+    hwFx_scream: ['😱 尖叫', '😱 Scream'], hwFx_laugh: ['😈 邪惡笑聲', '😈 Evil laugh'], hwFx_ghost: ['👻 鬼魂', '👻 Ghost'], hwFx_howl: ['🐺 狼嚎', '🐺 Wolf howl'],
+    hwFx_door: ['🚪 吱嘎開門', '🚪 Creaky door'], hwFx_thunder: ['⚡ 打雷', '⚡ Thunder'], hwFx_heartbeat: ['💓 心跳', '💓 Heartbeat'], hwFx_bell: ['🔔 午夜鐘聲', '🔔 Midnight bell'],
   };
   if (typeof I18N !== 'undefined') I18N.registerDict('cut', Object.fromEntries(Object.entries(dict).map(([k, v]) => [k, { zh: v[0], en: v[1] }])));
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -90,6 +104,7 @@ var CUT_UI = (() => {
     for (const [k, v] of Object.entries(vars)) value = value.split('{' + k + '}').join(String(v));
     return value;
   };
+  const isHalloween = cut => cut?.edition === 'halloween';
   const name = (cut, num) => list(cut.roster).find(p => Number(p.playerNum) === Number(num))?.name || t('player', { n: num });
   const countdown = (cut, now) => ['countdown', 'handoff'].includes(cut.phase)
     ? Math.max(0, Math.ceil((Number(cut.phaseUntil) - now) / 1000)) : null;
@@ -185,12 +200,12 @@ var CUT_UI = (() => {
       const thanks = ended && ['time', 'ended'].includes(cut.roundEnd) && cut.previousSpeaker != null ? t('jumpThanks', { name: name(cut, cut.previousSpeaker) }) + ' ' : '';
       const title = phase === 'paused' ? 'paused' : finished ? 'finished' : cut.roundEnd === 'time' ? 'jumpTimeUp' : 'breakTitle';
       const hint = phase === 'paused' ? cut.pauseReason === 'not_enough_players' ? 'not_enough_players' : cut.sharedControls ? 'sharedPaused' : 'pausedHint' : finished ? cut.sharedControls ? 'sharedFinished' : 'finishedHint' : cut.sharedControls ? 'sharedJumpBreak' : 'jumpBreakHint';
-      floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? '✂️' : cut.roundEnd === 'time' ? '⏰' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(thanks + t(hint))}</p></div>`;
+      floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? (isHalloween(cut) ? '🦇' : '✂️') : cut.roundEnd === 'time' ? '⏰' : isHalloween(cut) ? '🕯️' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(thanks + t(hint))}</p></div>`;
     }
     const yours = isMain && ['countdown', 'speaking', 'back'].includes(phase);
     const excluded = me > 0 && list(cut.roster).find(p => Number(p.playerNum) === me)?.active === false;
-    return `<div class="cut-stage cut-jump${isIn ? ' cut-is-cut' : ''}${isIn && !animate ? ' cut-static' : ''}${yours ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
-      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderMainClock(cut, now)}${me > 0 && cut.canExtend && phase !== 'timeup' ? `<button type="button" class="cut-button cut-extend" data-cut-action="extend">${esc(t('extend', { n: cut.extendMinutes || 1 }))}</button>` : ''}</div>
+    return `<div class="cut-stage cut-jump${isHalloween(cut) ? ' cut-hw' : ''}${isIn ? ' cut-is-cut' : ''}${isIn && !animate ? ' cut-static' : ''}${yours ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
+      <div class="cut-topic"><p class="cut-kicker">${esc(t(isHalloween(cut) ? 'topicHalloween' : 'topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderMainClock(cut, now)}${me > 0 && cut.canExtend && phase !== 'timeup' ? `<button type="button" class="cut-button cut-extend" data-cut-action="extend">${esc(t('extend', { n: cut.extendMinutes || 1 }))}</button>` : ''}</div>
       <div class="cut-floor" role="status" aria-live="polite">${floor}</div>
       ${excluded ? `<p class="cut-soft cut-sitting-out">${esc(t('sittingOut'))}</p>` : ''}
     </div>`;
@@ -226,11 +241,13 @@ var CUT_UI = (() => {
       const finished = ['finished', 'stopped'].includes(phase);
       const title = phase === 'paused' ? 'paused' : finished ? 'finished' : 'breakTitle';
       const hint = phase === 'paused' ? cut.pauseReason === 'not_enough_players' ? 'not_enough_players' : cut.sharedControls ? 'sharedPaused' : 'pausedHint' : finished ? cut.sharedControls ? 'sharedFinished' : 'finishedHint' : cut.sharedControls ? 'sharedBreak' : 'breakHint';
-      floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? '✂️' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(t(hint))}</p></div>`;
+      floor = `<div class="cut-rest"><span aria-hidden="true">${phase === 'paused' ? 'Ⅱ' : finished ? (isHalloween(cut) ? '🦇' : '✂️') : isHalloween(cut) ? '🕯️' : '☕'}</span><h3>${esc(t(title))}</h3><p class="cut-soft">${esc(t(hint))}</p></div>`;
     }
     const excluded = actor && list(cut.roster).find(p => Number(p.playerNum) === Number(actor))?.active === false;
-    return `<div class="cut-stage${isCut ? ' cut-is-cut' : ''}${isCut && !animate ? ' cut-static' : ''}${personal && inPlay ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
-      <div class="cut-topic"><p class="cut-kicker">${esc(t('topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${renderTopicClock(cut, now)}</div>
+    // The Halloween edition also shows its spooky opening line under the topic.
+    const opening = isHalloween(cut) && cut.topic?.starter ? `<p class="cut-hw-opening"><span>${esc(t('hwOpening'))}</span> ${esc(cut.topic.starter)}</p>` : '';
+    return `<div class="cut-stage${isHalloween(cut) ? ' cut-hw' : ''}${isCut ? ' cut-is-cut' : ''}${isCut && !animate ? ' cut-static' : ''}${personal && inPlay ? ' cut-is-you' : ''}" data-cut-phase="${esc(phase)}">
+      <div class="cut-topic"><p class="cut-kicker">${esc(t(isHalloween(cut) ? 'topicHalloween' : 'topic'))}</p><h2>${esc(cut.topic?.question || '')}</h2>${opening}${renderTopicClock(cut, now)}</div>
       <div class="cut-floor" role="status" aria-live="polite">${floor}</div>
       ${excluded ? `<p class="cut-soft cut-sitting-out">${esc(t('sittingOut'))}</p>` : ''}
     </div>`;
@@ -255,7 +272,10 @@ var CUT_UI = (() => {
     if (cut.phase === 'interrupt' && cut.canFinish && Number(cut.interrupter) !== Number(actor)) actions += button('done', 'backToMain');
     const options = (values, selected) => values.map(value => `<option value="${value}"${selected === value ? ' selected' : ''}>${esc(t(value))}</option>`).join('');
     const jumpMode = cut.mode === 'jump';
-    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings novalidate><label class="cut-field"><span>${esc(t('mode'))}</span><select name="mode" data-cut-setting>${options(['classic', 'jump'], jumpMode ? 'jump' : 'classic')}</select></label><p class="cut-soft" data-cut-mode-switch hidden>${esc(t('modeSwitchHint'))}</p><div class="cut-mode-fields" data-cut-jump-fields${jumpMode ? '' : ' hidden'}><label class="cut-field"><span>${esc(t('mainTime'))}</span><select name="mainMinutes" data-cut-setting>${mainOptions(cut.mainOptions, cut.mainMinutes)}</select></label><p class="cut-soft">${esc(t('mainTimeHint'))}</p><p class="cut-kicker" >${esc(t('firstCutAfter'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="firstCutMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMinSeconds ?? 25)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="firstCutMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMaxSeconds ?? 45)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-kicker" >${esc(t('cutInterval'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="cutIntervalMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMinSeconds ?? 30)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="cutIntervalMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMaxSeconds ?? 55)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-soft" id="cut-card-jump-hint">${esc(t('jumpTimingHint'))}</p><p class="cut-feedback" id="cut-card-jump-error" data-cut-jump-error role="alert"></p></div><div class="cut-mode-fields" data-cut-classic-fields${jumpMode ? ' hidden' : ''}><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field"><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><label class="cut-field"><span>${esc(t('topicTime'))}</span><input type="number" name="topicMinutes" data-cut-setting required min="1" max="60" step="1" inputmode="numeric" value="${esc(cut.topicMinutes ?? 10)}" aria-describedby="cut-card-topic-hint cut-card-topic-error"></label><p class="cut-soft" id="cut-card-topic-hint">${esc(t('topicMinutesHint'))}</p><p class="cut-feedback" id="cut-card-topic-error" data-cut-topic-error role="alert"></p><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
+    // Only an engine that knows editions lists them; an older service never receives one.
+    const editions = list(cut.editions).filter(value => ['classic', 'halloween'].includes(value));
+    const editionField = editions.length > 1 ? `<label class="cut-field"><span>${esc(t('edition'))}</span><select name="edition" data-cut-setting>${editions.map(value => `<option value="${value}"${(cut.edition || 'classic') === value ? ' selected' : ''}>${esc(t(value + 'Edition'))}</option>`).join('')}</select></label><p class="cut-soft" data-cut-edition-switch hidden>${esc(t('editionSwitchHint'))}</p>` : '';
+    const settings = cut.phase === 'setup' ? `<form class="cut-card-settings" data-cut-settings novalidate>${editionField}<label class="cut-field"><span>${esc(t('mode'))}</span><select name="mode" data-cut-setting>${options(['classic', 'jump'], jumpMode ? 'jump' : 'classic')}</select></label><p class="cut-soft" data-cut-mode-switch hidden>${esc(t('modeSwitchHint'))}</p><div class="cut-mode-fields" data-cut-jump-fields${jumpMode ? '' : ' hidden'}><label class="cut-field"><span>${esc(t('mainTime'))}</span><select name="mainMinutes" data-cut-setting>${mainOptions(cut.mainOptions, cut.mainMinutes)}</select></label><p class="cut-soft">${esc(t('mainTimeHint'))}</p><p class="cut-kicker" >${esc(t('firstCutAfter'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="firstCutMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMinSeconds ?? 25)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="firstCutMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.firstCutMaxSeconds ?? 45)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-kicker" >${esc(t('cutInterval'))}</p><div class="cut-settings"><label class="cut-field"><span >${esc(t('customMin'))}</span><input type="number" name="cutIntervalMinSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMinSeconds ?? 30)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label><label class="cut-field"><span >${esc(t('customMax'))}</span><input type="number" name="cutIntervalMaxSeconds" data-cut-setting min="5" max="300" step="1" inputmode="numeric" required value="${esc(cut.cutIntervalMaxSeconds ?? 55)}" aria-describedby="cut-card-jump-hint cut-card-jump-error"></label></div><p class="cut-soft" id="cut-card-jump-hint">${esc(t('jumpTimingHint'))}</p><p class="cut-feedback" id="cut-card-jump-error" data-cut-jump-error role="alert"></p></div><div class="cut-mode-fields" data-cut-classic-fields${jumpMode ? ' hidden' : ''}><div class="cut-settings"><label class="cut-field"><span>${esc(t('speed'))}</span><select name="speed" data-cut-setting>${options(['normal', 'chill', 'chaos', 'custom'], cut.speed)}</select></label><label class="cut-field" data-cut-category-field><span>${esc(t('category'))}</span><select name="category" data-cut-setting>${options(['mixed', 'real', 'absurd', 'personal', 'ideas'], cut.category)}</select></label></div><p class="cut-soft" data-cut-category-note hidden>${esc(t('hwCategoryNote'))}</p><label class="cut-field"><span>${esc(t('topicTime'))}</span><input type="number" name="topicMinutes" data-cut-setting required min="1" max="60" step="1" inputmode="numeric" value="${esc(cut.topicMinutes ?? 10)}" aria-describedby="cut-card-topic-hint cut-card-topic-error"></label><p class="cut-soft" id="cut-card-topic-hint">${esc(t('topicMinutesHint'))}</p><p class="cut-feedback" id="cut-card-topic-error" data-cut-topic-error role="alert"></p><div class="cut-custom" data-cut-custom-fields${cut.speed === 'custom' ? '' : ' hidden'}><div class="cut-settings"><label class="cut-field"><span>${esc(t('customMin'))}</span><input type="number" name="customMinSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMinSeconds ?? 15)}"></label><label class="cut-field"><span>${esc(t('customMax'))}</span><input type="number" name="customMaxSeconds" data-cut-setting min="5" max="120" step="1" inputmode="numeric" value="${esc(cut.customMaxSeconds ?? 25)}"></label></div><p class="cut-soft">${esc(t('customHint'))}</p><p class="cut-feedback" data-cut-custom-error role="alert"></p></div></div><div class="cut-controls"><button type="submit" class="cut-button cut-primary" data-cut-settings-save>${esc(t('saveSettings'))}</button>${button('cancelSettings', 'closeSettings')}</div></form>` : '';
     const roster = list(cut.roster).map(p => `<div class="cut-roster-row"><span>${esc(p.name || t('player', { n: p.playerNum }))}</span>${button('exclude', p.active === false ? 'reinclude' : 'exclude', ` data-player="${Number(p.playerNum)}" data-active="${p.active === false ? 'true' : 'false'}"`)}</div>`).join('');
     const management = (cut.phase === 'setup' ? '' : button('settings', 'settings')) + (stopped ? '' : button('restart', 'restart') + button('stop', 'stop', '', 'cut-stop'));
     return `${settings}<div class="cut-controls">${actions}</div><details class="cut-player-management" data-cut-management><summary>${esc(t('sharedManage'))}</summary><div class="cut-controls cut-management-actions">${management}</div><p class="cut-soft">${esc(t('rosterHint'))}</p>${roster}</details>`;
@@ -308,14 +328,14 @@ var CUT_UI = (() => {
       const request = data.cutAction;
       if (!this.pending && (['begin', 'done', 'skip', 'extend'].includes(request?.type) || cut.sharedControls === true && ['next', 'pause', 'resume', 'exclude', 'recover', 'endTopic', 'settings', 'configure', 'cancelSettings', 'stop', 'restart'].includes(request?.type)) && request.sessionId === cut.sessionId && request.turnId === cut.turnId && typeof request.id === 'string' && request.id.length >= 8 && request.id.length <= 100 && cut.reply?.id !== request.id) this.pending = request;
       const key = JSON.stringify([typeof I18N !== 'undefined' ? I18N.lang : '', data.name, data.playerNum, cut.sessionId, cut.turnId, cut.phase, cut.canBegin, cut.canEndTopic, cut.sharedControls, cut.canManage, cut.speed, cut.category, cut.customMinSeconds, cut.customMaxSeconds, cut.topicMinutes, cut.topic, cut.speaker, cut.nextSpeaker, cut.cutEvent, cut.roster,
-        cut.mode, cut.mainMinutes, cut.mainOptions, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd, cut.canExtend]);
+        cut.mode, cut.mainMinutes, cut.mainOptions, cut.mainClock?.durationMs, cut.interrupter, cut.canFinish, cut.roundEnd, cut.canExtend, cut.edition, cut.editions]);
       if (this.renderKey !== key) {
         this.renderKey = key;
         const managementOpen = this.element.querySelector('[data-cut-management]')?.open;
         const cutKey = ['cut', 'interrupt'].includes(cut.phase) ? `${cut.sessionId}:${cut.cutEvent?.id || cut.turnId}` : '';
         const animate = !cutKey || cutKey !== this.animatedCut;
         if (cutKey) this.animatedCut = cutKey;
-        this.element.innerHTML = `<div class="secret-card cut-player">${this.nameBanner(data)}<span class="cut-kicker cut-brand">✂️ CUT!</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}${this.sound ? `<div class="cut-controls"><button type="button" class="cut-button cut-sound" data-cut-sound title="${esc(t('cardSoundHint'))}" aria-pressed="false">${esc(t('soundOff'))}</button></div><p class="cut-feedback" data-cut-sound-status role="status"></p>` : ''}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
+        this.element.innerHTML = `<div class="secret-card cut-player${isHalloween(cut) ? ' cut-hw' : ''}">${this.nameBanner(data)}<span class="cut-kicker cut-brand">${isHalloween(cut) ? '🎃 CUT!' : '✂️ CUT!'}</span><div class="cut-player-scene">${scene(cut, data.playerNum, this.now(), { animate })}</div>${sharedPanel(cut, data.playerNum)}${this.sound ? `<div class="cut-controls"><button type="button" class="cut-button cut-sound" data-cut-sound title="${esc(t('cardSoundHint'))}" aria-pressed="false">${esc(t('soundOff'))}</button></div><p class="cut-feedback" data-cut-sound-status role="status"></p>` : ''}<p class="cut-feedback" data-cut-action-status role="status"></p><p class="cut-feedback" data-cut-connection role="status"></p></div>`;
         if (managementOpen && this.element.querySelector('[data-cut-management]')) this.element.querySelector('[data-cut-management]').open = true;
       }
       this.paint();
@@ -353,6 +373,12 @@ var CUT_UI = (() => {
         if (jumpFields) jumpFields.hidden = !jumpForm;
         if (classicFields) classicFields.hidden = jumpForm;
         if (switching) switching.hidden = jumpForm === (cut.mode === 'jump');
+        const formEdition = settings.edition ?? (cut.edition || 'classic');
+        const editionSwitch = form.querySelector('[data-cut-edition-switch]');
+        if (editionSwitch) editionSwitch.hidden = formEdition === (cut.edition || 'classic');
+        const categoryField = form.querySelector('[data-cut-category-field]'), categoryNote = form.querySelector('[data-cut-category-note]');
+        if (categoryField) categoryField.hidden = formEdition === 'halloween';
+        if (categoryNote) categoryNote.hidden = formEdition !== 'halloween';
         const customFields = form.querySelector('[data-cut-custom-fields]');
         if (customFields) customFields.hidden = !custom;
         for (const name of ['customMinSeconds', 'customMaxSeconds']) {
@@ -401,6 +427,8 @@ var CUT_UI = (() => {
           customMinSeconds: speed === 'custom' ? seconds('customMinSeconds') : cut.customMinSeconds ?? 15,
           customMaxSeconds: speed === 'custom' ? seconds('customMaxSeconds') : cut.customMaxSeconds ?? 25 };
       if (mode !== undefined) { input.mode = mode; input.mainMinutes = seconds('mainMinutes'); }
+      const edition = form.querySelector('[name="edition"]')?.value;
+      if (edition !== undefined) input.edition = edition;
       for (const key of jumpTimingKeys) input[key] = mode === 'jump' ? seconds(key) : cut[key] ?? jumpTimingDefaults[key];
       return input;
     }
@@ -435,7 +463,7 @@ var CUT_UI = (() => {
       if (type === 'settings') return cut.phase !== 'setup';
       if (type === 'cancelSettings') return cut.phase === 'setup';
       if (type === 'configure') return cut.phase === 'setup' && ['normal', 'chill', 'chaos', 'custom'].includes(extra.speed) && ['mixed', 'real', 'absurd', 'personal', 'ideas'].includes(extra.category) && this.validTiming(extra) && validTopicMinutes(extra.topicMinutes ?? cut.topicMinutes ?? 10) &&
-        (extra.mode === undefined || ['classic', 'jump'].includes(extra.mode)) && (extra.mainMinutes === undefined || list(cut.mainOptions).includes(extra.mainMinutes)) && ((extra.mode ?? cut.mode) !== 'jump' || validJumpTiming({ ...cut, ...extra }));
+        (extra.mode === undefined || ['classic', 'jump'].includes(extra.mode)) && (extra.edition === undefined || list(cut.editions).includes(extra.edition)) && (extra.mainMinutes === undefined || list(cut.mainOptions).includes(extra.mainMinutes)) && ((extra.mode ?? cut.mode) !== 'jump' || validJumpTiming({ ...cut, ...extra }));
       if (type === 'stop') return cut.phase !== 'stopped';
       if (type === 'next') return cut.phase === 'break';
       if (type === 'pause') return !['paused', 'stopped', 'setup'].includes(cut.phase);
@@ -465,6 +493,9 @@ var CUT_UI = (() => {
     constructor(onChange = () => {}) {
       this.context = null; this.enabled = true; this.blocked = false; this.unsupported = false;
       this.onChange = onChange; this.previous = null; this.seen = new Set(); this.voices = new Set();
+      // The Halloween edition swaps in spooky cues. A host page may also take
+      // over the CUT moment itself (onCut returns true when it played something).
+      this.edition = 'classic'; this.onCut = null;
     }
     async unlock() {
       if (!this.enabled) return false;
@@ -498,6 +529,8 @@ var CUT_UI = (() => {
       oscillator.start(start); oscillator.stop(start + length + .015);
     }
     cue(key) {
+      if (key === 'cut' && typeof this.onCut === 'function' && this.onCut()) return;
+      if (this.edition === 'halloween') return this.spooky(key);
       if (key === 'cut') { this.tone(185, .18, 0, 'sawtooth', .11); this.tone(130, .15, .11, 'square', .06); }
       else if (key === 'reveal') { this.tone(620, .1, .16); this.tone(830, .15, .25); }
       else if (key === 'go') { this.tone(720, .13); this.tone(980, .18, .11); }
@@ -505,8 +538,18 @@ var CUT_UI = (() => {
       else if (key === 'time') { this.tone(610, .14); this.tone(460, .22, .14); }
       else this.tone(520, .065, 0, 'sine', .05);
     }
+    spooky(key) {
+      // A low dissonant stab, a falling "uh-oh", a clock tick: still short cues.
+      if (key === 'cut') { this.tone(147, .5, 0, 'sawtooth', .08); this.tone(208, .46, 0, 'sawtooth', .05); this.tone(277, .4, .02, 'triangle', .05); }
+      else if (key === 'reveal') { this.tone(392, .28, .2, 'triangle', .07); this.tone(370, .45, .42, 'triangle', .06); }
+      else if (key === 'go') { this.tone(294, .16, 0, 'triangle'); this.tone(415, .3, .13, 'triangle'); }
+      else if (key === 'round') { this.tone(220, .14, 0, 'triangle'); this.tone(233, .22, .14, 'triangle'); }
+      else if (key === 'time') { this.tone(196, 1.1, 0, 'sine', .09); this.tone(233, .9, 0, 'sine', .05); this.tone(392, .7, 0, 'sine', .03); }
+      else this.tone(1250, .03, 0, 'square', .02);
+    }
     update(cut, now, fresh = false, audible = true) {
       if (!cut) { this.previous = null; this.silence(); return; }
+      this.edition = cut.edition === 'halloween' ? 'halloween' : 'classic';
       const previous = this.previous;
       const phaseKey = `${cut.sessionId}:${cut.turnId}:${cut.phase}`;
       if (fresh) { this.previous = null; this.seen.clear(); }

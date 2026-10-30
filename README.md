@@ -26,7 +26,7 @@ host is sharing.
 | 🎉 BLUFF PARTY | 3–9 | One strange topic, one real expert: make up explanations, question each other, and find the truth in one continuous conversation |
 | WORD WOLF | 3–9 | Describe your secret item, then privately vote for the one player holding a different item |
 | WHO KNOWS? | 4–9 | Insider or Werewolf roles with a secret word or number; optional broad starting clue |
-| WORD LIMIT THEATER | 2–9 | Take turns acting a scene with your own short word limit; short limits may repeat |
+| WORD LIMIT THEATER | 2–9 | Take turns acting a scene with your own word limit; most limits are 3 or 4 words, 1 and 6 are rare |
 | 🎯 雙選賓果 DUAL-PICK BINGO | 4–12 | Two teams secretly nominate a number, play one of five short challenges, and the result decides whose number is called on both boards |
 
 ## How it works

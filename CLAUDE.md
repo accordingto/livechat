@@ -1,3 +1,41 @@
+## CURRENT: Sketch Relay circle, WORD LIMIT bell curve, CUT 🎃 Halloween edition — 2026-10-31
+
+User request: research 傳情畫意 (Telestrations) and check our Sketch Relay rules;
+make a CUT Halloween version (themed UI, host music and scream-style effects,
+Halloween story openings); lower WORD LIMIT's 1- and 2-word odds with a curve.
+
+SKETCH RELAY (relay-3, frontend-only): compared with the publisher rulebook copy
+(RulesPal), officialgamerules.org and Mirror Media's 傳情畫意 article. Word card,
+shared die, simultaneous passing, 60 s sketch timer, untimed guesses, book home,
+owner reveal already matched. Fixed: even/odd and pass order used every Hub
+seat, so empty/sitting-out seats became skipped pages and every book ended on a
+drawing (verified by simulation: 6 seats with 1 away → all books end on a
+sketch). `startPlay` now fixes `state.circle` (active seats), keeps only their
+books, and derives offset/steps from it; non-circle seats show "joins next
+round" (`me.nextRound`, status `nextRound`); pass order lists the circle;
+saved games without a circle fall back to every seat. Competitive matching
+also pre-fills a match for a guess equal to the secret word (published rule).
+Read sketch-relay-mode.md "Relay-3 rules audit".
+
+WORD LIMIT (wl-7, frontend-only): `dealWeights` [22,22,20,18,13,5] →
+[5,13,32,32,13,5]; simulated actor shares ≈ 6/15/29/29/15/5–6 % for 1–6 with
+swaps and previous-limit exclusion; at most one six unchanged. Rules copy says
+most limits are 3–4 words. Read word-limit-mode.md "Limit draw policy".
+
+CUT (cut-13, ENGINE + CONTENT: frontend AND independent service): new
+`edition` classic (default/saved games) | halloween for both modes. New
+cut-halloween-topics.js (40 Mode 1 openings with half-sentence starters, 30
+Mode 2 topics, separate IDs, never mixed with classic pools, gore words
+tested out). Engine: create/configure/restart/view carry edition; changing
+edition opens a new topic via switchMode; view adds edition/editions. Host:
+edition cards (also `?edition=halloween`), themed page (Creepster font
+self-hosted with OFL in assets/cut-halloween/, moon, cobweb, bats), opening
+line under the topic, and cut-halloween-audio.js sound board: two original
+synthesized loops, eight synthesized effects, volumes, "Random scare at every
+CUT" (default on, localStorage). Cards get the Halloween look and spooky cues;
+an edition select only when the view lists editions. Read cut-mode.md
+"🎃 萬聖節版".
+
 ## CURRENT: 雙選賓果 DUAL-PICK BINGO (new game, last in the Hub) — 2026-10-30
 
 Read bingo-party-mode.md. User request: implement the 2026-10-29 package's

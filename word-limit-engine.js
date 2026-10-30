@@ -32,9 +32,11 @@ var WORD_LIMIT_ENGINE = (() => {
     // may still hold 7–10); every scene deals and swaps limits in 1–6.
     limitValues: Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), pointsMax: 50,
     dealValues: Object.freeze([1, 2, 3, 4, 5, 6]),
-    // Short lines may repeat. A six-word line is an occasional variation,
-    // never a compulsory role, and at most one is drawn for the cast.
-    dealWeights: Object.freeze([22, 22, 20, 18, 13, 5]),
+    // A bell curve centred on 3–4: one-word and six-word lines are equally
+    // rare variations (hard to play well), two and five are occasional, and
+    // most actors get three or four. Limits may repeat between actors, and at
+    // most one six is drawn for the cast.
+    dealWeights: Object.freeze([5, 13, 32, 32, 13, 5]),
     castMs: 20000,
     lineCooldownMs: 3000, foulCooldownMs: 2500,
     maxRerolls: 5,

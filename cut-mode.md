@@ -2,6 +2,18 @@
 
 英文副標題為「DON’T FINISH THAT」。CUT 提示保留「STOP! Hand over the unfinished thought.」，下一位提示為「Continue the unfinished sentence. Press Start when ready.」。入口 `cut.html`，沿用 ICEBREAK HUB 原房間、姓名與玩家卡，支援 2–9 人。介面預設英文、可切換繁體中文；題目固定使用簡單英文，所有對話仍透過原語音聊天室進行。
 
+## 🎃 萬聖節版 Halloween edition（2026-10-31）
+
+使用者要求：CUT 做一個萬聖節版本，介面要有感覺；主持人可以播放應景音樂與尖叫等增加效果的音效；故事開場也要有萬聖節感覺。
+
+- **版本 `edition`**：`classic`（預設，舊存檔沒有欄位也是 classic）或 `halloween`。設定畫面最上方多一組「版本」卡片（經典版／🎃 萬聖節版），兩種模式都能用；`cut.html?edition=halloween` 會預先選好萬聖節版。規則、節奏、時鐘、公平抽選、分享控制完全不變。
+- **題庫**：新檔 `cut-halloween-topics.js`（`CUT_HALLOWEEN_TOPICS`），**不混入** `cut-topics.js`／`cut-jump-topics.js`。`take` 40 題給模式 1（題目＋半句開場，ID `cut-halloween-01…40`），`jump` 30 題給模式 2（ID `jump-halloween-01…30`）。簡單英文、鬼屋／南瓜／午夜怪談，不血腥（測試擋 blood/kill/corpse 等字）。萬聖節版不分題目類型，類型選單會隱藏並說明；原本的 category 保留，回到經典版時沿用。
+- **引擎**：`create({ edition })` 驗證；`chooseTopic`／`chooseJumpTopic` 在萬聖節版改從對應萬聖節池抽（沿用 topicHistory／jumpTopicHistory 避免重複）。設定中改版本與改模式一樣走 `switchMode`，一定開新話題；同版本同模式的設定照舊保留話題。Restart 保留版本。`view` 公開 `edition` 與 `editions`。卡片設定只有在 view 帶 `editions` 時才顯示版本選單（舊服務不會收到 edition）。
+- **畫面**：`.cut-hw`（舞台／卡片）與 `body.cut-hw-page`（主持頁）。紫黑夜空、橘色南瓜主色、綠色 GO、月亮、蜘蛛網、飛舞蝙蝠；標題、CUT!、倒數用自架的 Creepster 字型（SIL OFL，`assets/cut-halloween/`）。題目卡標題改為 TONIGHT’S SPOOKY TALE／今晚的怪談，模式 1 在題目下方顯示「🕯️ Start with: …」開場句；CUT 畫面加南瓜、休息畫面是蠟燭、結束是蝙蝠。320–1280px 無水平溢出，主要文字對比 ≥7:1。
+- **主持音效台**：新檔 `cut-halloween-audio.js`（`CUT_HALLOWEEN_AUDIO.Board`），只在主持頁、只在萬聖節版顯示。全部用 Web Audio 即時合成，沒有錄音檔、下載、麥克風或外部媒體。兩首原創循環音樂（🎹 鬼屋音樂盒：D 小調音樂盒華爾滋＋低音嗡鳴；🕷️ 躡手躡腳：斷奏低音＋高音叮噹）、八個音效（尖叫、邪惡笑聲、鬼魂、狼嚎、吱嘎開門、打雷、心跳、午夜鐘聲）、音樂／音效音量、以及「每次 CUT 隨機播放驚嚇音效」（預設開，存 `cut-halloween-sound.v1`）。關掉時每次 CUT 是短詭異音。自動 CUT 音效仍受主持頁的「🔊 音效」開關控制。播放給語音聊天室時，主持人分享畫面要一起分享電腦音訊。
+- **玩家卡**：開啟卡片音效的玩家，萬聖節版的提示音也換成詭異版本（`CUT_UI.Sound.spooky`）；卡片沒有音樂與音效台。
+- **快取與部署**：所有 CUT 資產 `cut-13`；`hub-launcher.js` 在 engine 前載入萬聖節題庫。這是引擎＋題庫變更，前端與獨立執行服務都要部署（打包腳本會依 require 自動帶入新題庫檔）。
+
 ## 模式 2 · 插話 Jump In（2026-10-11）
 
 `cut.html` 設定畫面最上方有兩張模式卡。**模式 1 · 接話 Take Over** 就是原本的玩法，規則、題庫、文案與預設值都沒有改，仍是預設模式；**模式 2 · 插話 Jump In** 是新增的實驗玩法，兩者並存供試玩比較。沒有 `mode` 欄位的舊房間一律是模式 1。

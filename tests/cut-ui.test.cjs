@@ -259,6 +259,12 @@ function hostDemo() {
     constructor() { this.enabled = false; this.context = null; }
     unlock() { return Promise.resolve(false); } update() {} silence() {} close() {} toggle() {}
   }
+  const boards = [];
+  class QuietBoard {
+    constructor() { this.ready = false; this.track = null; this.musicVolume = .35; this.effectsVolume = .8; this.autoScare = true; this.unlocks = 0; boards.push(this); }
+    unlock() { this.unlocks++; return Promise.resolve(false); } stopMusic() { this.track = null; } close() {} cut() { return false; }
+  }
+  const bodyClasses = new Set();
   const trackedEngine = { ...ENGINE,
     create(options) { creations.push(options); return ENGINE.create(options); },
     apply(state, command) { if (command.type !== 'tick') commands.push(command); return ENGINE.apply(state, command); },
@@ -266,7 +272,9 @@ function hostDemo() {
   const context = {
     CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: trackedEngine, CUT_TOPICS: require('../cut-topics.js'),
     CUT_CONFIG: require('../cut-config.js'), CUT_JUMP_TOPICS: require('../cut-jump-topics.js'), CUT_SYNC: { uid: () => 'host-command-' + (++serial) },
-    I18N: { applyStatic() {}, onChange() {} }, document: { getElementById: element }, location: { search: '?demo=1' },
+    CUT_HALLOWEEN_TOPICS: require('../cut-halloween-topics.js'), CUT_HALLOWEEN_AUDIO: { Board: QuietBoard },
+    I18N: { applyStatic() {}, onChange() {} }, location: { search: '?demo=1' },
+    document: { getElementById: element, querySelectorAll: () => [], body: { classList: { toggle(name, on) { if (on) bodyClasses.add(name); else bodyClasses.delete(name); } } } },
     URLSearchParams, crypto: { getRandomValues: array => { array[0] = 314; return array; } },
     Date: class extends Date { static now() { return time; } }, setInterval: fn => { interval = fn; return 1; }, clearInterval() {},
     window: { addEventListener() {} },
@@ -275,7 +283,7 @@ function hostDemo() {
   const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
   const click = async id => { element('cut-' + id).events.click?.({ target: { closest: () => null } }); await settle(); };
   const submit = async () => { element('cut-setup').events.submit({ preventDefault() {} }); await settle(); };
-  return { element, click, submit, creations, commands, topicNodes, scene: () => element('cut-scene').innerHTML,
+  return { element, click, submit, creations, commands, topicNodes, boards, bodyClasses, scene: () => element('cut-scene').innerHTML,
     advance: milliseconds => { time += milliseconds; interval(); },
     change: (id, value) => { const node = element('cut-' + id); node.value = value; node.events.change?.(); node.events.input?.(); },
   };
@@ -694,4 +702,66 @@ test('shared settings show minute errors, disable invalid saves and retain typed
     card.update({ playerNum: 2, cut: { ...cut, turnId: 3, topicMinutes: 7 } });
     assert.equal(fields.topicMinutes.value, '7');
   } finally { card.destroy(); }
+});
+
+
+test('host Halloween edition: picks the edition, themes the page, shows the board and keeps it through restart', async () => {
+  const H = require('../cut-halloween-topics.js');
+  const { element, click, submit, scene, creations, boards, bodyClasses } = hostDemo();
+  assert.equal(element('cut-hw-board').hidden, true); assert.equal(bodyClasses.has('cut-hw-page'), false);
+  await click('edition-halloween');
+  assert.equal(element('cut-edition-halloween').attributes['aria-pressed'], 'true');
+  assert.equal(element('cut-hw-board').hidden, false, 'the sound board appears while choosing the edition');
+  assert.equal(element('cut-category-field').hidden, true); assert.equal(element('cut-category-note').hidden, false);
+  assert.ok(bodyClasses.has('cut-hw-page')); assert.equal(element('cut-hw-tag').hidden, false);
+  assert.ok(boards[0].unlocks >= 1, 'choosing Halloween asks the browser for sound in that tap');
+  await submit();
+  assert.equal(creations.at(-1).edition, 'halloween');
+  assert.match(scene(), /cut-stage cut-hw/);
+  const question = scene().match(/<h2>(.*?)<\/h2>/s)[1];
+  assert.ok(H.take.items.some(topic => UI.esc(topic.question) === question), 'the first topic is a Halloween one');
+  assert.match(scene(), /cut-hw-opening/);
+  await click('restart');
+  assert.equal(creations.at(-1).edition, 'halloween');
+  assert.ok(bodyClasses.has('cut-hw-page'));
+  await click('settings-open');
+  await click('edition-classic');
+  assert.equal(element('cut-edition-switch-hint').hidden, false);
+  await submit();
+  assert.doesNotMatch(scene(), /cut-hw/); assert.equal(bodyClasses.has('cut-hw-page'), false); assert.equal(element('cut-hw-board').hidden, true);
+});
+
+test('cards show the Halloween look, the opening line and an edition setting only when the engine lists editions', () => {
+  const H = require('../cut-halloween-topics.js');
+  const roster = [1, 2, 3].map(playerNum => ({ playerNum, name: 'P' + playerNum }));
+  let state = ENGINE.create({ id: 'hw-card', roster, now: 1000, seed: 9, edition: 'halloween' });
+  const view = ENGINE.view({ ...state, sharedControls: true }, 1, 2000).cut;
+  const html = UI.scene(view, 1, 2000);
+  assert.match(html, /cut-stage cut-hw/); assert.match(html, /cut-hw-opening/);
+  assert.ok(html.includes(UI.esc(H.take.items.find(t => t.id === view.topic.id).starter)));
+  const classic = UI.scene(ENGINE.view(ENGINE.create({ id: 'classic-card', roster, now: 1000, seed: 9 }), 1, 2000).cut, 1, 2000);
+  assert.doesNotMatch(classic, /cut-hw/, 'the classic edition is unchanged');
+  const element = { innerHTML: '', addEventListener() {}, removeEventListener() {}, querySelector() { return null; }, querySelectorAll() { return []; } };
+  const card = new UI.Card(element, { send: async () => {}, now: () => 2000 });
+  state = ENGINE.apply({ ...state, sharedControls: true }, { id: 'hw-settings-1', type: 'settings', actor: 1, sessionId: state.sessionId, turnId: state.turnId, now: 1500, seed: 3 });
+  card.update({ playerNum: 1, name: 'P1', cut: ENGINE.view(state, 1, 2000).cut });
+  assert.match(element.innerHTML, /secret-card cut-player cut-hw/); assert.match(element.innerHTML, /🎃 CUT!/);
+  assert.match(element.innerHTML, /<select name="edition"/);
+  const legacy = ENGINE.view(state, 1, 2000).cut; delete legacy.editions;
+  card.update({ playerNum: 1, name: 'P1', cut: { ...legacy, turnId: legacy.turnId } });
+  card.renderKey = ''; card.update({ playerNum: 1, name: 'P1', cut: legacy });
+  assert.doesNotMatch(element.innerHTML, /name="edition"/, 'an older service without editions shows no edition setting');
+  card.destroy();
+});
+
+test('the shared Sound plays spooky cues in the Halloween edition and lets the host board take over CUT', () => {
+  const sound = new UI.Sound();
+  const played = [];
+  sound.tone = (...args) => played.push(args);
+  sound.cue('cut'); const classic = played.splice(0);
+  sound.edition = 'halloween'; sound.cue('cut'); const spooky = played.splice(0);
+  assert.notDeepEqual(classic, spooky); assert.ok(spooky.length >= 2);
+  let calls = 0; sound.onCut = () => { calls++; return true; };
+  sound.cue('cut'); assert.equal(calls, 1); assert.equal(played.length, 0, 'the board played the CUT sound instead');
+  sound.onCut = () => false; sound.cue('cut'); assert.ok(played.length > 0, 'falls back to the sting when the board is not ready');
 });

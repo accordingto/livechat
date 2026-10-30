@@ -8,6 +8,13 @@ var CUT_ENGINE = (() => {
   const random = typeof CUT_RANDOM !== 'undefined' ? CUT_RANDOM : require('./cut-random.js');
   const topics = typeof CUT_TOPICS !== 'undefined' ? CUT_TOPICS : require('./cut-topics.js');
   const jumpTopics = typeof CUT_JUMP_TOPICS !== 'undefined' ? CUT_JUMP_TOPICS : require('./cut-jump-topics.js');
+  const halloweenTopics = typeof CUT_HALLOWEEN_TOPICS !== 'undefined' ? CUT_HALLOWEEN_TOPICS : require('./cut-halloween-topics.js');
+  // The 🎃 Halloween edition swaps both topic pools and the look and sound of
+  // the game. Rules, timing and fairness are the same. Saved games are classic.
+  const EDITIONS = Object.freeze(['classic', 'halloween']);
+  const validEdition = edition => EDITIONS.includes(edition);
+  const editionOf = state => state?.edition === 'halloween' ? 'halloween' : 'classic';
+  const halloween = state => editionOf(state) === 'halloween';
   const list = value => Array.isArray(value) ? value.filter(item => item != null) : Object.values(value || {});
   const copy = value => JSON.parse(JSON.stringify(value));
   const active = state => list(state.roster).filter(player => player.active !== false && player.pending !== true);
@@ -89,6 +96,7 @@ var CUT_ENGINE = (() => {
     return random.speaker(list(state.roster).filter(p => p.pending !== true), excluded, state.stats, state.recent, state.speakerSequence, rng);
   }
   function chooseTopic(state, rng) {
+    if (halloween(state)) return pickFresh(state, halloweenTopics.take.items, 'topicHistory', config.topicHistorySize, rng);
     const available = topics.categories.filter(category => category !== 'mixed' && topics.items.some(topic => topic.category === category));
     const category = state.category === 'mixed'
       ? random.weighted(available, category => config.mixedTopicWeights[category] || 0, rng)
@@ -99,6 +107,15 @@ var CUT_ENGINE = (() => {
     const chosen = choices[Math.floor(rng() * choices.length)];
     state.topic = copy(chosen);
     state.topicHistory = [...state.topicHistory, chosen.id].slice(-config.topicHistorySize);
+  }
+  // One pool without categories: an unseen topic when there is one.
+  function pickFresh(state, pool, historyKey, size, rng) {
+    const history = list(state[historyKey]);
+    const unseen = pool.filter(topic => !history.includes(topic.id));
+    const choices = unseen.length ? unseen : pool;
+    const chosen = choices[Math.floor(rng() * choices.length)];
+    state.topic = copy(chosen);
+    state[historyKey] = [...history, chosen.id].slice(-size);
   }
   function prepare(state, playerNum, now, name = 'ready', remainingMs = null, countOnGo = true) {
     state.speaker = playerNum;
@@ -209,6 +226,7 @@ var CUT_ENGINE = (() => {
   // Mode 1's balanced draw on a ledger of its own, and never the Main Speaker.
   const chooseInterrupter = (state, rng) => random.speaker(seats(state), state.speaker, state.interruptStats, state.interruptRecent, state.interruptSequence, rng);
   function chooseJumpTopic(state, rng) {
+    if (halloween(state)) return pickFresh(state, halloweenTopics.jump.items, 'jumpTopicHistory', config.jump.topicHistorySize, rng);
     const fresh = jumpTopics.items.filter(topic => !state.jumpTopicHistory.includes(topic.id));
     const bank = fresh.length ? fresh : jumpTopics.items;
     const kinds = jumpTopics.categories.filter(category => bank.some(topic => topic.category === category));
@@ -347,25 +365,27 @@ var CUT_ENGINE = (() => {
     if (own(state.mainStats) < least(state.mainStats)) state.mainStats[playerNum] = { count: least(state.mainStats), lastRound: state.round };
     if (own(state.interruptStats) < least(state.interruptStats)) state.interruptStats[playerNum] = { count: least(state.interruptStats), lastTurn: state.interruptSequence };
   }
-  const settingsOf = state => ({ ...jumpTimingOf(state), mode: jump(state) ? 'jump' : 'classic', speed: state.speed, category: state.category,
+  const settingsOf = state => ({ ...jumpTimingOf(state), mode: jump(state) ? 'jump' : 'classic', edition: editionOf(state), speed: state.speed, category: state.category,
     customMinSeconds: state.customMinSeconds, customMaxSeconds: state.customMaxSeconds, topicMinutes: state.topicMinutes,
     mainMinutes: validMainMinutes(state.mainMinutes) ? state.mainMinutes : config.jump.mainMinutes.default });
   function settingsFrom(state, input) {
     const saved = settingsOf(state), pick = key => input[key] === undefined ? saved[key] : input[key];
-    const next = { speed: input.speed ?? saved.speed, category: input.category ?? saved.category,
+    const next = { edition: input.edition ?? saved.edition, speed: input.speed ?? saved.speed, category: input.category ?? saved.category,
       customMinSeconds: pick('customMinSeconds'), customMaxSeconds: pick('customMaxSeconds'),
       topicMinutes: pick('topicMinutes'), mainMinutes: pick('mainMinutes'),
       firstCutMinSeconds: pick('firstCutMinSeconds'), firstCutMaxSeconds: pick('firstCutMaxSeconds'), cutIntervalMinSeconds: pick('cutIntervalMinSeconds'), cutIntervalMaxSeconds: pick('cutIntervalMaxSeconds') };
-    return validSpeed(next.speed) && topics.categories.includes(next.category) && validTiming(next.customMinSeconds, next.customMaxSeconds) &&
+    return validEdition(next.edition) && validSpeed(next.speed) && topics.categories.includes(next.category) && validTiming(next.customMinSeconds, next.customMaxSeconds) &&
       validTopicMinutes(next.topicMinutes) && validMainMinutes(next.mainMinutes) && validJumpTiming(next) ? next : null;
   }
   // The two pools suit different play, so a new mode always opens its own topic.
   // Nothing of the old mode keeps running: no deadline, interruption or paused turn.
+  // A new edition (classic / Halloween) also has its own pools and opens a new topic.
   function switchMode(state, input, now, rng) {
     const options = settingsFrom(state, input);
+    const mode = input.mode ?? (jump(state) ? 'jump' : 'classic');
     if (state.phase !== 'setup') return 'not_available';
-    if (!validMode(input.mode) || !options) return 'invalid_options';
-    Object.assign(state, options, { mode: input.mode });
+    if (!validMode(mode) || !options) return 'invalid_options';
+    Object.assign(state, options, { mode });
     state.nextSpeaker = null; state.interrupter = null; state.cutEvent = null; state.roundEnd = null; state.lastStretch = false;
     state.pause = null; state.pauseReason = ''; state.pendingDurationMs = null; state.speakingDurationMs = null;
     startRound(state, now, rng);
@@ -515,16 +535,16 @@ var CUT_ENGINE = (() => {
     state.turnId++; state.lastChangeAt = now;
     return state;
   }
-  function create({ id, roster, speed = 'normal', category = 'mixed',
+  function create({ id, roster, speed = 'normal', category = 'mixed', edition = 'classic',
     customMinSeconds = config.customTiming.defaultMinSeconds, customMaxSeconds = config.customTiming.defaultMaxSeconds,
     topicMinutes = config.topicTiming.defaultMinutes, mode = 'classic', mainMinutes = config.jump.mainMinutes.default,
     firstCutMinSeconds = jumpTimingDefaults.firstCutMinSeconds, firstCutMaxSeconds = jumpTimingDefaults.firstCutMaxSeconds, cutIntervalMinSeconds = jumpTimingDefaults.cutIntervalMinSeconds, cutIntervalMaxSeconds = jumpTimingDefaults.cutIntervalMaxSeconds, now, seed } = {}) {
     if (!id || !Number.isFinite(now) || !Array.isArray(roster) || roster.length < config.minPlayers || roster.length > config.maxPlayers) throw new Error('invalid_setup');
     if (roster.some(player => !player || !Number.isInteger(player.playerNum) || player.playerNum < 1) || new Set(roster.map(player => player.playerNum)).size !== roster.length) throw new Error('invalid_roster');
     if (!validSpeed(speed) || !topics.categories.includes(category) || !validTiming(customMinSeconds, customMaxSeconds) || !validTopicMinutes(topicMinutes)) throw new Error('invalid_options');
-    if (!validMode(mode) || !validMainMinutes(mainMinutes) || !validJumpTiming({ firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds })) throw new Error('invalid_options');
+    if (!validEdition(edition) || !validMode(mode) || !validMainMinutes(mainMinutes) || !validJumpTiming({ firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds })) throw new Error('invalid_options');
     const state = {
-      version: 1, rulesVersion: 2, sessionId: String(id), turnId: 0, mode,
+      version: 1, rulesVersion: 2, sessionId: String(id), turnId: 0, mode, edition,
       speed, category, customMinSeconds, customMaxSeconds, topicMinutes, mainMinutes, firstCutMinSeconds, firstCutMaxSeconds, cutIntervalMinSeconds, cutIntervalMaxSeconds,
       // Mode 2 keeps its own clock, topic history and fairness ledgers.
       mainClock: null, mainExtraMs: 0, interrupter: null, roundEnd: null, lastStretch: false, jumpTopicHistory: [],
@@ -577,7 +597,8 @@ var CUT_ENGINE = (() => {
     if (!host && !sharedManager && !selfReturn && !finishing && !extending && (input.type !== 'begin' || !isActive(state, actor))) error = 'not_available';
     else if (input.turnId !== state.turnId) error = 'stale_turn';
     else if (!Number.isFinite(now) || now < state.lastChangeAt) error = 'invalid_time';
-    else if (input.type === 'configure' && input.mode != null && input.mode !== (jump(state) ? 'jump' : 'classic')) error = switchMode(state, input, now, rng);
+    else if (input.type === 'configure' && ((input.mode != null && input.mode !== (jump(state) ? 'jump' : 'classic')) ||
+      (input.edition != null && input.edition !== editionOf(state)))) error = switchMode(state, input, now, rng);
     else if (jump(state)) error = applyJump(state, input, now, rng, current);
     else switch (input.type) {
       case 'begin':
@@ -674,7 +695,7 @@ var CUT_ENGINE = (() => {
         else {
           // Keep the sealed room session and dedup ledger, but advance its fence.
           // Old timers and competing pre-restart commands cannot affect the new game.
-          const restarted = create({ id: state.sessionId, roster: state.roster,
+          const restarted = create({ id: state.sessionId, roster: state.roster, edition: editionOf(state),
             speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds,
             customMaxSeconds: state.customMaxSeconds, topicMinutes: state.topicMinutes,
             ...jumpTimingOf(state), mainMinutes: settingsOf(state).mainMinutes, now, seed: input.seed });
@@ -764,6 +785,7 @@ var CUT_ENGINE = (() => {
     const cut = {
       version: 1, rulesVersion: state.rulesVersion || 1, sessionId: state.sessionId, turnId: state.turnId,
       speed: state.speed, category: state.category, phase: state.phase,
+      edition: editionOf(state), editions: EDITIONS.slice(),
       customMinSeconds: state.customMinSeconds ?? config.customTiming.defaultMinSeconds,
       customMaxSeconds: state.customMaxSeconds ?? config.customTiming.defaultMaxSeconds,
       topicMinutes: validTopicMinutes(state.topicMinutes) ? state.topicMinutes : config.topicTiming.defaultMinutes,
@@ -802,6 +824,6 @@ var CUT_ENGINE = (() => {
     }
     return { game: 'cut', playerNum, name: mine?.name || null, cut };
   }
-  return { create, apply, membership, view, upgrade, list };
+  return { create, apply, membership, view, upgrade, list, EDITIONS };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CUT_ENGINE;

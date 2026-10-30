@@ -20,7 +20,7 @@ function load(lang = 'en') {
   return { C: get('CARD_TABLE_UI'), WL: get('WORD_LIMIT_UI'), WE: get('WORD_LIMIT_ENGINE'), RS: get('ROOM_SURVEY_UI'), RE: get('ROOM_SURVEY_ENGINE'), dicts };
 }
 const GAMES = [
-  { page: 'word-limit-theater.html', title: 'WORD LIMIT THEATER', prefix: 'wl', tag: 'wl-6', files: ['word-limit-content.js', 'word-limit-engine.js', 'word-limit-ui.js'], host: 'word-limit-host.js', css: 'word-limit-theater.css', mark: 'assets/word-limit-theater/mark.svg', ns: 'wordlimit' },
+  { page: 'word-limit-theater.html', title: 'WORD LIMIT THEATER', prefix: 'wl', tag: 'wl-7', files: ['word-limit-content.js', 'word-limit-engine.js', 'word-limit-ui.js'], host: 'word-limit-host.js', css: 'word-limit-theater.css', mark: 'assets/word-limit-theater/mark.svg', ns: 'wordlimit' },
   { page: 'room-survey.html', title: 'ROOM SURVEY', prefix: 'rs', tag: 'rs-3', files: ['room-survey-content.js', 'room-survey-engine.js', 'room-survey-ui.js'], host: 'room-survey-host.js', css: 'room-survey.css', mark: 'assets/room-survey/mark.svg', ns: 'roomsurvey' },
 ];
 const slug = title => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -51,10 +51,10 @@ test('each host page loads the shared table, then its own modules, in order, wit
 test('original player links follow either table: play.html loads the rules and the table client, never a host page', () => {
   const play = read('play.html');
   const ct = [...play.matchAll(/<script src="((?:card-table|word-limit|room-survey)[^"?]*\.js)\?v=([a-z0-9-]+)"><\/script>/g)].map(match => `${match[1]}?v=${match[2]}`);
-  assert.deepEqual(ct, ['card-table.js?v=ct-2', 'card-table-ui.js?v=ct-2', 'word-limit-content.js?v=wl-6', 'word-limit-engine.js?v=wl-6', 'word-limit-ui.js?v=wl-6',
+  assert.deepEqual(ct, ['card-table.js?v=ct-2', 'card-table-ui.js?v=ct-2', 'word-limit-content.js?v=wl-7', 'word-limit-engine.js?v=wl-7', 'word-limit-ui.js?v=wl-7',
     'room-survey-content.js?v=rs-3', 'room-survey-engine.js?v=rs-3', 'room-survey-ui.js?v=rs-3']);
   assert.ok(!/word-limit-host\.js|room-survey-host\.js/.test(play), 'cards never load a host page');
-  for (const css of ['card-table.css?v=ct-2', 'word-limit-theater.css?v=wl-6', 'room-survey.css?v=rs-3']) assert.ok(play.includes(`<link rel="stylesheet" href="${css}">`), css);
+  for (const css of ['card-table.css?v=ct-2', 'word-limit-theater.css?v=wl-7', 'room-survey.css?v=rs-3']) assert.ok(play.includes(`<link rel="stylesheet" href="${css}">`), css);
   assert.match(play, /wordlimit: \{ key: 'wl', page: 'wl-card-page', title: 'WORD LIMIT THEATER', ui: \(\) => WORD_LIMIT_UI \}/);
   assert.match(play, /roomsurvey: \{ key: 'rs', page: 'rs-card-page', title: 'ROOM SURVEY', ui: \(\) => ROOM_SURVEY_UI \}/);
   assert.match(play, /data\[spec\.key\]\?\.version === 1 && \/\^\[a-f0-9\]\{32\}\$\/\.test\(data\[spec\.key\]\.table \|\| ''\)/, 'only a well-formed table token is followed');

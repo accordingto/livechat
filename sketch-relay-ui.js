@@ -41,6 +41,7 @@ var SKETCH_RELAY_UI = (() => {
     changeIt: ['修改', 'Change it'], yourPage: ['你交出的這一頁', 'The page you handed in'],
     skippedTitle: ['⏭️ 這一頁跳過了', '⏭️ This page was skipped'], skippedHint: ['這本畫本會直接傳下去。等下一頁就好。', 'This sketchbook moves on without your page. Just wait for the next one.'],
     awayTitle: ['💤 你暫時離開中', '💤 You’re sitting out'], awayHint: ['回來後按「我回來了」，從下一頁開始又會輪到你。', 'Tap “I’m back” to get pages again from the next one.'],
+    nextRoundTitle: ['⏳ 下一輪再加入', '⏳ You join next round'], nextRoundHint: ['這一輪開始畫的時候你不在，所以畫本只在正在玩的人之間傳。下一輪就會發給你。', 'You weren’t playing when the drawing started, so the sketchbooks only pass between the players in this round. You get one next round.'],
     imBack: ['我回來了', 'I’m back'], stepAway: ['💤 暫時離開', '💤 Sit out'], stepAwayConfirm: ['暫時離開？輪到你的頁會被跳過。', 'Sit out? Your pages will be skipped until you come back.'],
     timeUp: ['時間到！交出中…', 'Time’s up! Handing in…'], seconds: ['{n} 秒', '{n}s'], noTimer: ['不計時', 'No timer'],
     pageOf: ['第 {n} / {total} 頁', 'Page {n} of {total}'], bookOf: ['{name} 的畫本', '{name}’s sketchbook'],
@@ -53,7 +54,7 @@ var SKETCH_RELAY_UI = (() => {
     colorNames: ['黑,紅,藍,綠,橘,紫,咖啡', 'black,red,blue,green,orange,purple,brown'],
     // statuses
     st_choosing: ['看單字中', 'Reading'], st_ready: ['準備好', 'Ready'], st_drawing: ['畫圖中', 'Drawing'], st_guessing: ['猜題中', 'Guessing'],
-    st_done: ['完成', 'Done'], st_skipped: ['跳過', 'Skipped'], st_away: ['暫離', 'Sitting out'], st_idle: ['', ''],
+    st_done: ['完成', 'Done'], st_skipped: ['跳過', 'Skipped'], st_away: ['暫離', 'Sitting out'], st_nextRound: ['下一輪加入', 'Joins next round'], st_idle: ['', ''],
     players: ['玩家', 'Players'],
     // reveal
     revealKicker: ['揭曉時間', 'REVEAL TIME'], revealTitle: ['📖 {name} 的畫本', '📖 {name}’s sketchbook'],
@@ -141,7 +142,7 @@ var SKETCH_RELAY_UI = (() => {
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const list = value => Array.isArray(value) ? value.filter(v => v != null) : Object.values(value || {});
   const nameOf = (relay, num) => list(relay?.roster).find(p => Number(p.playerNum) === Number(num))?.name || t('player', { n: num });
-  const STATUS_ICON = { choosing: '👀', ready: '✅', drawing: '✏️', guessing: '💭', done: '✅', skipped: '⏭️', away: '💤', idle: '' };
+  const STATUS_ICON = { choosing: '👀', ready: '✅', drawing: '✏️', guessing: '💭', done: '✅', skipped: '⏭️', away: '💤', nextRound: '⏳', idle: '' };
   const uid = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'sr-' + Date.now() + '-' + Math.random().toString(36).slice(2);
 
   function confirmAction(message) {
@@ -224,7 +225,10 @@ var SKETCH_RELAY_UI = (() => {
     return `${title ? `<p class="sr-kicker sr-roster-title">${esc(t('players'))}</p>` : ''}<ul class="sr-chips">${rows}</ul>`;
   }
   function passOrderHTML(relay) {
-    const names = list(relay.roster).map(p => `<span class="sr-pass-name${p.active === false ? ' is-away' : ''}">${esc(p.name)}</span>`);
+    // Once drawing starts only the circle passes books.
+    const circle = Array.isArray(relay.circle) ? relay.circle.map(Number) : null;
+    const people = list(relay.roster).filter(p => !circle || circle.includes(Number(p.playerNum)));
+    const names = people.map(p => `<span class="sr-pass-name${p.active === false ? ' is-away' : ''}">${esc(p.name)}</span>`);
     return `<div class="sr-pass"><p class="sr-kicker">${esc(t('passOrder'))}</p><div class="sr-pass-row">${names.join('<span class="sr-pass-arrow" aria-hidden="true">→</span>')}<span class="sr-pass-arrow sr-pass-loop" aria-hidden="true">↩</span></div></div>`;
   }
   function waitingNames(relay) {
@@ -592,7 +596,7 @@ var SKETCH_RELAY_UI = (() => {
       // stage bar
       this.element.querySelector('[data-sr-stage]').innerHTML = this.stage();
       // task area, rebuilt only when what you are doing changes
-      const taskKey = JSON.stringify([lang(), relay.phase, relay.sessionId, relay.turnId, me.away, me.card, me.wordIndex, me.ready, me.swapsLeft, me.word,
+      const taskKey = JSON.stringify([lang(), relay.phase, relay.sessionId, relay.turnId, me.away, me.nextRound, me.card, me.wordIndex, me.ready, me.swapsLeft, me.word,
         task && [task.book, task.kind, task.submitted, task.skipped, task.prompt?.index], this.editing,
         relay.phase === 'reveal' ? relay.reveal : null, relay.phase === 'finished' ? [relay.scores, me.book] : null]);
       if (taskKey !== this.taskKey) { this.taskKey = taskKey; this.renderTask(); }
@@ -605,7 +609,8 @@ var SKETCH_RELAY_UI = (() => {
     stage() {
       const relay = this.relay(), me = relay.me || {}, task = this.task();
       const page = relay.phase === 'play' ? t('batonOf', { n: Number(relay.step) + 1, total: Number(relay.steps) }) : '';
-      if (me.away && ['word', 'play'].includes(relay.phase)) return stageHTML({ tone: 'idle', kicker: page || t('brand'), title: esc(t('awayTitle')), hint: t('awayHint') });
+      if (me.away && ['word', 'play'].includes(relay.phase)) return stageHTML({ tone: 'idle', kicker: page || t('brand'), title: esc(t('awayTitle')), hint: t(me.nextRound ? 'nextRoundHint' : 'awayHint') });
+      if (relay.phase === 'play' && me.nextRound) return stageHTML({ tone: 'idle', kicker: page, title: esc(t('nextRoundTitle')), hint: t('nextRoundHint') });
       if (relay.phase === 'word') return stageHTML({ tone: 'word', kicker: t('wordKicker'), title: esc(t('wordTitle')), hint: me.ready ? t('readyDone') : t('wordHint', { n: relay.die }), extra: `<div class="sr-stage-side">${dieFace(relay.die)}</div>` });
       if (relay.phase === 'play' && task) {
         const editing = this.editing === this.padKeyFor(task) || this.editing === 'guess:' + this.padKeyFor(task);
@@ -641,6 +646,10 @@ var SKETCH_RELAY_UI = (() => {
           `<li class="${i === me.wordIndex ? 'is-picked' : ''}"><span class="sr-num">${i + 1}</span><span class="sr-word">${esc(word)}</span>${i === me.wordIndex ? '<span class="sr-pick" aria-hidden="true">◀</span>' : ''}</li>`).join('')}</ol></div>
           <div class="sr-actions sr-actions-stack">${me.ready ? `<p class="sr-done-pill">${esc(t('readyDone'))}</p>` : `<button type="button" class="sr-button sr-primary sr-big" data-sr-action="ready">${esc(t('readyBtn'))}</button>`}
           ${me.swapsLeft > 0 ? `<button type="button" class="sr-link" data-sr-action="swapWord">${esc(t('swapBtn'))} <small>(${esc(t('swapsLeft', { n: me.swapsLeft }))})</small></button>` : ''}</div>`;
+        return;
+      }
+      if (relay.phase === 'play' && me.nextRound) {
+        box.innerHTML = `<div class="sr-panel sr-center"><p class="sr-big-emoji" aria-hidden="true">⏳</p>${progressHTML(relay)}</div>`;
         return;
       }
       if (relay.phase === 'play' && task) {

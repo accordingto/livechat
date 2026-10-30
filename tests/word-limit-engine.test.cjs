@@ -427,13 +427,19 @@ test('pause, swaps, reconnect and non-speaker changes retain the floor; sitting 
   assert.equal(E.view(JSON.parse(JSON.stringify(state)), next).wl.me.canLine, true, 'reconnect reads the saved floor');
 });
 
-test('short limits repeat, six is rare rather than required, and no new draw exceeds six', () => {
+test('limits follow a bell curve: three and four are common, one and six equally rare, no new draw exceeds six', () => {
+  assert.deepEqual([...E.CONFIG.dealWeights], [5, 13, 32, 32, 13, 5]);
   const random = E.rng(20261026), counts = Array(7).fill(0);
   for (let i = 0; i < 12000; i++) counts[E.drawLimits(1, random)[0]]++;
   assert.equal(counts[0], 0);
   assert.equal(counts.reduce((sum, n) => sum + n, 0), 12000);
-  assert.ok(counts[6] > 360 && counts[6] < 840, 'six is approximately 5%, not a mandatory seat');
-  for (let n = 1; n <= 5; n++) assert.ok(counts[n] > counts[6] * 2, `short limit ${n} is more common than six`);
+  const share = n => counts[n] / 12000;
+  assert.ok(share(6) > .03 && share(6) < .07, 'six is approximately 5%, not a mandatory seat');
+  assert.ok(share(1) > .03 && share(1) < .07, 'one word is as rare as six');
+  assert.ok(share(2) > .10 && share(2) < .16 && share(5) > .10 && share(5) < .16, 'two and five are occasional');
+  assert.ok(share(3) > .28 && share(4) > .28, 'three and four are the usual limits');
+  for (const n of [3, 4]) for (const m of [1, 2, 5, 6]) assert.ok(counts[n] > counts[m], `${n} is more common than ${m}`);
+  assert.ok(counts[2] > counts[1] * 1.8 && counts[5] > counts[6] * 1.8, 'the curve falls off towards both ends');
   let repeatedSmallCast = 0, noSix = 0;
   for (let i = 0; i < 200; i++) {
     let state = toScene(make(9));

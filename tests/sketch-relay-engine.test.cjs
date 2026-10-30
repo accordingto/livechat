@@ -490,3 +490,96 @@ test('word list stays simple, unique and printable', () => {
     assert.ok(word.length <= 28, word);
   }
 });
+
+test('empty or sitting-out seats are left out of the circle, so every book still ends with a guess', () => {
+  for (const [n, away] of [[6, [6]], [5, [5]], [9, [7, 8, 9]], [8, [8]], [9, [2, 5]]]) {
+    let s = game(n);
+    for (const num of away) s = act(s, 0, 'away', { playerNum: num, away: true });
+    s = readyAll(s);
+    assert.equal(s.phase, 'play', `${n} seats, away ${away}`);
+    const playing = n - away.length;
+    assert.deepEqual(s.circle, roster(n).map(p => p.playerNum).filter(num => !away.includes(num)));
+    assert.equal(s.books.length, playing, 'only players in the circle own a sketchbook');
+    assert.equal(s.offset, playing % 2); assert.equal(s.steps, playing - playing % 2);
+    // Absent seats get no task; the next real player is who you pass to.
+    for (const num of away) {
+      const me = E.view(s, num).relay.me;
+      assert.equal(me.task, undefined); assert.equal(me.away, true);
+      assert.equal(E.view(s, 0).relay.roster.find(p => p.playerNum === num).status, 'away');
+    }
+    const first = s.circle[0], second = s.circle[1];
+    assert.equal(E.view(s, first).relay.me.task.passTo, second);
+    assert.equal(E.view(s, s.circle[s.circle.length - 1]).relay.me.task.passTo, first);
+    const odd = playing % 2 === 1;
+    assert.equal(E.view(s, first).relay.me.task.own, !odd, odd ? 'odd circle passes the word first' : 'even circle draws its own word');
+    s = playAll(s);
+    assert.equal(s.phase, 'reveal');
+    for (const book of s.books) {
+      assert.ok(book.pages.every(p => !p.skipped), 'no skipped pages from empty seats');
+      assert.equal(book.pages.length, 1 + s.steps);
+      assert.equal(book.pages.at(-1).kind, 'guess', 'every book comes home with a guess');
+      assert.ok(book.pages.slice(1).every(p => p.by !== book.owner || !odd), 'odd circles never let owners draw their own word');
+    }
+  }
+});
+
+test('someone who comes back after drawing starts waits for the next round, then plays', () => {
+  let s = game(6);
+  s = act(s, 0, 'away', { playerNum: 6, away: true });
+  s = readyAll(s);
+  assert.equal(s.books.length, 5);
+  s = act(s, 6, 'away', { playerNum: 6, away: false });
+  assert.equal(s.replies[6].error, '');
+  const me = E.view(s, 6).relay;
+  assert.equal(me.me.nextRound, true); assert.equal(me.me.task, undefined);
+  assert.equal(me.roster.find(p => p.playerNum === 6).status, 'nextRound');
+  assert.deepEqual(me.circle, [1, 2, 3, 4, 5]);
+  // Nobody ever waits for the returning player during this round.
+  s = playAll(s);
+  assert.equal(s.phase, 'reveal');
+  assert.ok(s.books.every(b => b.owner !== 6 && b.pages.every(p => p.by !== 6)));
+  for (let b = 0; b < s.books.length; b++) {
+    if (!s.reveal.complete) s = act(s, 0, 'revealNext', { book: b, shown: s.reveal.shown, all: true });
+    s = act(s, 0, 'nextBook', { book: b });
+  }
+  assert.equal(s.phase, 'finished');
+  assert.ok(Object.hasOwn(s.result.totals, 6));
+  s = act(s, 0, 'nextRound');
+  assert.equal(s.circle, null); assert.equal(s.books.length, 6);
+  s = readyAll(s);
+  assert.deepEqual(s.circle, [1, 2, 3, 4, 5, 6]);
+  assert.equal(s.offset, 0); assert.equal(s.steps, 6);
+});
+
+test('a circle member cannot leave fewer than two players drawing and passing', () => {
+  let s = game(4);
+  s = act(s, 0, 'away', { playerNum: 4, away: true });
+  s = readyAll(s);
+  assert.equal(s.steps, 2, 'a circle of three passes the word first and has two pages');
+  s = act(s, 4, 'away', { playerNum: 4, away: false }); // back, but waits for next round
+  s = act(s, 0, 'away', { playerNum: 3, away: true });
+  assert.equal(s.replies[0].error, '');
+  s = act(s, 0, 'away', { playerNum: 2, away: true });
+  assert.equal(s.replies[0].error, 'not_enough_players', 'only two circle players are left');
+});
+
+test('games saved before the circle existed keep passing around every seat', () => {
+  let s = readyAll(game(5));
+  delete s.circle; // legacy save: steps/offset from the full roster, no circle
+  s.books.forEach(b => { assert.ok(b.pages.length === 1); });
+  assert.equal(E.holderOf(s, 0), 2); assert.equal(E.bookHeldBy(s, 1), 4);
+  s = playAll(s);
+  assert.equal(s.phase, 'reveal');
+  assert.ok(s.books.every(b => b.pages.at(-1).kind === 'guess'));
+});
+
+test('competitive matching also accepts a guess that names the secret word', () => {
+  let s = game(4, { scoring: 'competitive' });
+  const words = s.books.map(b => b.card[b.wordIndex]);
+  // Ben guesses something else; Dee, later in Amy's book, names Amy's secret word.
+  s = playAll(s, (task, num) => task.kind === 'sketch' ? { art: doodle(num) } : { text: num === 4 && task.book === 0 ? words[0] : `nope ${num} ${task.book}` });
+  s = act(s, 0, 'revealNext', { book: 0, shown: 1, all: true });
+  assert.equal(s.awards[0].matches[2], false);
+  assert.equal(s.awards[0].matches[4], true, 'a guess equal to the secret word is suggested as a match');
+  assert.equal(s.awards[0].final, true);
+});

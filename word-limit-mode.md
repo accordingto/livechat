@@ -46,13 +46,19 @@ card-table-mode.md).
   by the card page through `body.wl-card-page`).
 - `assets/word-limit-theater/` — Hub/header mark and self-hosted Latin subsets
   of Anton and Courier Prime with their SIL OFL licences.
-- Cache tag `wl-5` (game) and `ct-2` (shared table) in both entry pages.
+- Cache tag `wl-7` (game) and `ct-2` (shared table) in both entry pages.
 
 ## Limit draw policy
 
 `WORD_LIMIT_ENGINE.CONFIG.dealValues` is 1–6, with base weights
-`dealWeights = [22, 22, 20, 18, 13, 5]` respectively. Values 1–5 draw with
-replacement, so several players can hold the same short limit. A new cast or
+`dealWeights = [5, 13, 32, 32, 13, 5]` respectively (2026-10-31, wl-7): a bell
+curve centred on three and four words. Players found one- and two-word lines
+as hard to play well as very long ones, so one word is now as rare as six.
+The previous policy was `[22, 22, 20, 18, 13, 5]`, which made one and two the
+most common limits. Simulated across a first deal plus three swaps with the
+previous-limit exclusion, actors hold roughly 6% one, 15% two, 29% three,
+29% four, 15% five and 5–6% six (3–9 players). Values 1–5 draw with
+replacement, so several players can hold the same limit. A new cast or
 swap may contain no six and contains at most one six. Seat draw order is
 shuffled before weighting, so an earlier seat does not reserve that slot.
 The previous limit is excluded for each actor; remaining weights are

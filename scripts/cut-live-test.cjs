@@ -53,7 +53,7 @@ function database() {
 }
 function device(db, room) {
   const context = vm.createContext({ crypto: webcrypto, Date, console, setInterval, clearInterval });
-  for (const file of ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-engine.js', 'cut-sync.js']) vm.runInContext(fs.readFileSync(path.join(app, file), 'utf8'), context, { filename: file });
+  for (const file of ['cut-config.js', 'cut-random.js', 'cut-topics.js', 'cut-jump-topics.js', 'cut-halloween-topics.js', 'cut-engine.js', 'cut-sync.js']) vm.runInContext(fs.readFileSync(path.join(app, file), 'utf8'), context, { filename: file });
   const client = new context.CUT_SYNC.Host({ db, room, onChange: value => { client.state = clone(value); }, onStatus: value => { client.qaStatus = value; } });
   return client;
 }

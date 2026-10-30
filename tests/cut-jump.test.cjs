@@ -407,7 +407,10 @@ function hostDemo() {
     apply(state, input) { if (input.type !== 'tick') commands.push(input); return E.apply(state, input); } };
   vm.runInNewContext(fs.readFileSync(require.resolve('../cut-host.js'), 'utf8'), {
     CUT_UI: { ...UI, Sound: QuietSound }, CUT_ENGINE: engine, CUT_TOPICS: T, CUT_JUMP_TOPICS: J, CUT_CONFIG: C, CUT_SYNC: { uid: () => 'jump-host-' + ++serial },
-    I18N: { applyStatic() {}, onChange() {} }, document: { getElementById: element }, location: { search: '?demo=1' }, URLSearchParams,
+    CUT_HALLOWEEN_TOPICS: require('../cut-halloween-topics.js'),
+    CUT_HALLOWEEN_AUDIO: { Board: class { constructor() { this.ready = false; this.track = null; this.musicVolume = .35; this.effectsVolume = .8; this.autoScare = true; } unlock() { return Promise.resolve(false); } stopMusic() {} close() {} cut() { return false; } } },
+    I18N: { applyStatic() {}, onChange() {} }, location: { search: '?demo=1' }, URLSearchParams,
+    document: { getElementById: element, querySelectorAll: () => [], body: { classList: { toggle() {} } } },
     crypto: { getRandomValues: array => { array[0] = 2718 + serial; return array; } }, Date: class extends Date { static now() { return time; } },
     setInterval: fn => { interval = fn; return 1; }, clearInterval() {}, window: { addEventListener() {} } });
   const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };

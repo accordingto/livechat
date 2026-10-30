@@ -10,6 +10,11 @@
  * receives a drawing writes what they think it is. When every book is back
  * with its owner, the books are revealed one page at a time.
  *
+ * The circle is fixed when drawing starts: only the players who are playing
+ * at that moment own a sketchbook and receive pages, and the even/odd rule
+ * uses their number. Seats that were empty or sitting out join the next round,
+ * so a room with unused links still ends every book on a guess.
+ *
  * Absent players never get invented pages. A page can be skipped; the next
  * player simply responds to the last real page of that book, so drawings and
  * guesses keep alternating inside every book. */
@@ -81,7 +86,7 @@
     Object.assign(state, {
       phase: 'word', die, turnId: (state.turnId || 0) + 1, usedWords: used.slice(-400),
       books: state.roster.map((p, i) => ({ owner: p.playerNum, card: cards[i], wordIndex: die - 1, pages: [] })),
-      ready: {}, swaps: {}, offset, steps: n - offset, step: 0, submissions: {}, drafts: {},
+      ready: {}, swaps: {}, offset, steps: n - offset, step: 0, submissions: {}, drafts: {}, circle: null,
       stepStartedAt: null, deadline: null, paused: false, pausedAt: null,
       reveal: null, awards: {}, result: null, roundStartedAt: now,
     });
@@ -110,12 +115,17 @@
   const nameOf = (state, num) => player(state, num)?.name || `Player ${num}`;
   const isActive = (state, num) => player(state, num)?.active !== false;
   const activeNums = state => state.roster.filter(p => p.active !== false).map(p => p.playerNum);
+  // The players passing books this round, in seat order. Games saved before
+  // the circle existed used every roster seat.
+  const circleOf = state => Array.isArray(state.circle) && state.circle.length ? state.circle : state.roster.map(p => p.playerNum);
+  const inCircle = (state, num) => circleOf(state).includes(Number(num));
   // The book a seat is holding at a step, and the reverse.
-  const holderOf = (state, book, step = state.step) => state.roster[(book + step + state.offset) % state.roster.length].playerNum;
+  const holderOf = (state, book, step = state.step) => { const c = circleOf(state); return c[(book + step + state.offset) % c.length]; };
   function bookHeldBy(state, num, step = state.step) {
-    const i = seat(state, num), n = state.roster.length;
+    const c = circleOf(state), i = c.indexOf(Number(num)), n = c.length;
     return i < 0 ? -1 : ((i - step - state.offset) % n + n) % n;
   }
+  const nextInCircle = (state, num) => { const c = circleOf(state), i = c.indexOf(Number(num)); return i < 0 ? null : c[(i + 1) % c.length]; };
   const lastReal = (pages, before = pages.length) => {
     for (let i = before - 1; i >= 0; i--) if (!pages[i].skipped) return i;
     return -1;
@@ -163,6 +173,13 @@
     else beginStep(state, now);
   }
   function startPlay(state, now) {
+    // Fix the circle: everyone playing now owns a book; empty or sitting-out
+    // seats join next round. Even circles draw their own word first, odd
+    // circles pass it first, so every book comes home ending with a guess.
+    const circle = activeNums(state);
+    state.circle = circle;
+    state.books = state.books.filter(book => circle.includes(book.owner));
+    state.offset = circle.length % 2; state.steps = circle.length - state.offset;
     state.books.forEach(book => { book.pages = [{ kind: 'word', by: book.owner, text: book.card[book.wordIndex] }]; });
     state.phase = 'play'; state.step = 0; state.ready = {};
     beginStep(state, now);
@@ -183,7 +200,8 @@
     const pages = book.pages, last = finalGuess(pages);
     const awards = { sketch: null, guess: null, final: last > 0 && sameWords(pages[last].text, pages[0].text), matches: {} };
     if (state.settings.scoring === 'competitive') {
-      pages.forEach((page, i) => { if (page.kind === 'guess' && !page.skipped) awards.matches[i] = sameWords(page.text, sourceText(pages, i)); });
+      // A guess matches when it names what its artist drew or the secret word.
+      pages.forEach((page, i) => { if (page.kind === 'guess' && !page.skipped) awards.matches[i] = sameWords(page.text, sourceText(pages, i)) || sameWords(page.text, pages[0].text); });
     }
     state.awards[reveal.book] = awards;
   }
@@ -308,6 +326,7 @@
         if (!player(state, num) || typeof input.away !== 'boolean' || (actor !== 0 && actor !== num)) return 'not_available';
         if (isActive(state, num) !== away) return '';
         if (away && activeNums(state).length <= 2) return 'not_enough_players';
+        if (away && phase === 'play' && inCircle(state, num) && circleOf(state).filter(n => isActive(state, n)).length <= 2) return 'not_enough_players';
         player(state, num).active = !away;
         if (away && phase === 'word') { delete state.ready[num]; maybeStartPlay(state, now); }
         if (away && phase === 'play') {
@@ -426,7 +445,9 @@
     if (!isActive(state, num)) return 'away';
     if (state.phase === 'word') return state.ready[num] ? 'ready' : 'choosing';
     if (state.phase !== 'play') return 'idle';
-    const b = bookHeldBy(state, num), sub = state.submissions[b];
+    const b = bookHeldBy(state, num);
+    if (b < 0) return 'nextRound';
+    const sub = state.submissions[b];
     if (sub?.skipped) return 'skipped';
     if (sub) return 'done';
     return taskKind(state, b) === 'sketch' ? 'drawing' : 'guessing';
@@ -446,6 +467,7 @@
       pausedRemainingMs: state.paused && state.deadline > 0 ? Math.max(0, state.deadline - (Number.isFinite(state.pausedAt) ? state.pausedAt : now)) : null,
       graceMs: AUTO_SKIP_GRACE_MS,
     };
+    if (['play', 'reveal', 'finished'].includes(state.phase)) relay.circle = circleOf(state).slice();
     if (state.phase === 'play') {
       const counts = { sketch: 0, guess: 0 }; let done = 0;
       state.books.forEach((_, b) => {
@@ -472,10 +494,11 @@
       const mine = { away: me.active === false };
       if (state.phase === 'word') Object.assign(mine, { card: own.card.slice(), wordIndex: own.wordIndex, ready: state.ready[actor] === true, swapsLeft: MAX_SWAPS - (Number(state.swaps[actor]) || 0) });
       if (own && state.phase !== 'word') mine.word = own.pages[0]?.text || own.card[own.wordIndex];
-      if (state.phase === 'play') {
+      if (state.phase === 'play' && !inCircle(state, actor)) mine.nextRound = true;
+      else if (state.phase === 'play') {
         const b = bookHeldBy(state, actor), book = state.books[b], sub = state.submissions[b];
         const last = lastReal(book.pages), prompt = book.pages[last];
-        const passTo = state.roster[(seat(state, actor) + 1) % state.roster.length].playerNum;
+        const passTo = nextInCircle(state, actor);
         mine.task = { book: b, owner: book.owner, ownerName: nameOf(state, book.owner), own: book.owner === actor,
           kind: taskKind(state, b), page: book.pages.length, passTo, passToName: nameOf(state, passTo),
           prompt: { ...pageView(state, prompt, last), skippedBefore: last < book.pages.length - 1 } };
@@ -494,6 +517,6 @@
 
   return Object.freeze({
     MIN_PLAYERS, MAX_PLAYERS, CARD_SIZE, MAX_SWAPS, DECKS, TIMERS, SCORING, GUESS_MAX, AUTO_SKIP_GRACE_MS,
-    create, apply, view, normalize, sameWords, roundScores, holderOf, bookHeldBy, taskKind, sourceText, finalGuess, validSettings, cleanText,
+    create, apply, view, normalize, sameWords, roundScores, holderOf, bookHeldBy, circleOf, taskKind, sourceText, finalGuess, validSettings, cleanText,
   });
 });

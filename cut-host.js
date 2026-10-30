@@ -9,6 +9,9 @@
   let startingSession = null, editing = false, animatedCut = '', customError = false, topicError = false, jumpError = false, endTarget = null;
   // Mode 1 (classic) is the original takeover game; Mode 2 (jump) keeps one Main Speaker.
   let mode = 'classic';
+  // Classic or 🎃 Halloween: its own topic pools, look and host sound board.
+  let edition = new URLSearchParams(location.search).get('edition') === 'halloween' ? 'halloween' : 'classic';
+  const editionOf = current => current?.edition === 'halloween' ? 'halloween' : 'classic';
   const jumpTimingIds = ["first-min","first-max","interval-min","interval-max"];
   const jumpTimingKeys = CUT_UI.jumpTimingKeys;
   const jumpTimingOf = current => Object.fromEntries(jumpTimingKeys.map(key => [key, current?.[key] ?? CUT_UI.jumpTimingDefaults[key]]));
@@ -16,7 +19,7 @@
   const mainSetting = CUT_CONFIG.jump.mainMinutes;
   const modeOf = current => current?.mode === 'jump' ? 'jump' : 'classic';
   const mainMinutesOf = value => mainSetting.options.includes(Number(value)) ? Number(value) : mainSetting.default;
-  const libraryPool = () => byId('library-mode').value === 'jump' ? CUT_JUMP_TOPICS : CUT_TOPICS;
+  const libraryPool = () => ({ jump: CUT_JUMP_TOPICS, 'halloween-take': CUT_HALLOWEEN_TOPICS.take, 'halloween-jump': CUT_HALLOWEEN_TOPICS.jump })[byId('library-mode').value] || CUT_TOPICS;
   const seed = () => crypto.getRandomValues(new Uint32Array(1))[0];
   const uid = () => CUT_SYNC.uid();
   const now = () => sync ? sync.now() : Date.now();
@@ -24,6 +27,12 @@
   const canStart = () => !closed && (demo || !!(sync?.connected && (sync?.own || sync?.doc?.executor?.v === 1)));
   const canControl = () => canStart() && !sync?.suspended;
   const sound = new CUT_UI.Sound(paintSound);
+  const board = new CUT_HALLOWEEN_AUDIO.Board({ onChange: () => paintBoard() });
+  // The edition on screen: the one being chosen in setup, otherwise the game's.
+  const shownEdition = () => (!state || editing || status === 'switched') ? edition : editionOf(state);
+  // In the Halloween edition the sound board takes over each CUT moment.
+  sound.onCut = () => shownEdition() === 'halloween' && board.ready ? board.cut() : false;
+  const unlockAudio = () => { if (sound.enabled) sound.unlock(); if (shownEdition() === 'halloween') board.unlock(); };
   const view = () => state ? CUT_ENGINE.view(state, 0, now()).cut : null;
   const knownError = message => message === 'invalid_setup' ? 'invalid_roster' : message === 'invalid_player' ? 'not_available'
     : ['offline', 'other_host', 'not_enough_players', 'invalid_roster', 'invalid_options', 'not_available', 'stale_turn'].includes(message) ? message : 'error';
@@ -33,6 +42,35 @@
     byId('sound').textContent = t(waiting ? 'enableSound' : sound.enabled ? 'soundOn' : 'soundOff');
     byId('sound').setAttribute('aria-pressed', String(sound.enabled));
     byId('sound-status').textContent = sound.unsupported ? t('soundUnsupported') : waiting ? t('soundBlocked') : '';
+  }
+  function paintBoard() {
+    const show = shownEdition() === 'halloween';
+    document.body.classList.toggle('cut-hw-page', show);
+    byId('hw-tag').hidden = !show;
+    byId('hw-board').hidden = !show;
+    if (!show) { if (board.track) board.stopMusic(); return; }
+    const waiting = !board.unsupported && !board.ready;
+    byId('hw-unlock').hidden = !waiting;
+    byId('hw-status').textContent = board.unsupported ? t('hwUnsupported') : '';
+    for (const button of document.querySelectorAll('[data-hw-track]')) {
+      button.setAttribute('aria-pressed', String(board.track === button.dataset.hwTrack));
+      button.disabled = board.unsupported;
+    }
+    byId('hw-stop').disabled = !board.track;
+    for (const button of document.querySelectorAll('[data-hw-fx]')) button.disabled = board.unsupported;
+    byId('hw-music-volume').value = String(Math.round(board.musicVolume * 100));
+    byId('hw-effects-volume').value = String(Math.round(board.effectsVolume * 100));
+    byId('hw-auto').checked = board.autoScare;
+  }
+  function renderEdition() {
+    const halloween = edition === 'halloween';
+    byId('edition-classic').setAttribute('aria-pressed', String(!halloween));
+    byId('edition-halloween').setAttribute('aria-pressed', String(halloween));
+    for (const id of ['edition-classic', 'edition-halloween']) byId(id).disabled = busy;
+    byId('edition-switch-hint').hidden = !(editing && state && edition !== editionOf(state));
+    byId('category-field').hidden = halloween;
+    byId('category-note').hidden = !halloween;
+    paintBoard();
   }
   function labels() {
     I18N.applyStatic(document);
@@ -98,6 +136,7 @@
     byId('main-minutes').value = String(mainMinutesOf(current.mainMinutes));
     const timing = jumpTimingOf(current);
     jumpTimingKeys.forEach((key, index) => { byId(jumpTimingIds[index]).value = String(timing[key]); });
+    edition = editionOf(current);
     customError = false; topicError = false; jumpError = false;
   }
   function setupOptions() {
@@ -113,7 +152,7 @@
       jumpError = false;
       // Mode 1's fields are hidden here: keep their last good values rather than block on them.
       topicError = false; customError = false;
-      return { ...(jumpValid ? timing : jumpTimingOf(state)), mode, mainMinutes, speed, category: byId('category').value,
+      return { ...(jumpValid ? timing : jumpTimingOf(state)), mode, edition, mainMinutes, speed, category: byId('category').value,
         topicMinutes: CUT_UI.validTopicMinutes(topicMinutes) ? topicMinutes : state?.topicMinutes ?? 10,
         customMinSeconds: valid ? min : state?.customMinSeconds ?? 15,
         customMaxSeconds: valid ? max : state?.customMaxSeconds ?? 25 };
@@ -126,7 +165,7 @@
       customError = true; render(); byId(!minValid || min > max ? 'custom-min' : 'custom-max').focus(); return null;
     }
     customError = false;
-    return { ...(jumpValid ? timing : jumpTimingOf(state)), mode, mainMinutes, speed, category: byId('category').value, topicMinutes,
+    return { ...(jumpValid ? timing : jumpTimingOf(state)), mode, edition, mainMinutes, speed, category: byId('category').value, topicMinutes,
       customMinSeconds: valid ? min : state?.customMinSeconds ?? 15,
       customMaxSeconds: valid ? max : state?.customMaxSeconds ?? 25 };
   }
@@ -157,7 +196,7 @@
     byId('setup-close').hidden = !editing;
     byId('setup-close').disabled = busy || !canControl();
     byId('settings-hint').hidden = !editing;
-    renderCustom(); renderTopicSettings(); renderMode();
+    renderCustom(); renderTopicSettings(); renderMode(); renderEdition();
     if (endTarget && (!sameEndTarget(cut) || !cut.canEndTopic || switched)) closeEndDialog();
     byId('end-accept').disabled = busy || !canControl() || !cut?.canEndTopic;
     byId('error').textContent = error ? t(error) : '';
@@ -229,10 +268,11 @@
   async function start(restart = false) {
     const allowed = () => editing && !restart ? canControl() : canStart();
     if (busy || !allowed()) return;
-    const options = restart && state ? { ...jumpTimingOf(state), mode: modeOf(state), mainMinutes: mainMinutesOf(state.mainMinutes), speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
+    const options = restart && state ? { ...jumpTimingOf(state), mode: modeOf(state), edition: editionOf(state), mainMinutes: mainMinutesOf(state.mainMinutes), speed: state.speed, category: state.category, customMinSeconds: state.customMinSeconds ?? 15, customMaxSeconds: state.customMaxSeconds ?? 25, topicMinutes: state.topicMinutes ?? 10 } : setupOptions();
     if (!options) return;
     // This call runs inside the Show-topic click gesture, allowing Web Audio on mobile.
     const audioReady = sound.enabled ? sound.unlock() : Promise.resolve(false);
+    if (options.edition === 'halloween') board.unlock();
     if (editing && !restart) {
       const saved = await command('configure', options);
       if (saved) { editing = false; render(); }
@@ -259,8 +299,25 @@
     }
   }
   async function closeSettings() {
-    if (await command('cancelSettings')) { editing = false; mode = modeOf(state); render(); }
+    if (await command('cancelSettings')) { editing = false; mode = modeOf(state); edition = editionOf(state); render(); }
   }
+  for (const id of ['edition-classic', 'edition-halloween']) byId(id).addEventListener('click', () => {
+    if (busy) return;
+    edition = id === 'edition-halloween' ? 'halloween' : 'classic';
+    if (edition === 'halloween') board.unlock();
+    render();
+  });
+  byId('hw-unlock').addEventListener('click', () => board.unlock());
+  for (const button of document.querySelectorAll('[data-hw-track]')) button.addEventListener('click', async () => {
+    if (await board.unlock()) board.toggleMusic(button.dataset.hwTrack);
+  });
+  byId('hw-stop').addEventListener('click', () => board.stopMusic());
+  for (const button of document.querySelectorAll('[data-hw-fx]')) button.addEventListener('click', async () => {
+    if (await board.unlock()) board.play(button.dataset.hwFx);
+  });
+  byId('hw-music-volume').addEventListener('input', event => board.setMusicVolume(Number(event.target.value) / 100));
+  byId('hw-effects-volume').addEventListener('input', event => board.setEffectsVolume(Number(event.target.value) / 100));
+  byId('hw-auto').addEventListener('change', event => board.setAutoScare(event.target.checked));
   for (const id of ['mode-classic', 'mode-jump']) byId(id).addEventListener('click', () => {
     if (busy) return;
     mode = id === 'mode-jump' ? 'jump' : 'classic'; customError = false; topicError = false; render();
@@ -280,14 +337,14 @@
   byId('end-confirm').addEventListener('click', event => { if (event.target === byId('end-confirm')) closeEndDialog(); });
   byId('setup-close').addEventListener('click', closeSettings);
   byId('settings-open').addEventListener('click', openSettings);
-  byId('begin').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command('begin'); });
+  byId('begin').addEventListener('click', () => { unlockAudio(); command('begin'); });
   byId('scene').addEventListener('click', event => {
-    if (event.target.closest('[data-cut-action="begin"]')) { if (sound.enabled) sound.unlock(); command('begin'); }
+    if (event.target.closest('[data-cut-action="begin"]')) { unlockAudio(); command('begin'); }
     for (const type of ['done', 'skip', 'extend']) if (event.target.closest('[data-cut-action="' + type + '"]')) command(type);
   });
-  for (const type of ['done', 'skip', 'extend']) byId(type).addEventListener('click', () => { if (sound.enabled) sound.unlock(); command(type); });
-  byId('pause').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command(state?.phase === 'paused' ? 'resume' : 'pause'); });
-  byId('next').addEventListener('click', () => { if (sound.enabled) sound.unlock(); command('next'); });
+  for (const type of ['done', 'skip', 'extend']) byId(type).addEventListener('click', () => { unlockAudio(); command(type); });
+  byId('pause').addEventListener('click', () => { unlockAudio(); command(state?.phase === 'paused' ? 'resume' : 'pause'); });
+  byId('next').addEventListener('click', () => { unlockAudio(); command('next'); });
   byId('manage-open').addEventListener('click', () => { if (state) byId('manage').showModal(); });
   byId('restart').addEventListener('click', () => start(true));
   byId('stop').addEventListener('click', async () => { await command('stop'); byId('manage').close(); });
@@ -320,7 +377,7 @@
             restoreOptions(next);
           }
           // Outside settings, the mode cards and rules follow the game in play.
-          if (next && next.phase !== 'setup') mode = modeOf(next);
+          if (next && next.phase !== 'setup') { mode = modeOf(next); edition = editionOf(next); }
           editing = next?.phase === 'setup'; state = next; render();
         },
         onStatus: next => { status = next; if (next === 'switched') { editing = false; sound.silence(); sceneKey = ''; byId('manage').close(); } render(); },
@@ -342,7 +399,7 @@
     paint();
   }, 100);
   function close() {
-    closed = true; clearInterval(timer); sync?.close(); sound.close(); closeEndDialog();
+    closed = true; clearInterval(timer); sync?.close(); sound.close(); board.close(); closeEndDialog();
   }
   window.addEventListener('storage', event => {
     if (!demo && event.key === 'room-last-session' && event.newValue !== roomCode) {

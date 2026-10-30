@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const base = 'https://livechat-two-alpha.vercel.app/';
-const release = process.argv[2] || 'relay-2';
+const release = process.argv[2] || 'relay-3';
 const assets = ['index.html', 'play.html', 'sketch-relay.html', 'sketch-relay.css',
   'sketch-relay-art.js', 'sketch-relay-engine.js', 'sketch-relay-words.js',
   'sketch-relay-sync.js', 'sketch-relay-ui.js', 'sketch-relay-host.js'];

@@ -14,10 +14,15 @@ the same rules, and the Hub supports up to 9).
    not know their word may move to the next word on their card (up to five
    times) before tapping *I'm ready*. When everyone is ready — or the host
    taps *Start without waiting* — the first page begins.
-2. **Even number of players:** each player first draws their own word.
-   **Odd number:** each word goes straight to the next player, who draws it.
-   This is the published rule, so every sketchbook comes home ending with a
-   guess.
+2. **The circle is fixed when drawing starts.** Only the players who are
+   playing at that moment (not sitting out) own a sketchbook and pass books.
+   Empty Hub seats or players who come back later wait and join the next
+   round (their card says so). **Even circle:** each player first draws their
+   own word. **Odd circle:** each word goes straight to the next player, who
+   draws it. This is the published rule, so every sketchbook comes home ending
+   with a guess — including rooms with unused links. (Before relay-3 the even/
+   odd rule used every Hub seat and sent books through empty seats as skipped
+   pages, so one missing player made every book end on a drawing.)
 3. **Pass it on.** After every page all sketchbooks move one seat onward
    together (roster order, shown on the shared screen). Receive a word or a
    guess → draw it. Receive a drawing → write what it shows (1–40 characters,
@@ -34,9 +39,10 @@ the same rules, and the Hub supports up to 9).
    - *Friendly*: for each book the owner picks a favourite drawing
      and a favourite guess (never their own page); each earns its maker 1
      point. If the last guess matches the secret word, the owner gets 1 point.
-   - *Competitive*: every guess that matches what its artist was drawing earns
-     the guesser 1 point and that artist 1 point; a last guess that matches the
-     secret word earns the owner 1 point.
+   - *Competitive*: every guess that matches what its artist was drawing (the
+     page before the drawing) or the book's secret word earns the guesser 1
+     point and that artist 1 point; a last guess that matches the secret word
+     earns the owner 1 point.
    - *Just for laughs* (default): no points.
    A book ending with a drawing after skipped pages has no final guess bonus;
    an earlier guess is never treated as its ending. Matches are pre-filled with
@@ -53,7 +59,9 @@ timer, about 60 seconds.
 
 ## Absent players
 
-Nobody's page is invented. The host can mark a player as sitting out (and a
+Nobody's page is invented. Players missing when drawing starts are simply not
+in this round's circle. The rest of this section is about someone in the
+circle who leaves during the round. The host can mark a player as sitting out (and a
 player can do it from their own card); their current page and future pages are
 skipped until they return. A skipped page is transparent: the next player
 answers the last *real* page of that book, so drawings and guesses keep
@@ -95,7 +103,7 @@ drawing time is preserved on resume.
 | `sketch-relay-engine.js` | Pure rules: create/apply/view, chain math, skips, timer grace, reveal, scoring, projections. |
 | `sketch-relay-sync.js` | Trusted-host Firebase transport (below). |
 | `sketch-relay-ui.js` | Bilingual text, drawing pad, renderers and the player-card controller. |
-| `sketch-relay-host.js`, `sketch-relay.html`, `sketch-relay.css` | Host page, demo and styles (`relay-2` asset version). |
+| `sketch-relay-host.js`, `sketch-relay.html`, `sketch-relay.css` | Host page, demo and styles (`relay-3` asset version). |
 | `tests/sketch-relay-*.test.cjs` | Engine, transport and UI tests (`npm run test:sketch-relay`). |
 | `scripts/sketch-relay-verify-release.cjs` | Read-only production asset hash checks; never touches room data. |
 
@@ -139,6 +147,28 @@ lease to expire if the closed tab could not release it).
 
 Rule sources: [The Op 2025 official rules](https://cdn.shopify.com/s/files/1/0611/3958/3198/files/Reduced_Telestrations_12P_Rules_2025.pdf?v=1750189801)
 and [2Plus Taiwan rules](https://2plus.com.tw/product/q013-telestration/).
+
+## Relay-3 rules audit (2026-10-31)
+
+Compared again with the publisher rules (RulesPal copy of the rulebook,
+officialgamerules.org summary, Mirror Media's 傳情畫意 article). The word card,
+shared die, simultaneous passing, 60-second sketch timer with untimed guesses,
+book-home ending and owner reveal already matched. Two deviations were fixed:
+
+- The even/odd parity and the pass order used every Hub seat. A room with nine
+  links but six players, or anyone sitting out at the start, sent each book
+  through the empty seats as skipped pages: books ended on a drawing, empty
+  seats' books were played too, and rounds had extra steps. Now `startPlay`
+  fixes `state.circle` (active seats in roster order), keeps only their books
+  and computes `offset`/`steps` from the circle. `holderOf`, `bookHeldBy` and
+  the pass-to name use it. Non-circle seats get `me.nextRound` and status
+  `nextRound`; the shared pass order lists only the circle. Saved games with no
+  circle fall back to every seat, exactly as before.
+- Competitive matching now also suggests a match when a guess names the book's
+  secret word, as the published competitive rule does.
+
+The word swap (up to five moves along your card) is a Hub house rule for words
+a player does not know; the printed game has no swap.
 
 ## Relay-2 validation (2026-10-11)
 

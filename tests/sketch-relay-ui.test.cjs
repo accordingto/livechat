@@ -82,7 +82,7 @@ test('drawings render as safe SVG and blank pages are labelled', () => {
 
 test('play.html and the host page load Sketch Relay and guard every card request', () => {
   const play = fs.readFileSync(path.join(root, 'play.html'), 'utf8');
-  assert.match(play, /sketch-relay-art\.js\?v=relay-2/); assert.match(play, /sketch-relay-ui\.js\?v=relay-2/); assert.match(play, /sketch-relay\.css\?v=relay-2/);
+  assert.match(play, /sketch-relay-art\.js\?v=relay-3/); assert.match(play, /sketch-relay-ui\.js\?v=relay-3/); assert.match(play, /sketch-relay\.css\?v=relay-3/);
   assert.match(play, /new SKETCH_RELAY_UI\.Card/); assert.match(play, /relayCard\.destroy\(\)/);
   assert.match(play, /current\.relay\?\.sessionId !== command\.sessionId/);
   assert.match(play, /current\.relay\.turnId !== command\.turnId/);

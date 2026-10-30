@@ -9,7 +9,7 @@ var WORD_LIMIT_UI = (() => {
   const dict = {
     brand: ['WORD LIMIT THEATER', 'WORD LIMIT THEATER'],
     subtitle: ['輪流說一句，用你的字數接住這場戲。', 'One line each. Keep the scene going.'],
-    pitch: ['看主題、抽字數，照順序輪流自由接一句。角色只是可忽略的靈感。1 到 5 字比較常見，可以和別人相同，6 字偶爾出現。輪到你時，說完剛好字數的台詞，再按卡片得分並交給下一位。', 'Read the theme, draw a limit and take turns adding one line freely. Roles are optional inspiration. Limits of 1–5 are common and may repeat; six is occasional. Say exactly your limit, then tap to score and hand over.'],
+    pitch: ['看主題、抽字數，照順序輪流自由接一句。角色只是可忽略的靈感。大多是 3 或 4 字，2 或 5 字有時出現，1 字和 6 字比較少見；可以和別人相同。輪到你時，說完剛好字數的台詞，再按卡片得分並交給下一位。', 'Read the theme, draw a limit and take turns adding one line freely. Roles are optional inspiration. Most limits are 3 or 4 words, 2 or 5 sometimes, 1 or 6 rarely; limits may repeat. Say exactly your limit, then tap to score and hand over.'],
     hostNote: ['角色、字數和分數都是公開的，大家才能一起抓犯規。', 'Roles, limits and points are public, so everyone can catch a foul.'],
     start: ['開始第一場', 'Start the first scene'],
     sceneN: ['第 {n} 場', 'Scene {n}'],
@@ -66,7 +66,7 @@ var WORD_LIMIT_UI = (() => {
     pointsFor: ['{n} 字台詞每句得分', 'Points for a line with a limit of {n}'],
     pointsUnit: ['分', 'pts'],
     setupTitle: ['開演前的設定', 'Before the curtain'],
-    rules_1: ['每場抽一個主題與字數，角色只是可忽略的靈感。1 到 5 字較常見，可以重複；6 字偶爾出現，每次最多一位。', 'Draw a theme and limits. Roles are optional inspiration. Limits of 1–5 are common and may repeat; at most one actor occasionally draws six.'],
+    rules_1: ['每場抽一個主題與字數，角色只是可忽略的靈感。大多是 3 或 4 字，2 或 5 字有時出現，1 字和 6 字比較少見（6 字每次最多一位）；可以重複。', 'Draw a theme and limits. Roles are optional inspiration. Most limits are 3 or 4 words, 2 or 5 sometimes, 1 or 6 rarely (at most one six); limits may repeat.'],
     rules_2: ['照畫面順序輪流即興說一句，每句都要剛好是自己的字數。沒有個人倒數，整場時間會繼續跑。', 'Take turns improvising one line, exactly your limit. There is no individual countdown; the scene clock keeps running.'],
     rules_3: ['輪到你說完一句，再按「說完了，下一位」，得到目前字數的分數並交棒。預設幾個字就幾分，可以在設定裡改。', 'On your turn, tap “Line done · next actor” after your line to score and hand over. By default one point per word; settings can change that.'],
     rules_4: ['演出中每個人會重新抽字數好幾次（預設 3 次），一定會換到不一樣的數字，換完記得看自己的新字數。', 'Everyone draws a new limit a few times during the scene (3 by default), always a different number. Check your new limit each time.'],
