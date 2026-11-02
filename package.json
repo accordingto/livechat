@@ -4,30 +4,15 @@
   "version": "1.0.0",
   "description": "Voice-first online icebreaker games",
   "scripts": {
-    "test:cut": "node --test tests/cut-*.test.cjs",
-    "test:sketch-relay": "node --test tests/sketch-relay-*.test.cjs",
-    "dev:cut": "node scripts/cut-dev-server.cjs",
     "test": "node --test tests/*.test.cjs",
     "test:chat-wolf": "node --test tests/chat-wolf-*.test.cjs",
     "dev:chat-wolf": "node scripts/chat-wolf-dev-server.cjs",
     "test:once-upon-a-time": "node --test tests/once-upon-a-time-*.test.cjs",
     "dev:once-upon-a-time": "node scripts/once-upon-a-time-dev-server.cjs",
     "test:dixit": "node --test tests/dixit-*.test.cjs",
-    "test:life-story": "node --test tests/life-story-*.test.cjs",
-    "test:life-story:browser": "node tests/life-story-ui.browser.cjs",
-    "dev:dixit": "node scripts/dixit-dev-server.cjs",
-    "test:bluff": "node --test tests/bluff-*.test.cjs",
-    "dev:bluff": "node scripts/bluff-dev-server.cjs",
-    "build:bluff-topics": "node scripts/bluff-compile-topics.cjs",
-    "validate:bluff-topics": "node scripts/bluff-compile-topics.cjs --check",
-    "test:bingo-party": "node --test tests/bingo-party-*.test.cjs",
-    "test:bingo-party:browser": "node tests/bingo-party.browser.cjs",
-    "validate:bingo-party-cards": "node scripts/bingo-party-build-content.cjs --check"
+    "dev:dixit": "node scripts/dixit-dev-server.cjs"
   },
   "engines": {
     "node": ">=20"
-  },
-  "dependencies": {
-    "@vercel/queue": "0.8.0"
   }
 }

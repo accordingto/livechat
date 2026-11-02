@@ -1,0 +1,286 @@
+/* shared.css — loaded by every game page (not index.html) */
+
+/* ── Theme tokens ── */
+:root {
+  --bg: #0d0d1a;
+  --surface: #13132b;
+  --surface-b: #100f25;
+  --border: #1e1e42;
+  --border-dim: rgba(255,255,255,.06);
+  --text: #eee;
+  --text-dim: #666;
+  --text-muted: #555;
+  --text-faint: #2a2a50;
+  --divider: #1e1e3a;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(28px, env(safe-area-inset-top))
+           max(20px, env(safe-area-inset-right))
+           max(72px, calc(env(safe-area-inset-bottom) + 24px))
+           max(20px, env(safe-area-inset-left));
+  overflow-x: hidden;
+  position: relative;
+  transition: background .3s, color .3s;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .3; }
+}
+
+.topbar {
+  width: 100%; max-width: 1100px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 36px;
+  animation: fadeUp .45s ease both;
+  position: relative; z-index: 1;
+}
+a.back {
+  color: var(--text-muted); text-decoration: none; font-size: 14px;
+  transition: color .2s;
+}
+a.back:hover { color: var(--text); }
+.round-badge { font-size: 13px; color: var(--text-muted); }
+.round-badge span { font-weight: 700; }
+
+.header {
+  text-align: center; margin-bottom: 32px;
+  animation: fadeUp .45s .1s ease both;
+  position: relative; z-index: 1;
+}
+.header h1 {
+  font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800;
+}
+
+.reset-btn {
+  background: var(--surface); color: #999;
+  border: 2px solid #35355e; border-radius: 999px;
+  padding: 16px 28px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: background .2s, color .2s, border-color .2s, transform .1s;
+}
+.reset-btn:hover { background: var(--border-dim); color: var(--text); border-color: var(--text-muted); }
+.reset-btn:active { transform: scale(.97); }
+.reset-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+.hint {
+  margin-top: 14px; font-size: 13px; color: var(--text-muted);
+  text-align: center; transition: color .3s;
+}
+
+/* ── Soft theme: game-render.js class overrides ── */
+
+/* ── Sunset theme: game-render.js class overrides ── */
+
+/* ── Forest theme: game-render.js class overrides ── */
+
+
+@media (max-width: 520px) {
+  .topbar { margin-bottom: 24px; }
+  .header { margin-bottom: 22px; }
+  .reset-btn { padding: 13px 20px; font-size: .92rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ── Host-page chrome ──
+   Every host page draws the same warning strip, section headings and pair of
+   buttons; only the colour changes. Each page sets its own --accent (and
+   --accent-alt for the secondary button's hover, where it differs), so these
+   rules live here once instead of being copied into ten <style> blocks.
+   A page that genuinely needs a different shape still overrides below — its
+   own <style> comes after this file. */
+.hidden { display: none !important; }
+
+.fb-warning {
+  width: 100%; max-width: 1100px;
+  background: color-mix(in srgb, var(--warn, var(--accent)) 10%, transparent);
+  border: 1.5px solid var(--warn, var(--accent));
+  color: var(--warn, var(--accent));
+  border-radius: 12px; padding: 12px 16px; font-size: .82rem; line-height: 1.6;
+  margin-bottom: 20px; position: relative; z-index: 1;
+}
+.fb-warning code { background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 4px; }
+
+.section-hdr {
+  width: 100%; max-width: 1100px;
+  font-size: .86rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #555; margin: 6px 0 10px;
+  position: relative; z-index: 1;
+}
+
+.btn-primary {
+  background: #13132b; color: var(--accent); border: 2px solid var(--accent);
+  border-radius: 12px; padding: 12px 26px;
+  font-size: .95rem; font-weight: 700; font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, transform .1s;
+}
+.btn-primary:hover  { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.btn-primary:active { transform: scale(.98); }
+
+.btn-secondary {
+  background: #1a1a38; color: #999; border: 2px solid #35335e;
+  border-radius: 12px; padding: 12px 22px;
+  font-size: .9rem; font-weight: 700; font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, border-color .2s, color .2s, transform .1s;
+}
+.btn-secondary:hover  { border-color: var(--accent-alt, var(--accent)); color: var(--accent-alt, var(--accent)); }
+.btn-secondary:active { transform: scale(.98); }
+
+/* ── Game guide ──
+   The how-to-play briefing guide.js injects above every game. Deliberately
+   larger and brighter than the rest of the chrome: the host reads it out from
+   a shared screen, so body copy is pure white at ~18px rather than the dimmer
+   greys used elsewhere. Colour comes from each page's own --accent. */
+.guide-veiled { display: none !important; }
+
+.guide-screen {
+  width: 100%; max-width: 900px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-left: 5px solid var(--accent);
+  border-radius: 18px;
+  padding: 32px 34px 28px;
+  margin-bottom: 28px;
+  position: relative; z-index: 1;
+  animation: fadeUp .45s .15s ease both;
+}
+
+.guide-top { margin-bottom: 16px; }
+.guide-badge {
+  display: inline-block;
+  font-size: .95rem; font-weight: 800; letter-spacing: .5px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px; padding: 6px 16px;
+}
+
+.guide-tagline {
+  font-size: 1.3rem; line-height: 1.7; font-weight: 700;
+  color: #fff;
+  padding-bottom: 22px; margin-bottom: 6px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.guide-sec { margin-top: 26px; }
+.guide-sec-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1.4rem; font-weight: 800; color: var(--accent);
+  margin-bottom: 14px;
+}
+.guide-sec-icon { font-size: 1.5rem; line-height: 1; }
+
+/* Body copy: bright white, comfortably large for a shared screen. */
+.guide-p,
+.guide-steps li,
+.guide-tips li,
+.guide-role-desc {
+  font-size: 1.15rem; line-height: 1.85; color: #fff;
+}
+.guide-p + .guide-p { margin-top: 12px; }
+
+.guide-steps { list-style: none; counter-reset: guide-step; }
+.guide-steps li {
+  counter-increment: guide-step;
+  position: relative; padding-left: 46px; margin-bottom: 14px;
+}
+.guide-steps li::before {
+  content: counter(guide-step);
+  position: absolute; left: 0; top: .15em;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 800;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.guide-roles { display: grid; gap: 12px; }
+.guide-role {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--surface-b);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+}
+.guide-role-emoji { font-size: 1.8rem; line-height: 1.2; flex-shrink: 0; }
+.guide-role-body { min-width: 0; }
+.guide-role-name {
+  font-size: 1.15rem; font-weight: 800; color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.guide-tips { list-style: none; }
+.guide-tips li {
+  position: relative; padding-left: 26px; margin-bottom: 10px;
+}
+.guide-tips li::before {
+  content: '•';
+  position: absolute; left: 6px; top: 0;
+  color: var(--accent); font-weight: 900;
+}
+
+.guide-actions {
+  margin-top: 30px; padding-top: 24px;
+  border-top: 1px solid var(--divider);
+  display: flex; justify-content: center;
+}
+.guide-start {
+  background: var(--accent); color: #0b0b18;
+  border: none; border-radius: 14px;
+  padding: 18px 46px;
+  font-size: 1.2rem; font-weight: 800; font-family: inherit;
+  cursor: pointer;
+  transition: filter .2s, transform .1s;
+}
+.guide-start:hover  { filter: brightness(1.12); }
+.guide-start:active { transform: scale(.98); }
+
+.guide-reopen {
+  background: transparent; color: var(--text-muted);
+  border: 1.5px solid var(--border);
+  border-radius: 999px; padding: 7px 18px;
+  font-size: .88rem; font-weight: 700; font-family: inherit;
+  cursor: pointer; margin-bottom: 22px;
+  transition: color .2s, border-color .2s;
+}
+.guide-reopen:hover { color: var(--accent); border-color: var(--accent); }
+
+@media (max-width: 520px) {
+  .guide-screen { padding: 24px 20px 22px; border-radius: 14px; }
+  .guide-tagline { font-size: 1.15rem; }
+  .guide-sec-title { font-size: 1.22rem; }
+  .guide-p,
+  .guide-steps li,
+  .guide-tips li,
+  .guide-role-desc { font-size: 1.05rem; line-height: 1.8; }
+  .guide-steps li { padding-left: 40px; }
+  .guide-steps li::before { width: 28px; height: 28px; font-size: .92rem; }
+  .guide-start { width: 100%; padding: 16px 24px; font-size: 1.08rem; }
+}
+
+/* Always visible above the private Beta player card. */
+.beta-label { color: #fda4af; font-size: 1rem; font-weight: 700; text-align: center; margin-bottom: 16px; }

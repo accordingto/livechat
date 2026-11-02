@@ -66,8 +66,6 @@ const ROOM = (() => {
   let count = 4;
   let db = null;
   let listeners = [];
-  let privateReads = true;
-  let listenerEpoch = 0;
   const data = {}; // playerNum -> the node's latest value, for tallying votes
 
   /* ── Firebase (optional) ── */
@@ -119,7 +117,6 @@ const ROOM = (() => {
       localStorage.setItem(STORAGE_PREFIX + sessionCode, JSON.stringify(
         Object.assign({}, prev, { tokens, playerCount: count, names: merged })));
       localStorage.setItem(LAST_SESSION_KEY, sessionCode);
-      if (typeof window !== 'undefined' && typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('hub-room-setup', { detail: { code: sessionCode } }));
     } catch (e) { /* private browsing — links still work for this session */ }
   }
 
@@ -211,13 +208,10 @@ const ROOM = (() => {
      simple word (pulled from the shared everyday-word list — 200 words, plenty
      to cover up to 8 players with none repeated) so the host can go around asking
      "what does your card say?" and catch anyone who opened the wrong link before
-     the real game starts. Active membership games retain their cards when
-     the Hub setup is reopened to add players. */
+     the real game starts. This overwrites whatever the current game had published,
+     same as any other publish() — dealing the real game afterward replaces it. */
   function sendCardCheck() {
-    if (!on() || !privateReads || cfg.privateProjectionOnly) return;
-    // A membership update may be publishing a brand-new, still-empty seat.
-    // Do not race that publication with a card-check write to any seat.
-    if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
+    if (!on()) return;
     const pool = (typeof GAME_DATA !== 'undefined' && GAME_DATA.forbidden) || [];
     if (pool.length < count) return; // not enough words to guarantee everyone different
     const shuffled = pool.slice().sort(() => Math.random() - 0.5);
@@ -227,14 +221,7 @@ const ROOM = (() => {
     // own screen until each player has said theirs out loud and
     // revealCardCheck() is pressed on purpose
     checkRevealed = false;
-    // Updating Hub names/links must not replace an ongoing registered game.
-    for (let i = 0; i < count; i++) {
-      const word = checkWords[i];
-      db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).transaction(current => {
-        if (['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(current?.game)) return;
-        return { game: 'cardcheck', word: word.word, emoji: word.emoji, playerNum: i + 1, name: names[i] || null };
-      }, undefined, false);
-    }
+    publish(i => ({ game: 'cardcheck', word: checkWords[i].word, emoji: checkWords[i].emoji }));
     render();
   }
 
@@ -259,9 +246,7 @@ const ROOM = (() => {
      check) because there's no answer to accidentally peek at — the host picked the
      numbers and calls them out, so seeing a press land live is the whole point. */
   function sendButtonCheck() {
-    if (!on() || !privateReads || cfg.privateProjectionOnly) return;
-    // A retained homepage must not replace an ongoing table or its new seat.
-    if (Object.values(data).some(card => ['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(card?.game))) return;
+    if (!on()) return;
     // two-digit (10-99), not single digits — a lone digit is easy to guess/copy
     // without actually reading the card, which defeats a check that's meant to
     // confirm the player is looking at their own screen. The domain (90 values)
@@ -274,13 +259,7 @@ const ROOM = (() => {
     const id = checkButtonId;
     // each card gets its own independent shuffle of the same three numbers, so
     // "press 7" can't be answered by copying whichever position a neighbor pressed
-    for (let i = 0; i < count; i++) {
-      const numbers = checkNumbers.slice().sort(() => Math.random() - 0.5);
-      db.ref(`rooms/${sessionCode}/players/${tokens[i]}`).transaction(current => {
-        if (['dixit', 'onceupon', 'bluffking', 'cut', 'openmic', 'letstalk'].includes(current?.game)) return;
-        return { game: 'buttoncheck', id, numbers, playerNum: i + 1, name: names[i] || null };
-      }, undefined, false);
-    }
+    publish(() => ({ game: 'buttoncheck', id, numbers: checkNumbers.slice().sort(() => Math.random() - 0.5) }));
     render();
   }
 
@@ -877,7 +856,7 @@ const ROOM = (() => {
 
   function setCount(n) {
     count = n;
-    checkWords = null; checkRevealed = false; // stale answer key for the old headcount
+    checkWords = null; // stale answer key for the old headcount
     checkNumbers = null; checkButtonId = '';
     document.querySelectorAll('.room-count-btn').forEach(b => b.classList.toggle('active', Number(b.textContent) === n));
     if (on()) ensureTokens(count);
@@ -891,11 +870,9 @@ const ROOM = (() => {
     const typed = document.getElementById('room-code-input').value.trim().toUpperCase();
     if (!typed) return;
     sessionCode = typed;
-    checkWords = null; checkRevealed = false; // stale answer key for the room we just left
+    checkWords = null; // stale answer key for the room we just left
     checkNumbers = null; checkButtonId = '';
     const saved = loadSessionData(typed);
-    privateReads = saved?.dixitMode !== 'life_story';
-    cfg.privateProjectionOnly = !privateReads;
     tokens = saved && saved.tokens ? saved.tokens.slice() : [];
     // a code with no saved data of its own (brand new, never used) starts
     // blank, same as newRoom() below — it should never inherit whatever
@@ -910,12 +887,10 @@ const ROOM = (() => {
 
   function newRoom() {
     sessionCode = generateSessionCode();
-    checkWords = null; checkRevealed = false;
+    checkWords = null;
     checkNumbers = null; checkButtonId = '';
     tokens = [];
     names = []; // a brand new room starts with blank names, not whoever was in the old one
-    privateReads = true;
-    cfg.privateProjectionOnly = false;
     ensureTokens(count);
     save();
     attach();
@@ -924,47 +899,23 @@ const ROOM = (() => {
 
   /* ── Firebase traffic ── */
   function detach() {
-    listenerEpoch++;
     listeners.forEach(l => l.ref.off('value', l.handler));
     listeners = [];
-  }
-
-  /* A shared manager must never subscribe to Life Story player projections.
-     Re-enabling is explicit and any surviving Life node immediately closes it
-     again. Epoch fencing also discards callbacks already queued by Firebase. */
-  function setPrivateReads(enabled) {
-    const next = enabled === true;
-    const changed = privateReads !== next || cfg.privateProjectionOnly === next;
-    privateReads = next;
-    cfg.privateProjectionOnly = !next;
-    if (!next) {
-      detach();
-      Object.keys(data).forEach(key => delete data[key]);
-    } else if (changed) attach();
   }
 
   /* one listener per known token — the rules allow reading a token you know, never a list */
   function attach() {
     detach();
-    if (!on() || !privateReads || cfg.privateProjectionOnly) return;
-    const epoch = listenerEpoch;
+    if (!on()) return;
     for (let i = 0; i < count; i++) {
-      if (!privateReads || cfg.privateProjectionOnly || epoch !== listenerEpoch) break;
       const ref = db.ref(`rooms/${sessionCode}/players/${tokens[i]}`);
       const num = i + 1;
       const handler = snap => {
-        if (!privateReads || cfg.privateProjectionOnly || epoch !== listenerEpoch) return;
-        const value = snap.val();
-        if (value?.game === 'dixit' && value.dixit?.mode === 'life_story') {
-          setExtra('dixitMode', 'life_story');
-          setPrivateReads(false);
-          return;
-        }
-        data[num] = value;
+        data[num] = snap.val();
         // never let one game's render error kill this listener: the card messages
         // that drive a round (a buzz, a vote, a request for the next prompt) all
         // arrive through here, and a page that throws once would go deaf
-        try { if (cfg.onPlayerData) cfg.onPlayerData(num, value); }
+        try { if (cfg.onPlayerData) cfg.onPlayerData(num, snap.val()); }
         catch (e) { console.error('onPlayerData', e); }
         // a button-check press has to reach the host's screen the moment it
         // lands (that's the entire point of it), and render() is the only thing
@@ -974,8 +925,8 @@ const ROOM = (() => {
         // are read-only there, so a rebuild mid-check never costs a focused input.
         if (checkNumbers) render();
       };
-      listeners.push({ ref, handler });
       ref.on('value', handler);
+      listeners.push({ ref, handler });
     }
   }
 
@@ -1018,9 +969,6 @@ const ROOM = (() => {
     let lastCode = null;
     try { lastCode = localStorage.getItem(LAST_SESSION_KEY); } catch (e) { /* ignore */ }
     const saved = lastCode ? loadSessionData(lastCode) : null;
-    privateReads = cfg.privateProjectionOnly !== true && saved?.dixitMode !== 'life_story';
-    cfg.privateProjectionOnly = !privateReads;
-    if (!privateReads) Object.keys(data).forEach(key => delete data[key]);
     if (lastCode && saved && saved.tokens && saved.tokens.length) {
       sessionCode = lastCode;
       tokens = saved.tokens.slice();
@@ -1052,8 +1000,7 @@ const ROOM = (() => {
   }
 
   const api = {
-    init, render, publish, update, clearAnswer, setCount, setExtra, getExtra, setPrivateReads,
-    get privateReads() { return privateReads && !cfg.privateProjectionOnly; },
+    init, render, publish, update, clearAnswer, setCount, setExtra, getExtra,
     get enabled() { return on(); },
     get count() { return count; },
     get names() { return names; },

@@ -483,47 +483,6 @@ test('role colors are readable red, yellow and green without relying on color al
   }
 });
 
-test('illustrated modern cards choose only the viewer private camp and keep its exact role title',()=>{
-  const art={WOLF:'wolf',JESTER:'jester',VILLAGER:'villager'};
-  for(const role of Object.keys(art)){
-    const {api}=harness({public:{flowVersion:4},private:{role,wolfProfession:role==='WOLF'?'director':null,profession:role==='VILLAGER'?'bait':null}},true);
-    const html=api.render();
-    assert.equal((html.match(/data-wolf-role-art=/g)||[]).length,1);
-    assert.match(html,new RegExp('src="assets/chat-wolf/roles/'+art[role]+'-v1\\.webp"'));
-    assert.match(html,/alt="" aria-hidden="true"/,'the textual role is the accessible identity');
-    const title=role==='WOLF'?'Director Wolf':role==='JESTER'?'Jester':'Bait';
-    assert.match(html,new RegExp('<h2 class="role-title '+art[role]+'">'+title+'</h2>'));
-    for(const other of Object.values(art).filter(value=>value!==art[role]))assert.ok(!html.includes('/'+other+'-v1.webp'));
-  }
-});
-
-test('host presentation, lobby and results never acquire a private role portrait',()=>{
-  for(const role of ['WOLF','JESTER','VILLAGER']){
-    const {api,current}=harness({public:{flowVersion:4},private:{role,isHost:true}});
-    assert.doesNotMatch(api.render(),/data-wolf-role-art|assets\/chat-wolf\/roles/);
-    current.private.isHost=false;current.public.phase='LOBBY';
-    assert.doesNotMatch(api.render(),/data-wolf-role-art|assets\/chat-wolf\/roles/);
-    current.public.phase='FINISHED';current.public.result={outcome:'DRAW'};
-    current.public.reveal={roles:{a:role},tasks:[]};
-    assert.doesNotMatch(api.render(),/data-wolf-role-art/);
-    assert.match(api.render(),/Roles revealed/,'the existing public reveal is still available');
-  }
-});
-
-test('role portrait reuse keys separate players, matches and camps; interface remains compact',()=>{
-  const {api,current}=harness({public:{flowVersion:4},private:{role:'WOLF',playerId:'a'}},true);
-  const key=()=>api.render().match(/data-wolf-role-art="([^"]+)"/)?.[1];
-  const first=key();assert.ok(first);
-  current.public.matchId='match-2';assert.notEqual(key(),first);
-  current.public.matchId='match-1';current.private.playerId='b';assert.notEqual(key(),first);
-  current.private.playerId='a';current.private.role='JESTER';assert.notEqual(key(),first);
-  current.private.role='constructor';assert.equal(key(),undefined);
-  const css=fs.readFileSync(path.join(rootPath,'chat-wolf.css'),'utf8');
-  assert.match(css,/\.v8-role-portrait\s*\{[^}]*width:\s*88px[^}]*height:\s*110px/);
-  assert.match(css,/\.v8-role-portrait\s*\{\s*width:\s*72px;\s*height:\s*90px/);
-  assert.match(fs.readFileSync(path.join(rootPath,'chat-wolf.js'),'utf8'),/v3\.mount\(app\)/);
-});
-
 test('a manual follow-up displays once above tasks and retains the original only in collapsed context',()=>{
   const {api}=harness({public:{flowVersion:4,activeFollowUp:{id:'f1',text:'Which trip would you repeat?'}}},true);
   const html=api.render();
@@ -619,39 +578,4 @@ test('v4 exhaustion offers no secret details and requires explicit one-deal repe
   assert.equal(calls[0].action,'restart');
   assert.equal(calls[0].payload.allowRecentRepeat,true);
   assert.equal(calls[0].payload.keepTopic,true);
-});
-
-
-test('independent embedded private cards keep their role and tasks while managing public phases', async () => {
-  const { api, current, calls } = harness({ public: { flowVersion:4, sharedControls:true, phase:'ROLE_REVEAL' },
-    private: { isHost:false, canManage:true, roleAcknowledged:false, actions:{canBeginTalk:true,canCompleteTask:true,canCancel:true} } }, true);
-  let html=api.render();
-  assert.match(html,/<h2 class="role-title wolf">Wolf<\/h2>/);
-  assert.match(html,/Secret wolf action one/); assert.match(html,/data-v3-action="beginTalk"/);
-  assert.match(html,/data-v3-action="ackRole"/);
-  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'beginTalk'}})}});
-  assert.equal(calls[0].action,'beginTalk');
-  assert.equal(current.private.isHost,false);
-  current.public.phase='TALK';
-  current.private.actions={canCompleteTask:true,canEndTalk:true,canPause:true,canShowFollowUp:true};
-  html=api.render(); assert.match(html,/Secret wolf action one/);
-  assert.match(html,/data-v3-action="endTalk"/); assert.match(html,/data-task-id="w1"/);
-});
-
-test('remaining players can skip an absent meeting speaker and still cast their own private ballot', async () => {
-  const meeting={id:'m1',order:['a','b','c','d','e','f'],speakerIndex:0,currentSpeakerId:'a',nextSpeakerId:'b',completedPlayerIds:[],turnSeconds:60,nextTurnSeconds:45};
-  const { api, current, calls } = harness({ public:{flowVersion:4,sharedControls:true,phase:'MEETING_TURNS',meeting},
-    private:{playerId:'c',isHost:false,canManage:true,role:'VILLAGER',tasks:null,wolfTeam:null,
-      actions:{canSkipMeetingTurn:true,canEndMeeting:true,canSetMeetingTurnSeconds:true}} },true);
-  let html=api.render(); assert.match(html,/Skip \/ end this speaker/);
-  assert.match(html,/End remaining turns and start voting/);
-  await api.handleClick({target:{closest:()=>({dataset:{v3Action:'skipMeetingTurn'}})}});
-  assert.equal(calls[0].action,'skipMeetingTurn'); assert.equal(current.private.isHost,false);
-  current.public.phase='VOTING';
-  current.public.voting={id:'v1',type:'MID',requiredSelections:2}; current.private.myVoteSubmitted=false;
-  current.private.actions={canSubmitVote:true,canEndVote:true};
-  html=api.render();
-  assert.match(html,/data-v3-action="endVote"/);
-  assert.match(html,/<form id="v3-vote-form"/);
-  assert.doesNotMatch(html,/id="v3-c"/);
 });

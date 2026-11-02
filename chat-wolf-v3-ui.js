@@ -7,20 +7,6 @@
     const seconds=Math.floor(Math.max(0,Number(ms)||0)/1000),minutes=Math.floor(seconds/60),hours=Math.floor(minutes/60);
     return hours?hours+':'+String(minutes%60).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0'):minutes+':'+String(seconds%60).padStart(2,'0');
   }
-  // Role art is decorative and chosen only from the viewer's private role.
-  // No art or role-dependent styling belongs on the public host presentation.
-  const roleArt = Object.freeze({WOLF:'wolf',JESTER:'jester',VILLAGER:'villager'});
-  function mountRoleCard(container, html) {
-    const template=container.ownerDocument.createElement('template');
-    template.innerHTML=html;
-    const previous=container.querySelector('[data-wolf-role-art]');
-    const next=template.content.querySelector('[data-wolf-role-art]');
-    if(previous && next && previous.dataset.wolfRoleArt===next.dataset.wolfRoleArt &&
-      previous.getAttribute('src')===next.getAttribute('src')) next.replaceWith(previous);
-    // Moving the unchanged loaded image before committing avoids another
-    // fetch/decode flash on receipts, presence updates and task cooperation.
-    container.replaceChildren(template.content);
-  }
   function create(ctx) {
     let C = root.CHAT_WOLF_COPY_V3;
     const esc = ctx.esc;
@@ -46,19 +32,12 @@
     const me = () => state().private;
     const actions = () => me().actions || {};
     const isHost = () => me().isHost && !ctx.embeddedCard;
-    const canManage = () => !!(pub().sharedControls && me().canManage) || isHost();
     const modern = () => pub().flowVersion >= 4 || (pub().phase === 'LOBBY' && pub().settings.talkEndBehavior === 'host_confirm');
     const name = id => ctx.playerName(id);
     const professions = () => root.CHAT_WOLF_V3_RULES.professions;
     const profession = id => professions().find(item => item.id === id || item.roleId === id);
     const topics = () => (root.CHAT_WOLF_V4_CONTENT || root.CHAT_WOLF_V3_CONTENT).topics;
     const names = ids => (ids || []).map(name).map(esc).join(', ') || esc(C.nobody);
-    const rolePortrait = role => {
-      const art=Object.hasOwn(roleArt,role)?roleArt[role]:null;
-      if(!art || isHost())return '';
-      const key=JSON.stringify([pub().matchId||'',me().playerId||'',role]);
-      return '<div class="v8-role-portrait"><img src="assets/chat-wolf/roles/'+art+'-v1.webp" alt="" aria-hidden="true" width="160" height="200" decoding="async" data-wolf-role-art="'+esc(key)+'"></div>';
-    };
     const button = (action, label, extra, style) => '<button type="button" class="btn '+(style || '')+'" data-v3-action="'+esc(action)+'" '+(extra || '')+'>'+esc(label)+'</button>';
     const field = (key, value, min, max) => {
       const limits = root.CHAT_WOLF_V3_RULES.limits[key] || [min,max];
@@ -103,7 +82,7 @@
       return '<section class="panel v3-host-card"><div><h3>'+esc(C.hostView)+'</h3><p class="muted">'+esc(C.hostViewHelp)+'</p></div><div class="button-row">'+button('openCard',C.openCard,'','secondary small')+button('copyCard',C.copyCard,'','ghost small')+'</div><small class="muted">'+esc(C.privateWarning)+'</small></section>';
     }
     function hostControls() {
-      if (!canManage()) return '';
+      if (!isHost()) return '';
       const a = actions();
       let html = '<div class="button-row v3-controls">';
       if (a.canBeginTalk) html += button('beginTalk',C.start);
@@ -119,7 +98,7 @@
       return html;
     }
     function restartControls() {
-      if (!canManage() || pub().phase === 'LOBBY') return '';
+      if (!isHost() || pub().phase === 'LOBBY') return '';
       return '<details class="panel v3-restart" data-detail="v3-restart"><summary>'+esc(C.restartMenu)+'</summary><div class="button-row">'+button('restart',C.restartSame,'data-keep-topic="true"','secondary')+button('restart',C.restartNew,'data-keep-topic="false"','secondary')+(pub().phase === 'FINISHED' ? button('replay',C.backLobby,'','secondary') : button('cancelGame',C.cancel,'','danger'))+'</div></details>';
     }
     function settingSummary(settings) {
@@ -142,16 +121,16 @@
     }
     function topicLibrary() {
       const selected = (settingsDraft || pub().settings).topicId;
-      return '<details class="panel v3-topic-library" data-detail="v3-topic-library"><summary><strong>'+esc(C.browseTopics)+' ('+topics().length+')</strong></summary><label class="field"><span>'+esc(C.topicSearch)+'</span><input type="text" id="v3-topic-search"></label><div class="v3-topic-list">'+topics().map(topic => '<article class="v3-topic-option" data-topic-search="'+esc((topic.category+' '+topic.mainQuestion).toLowerCase())+'"><span class="eyebrow">'+esc(topic.category)+'</span><h3>'+esc(topic.mainQuestion)+'</h3><ul>'+topic.entryPrompts.map(text=>'<li>'+esc(text)+'</li>').join('')+'<details data-detail="preview-'+esc(topic.id)+'"><summary>'+esc(C.followUps)+' ('+topic.followUps.length+')</summary><ol>'+topic.followUps.map(item=>'<li>'+esc(item.text)+'</li>').join('')+'</ol></details>'+(canManage()?button('chooseTopic',topic.id===selected?C.selectedTopic:C.chooseTopic,'data-topic-id="'+esc(topic.id)+'"','secondary small'):'')+'</article>').join('')+'</div></details>';
+      return '<details class="panel v3-topic-library" data-detail="v3-topic-library"><summary><strong>'+esc(C.browseTopics)+' ('+topics().length+')</strong></summary><label class="field"><span>'+esc(C.topicSearch)+'</span><input type="text" id="v3-topic-search"></label><div class="v3-topic-list">'+topics().map(topic => '<article class="v3-topic-option" data-topic-search="'+esc((topic.category+' '+topic.mainQuestion).toLowerCase())+'"><span class="eyebrow">'+esc(topic.category)+'</span><h3>'+esc(topic.mainQuestion)+'</h3><ul>'+topic.entryPrompts.map(text=>'<li>'+esc(text)+'</li>').join('')+'<details data-detail="preview-'+esc(topic.id)+'"><summary>'+esc(C.followUps)+' ('+topic.followUps.length+')</summary><ol>'+topic.followUps.map(item=>'<li>'+esc(item.text)+'</li>').join('')+'</ol></details>'+(isHost()?button('chooseTopic',topic.id===selected?C.selectedTopic:C.chooseTopic,'data-topic-id="'+esc(topic.id)+'"','secondary small'):'')+'</article>').join('')+'</div></details>';
     }
     function lobby() {
       const p = pub();
       const current = p.players.find(player=>player.id===me().playerId);
-      return '<div class="game-grid"><div class="main-stack"><section class="panel"><div class="panel-header"><div><h2>'+esc(C.lobby)+'</h2><p>'+esc(C.lobbyHelp)+'</p></div><span class="phase-chip">'+p.players.length+' / '+p.settings.playerCount+'</span></div>'+ctx.playerRows(canManage())+'<div class="button-row">'+button('ready',current?.ready?C.notReady:C.ready,'data-ready="'+(current?.ready?'false':'true')+'"')+(canManage()?button('startGame',C.deal,p.players.length===p.settings.playerCount?'':'disabled','warning'):'')+'</div></section>'+hostCardLink()+topicLibrary()+'</div><aside class="side-stack">'+(canManage()?settingsForm():settingSummary(p.settings))+'</aside></div>';
+      return '<div class="game-grid"><div class="main-stack"><section class="panel"><div class="panel-header"><div><h2>'+esc(C.lobby)+'</h2><p>'+esc(C.lobbyHelp)+'</p></div><span class="phase-chip">'+p.players.length+' / '+p.settings.playerCount+'</span></div>'+ctx.playerRows(isHost())+'<div class="button-row">'+button('ready',current?.ready?C.notReady:C.ready,'data-ready="'+(current?.ready?'false':'true')+'"')+(isHost()?button('startGame',C.deal,p.players.length===p.settings.playerCount?'':'disabled','warning'):'')+'</div></section>'+hostCardLink()+topicLibrary()+'</div><aside class="side-stack">'+(isHost()?settingsForm():settingSummary(p.settings))+'</aside></div>';
     }
     function chatClock() {
       const p=pub(), clock=p.talkClock;
-      if (!modern() || p.phase!=='TALK' || !canManage() || !clock) return '';
+      if (!modern() || p.phase!=='TALK' || !isHost() || !clock) return '';
       return '<details class="v4-chat-clock" data-detail="talk-clock-'+p.round+'"><summary>'+esc(C.showTimer)+'</summary><div><span>'+esc(C.elapsed)+'</span> <strong data-elapsed-ms="'+Number(clock.elapsedMs||0)+'" data-active-since="'+Number(clock.activeSince||0)+'" data-clock-paused="'+(p.paused?'true':'false')+'">0:00</strong><span class="muted">'+esc(C.suggested)+': '+esc(duration(clock.suggestedSeconds))+'</span></div><p class="muted" data-talk-overtime="'+Number(clock.suggestedSeconds||0)+'"></p>'+(p.paused?'<small>'+esc(C.pausedClock)+'</small>':'')+'</details>';
     }
     function topicCard(privateView) {
@@ -173,7 +152,7 @@
       return '<details class="v5-room-info" data-detail="private-room-info"><summary>'+esc(C.roomInfo)+'</summary><dl><dt>'+esc(C.roomCode)+'</dt><dd>'+esc(pub().code)+'</dd><dt>'+esc(C.roomPhase)+'</dt><dd>'+esc(C.phases[pub().phase]||pub().phase)+'</dd></dl></details>';
     }
     function followUpControls() {
-      if (!canManage() || pub().paused || pub().temporaryTopic || !['TALK','WRAP_UP'].includes(pub().phase)) return '';
+      if (!isHost() || pub().paused || pub().temporaryTopic || !['TALK','WRAP_UP'].includes(pub().phase)) return '';
       const used = new Set(pub().usedFollowUpIds || []);
       return '<section class="panel"><div class="button-row">'+(actions().canFollowUp?button('followUp',C.followUp,'','secondary'):'<p class="muted">'+esc(C.noFollowUps)+'</p>')+(pub().activeFollowUp?button('clearFollowUp',C.backToMain,'','ghost'):'')+'</div><details data-detail="v3-followups"><summary>'+esc(C.chooseFollowUp)+'</summary><div class="v3-followup-list">'+pub().topic.followUps.map(item=>'<article><p>'+esc(item.text)+'</p>'+(used.has(item.id)?'<span class="mini-chip">'+esc(C.used)+'</span>':button('followUp',C.useFollowUp,'data-follow-up-id="'+esc(item.id)+'"','secondary small'))+'</article>').join('')+'</div></details></section>';
     }
@@ -312,7 +291,7 @@
       const roleName=role==='VILLAGER'?(villageRole?.name || C.ordinary):role==='WOLF'?wolfRoleName(person.wolfProfession):C.roles[role];
       const progress=role==='WOLF'?C.teamTasks((person.tasks||[]).filter(task=>task.completed).length,(person.tasks||[]).length):'';
       const roleClass=role==='WOLF'?'wolf':role==='JESTER'?'jester':'villager';
-      let html='<div class="v4-private-layout v8-private-card v8-camp-'+roleClass+'"><header class="panel v4-role-header v5-role-'+roleClass+'"><div class="v8-role-identity">'+rolePortrait(role)+'<div class="v8-role-copy"><div class="eyebrow">'+esc(team)+'</div><h2 class="role-title '+roleClass+'">'+esc(roleName)+'</h2></div></div>'+(p.phase==='ROLE_REVEAL'?(person.roleAcknowledged?'<span class="mini-chip ready">'+esc(C.ready)+'</span>':button('ackRole',C.ready)):'')+'</header>';
+      let html='<div class="v4-private-layout"><header class="panel v4-role-header v5-role-'+roleClass+'"><div><div class="eyebrow">'+esc(team)+'</div><h2 class="role-title '+roleClass+'">'+esc(roleName)+'</h2></div>'+(p.phase==='ROLE_REVEAL'?(person.roleAcknowledged?'<span class="mini-chip ready">'+esc(C.ready)+'</span>':button('ackRole',C.ready)):'')+'</header>';
       if(['MEETING_TURNS','FINAL_CLUES','VOTING','JUDGE_DECISION'].includes(p.phase))html+=phasePanel();
       html+=topicCard(true);
       if(hasTasks)html+='<section class="panel v4-private-tasks"><div class="v4-task-toolbar"><h3>'+esc(role==='WOLF'?progress:roleName+' · task')+'</h3>'+button('toggleTaskLanguage',taskLanguage==='en'?C.chineseHelp:C.englishHelp,'aria-pressed="'+(taskLanguage==='zh')+'"','ghost small')+'</div>';
@@ -367,9 +346,9 @@
       const completed=new Set(m.completedPlayerIds||[]);
       let controls='';
       if(!p.paused && mine)controls+=button('endMeetingTurn',C.endMeetingTurn,'')+button('skipMeetingTurn',C.skipMeetingTurn,'','ghost');
-      else if(!p.paused && canManage() && a.canSkipMeetingTurn)controls+=button('skipMeetingTurn',C.hostSkipTurn,'','secondary');
+      else if(!p.paused && isHost() && a.canSkipMeetingTurn)controls+=button('skipMeetingTurn',C.hostSkipTurn,'','secondary');
       let html='<section class="panel v4-meeting"><div class="panel-header"><div><div class="eyebrow">'+esc(C.meetingProgress(m.speakerIndex+1,m.order.length))+'</div><h2>'+esc(C.meeting)+'</h2></div></div><div class="v4-speaker-focus'+(mine?' mine':'')+'"><div><span>'+esc(mine&&!isHost()?C.meetingYourTurn:C.currentSpeaker)+'</span><strong>'+esc(name(m.currentSpeakerId))+'</strong><small>'+esc(m.nextSpeakerId?C.nextSpeaker+': '+name(m.nextSpeakerId):C.lastSpeaker)+'</small></div>'+ctx.timer(p.deadlineAt)+'</div><p class="muted">'+esc(C.meetingHelp)+'</p><div class="button-row">'+controls+'</div><div class="v4-meeting-order">'+m.order.map(id=>'<span class="mini-chip'+(completed.has(id)?' ready':id===m.currentSpeakerId?' active':'')+'">'+esc(name(id))+' · '+esc(completed.has(id)?C.meetingDone:id===m.currentSpeakerId?C.currentSpeaker:C.meetingWaiting)+'</span>').join('')+'</div>';
-      if(canManage()){
+      if(isHost()){
         html+=hostControls();
         if(a.canSetMeetingTurnSeconds){
           const limits=root.CHAT_WOLF_V3_RULES.limits.meetingTurnSeconds||[10,180];
@@ -380,12 +359,12 @@
       return html+'<small class="muted">'+esc(C.nextTurnLimit(m.nextTurnSeconds||p.settings.meetingTurnSeconds||60))+'</small></section>';
     }
     function contentExhausted() {
-      if(!pendingDeal || !canManage())return '';
+      if(!pendingDeal || !isHost())return '';
       return '<section class="notice v4-exhausted"><h3>'+esc(C.contentExhausted)+'</h3><p>'+esc(C.contentExhaustedHelp)+'</p><div class="button-row">'+(pub().phase==='LOBBY'?button('exhaustedSettings',C.chooseDifferent,'','secondary'):button('exhaustedNewTopic',C.differentRestart,'','secondary'))+button('allowRecentRepeat',C.allowRepeat,'','ghost')+'</div></section>';
     }
     function onActionError(action,payload,code) {
       if(code!=='CONTENT_EXHAUSTED')return;
-      if(canManage()) {
+      if(isHost()) {
         pendingDeal={action,payload:{...(payload||{})}};
         delete pendingDeal.payload.allowRecentRepeat;
         ctx.rerender();
@@ -429,7 +408,7 @@
       if(pub().releaseStage==='development')html+='<p class="notice warning v4-development">'+esc(C.developmentPreview)+'</p>';
       if (pub().phase==='LOBBY') html += lobby();
       else if (pub().phase==='FINISHED') html += finished()+restartControls();
-      else if(modern() && !isHost())html+=privateCard()+lastGuess()+(!['MEETING_TURNS','FINAL_CLUES','VOTING','JUDGE_DECISION'].includes(pub().phase)?hostControls():'')+followUpControls()+restartControls();
+      else if(modern() && !isHost())html+=privateCard()+lastGuess();
       else if(modern()) {
         html+='<div class="main-stack">'+(pub().phase==='MEETING_TURNS'?phasePanel()+topicCard():topicCard()+phasePanel())+(['TALK','WRAP_UP'].includes(pub().phase)?lastGuess():'')+followUpControls()+hostCardLink()+'</div>'+restartControls();
       } else {
@@ -555,7 +534,7 @@
       }
       return false;
     }
-    return {render,mount:container=>mountRoleCard(container,render()),entryFields,readSettings,handleClick,handleChange,handleInput,handleSubmit,onActionError,updateDirectionNotice,handleKeydown};
+    return {render,entryFields,readSettings,handleClick,handleChange,handleInput,handleSubmit,onActionError,updateDirectionNotice,handleKeydown};
   }
-  root.CHAT_WOLF_V3_UI=Object.freeze({create,elapsedMilliseconds,formatElapsed,mountRoleCard});
+  root.CHAT_WOLF_V3_UI=Object.freeze({create,elapsedMilliseconds,formatElapsed});
 }(window));

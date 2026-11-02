@@ -5,7 +5,6 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const crypto = require('node:crypto').webcrypto;
 const E = require('../once-upon-a-time-engine.js');
-const D = require('../once-upon-a-time-deck.js');
 const clone = value => value == null ? null : JSON.parse(JSON.stringify(value));
 const snap = value => ({ val: () => clone(value) });
 
@@ -58,10 +57,9 @@ function setup(t, count = 4, fixedSeed = null) {
   const paths = Array.from({ length: count }, (_, i) => `rooms/OU-TEST/players/player-${i + 1}`);
   const room = { code: 'OU-TEST', count, answers: {}, name: i => 'Person ' + (i + 1),
     getExtra: key => extras[key], setExtra: (key, value) => { extras[key] = value; }, playerRef: i => db.ref(paths[i]) };
-  let seedIndex = 0;
   const contextCrypto = fixedSeed == null ? crypto : { getRandomValues(array) {
     crypto.getRandomValues(array);
-    if (array.BYTES_PER_ELEMENT === 4) array.fill(Array.isArray(fixedSeed) ? fixedSeed[Math.min(seedIndex++, fixedSeed.length - 1)] : fixedSeed);
+    if (array.BYTES_PER_ELEMENT === 4) array.fill(fixedSeed);
     return array;
   } };
   const context = vm.createContext({ crypto: contextCrypto, Date, ONCE_ENGINE: E, setInterval: () => 1, clearInterval() {} });
@@ -95,15 +93,6 @@ function setup(t, count = 4, fixedSeed = null) {
   };
 }
 
-test('Once transport never runs another game timer or requires TALK_ENGINE', async t => {
-  const f = setup(t, 4), h = f.host(); await f.story(h);
-  assert.equal(h.own, true); assert.equal(h.connected, true);
-  const before = JSON.stringify(h.doc);
-  for (let tick = 0; tick < 20; tick++) assert.equal(await h.tickCrazy(), false);
-  await settle(h);
-  assert.equal(JSON.stringify(h.doc), before);
-});
-
 for (const count of [2, 4, 6]) test(`${count} players receive only their own private cards; host receives a public view`, async t => {
   const f = setup(t, count), h = f.host(); await f.dealt(h);
   assert.equal(h.doc.state.phase, 'CHOOSING_FIRST');
@@ -123,8 +112,8 @@ for (const count of [2, 4, 6]) test(`${count} players receive only their own pri
     const serialized = JSON.stringify(card);
     for (let other = 1; other <= count; other++) {
       if (other === seat) continue;
-      h.doc.state.hands[other].forEach(id => assert.equal(serialized.includes(JSON.stringify(id)), false));
-      assert.equal(serialized.includes(JSON.stringify(h.doc.state.endings[other])), false);
+      h.doc.state.hands[other].forEach(id => assert.equal(serialized.includes(id), false));
+      assert.equal(serialized.includes(h.doc.state.endings[other]), false);
       assert.equal(serialized.includes(f.paths[other - 1]), false);
     }
     assert.equal(serialized.includes(control), false);
@@ -132,8 +121,8 @@ for (const count of [2, 4, 6]) test(`${count} players receive only their own pri
     assert.equal(serialized.includes('rollback'), false);
   }
   const hostView = JSON.stringify(h.latest);
-  allHands.forEach(id => assert.equal(hostView.includes(JSON.stringify(id)), false));
-  Object.values(h.doc.state.endings).forEach(id => assert.equal(hostView.includes(JSON.stringify(id)), false));
+  allHands.forEach(id => assert.equal(hostView.includes(id), false));
+  Object.values(h.doc.state.endings).forEach(id => assert.equal(hostView.includes(id), false));
   assert.equal(h.latest.once.playerNum, 0);
   assert.equal(h.latest.once.hand, undefined); assert.equal(h.latest.once.ending, undefined);
   assert.equal(hostView.includes(control), false);
@@ -166,54 +155,6 @@ test('host can deal immediately with nobody ready and retries cannot redeal', as
   await h.command('deal', envelope); await settle(h);
   assert.deepEqual(h.doc.state.hands, before);
   for(let seat=1;seat<=6;seat++) assert.equal(f.card(seat).once.hand.length,5);
-});
-
-test('lobby configuration synchronizes world and manual size on every original card without publishing secret decks', async t => {
-  const f = setup(t, 6), h = f.host(); await f.lobby(h);
-  const current = { sessionId: h.doc.state.sessionId, turnId: h.doc.state.turnId };
-  await h.command('configure', { id: 'world-settings', ...current, world: 'modern-future', handSize: 4 }); await settle(h);
-  for (let seat = 1; seat <= 6; seat++) {
-    assert.equal(f.card(seat).once.world, 'modern-future'); assert.equal(f.card(seat).once.handSize, 4);
-    assert.equal(f.card(seat).once.resolvedHandSize, 4); assert.equal(f.card(seat).once.actions.configure, false);
-    assert.deepEqual(f.card(seat).once.hand, []);
-  }
-  const revision = h.doc.state.revision;
-  await h.command('configure', { id: 'world-settings', ...current, world: 'modern-future', handSize: 4 }); await settle(h);
-  assert.equal(h.doc.state.revision, revision, 'retry must reuse the one receipt and not configure again');
-  await h.command('deal'); await settle(h);
-  const pool = D.getWorld('modern-future'), ids = new Set(pool.storyCards.map(card => card.id));
-  for (let seat = 1; seat <= 6; seat++) {
-    const card = f.card(seat);
-    assert.equal(card.once.hand.length, 4); assert.ok(card.once.hand.every(story => ids.has(story.id)));
-    assert.ok(pool.endingCards.some(ending => ending.id === card.once.ending.id));
-    const text = JSON.stringify(card);
-    for (const id of h.doc.state.storyDeck) assert.equal(text.includes(JSON.stringify(id)), false);
-    for (let other = 1; other <= 6; other++) if (other !== seat) {
-      for (const id of h.doc.state.hands[other]) assert.equal(text.includes(JSON.stringify(id)), false);
-      assert.equal(text.includes(JSON.stringify(h.doc.state.endings[other])), false);
-    }
-  }
-  assert.equal(h.latest.once.hand, undefined); assert.equal(h.latest.once.ending, undefined);
-});
-
-test('forged configuration actor is denied; invalid/stale/midgame host settings never change acknowledged pair', async t => {
-  const f = setup(t, 4), h = f.host(); await f.lobby(h);
-  const forged = await f.send(h, 2, 'configure', { actor: 0, world: 'modern-future', handSize: 3 });
-  assert.equal(f.card(2).once.reply.id, forged.id); assert.equal(f.card(2).once.reply.error, 'not_available');
-  assert.equal(h.doc.state.world, 'classic'); assert.equal(h.doc.state.handSize, null);
-  await assert.rejects(h.command('configure', { world: 'modern-future', handSize: 10 }), /invalid_hand_size/);
-  assert.equal(h.doc.state.world, 'classic'); assert.equal(h.doc.state.handSize, null);
-  const turnId = h.doc.state.turnId;
-  await h.command('configure', { handSize: 3 });
-  await assert.rejects(h.command('configure', { turnId, handSize: 8 }), /stale_turn/);
-  await h.command('deal'); await settle(h); const held = clone(h.doc.state.hands);
-  await assert.rejects(h.command('configure', { world: 'modern-future', handSize: 9 }), /not_available/);
-  assert.equal(h.doc.state.world, 'classic'); assert.equal(h.doc.state.handSize, 3); assert.deepEqual(h.doc.state.hands, held);
-  await h.command('restart'); await settle(h);
-  for (let seat = 1; seat <= 4; seat++) {
-    assert.equal(f.card(seat).once.handSize, 3); assert.deepEqual(f.card(seat).once.hand, []);
-    assert.equal(f.card(seat).once.ending, null);
-  }
 });
 
 test('duplicate play and pass requests never remove a second card or draw twice', async t => {
@@ -249,8 +190,7 @@ test('simultaneous interrupts use one atomic winner and impose no penalty on a l
   assert.equal(h.doc.state.hands[loser].length, counts[loser]);
   assert.equal(f.card(2).once.reply.id, second.id); assert.equal(f.card(3).once.reply.id, third.id);
   assert.equal(f.card(winner).once.reply.error, ''); assert.ok(f.card(loser).once.reply.error);
-  // Six hands of five, then the old Storyteller's one interrupt draw. No starter card.
-  assert.equal(h.doc.state.storyDeck.length, D.storyCards.length - 6 * 5 - 1);
+  assert.equal(h.doc.state.storyDeck.length, 114 - 6 * 5 - 2);
 });
 
 test('projections preserve a mailbox submitted concurrently with another state update', async t => {
@@ -601,8 +541,7 @@ test('full private-card flow: dispute, concurrent votes, challenges, pass, endin
 });
 
 test('category interrupt responds to an actual play, consumes the opportunity once, and cannot chain', async t => {
-  // Deterministic valid category fixture, independent of exact shuffled deck size.
-  const f = setup(t, 6, [200, 1234]), h = f.host(); await f.dealt(h);
+  const f = setup(t, 6, 1234), h = f.host(); await f.dealt(h);
   await h.command('chooseFirst', { playerNum: 2 }); await settle(h);
   const playedCard = f.card(2).once.hand.find(card => card.category === 'thing');
   const interruptCard = f.card(1).once.hand.find(card => card.isInterrupt && card.category === 'thing');

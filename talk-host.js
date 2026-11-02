@@ -3,40 +3,14 @@
   const { t, esc, list, name } = TALK_UI;
   const byId = id => document.getElementById('talk-' + id);
   const demo = new URLSearchParams(location.search).get('demo') === '1';
-  const demoRoster = ['小安', '阿哲', '小羽', '阿凱', '阿樂'].map((name, i) => ({ playerNum: i + 1, name }));
+  const demoRoster = ['小安', '阿哲', '小羽', '阿凱'].map((name, i) => ({ playerNum: i + 1, name }));
   let state = null, sync = null, demoCard = null, status = demo ? 'ready' : 'offline', busy = false, autoStart = false;
   let error = '';
-  let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '', roundClockVisible = false;
-  let firstDraw = true;
+  let source = 'library', exploreOpen = false, renderedSession = null, exploreKey = '';
   const draftKey = 'lets-talk-topic-draft.v1';
   const startersKey = 'lets-talk-starters.v1';
   let starterPreference = true, starterPending = null;
   let explanationSession = null;
-  const preferenceFields = { gameMode: 'game-mode', conversationMode: 'conversation-mode', crazySource: 'crazy-source', crazyMinSeconds: 'crazy-min-seconds', crazyMaxSeconds: 'crazy-max-seconds', mode: 'mode', seconds: 'seconds', gameSeconds: 'game-seconds', crazyTaskSeconds: 'crazy-task-seconds', crazyMaxActive:'crazy-max-active', crazyPlayStyle:'crazy-play-style', crazyRotationSeconds:'crazy-rotation-seconds' };
-  const savedPreferences = TALK_SETTINGS.read();
-  let applyHomePreferences = TALK_SETTINGS.consumePending();
-  function setSetupPreference(key, value) {
-    const field = byId(preferenceFields[key]);
-    if (['seconds','crazyRotationSeconds'].includes(key) && Number.isInteger(Number(value))
-        && !Array.from(field.options).some(option => option.value === String(value))) {
-      const option = document.createElement('option'); option.value = String(value); option.textContent = t(key === 'seconds' ? 'seconds' : 'rotationChoice', { n: key === 'seconds' ? value : value / 60 }); field.append(option);
-    }
-    field.value = String(['gameSeconds', 'crazyTaskSeconds'].includes(key) ? value / 60 : value);
-  }
-  Object.entries(savedPreferences).forEach(([key, value]) => setSetupPreference(key, value));
-  const setupPreferences = () => {
-    const values = Object.fromEntries(Object.entries(preferenceFields).map(([key, id]) => [key, byId(id).value]));
-    for (const key of ['gameSeconds', 'crazyTaskSeconds']) values[key] = TALK_SETTINGS.minutesToSeconds(values[key]);
-    if (!TALK_SETTINGS.validDuration(values.gameSeconds, 'gameSeconds')) throw new Error('invalid_game_seconds');
-    if (values.gameMode === 'crazy' && !TALK_SETTINGS.validDuration(values.crazyTaskSeconds, 'crazyTaskSeconds')) throw new Error('invalid_crazy_task_seconds');
-    if (values.gameMode === 'crazy' && !TALK_SETTINGS.validInterval(values.crazyMinSeconds, values.crazyMaxSeconds)) throw new Error('invalid_crazy_interval');
-    if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyMaxActive)) || Number(values.crazyMaxActive) < 1 || Number(values.crazyMaxActive) > 9)) throw new Error('invalid_crazy_max_active');
-    if (values.gameMode === 'crazy' && (!Number.isInteger(Number(values.crazyRotationSeconds)) || Number(values.crazyRotationSeconds) < 60 || Number(values.crazyRotationSeconds) > 900)) throw new Error('invalid_crazy_rotation');
-    const playerCount = demo ? demoRoster.length : state?.roster?.filter(p=>p.active !== false && p.pending !== true).length || ROOM.count || 0;
-    if (values.gameMode === 'crazy' && values.crazyPlayStyle === 'director' && playerCount < 2) throw new Error('directorNeedsPlayers');
-    return TALK_SETTINGS.normalize(values);
-  };
-  const rememberSettings = () => TALK_SETTINGS.save(setupPreferences());
   try { starterPreference = localStorage.getItem(startersKey) !== 'false'; } catch (e) {}
   const activeSession = () => !!state && status !== 'switched';
   const startersOn = () => activeSession() ? !!state.showStarters : starterPreference;
@@ -45,41 +19,8 @@
     byId('starter-toggle').disabled = busy || (activeSession() && !canControl());
     byId('host-view').classList.toggle('talk-starters-off', !startersOn());
   }
-  function renderModeSettings() {
-    const crazy = byId('game-mode').value === 'crazy';
-    byId('crazy-play-style-field').hidden = !crazy; byId('crazy-advanced').hidden = !crazy; byId('crazy-style-hint').hidden = !crazy;
-    byId('crazy-style-hint').textContent = byId('crazy-play-style').value === 'director' ? t('crazyDirectorHint') : '';
-    byId('crazy-rotation-seconds').disabled = !crazy || byId('crazy-play-style').value !== 'director';
-    byId('crazy-max-active').disabled = !crazy;
-    byId('crazy-source-field').hidden = !crazy;
-    byId('crazy-task-field').hidden = !crazy;
-    byId('crazy-task-seconds').disabled = !crazy;
-    byId('crazy-frequency').hidden = !crazy;
-    const intervalValid = !crazy || TALK_SETTINGS.validInterval(byId('crazy-min-seconds').value, byId('crazy-max-seconds').value);
-    for (const id of ['crazy-min-seconds', 'crazy-max-seconds']) {
-      byId(id).disabled = !crazy;
-      byId(id).setCustomValidity?.(intervalValid ? '' : t('invalid_crazy_interval'));
-      byId(id).setAttribute('aria-invalid', String(!intervalValid));
-    }
-    byId('crazy-interval-error').textContent = intervalValid ? '' : t('invalid_crazy_interval');
-    let durationError = '';
-    for (const [key, id, errorKey] of [['gameSeconds', 'game-seconds', 'invalid_game_seconds'], ['crazyTaskSeconds', 'crazy-task-seconds', 'invalid_crazy_task_seconds']]) {
-      const valid = (key === 'crazyTaskSeconds' && !crazy) || TALK_SETTINGS.validDuration(TALK_SETTINGS.minutesToSeconds(byId(id).value), key);
-      byId(id).setCustomValidity?.(valid ? '' : t(errorKey));
-      byId(id).setAttribute('aria-invalid', String(!valid));
-      if (!valid && !durationError) durationError = errorKey;
-    }
-    byId('duration-error').textContent = durationError ? t(durationError) : '';
-    byId('mode-hint').textContent = t(crazy ? 'crazyHint' : 'normalHint');
-    const style = byId('conversation-mode').value;
-    byId('conversation-hint').textContent = t(style === 'assigned' ? 'conversationHintAssigned' : style === 'free' ? 'conversationHintFree' : 'conversationHintRandom');
-    const visibleCrazy = activeSession() && byId('setup').hidden ? state.gameMode === 'crazy' : crazy;
-    document.body.classList.toggle('talk-is-crazy', visibleCrazy);
-    byId('brand').textContent = visibleCrazy ? 'CRAZY TALK' : 'LET’S TALK';
-    document.title = (visibleCrazy ? 'Crazy Talk' : "Let's Talk") + ' · IceBreak Hub';
-  }
   const now = () => sync ? sync.now() : Date.now();
-  const canControl = () => demo || (!!(sync?.own || sync?.doc?.executor?.v === 1) && sync.connected);
+  const canControl = () => demo || (!!sync?.own && sync.connected);
   const selectedTopic = () => TALK_TOPICS.find(topic => topic.id === byId('topic-select').value);
   function previewTopic() {
     const topic = selectedTopic();
@@ -90,11 +31,8 @@
     byId('preview-path').innerHTML = TALK_ENGINE.followUps(topic).map(q => `<li><p>${esc(q.question)}</p></li>`).join('');
   }
   function drawTopic() {
-    const random = () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
-    const scenarios = firstDraw && !byId('category').value && !byId('search').value ? TALK_TOPICS.filter(topic => topic.sourceTopicId) : [];
-    const topic = scenarios.length ? scenarios[Math.floor(random() * scenarios.length)] : TALK_LIBRARY.draw(byId('category').value, byId('search').value,
-      [byId('topic-select').value, state?.topic.id], random);
-    firstDraw = false;
+    const topic = TALK_LIBRARY.draw(byId('category').value, byId('search').value,
+      [byId('topic-select').value, state?.topic.id], () => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296);
     if (topic) byId('topic-select').value = topic.id;
     previewTopic();
     return topic;
@@ -177,13 +115,10 @@
     if (byId('draft-status').dataset.message) byId('draft-status').textContent = t(byId('draft-status').dataset.message);
     byId('demo-view').innerHTML = `<option value="0">${esc(t('hostView'))}</option>` + demoRoster.map(p => `<option value="${p.playerNum}">${esc(p.name)}</option>`).join('');
     byId('seconds').querySelectorAll('option').forEach(o => { o.textContent = t('seconds', { n: o.value }); });
-    byId('crazy-rotation-seconds').querySelectorAll('option').forEach(o => { o.textContent = t('rotationChoice', {n:Number(o.value) / 60}); });
-
     byId('room-label').textContent = demo ? '' : (sync ? t('room', { code: ROOM.code }) : '');
   }
   function render() {
     renderStarters();
-    renderModeSettings();
     byId('host-status').textContent = status === 'ready' ? '' : t(status);
     byId('open').disabled = busy || !canControl() || (source === 'library' && !selectedTopic());
     byId('session').hidden = !state || !byId('setup').hidden;
@@ -195,54 +130,36 @@
     byId('host-view').hidden = !!state && !!me;
     if (!state) return;
     if (renderedSession !== state.sessionId) {
-      exploreOpen = false; exploreKey = ''; roundClockVisible = false; byId('live-followup').value = ''; renderedSession = state.sessionId;
-      byId('vnext-panel').innerHTML = '';
+      exploreOpen = false; exploreKey = ''; byId('live-followup').value = ''; renderedSession = state.sessionId;
     }
-    const s = TALK_ENGINE.view(state, 0, now(), {hostAuthorized:true}).talk;
-    const vnext = TALK_UI.vnext(s), ended = s.phase === 'ended' && !vnext;
-    byId('active-board').hidden = ended;
-    byId('round-rest').hidden = !ended;
-    byId('round-scores').innerHTML = ended && TALK_UI.scoreboardHTML ? TALK_UI.scoreboardHTML(s, 0) : '';
-    byId('round-controls').hidden = s.phase !== 'talking' || vnext;
-    for (const id of ['add-time', 'finish']) byId(id).disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking' || vnext;
-    const vnextPanel = byId('vnext-panel');
-    vnextPanel.hidden = !vnext;
-    if (document.activeElement?.tagName !== 'SELECT' || !vnextPanel.contains?.(document.activeElement)) vnextPanel.innerHTML = TALK_UI.vnextHTML(s,0);
-    vnextPanel.querySelectorAll('[data-talk-action]').forEach(control => { control.disabled = busy || !canControl() || status === 'switched'; });
-    byId('crazy-host').hidden = s.gameMode !== 'crazy' || ended;
-    byId('crazy-status').textContent = s.crazy?.enabled ? (s.crazy.paused ? t('crazyPaused') + ' ' : '') + t('crazyActiveHostStatus', { n: s.crazy.pendingCount, max:s.crazy.effectiveMaxActive || s.crazy.maxActive || 2 }) : '';
-    byId('crazy-pause').textContent = t(s.crazy?.paused ? 'crazyResume' : 'crazyPause');
-
-    byId('crazy-pause').disabled = busy || !canControl() || status === 'switched' || s.phase !== 'talking';
+    const s = TALK_ENGINE.view(state, 0, now()).talk;
     byId('topic-title').textContent = (state.topic.emoji || '💬') + ' ' + (state.topic.title || t('customTopic'));
     byId('question').textContent = state.topic.question;
     byId('starter').textContent = s.extended && s.starter === s.topic.followUp ? '' : s.starter;
     byId('follow-up').hidden = !state.extended;
     byId('follow-up').textContent = s.topic.followUp;
     byId('floor').textContent = TALK_UI.status(s, 0);
-    byId('session-style').textContent = t(s.conversationMode === 'assigned' ? 'assignedMode' : s.conversationMode === 'free' ? 'freeMode' : 'randomMode');
-    byId('participants-panel').hidden = ended && s.gameMode === 'crazy';
-    byId('participants-content').innerHTML = TALK_UI.participantsHTML(s, 0);
-    byId('notes').hidden = ended || !list(s.notes).length;
+    byId('question-return').textContent = s.activeQuestion ? t('returnTo', { name: name(s, s.speaker) }) : '';
+    byId('question-requests').textContent = list(s.questions).filter(q => q.id !== s.activeQuestion?.id).map(q => t('wantsAsk', { name: name(s, q.playerNum) }) + (q.deferred ? ' · ' + t('held') : '')).join(' · ');
+    byId('interest').innerHTML = TALK_UI.interests(s, now());
+    byId('notes').hidden = !list(s.notes).length;
     byId('notes-content').innerHTML = TALK_UI.notes(s);
     byId('start').hidden = s.phase !== 'thinking';
     byId('extend').hidden = s.phase !== 'talking';
     byId('extend').textContent = t(exploreOpen ? 'closeExplore' : 'extend');
     byId('extend').setAttribute('aria-expanded', String(exploreOpen));
     renderExplore();
-    byId('help').hidden = s.phase !== 'talking' || s.conversationMode === 'free';
-    byId('help-end').hidden = !!s.activeQuestion || s.conversationMode === 'free';
+    byId('help').hidden = s.phase !== 'talking';
+    byId('help-end').hidden = !!s.activeQuestion;
     byId('help-resume').hidden = !s.activeQuestion;
     for (const id of ['start', 'extend', 'new', 'help-end', 'help-resume', 'force-end', 'show-followup', 'show-custom-followup', 'hide-followup']) byId(id).disabled = busy || !canControl() || status === 'switched';
     if (demo && me) {
       if (!demoCard || demoCard.data?.playerNum !== me) {
         if (demoCard) demoCard.destroy();
         demoCard = new TALK_PLAYER.Card(byId('demo-player'), {
-          identity: {room:'DEMOTLK',token:'0'.repeat(63) + me,verified:true},
-          sendTechnical: command => { state = TALK_ENGINE.apply(state, {...command,actor:me,actorIdentity:'0'.repeat(63)+me,now:now(),seed:35}); render(); return Promise.resolve(); },
           nameBanner: data => `<span class="name-banner">${esc(data.name)}</span>`,
           send: command => {
-            state = TALK_ENGINE.apply(state, Object.assign({}, command, { actor: me, actorIdentity:'0'.repeat(63)+me, now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] }));
+            state = TALK_ENGINE.apply(state, Object.assign({}, command, { actor: me, now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] }));
             render(); return Promise.resolve();
           },
         });
@@ -263,45 +180,20 @@
     } catch (e) { error = e.message in { pending_questions: 1, question_open: 1, not_available: 1, offline: 1, invalid_extension: 1, invalid_topic: 1 } ? e.message : 'error'; }
     finally { busy = false; render(); if (error === 'pending_questions') byId('force-end').focus(); }
   }
-  byId('participants-content').addEventListener('click', event => {
-    const control = event.target.closest('[data-talk-action="exclude"]');
-    if (!control || control.disabled) return;
-    command('exclude', { playerNum: Number(control.dataset.player), active: control.dataset.active === 'true' });
-  });
   byId('setup').addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !canControl()) return;
     busy = true; error = ''; render();
     try {
       const topic = source === 'custom' ? TALK_LIBRARY.custom(draft()) : selectedTopic();
       if (!topic) throw new Error('invalid_topic');
-      const options = { topic, ...rememberSettings(), showStarters: startersOn() };
-      if (demo) state = TALK_ENGINE.create({ ...options, ...TALK_ENGINE.resetCarry(state, now()), id: TALK_SYNC.uid(), roster: demoRoster,
-        crazyIdentities:{ ...Object.fromEntries(demoRoster.map(p=>[p.playerNum,'0'.repeat(63)+p.playerNum])), ...state?.crazyIdentities }, now: now() });
+      const options = { topic, mode: byId('mode').value, seconds: Number(byId('seconds').value), showStarters: startersOn() };
+      if (demo) state = TALK_ENGINE.create({ ...options, id: TALK_SYNC.uid(), roster: demoRoster, now: now() });
       else await sync.start(options);
       byId('setup').hidden = true;
-    } catch (e) { error = ['offline', 'invalid_topic', 'invalid_crazy_interval', 'invalid_game_seconds', 'invalid_crazy_task_seconds','invalid_crazy_max_active','invalid_crazy_rotation','directorNeedsPlayers','missions_active'].includes(e.message) ? e.message : 'error'; }
+    } catch (e) { error = ['offline', 'invalid_topic'].includes(e.message) ? e.message : 'error'; }
     finally { busy = false; render(); }
   });
   byId('start').addEventListener('click', () => command('start'));
-  byId('vnext-panel').addEventListener('click', event => {
-    const control = event.target.closest('[data-talk-action]');
-    if (!control || control.disabled || !state) return;
-    const type = control.dataset.talkAction, projected = TALK_ENGINE.view(state,0,now(),{hostAuthorized:true}).talk.crazy;
-    const permission = {crazyExtend:'extend',crazyDrain:'drain',crazyDelegate:'delegate',crazyClaimHost:'claim',crazyReveal:'reveal'}[type];
-    if (!permission || !projected?.hostActions?.[permission]) return;
-    command(type, { ...(type === 'crazyExtend' ? {seconds:Number(control.dataset.seconds)} : {}), ...(type === 'crazyDelegate' ? {playerNum:Number(byId('vnext-panel').querySelector?.('[data-talk-delegate]')?.value)} : {}) });
-  });
-  byId('clock-toggle').addEventListener('click', () => {
-    if (state?.phase !== 'talking' || !state.gameDeadline) return;
-    roundClockVisible = !roundClockVisible; renderClock();
-  });
-  byId('add-time').addEventListener('click', () => command('addTime', { seconds: 60 }));
-  byId('finish').addEventListener('click', () => command('finish'));
-  Object.values(preferenceFields).forEach(id => byId(id).addEventListener('change', () => {
-    error = ''; try { rememberSettings(); } catch (e) { error = e.message; } render();
-  }));
-  byId('browse-library').addEventListener('click', () => { byId('question-bank').open = true; });
-  byId('crazy-pause').addEventListener('click', () => command('crazyPause', { paused: !state?.crazy?.paused }));
   byId('starter-toggle').addEventListener('change', async event => {
     const show = event.target.checked;
     if (activeSession()) {
@@ -348,31 +240,10 @@
   byId('new').addEventListener('click', showSetup);
   byId('cancel-setup').addEventListener('click', () => { byId('setup').hidden = true; render(); });
   byId('demo-view').addEventListener('change', render);
-  // Showing the round clock is local display state, independent of timer commands.
-  function renderClock() {
-    if (!state) return;
-    const preparation = state.phase === 'thinking';
-    const running = state.phase === 'talking' && !!state.gameDeadline;
-    const visible = preparation || (running && roundClockVisible);
-    const toggle = byId('clock-toggle');
-    toggle.hidden = !running;
-    toggle.textContent = t(roundClockVisible && running ? 'hideTime' : 'viewTime');
-    toggle.setAttribute('aria-expanded', String(running && roundClockVisible));
-    byId('clock').hidden = !visible;
-    const secondsLeft = Math.max(0, Math.ceil(((preparation ? state.deadline : state.gameDeadline) - now()) / 1000));
-    const duration = TALK_UI.duration || (seconds => Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0'));
-    byId('clock').textContent = preparation ? t('preparationClock', { n: secondsLeft })
-      : visible ? t('roundClock', { time: duration(secondsLeft) }) : '';
-  }
   function paintClock() {
     if (!state) return;
-    if (demo && !busy && TALK_ENGINE.timerDue(state, now())) {
-      state = TALK_ENGINE.apply(state, { id: TALK_SYNC.uid(), type: 'clockTick', actor: 0, sessionId: state.sessionId,
-        now: now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] });
-      render();
-    }
-    renderClock();
-
+    byId('clock').textContent = state.phase === 'thinking' ? t('secondsLeft', { n: Math.max(0, Math.ceil((state.deadline - now()) / 1000)) }) : '';
+    byId('interest').querySelectorAll('[data-talk-until]').forEach(e => { if (Number(e.dataset.talkUntil) <= now()) e.remove(); });
     if (state.phase === 'thinking' && now() >= state.deadline && canControl() && status !== 'switched' && !busy && !autoStart) {
       autoStart = true; command('start').finally(() => { autoStart = false; });
     }
@@ -400,25 +271,7 @@
           const newSession = state?.sessionId !== next.sessionId;
           if (state?.turnId !== next.turnId) error = '';
           state = next;
-          if (newSession) {
-            const fromHome = applyHomePreferences; applyHomePreferences = false;
-            byId('setup').hidden = !fromHome;
-            if (!fromHome) {
-            byId('game-mode').value = next.gameMode === 'crazy' ? 'crazy' : 'normal';
-            const interval = TALK_SETTINGS.normalize(next.crazy?.minSeconds != null ? { crazyMinSeconds: next.crazy.minSeconds, crazyMaxSeconds: next.crazy.maxSeconds } : { crazySeconds: next.crazy?.intervalSeconds });
-            setSetupPreference('crazyMinSeconds', interval.crazyMinSeconds);
-            setSetupPreference('crazyMaxSeconds', interval.crazyMaxSeconds);
-            byId('crazy-source').value = next.crazy?.source || 'mixed';
-            byId('conversation-mode').value = next.conversationMode || 'random';
-            byId('mode').value = next.mode || 'think';
-            setSetupPreference('seconds', next.seconds || 45);
-            setSetupPreference('gameSeconds', next.gameSeconds || 900);
-            setSetupPreference('crazyTaskSeconds', next.crazy?.taskSeconds || next.crazyTaskSeconds || 150);
-            setSetupPreference('crazyMaxActive', next.crazy?.maxActive || 3);
-            setSetupPreference('crazyPlayStyle', next.crazy?.playStyle || 'director');
-            setSetupPreference('crazyRotationSeconds', next.crazy?.rotationSeconds || TALK_SETTINGS.defaults.crazyRotationSeconds);
-            }
-          }
+          if (newSession) byId('setup').hidden = true;
           render();
         },
         onStatus: next => { status = next; if (next === 'switched') byId('setup').hidden = false; render(); },

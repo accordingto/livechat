@@ -6,38 +6,15 @@
 var ONCE_ENGINE = (() => {
   'use strict';
   const deck = typeof ONCE_DECK !== 'undefined' ? ONCE_DECK : require('./once-upon-a-time-deck.js');
-  // Browsers load the opening bank before the engine; the service bundles it.
-  const openings = typeof ONCE_OPENINGS !== 'undefined' ? ONCE_OPENINGS : typeof require === 'function' ? require('./once-upon-a-time-openings.js') : null;
   // Firebase drops empty containers and sometimes returns numeric-key objects.
   const list = value => Array.isArray(value) ? value.filter(x => x != null) :
     Object.keys(value || {}).sort((a, b) => /^\d+$/.test(a) && /^\d+$/.test(b) ? Number(a) - Number(b) : 0)
       .map(key => value[key]).filter(x => x != null);
   const copy = value => JSON.parse(JSON.stringify(value));
   const storyCards = list(deck.storyCards), endingCards = list(deck.endingCards);
-  // Global id lookups support saved cards from either world. Physical piles
-  // are selected only once at deal time and are never mixed between worlds.
-  const storyById = deck.storyById || Object.fromEntries(storyCards.map(card => [card.id, card]));
-  const endingById = deck.endingById || Object.fromEntries(endingCards.map(card => [card.id, card]));
-  const worldPool = id => typeof deck.getWorld === 'function' ? deck.getWorld(id) :
-    id === 'classic' ? { id: 'classic', storyCards, endingCards } : null;
-  // Interrupt membership is a per-game rule, not live library metadata. Saved
-  // games keep the mix they were dealt with until their next deal: no marker =
-  // the original mix (1), 2 = the 2026-10-22 mix, 3 = the current library flags.
-  const INTERRUPT_PROFILE = 3;
-  const savedInterruptIds = s => {
-    const pool = worldPool(s.world);
-    const ids = s.interruptProfile === 2 ? pool?.profile2InterruptIds : pool?.legacyInterruptIds;
-    return ids || list(pool?.storyCards).filter(c => c.isInterrupt).map(c => c.id);
-  };
-  const isInterrupt = (s, card) => !!card && (s.interruptProfile === INTERRUPT_PROFILE ? card.isInterrupt === true :
-    savedInterruptIds(s).includes(card.id));
-  const projectedStoryCard = (s, id) => storyById[id] ? { ...copy(storyById[id]), isInterrupt: isInterrupt(s, storyById[id]) } : null;
-  const validHandSize = value => value === null || Number.isInteger(value) && value >= 3 && value <= 9;
-  const resolvedHandSize = s => s.handSize == null ? Math.max(5, 11 - activeRoster(s).length) : s.handSize;
-  const HOST_TYPES = ['configure', 'deal', 'newOpening', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel', 'recover'];
-  // Remember recent openings for the room, across Restart, so a table rarely
-  // hears the same opening twice. Bounded so saved state stays small.
-  const RECENT_OPENINGS = 60;
+  const storyById = Object.fromEntries(storyCards.map(card => [card.id, card]));
+  const endingById = Object.fromEntries(endingCards.map(card => [card.id, card]));
+  const HOST_TYPES = ['deal', 'chooseFirst', 'randomFirst', 'finishVote', 'resolveSocial', 'restart', 'cancel'];
   const TURN_FREE = ['ready', 'vote', 'finishVote', 'resolveSocial'];
   function seedValue(value) {
     if (typeof value === 'number' && Number.isFinite(value)) return (value >>> 0) || 1;
@@ -55,37 +32,26 @@ var ONCE_ENGINE = (() => {
     }
     return result;
   }
-  function create({ id, roster, seed, now, sharedControls = false, world = 'classic', handSize = null } = {}) {
+  function create({ id, roster, seed, now } = {}) {
     const players = list(roster);
     if (!id || players.length < 2 || players.length > 6) throw new Error('invalid_setup');
     if (new Set(players.map(p => p.playerNum)).size !== players.length ||
         players.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1)) throw new Error('invalid_roster');
-    if (typeof world !== 'string' || !worldPool(world)) throw new Error('invalid_world');
-    if (!validHandSize(handSize)) throw new Error('invalid_hand_size');
     return {
       version: 1, sessionId: String(id), phase: 'LOBBY', turnId: 0, revision: 0,
-      world, handSize, resolvedHandSize: handSize == null ? Math.max(5, 11 - players.length) : handSize, interruptProfile: INTERRUPT_PROFILE,
       roster: players.map(p => ({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80) })),
       readiness: {}, hands: {}, endings: {}, storyteller: null, winner: null,
       storyDeck: [], storyDiscard: [], storyHeld: [], endingDeck: [], endingDiscard: [],
-      starterCard: null, opening: null, recentOpenings: [], history: [], log: [], lastAction: null, categoryOpportunity: null,
+      starterCard: null, history: [], log: [], lastAction: null, categoryOpportunity: null,
       latestPlay: null, interrupt: null, vote: null, passPlayer: null, endingPlayed: null,
       rngState: seedValue(seed), createdAt: Number(now) || 0, replies: {}, seen: {},
-      ...(sharedControls === true ? { sharedControls: true } : {}),
     };
   }
   function normalize(current) {
     const s = copy(current);
-    // Existing sessions keep every already-dealt card. Missing metadata only
-    // describes their original classic/automatic setup; it never triggers a deal.
-    if (s.world == null) s.world = 'classic';
-    if (s.interruptProfile == null) s.interruptProfile = 1;
-    if (s.handSize == null) s.handSize = null;
-    for (const key of ['roster', 'storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history', 'log', 'recentOpenings']) s[key] = list(s[key]);
-    if (s.opening == null) s.opening = null;
+    for (const key of ['roster', 'storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history', 'log']) s[key] = list(s[key]);
     for (const key of ['readiness', 'hands', 'endings', 'replies', 'seen']) s[key] = s[key] || {};
     for (const player of s.roster) s.hands[player.playerNum] = list(s.hands[player.playerNum]);
-    if (s.resolvedHandSize == null || s.phase === 'LOBBY') s.resolvedHandSize = resolvedHandSize(s);
     if (s.interrupt?.rollback) {
       const rollback = s.interrupt.rollback;
       for (const key of ['storyDeck', 'storyDiscard', 'storyHeld']) rollback[key] = list(rollback[key]);
@@ -103,31 +69,7 @@ var ONCE_ENGINE = (() => {
     return s;
   }
   const name = (s, actor) => s.roster.find(p => p.playerNum === actor)?.name || 'Host';
-  const activeRoster = s => s.roster.filter(p => p.active !== false && p.pending !== true);
-  const onlinePlayers = (s, cmd) => cmd.onlineNums == null ? activeRoster(s).map(p => p.playerNum) :
-    activeRoster(s).filter(p => list(cmd.onlineNums).includes(p.playerNum)).map(p => p.playerNum);
-  function activatePending(s, cmd, immediate = false) {
-    if (!['CHOOSING_FIRST', 'STORYTELLING'].includes(s.phase) || s.interrupt || s.vote || s.categoryOpportunity || s.passPlayer) return;
-    const pending = s.roster.filter(p => p.active !== false && p.pending === true && (immediate || Number(s.turnId) > Number(p.pendingTurnId)));
-    const count = s.handSize == null ? Math.max(5, 11 - s.roster.filter(p => p.active !== false).length) : s.handSize;
-    for (const p of pending) {
-      // An exhausted physical deck postpones entry rather than inventing a card
-      // or allowing a zero-card newcomer to claim an immediate Ending.
-      if (!s.hands[p.playerNum].length && (!s.storyDeck.length && !s.storyDiscard.length || !s.endings[p.playerNum] && !s.endingDeck.length && !s.endingDiscard.length)) continue;
-      if (!s.hands[p.playerNum].length) drawStory(s, p.playerNum, count, cmd);
-      if (!s.endings[p.playerNum]) s.endings[p.playerNum] = draw(s, 'ending', 1, cmd)[0] || null;
-      p.pending = false; delete p.pendingTurnId;
-      if (s.availablePlayerNums != null && !list(s.availablePlayerNums).includes(p.playerNum)) s.availablePlayerNums = [...list(s.availablePlayerNums), p.playerNum];
-    }
-  }
-  const left = (s, actor) => {
-    const i = s.roster.findIndex(p => p.playerNum === actor), active = activeRoster(s).map(p => p.playerNum), online = s.sharedControls === true && s.availablePlayerNums != null ? list(s.availablePlayerNums).filter(n => active.includes(n)) : active;
-    for (let step = 1; step <= s.roster.length; step++) {
-      const n = s.roster[(i + step) % s.roster.length].playerNum;
-      if (online.includes(n)) return n;
-    }
-    return null;
-  };
+  const left = (s, actor) => s.roster[(s.roster.findIndex(p => p.playerNum === actor) + 1) % s.roster.length].playerNum;
   function log(s, cmd, type, text) {
     const item = { id: cmd.id + ':' + type, type, actor: Number(cmd.actor), at: Number(cmd.now) || 0, text };
     s.log = [...s.log, item].slice(-128); s.lastAction = item;
@@ -153,46 +95,6 @@ var ONCE_ENGINE = (() => {
     log(s, cmd, 'draw', name(s, actor) + ' drew ' + ids.length + ' Story Card' + (ids.length === 1 ? '.' : 's.'));
     return ids;
   }
-  function dealOpeningHands(s, count, cmd) {
-    // This is a light opening-hand safeguard, not five equal category quotas.
-    // Pick the first eligible physical card from the genuinely shuffled deck;
-    // the untouched remainder keeps its random order for all later draws.
-    const minimumKinds = Math.min(count, count >= 7 ? 4 : 3);
-    const categoryCap = Math.ceil(count * 0.4);
-    const seats = randomize(s, activeRoster(s).map(player => player.playerNum), cmd, 'opening-seats');
-    const counts = Object.fromEntries(seats.map(seat => [seat, {}]));
-    for (const seat of seats) s.hands[seat] = [];
-    for (let round = 0; round < count; round++) for (const seat of seats) {
-      const kinds = counts[seat], slotsAfter = count - round - 1;
-      const index = s.storyDeck.findIndex(id => {
-        const category = storyById[id].category, already = kinds[category] || 0;
-        return already < categoryCap && Object.keys(kinds).length + (already ? 0 : 1) + slotsAfter >= minimumKinds;
-      });
-      // A smaller future authored pool must not clone cards or block dealing.
-      // The normal complete deck always supplies an eligible category.
-      const cardId = s.storyDeck.splice(index < 0 ? 0 : index, 1)[0];
-      if (!cardId) continue;
-      s.hands[seat].push(cardId);
-      const category = storyById[cardId].category;
-      kinds[category] = (kinds[category] || 0) + 1;
-    }
-  }
-  // An opening story replaces the old "who looks most like this card" starter.
-  // It is chosen from the table's own world and avoids recent openings.
-  function pickOpening(s, cmd, salt) {
-    const pool = openings ? list(openings.forWorld(s.world)).map(item => item.id) : [];
-    const recent = new Set(list(s.recentOpenings));
-    let candidates = pool.filter(id => id !== s.opening && !recent.has(id));
-    if (!candidates.length) candidates = pool.filter(id => id !== s.opening);
-    if (!candidates.length) candidates = pool;
-    const id = randomize(s, candidates, cmd, salt)[0] || null;
-    if (id) s.recentOpenings = [...list(s.recentOpenings).filter(old => old !== id), id].slice(-RECENT_OPENINGS);
-    return id;
-  }
-  const projectedOpening = id => {
-    const item = id && openings && openings.byId[id];
-    return item ? { id: item.id, world: item.world, en: item.en, zh: item.zh } : null;
-  };
   function releaseHeld(s) { s.storyDiscard.push(...s.storyHeld); s.storyHeld = []; }
   function closeOpportunities(s, keepLatest = false) {
     s.categoryOpportunity = null; s.interrupt = null;
@@ -211,7 +113,7 @@ var ONCE_ENGINE = (() => {
     s.history.push(item); return item;
   }
   function beginVote(s, cmd, kind, subjectPlayer, excluded, extra = {}) {
-    s.vote = { id: s.sessionId + ':' + cmd.actor + ':' + s.turnId + ':' + cmd.id + ':vote', kind, subjectPlayer, eligible: activeRoster(s).map(p => p.playerNum).filter(n => !excluded.includes(n)), votes: {}, ...extra };
+    s.vote = { id: s.sessionId + ':' + cmd.actor + ':' + s.turnId + ':' + cmd.id + ':vote', kind, subjectPlayer, eligible: s.roster.map(p => p.playerNum).filter(n => !excluded.includes(n)), votes: {}, ...extra };
     s.phase = kind === 'interrupt' ? 'INTERRUPT_DISPUTE' : kind === 'challenge' ? 'CHALLENGE' : 'ENDING_REVIEW';
     advance(s);
   }
@@ -281,71 +183,36 @@ var ONCE_ENGINE = (() => {
     const actor = Number(input.actor);
     if (!Number.isInteger(actor) || (actor !== 0 && !list(current.roster).some(p => p.playerNum === actor))) return current;
     if (list((current.seen || {})[actor]).includes(input.id)) return current;
-    const s = normalize(current), cmd = { ...input, actor }, host = actor === 0, manager = host || s.sharedControls === true;
-    const online = onlinePlayers(s, cmd);
-    if (s.sharedControls === true && online.length >= 2) s.availablePlayerNums = online;
+    const s = normalize(current), cmd = { ...input, actor }, host = actor === 0;
     let error = '';
     const reject = code => { error = code; };
     const story = s.phase === 'STORYTELLING', speaking = actor === s.storyteller;
-    if (actor !== 0 && !activeRoster(s).some(p => p.playerNum === actor)) reject('not_available');
-    else if (s.sharedControls === true && activeRoster(s).length < 2 && !['restart', 'cancel', 'ready'].includes(cmd.type)) reject('waiting_players');
-    else if (HOST_TYPES.includes(cmd.type) && !manager) reject('not_available');
+    if (HOST_TYPES.includes(cmd.type) && !host) reject('not_available');
     else if (!TURN_FREE.includes(cmd.type) && cmd.turnId !== s.turnId) reject('stale_turn');
     else switch (cmd.type) {
-      case 'configure': {
-        if (s.phase !== 'LOBBY') { reject('not_available'); break; }
-        const hasWorld = Object.prototype.hasOwnProperty.call(cmd, 'world');
-        const hasSize = Object.prototype.hasOwnProperty.call(cmd, 'handSize');
-        if (!hasWorld && !hasSize) { reject('invalid_settings'); break; }
-        const world = hasWorld ? cmd.world : s.world, handSize = hasSize ? cmd.handSize : s.handSize;
-        if (typeof world !== 'string' || !worldPool(world)) { reject('invalid_world'); break; }
-        if (!validHandSize(handSize)) { reject('invalid_hand_size'); break; }
-        // Validate both values before changing either; a concurrent stale
-        // configure or deal cannot silently replace the acknowledged settings.
-        if (s.world !== world || s.handSize !== handSize) {
-          s.world = world; s.handSize = handSize; s.resolvedHandSize = resolvedHandSize(s);
-          advance(s);
-          log(s, cmd, 'configure', 'The next game settings were updated.');
-        }
-        break;
-      }
       case 'ready':
         if (host || s.phase !== 'LOBBY' || typeof cmd.value !== 'boolean') { reject('not_available'); break; }
         s.readiness[actor] = cmd.value;
         break;
       case 'deal': {
         if (s.phase !== 'LOBBY') { reject('not_available'); break; }
-        if (s.sharedControls === true && online.length < 2) { reject('waiting_players'); break; }
-        const pool = worldPool(s.world), count = resolvedHandSize(s);
-        if (!pool) { reject('invalid_world'); break; }
-        if (!validHandSize(s.handSize)) { reject('invalid_hand_size'); break; }
-        if (list(pool.storyCards).length < activeRoster(s).length * count || list(pool.endingCards).length < activeRoster(s).length) { reject('insufficient_cards'); break; }
-        s.interruptProfile = INTERRUPT_PROFILE;
-        s.storyDeck = randomize(s, list(pool.storyCards).map(card => card.id), cmd, 'story-deal');
-        s.endingDeck = randomize(s, list(pool.endingCards).map(card => card.id), cmd, 'ending-deal');
-        s.resolvedHandSize = count;
-        dealOpeningHands(s, count, cmd);
-        for (const player of activeRoster(s)) {
+        s.storyDeck = randomize(s, storyCards.map(card => card.id), cmd, 'story-deal');
+        s.endingDeck = randomize(s, endingCards.map(card => card.id), cmd, 'ending-deal');
+        const count = Math.max(5, 11 - s.roster.length);
+        for (const player of s.roster) {
+          s.hands[player.playerNum] = draw(s, 'story', count, cmd);
           s.endings[player.playerNum] = draw(s, 'ending', 1, cmd)[0] || null;
         }
-        // No starter card is drawn: the opening story sets the scene instead.
-        s.starterCard = null; s.opening = pickOpening(s, cmd, 'opening');
+        s.starterCard = draw(s, 'story', 1, cmd)[0]; s.storyDiscard.push(s.starterCard);
         s.phase = 'CHOOSING_FIRST'; advance(s);
-        log(s, cmd, 'deal', 'Cards dealt. Read the opening story, then choose who begins.');
-        break;
-      }
-      case 'newOpening': {
-        if (s.phase !== 'CHOOSING_FIRST' || !s.opening) { reject('not_available'); break; }
-        s.opening = pickOpening(s, cmd, 'opening-again'); advance(s);
-        log(s, cmd, 'newOpening', 'A different opening story was drawn.');
+        log(s, cmd, 'deal', 'Cards dealt. Choose the player who looks most like ' + storyById[s.starterCard].title + '.');
         break;
       }
       case 'chooseFirst':
       case 'randomFirst': {
         if (s.phase !== 'CHOOSING_FIRST') { reject('not_available'); break; }
-        const chosen = cmd.type === 'randomFirst' ? randomize(s, s.sharedControls === true ? online : activeRoster(s).map(p => p.playerNum), cmd, 'first')[0] : Number(cmd.playerNum);
-        if (s.sharedControls === true && (online.length < 2 || !online.includes(chosen))) { reject('waiting_players'); break; }
-        if (!activeRoster(s).some(p => p.playerNum === chosen)) { reject('invalid_player'); break; }
+        const chosen = cmd.type === 'randomFirst' ? randomize(s, s.roster.map(p => p.playerNum), cmd, 'first')[0] : Number(cmd.playerNum);
+        if (!s.roster.some(p => p.playerNum === chosen)) { reject('invalid_player'); break; }
         s.storyteller = chosen; s.phase = 'STORYTELLING'; advance(s);
         log(s, cmd, 'first', name(s, chosen) + ' begins the story.');
         break;
@@ -368,7 +235,7 @@ var ONCE_ENGINE = (() => {
         if (!card || !s.hands[actor].includes(cmd.cardId)) { reject('invalid_card'); break; }
         if (mode === 'category') {
           if (!s.categoryOpportunity || cmd.opportunityId !== s.categoryOpportunity.id) { reject('stale_opportunity'); break; }
-          if (!isInterrupt(s, card) || card.category !== s.categoryOpportunity.category) { reject('wrong_category'); break; }
+          if (!card.isInterrupt || card.category !== s.categoryOpportunity.category) { reject('wrong_category'); break; }
         }
         const oldStoryteller = s.storyteller;
         const rollback = mode === 'normal' ? copy({ storyDeck: s.storyDeck, storyDiscard: s.storyDiscard, storyHeld: s.storyHeld, hands: s.hands, rngState: s.rngState, latestPlay: s.latestPlay || null }) : null;
@@ -454,32 +321,8 @@ var ONCE_ENGINE = (() => {
         }
         break;
       }
-      case 'recover': {
-        if (s.sharedControls !== true || ['LOBBY', 'CHOOSING_FIRST', 'FINISHED', 'CANCELLED'].includes(s.phase)) { reject('not_available'); break; }
-        if (online.length < 2) { reject('waiting_players'); break; }
-        if (s.vote) {
-          if (!s.vote.eligible.length) { reject('social_agreement_required'); break; }
-          if (s.vote.eligible.some(n => online.includes(n) && !Object.prototype.hasOwnProperty.call(s.vote.votes, n))) { reject('waiting_votes'); break; }
-          // Preserve the original eligible denominator: missing players abstain.
-          resolveVote(s, cmd);
-        }
-        if (s.phase === 'PASS_DISCARD' && !online.includes(s.passPlayer)) {
-          const absent = s.passPlayer; s.passPlayer = null; s.storyteller = left(s, absent);
-          s.phase = 'STORYTELLING'; closeOpportunities(s); advance(s);
-          log(s, cmd, 'awayPass', name(s, absent) + ' is away; their cards were kept and the story passes left.');
-        } else if (s.phase === 'STORYTELLING' && !online.includes(s.storyteller)) {
-          const absent = s.storyteller;
-          closeOpportunities(s); drawStory(s, absent, 1, cmd);
-          s.storyteller = left(s, absent); advance(s);
-          log(s, cmd, 'awayPass', name(s, absent) + ' is away; the story passes left without discarding a private card.');
-        }
-        break;
-      }
       case 'restart': {
-        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now, sharedControls: s.sharedControls, world: s.world, handSize: s.handSize });
-        fresh.roster = fresh.roster.map(p => ({ ...p, ...(s.roster.find(old => old.playerNum === p.playerNum)?.active === false ? { active: false } : {}) }));
-        fresh.resolvedHandSize = resolvedHandSize(fresh);
-        fresh.recentOpenings = list(s.recentOpenings).slice(-RECENT_OPENINGS);
+        const fresh = create({ id: s.sessionId + ':restart:' + cmd.id, roster: s.roster, seed: cmd.seed, now: cmd.now });
         Object.assign(s, fresh); advance(s);
         log(s, cmd, 'restart', 'A new game is ready for the host to deal.');
         break;
@@ -491,7 +334,6 @@ var ONCE_ENGINE = (() => {
         break;
       default: reject('not_available');
     }
-    if (!error) activatePending(s, cmd);
     s.revision = (Number(current.revision) || 0) + 1;
     s.seen[actor] = [...list(s.seen[actor]), cmd.id].slice(-64);
     s.replies[actor] = { id: cmd.id, error };
@@ -499,35 +341,30 @@ var ONCE_ENGINE = (() => {
   }
   function view(current, playerNum, now) {
     const s = normalize(current), actor = Number(playerNum), mine = s.roster.find(p => p.playerNum === actor), host = actor === 0;
-    const player = !!mine, eligible = player && mine.active !== false && mine.pending !== true, manager = host || eligible && s.sharedControls === true, enough = s.sharedControls !== true || activeRoster(s).length >= 2, speaking = eligible && actor === s.storyteller, story = enough && s.phase === 'STORYTELLING';
-    const hand = player ? s.hands[actor].filter(id => storyById[id]).map(id => projectedStoryCard(s, id)) : [];
+    const player = !!mine, speaking = player && actor === s.storyteller, story = s.phase === 'STORYTELLING';
+    const hand = player ? s.hands[actor].filter(id => storyById[id]).map(id => copy(storyById[id])) : [];
     const vote = s.vote, pending = s.interrupt;
     const mayReturn = !!(s.latestPlay && s.latestPlay.playerNum === s.storyteller && s.storyHeld.includes(s.latestPlay.cardId));
     const actions = {
-      ready: eligible && s.phase === 'LOBBY', configure: enough && manager && s.phase === 'LOBBY', deal: manager && s.phase === 'LOBBY',
-      chooseFirst: manager && s.phase === 'CHOOSING_FIRST', randomFirst: manager && s.phase === 'CHOOSING_FIRST',
-      newOpening: enough && manager && s.phase === 'CHOOSING_FIRST' && !!s.opening,
-      play: story && speaking && hand.length > 0, interrupt: story && eligible && !speaking && hand.length > 0,
-      categoryInterrupt: story && eligible && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),
-      dispute: story && eligible && !!pending && actor !== pending.interrupter,
+      ready: player && s.phase === 'LOBBY', deal: host && s.phase === 'LOBBY',
+      chooseFirst: host && s.phase === 'CHOOSING_FIRST', randomFirst: host && s.phase === 'CHOOSING_FIRST',
+      play: story && speaking && hand.length > 0, interrupt: story && player && !speaking && hand.length > 0,
+      categoryInterrupt: story && player && !speaking && !!s.categoryOpportunity && hand.some(c => c.isInterrupt && c.category === s.categoryOpportunity.category),
+      dispute: story && player && !!pending && actor !== pending.interrupter,
       continueStory: story && speaking && !!(pending || s.categoryOpportunity), pass: story && speaking,
-      challenge: story && eligible && !speaking, ending: story && speaking && !hand.length && !!s.endings[actor],
-      discard: enough && eligible && s.phase === 'PASS_DISCARD' && actor === s.passPlayer && hand.length > 0,
-      keepAll: enough && eligible && s.phase === 'PASS_DISCARD' && actor === s.passPlayer,
-      vote: eligible && !!vote && vote.eligible.includes(actor) && !Object.prototype.hasOwnProperty.call(vote.votes, actor),
-      finishVote: enough && manager && !!vote && vote.eligible.length > 0, resolveSocial: enough && manager && !!vote && !vote.eligible.length,
-      restart: manager, cancel: manager && !['FINISHED', 'CANCELLED'].includes(s.phase),
-      recover: manager && s.sharedControls === true && !['LOBBY', 'CHOOSING_FIRST', 'FINISHED', 'CANCELLED'].includes(s.phase),
+      challenge: story && player && !speaking, ending: story && speaking && !hand.length && !!s.endings[actor],
+      discard: s.phase === 'PASS_DISCARD' && actor === s.passPlayer && hand.length > 0,
+      keepAll: s.phase === 'PASS_DISCARD' && actor === s.passPlayer,
+      vote: player && !!vote && vote.eligible.includes(actor) && !Object.prototype.hasOwnProperty.call(vote.votes, actor),
+      finishVote: host && !!vote && vote.eligible.length > 0, resolveSocial: host && !!vote && !vote.eligible.length,
+      restart: host, cancel: host && !['FINISHED', 'CANCELLED'].includes(s.phase),
     };
     const once = {
       version: 1, playerNum: player ? actor : 0, sessionId: s.sessionId, turnId: s.turnId, revision: s.revision,
       phase: s.phase, storyteller: s.storyteller || null, winner: s.winner || null,
-      world: s.world, handSize: s.handSize, resolvedHandSize: s.resolvedHandSize,
-      roster: s.roster.map(p => ({ playerNum: p.playerNum, name: p.name, active: p.active !== false, pending: p.pending === true, memberStatus: p.active === false ? 'away' : p.pending === true ? 'next_turn' : 'active', handCount: s.hands[p.playerNum].length, ready: s.readiness[p.playerNum] === true })),
-      membership: { enabled: s.sharedControls === true, minPlayers: 2, maxPlayers: 6, activeCount: activeRoster(s).length, pendingCount: s.roster.filter(p => p.active !== false && p.pending === true).length },
-      starterCard: s.starterCard ? projectedStoryCard(s, s.starterCard) : null,
-      opening: projectedOpening(s.opening),
-      history: s.history.map(event => ({ ...event, card: projectedStoryCard(s, event.cardId) })),
+      roster: s.roster.map(p => ({ ...p, handCount: s.hands[p.playerNum].length, ready: s.readiness[p.playerNum] === true })),
+      starterCard: s.starterCard ? copy(storyById[s.starterCard]) : null,
+      history: s.history.map(event => ({ ...event, card: copy(storyById[event.cardId]) })),
       categoryOpportunity: s.categoryOpportunity ? copy(s.categoryOpportunity) : null,
       interrupt: pending ? { id: pending.id, eventId: pending.eventId, cardId: pending.cardId, oldStoryteller: pending.oldStoryteller, interrupter: pending.interrupter } : null,
       vote: vote ? { id: vote.id, kind: vote.kind, subjectPlayer: vote.subjectPlayer, eligible: vote.eligible.slice(),
@@ -536,11 +373,10 @@ var ONCE_ENGINE = (() => {
         returnLatest: vote.returnLatest === true, requiresSocial: !vote.eligible.length } : null,
       endingCard: ['ENDING_REVIEW', 'FINISHED'].includes(s.phase) && s.endingPlayed ? copy(endingById[s.endingPlayed.cardId]) : null,
       passPlayer: s.passPlayer || null, canReturnLatest: mayReturn,
-      returnableCard: mayReturn ? projectedStoryCard(s, s.latestPlay.cardId) : null,
+      returnableCard: mayReturn ? copy(storyById[s.latestPlay.cardId]) : null,
       deckCounts: { story: s.storyDeck.length, storyDiscard: s.storyDiscard.length, ending: s.endingDeck.length, endingDiscard: s.endingDiscard.length },
       readiness: player && s.readiness[actor] === true, actions, log: copy(s.log), lastAction: s.lastAction ? copy(s.lastAction) : null,
       reply: s.replies[actor] ? copy(s.replies[actor]) : null,
-      ...(s.sharedControls === true ? { sharedControls: true, hostControls: manager } : {}),
     };
     // Only a real roster member gets private keys, even when the requested seat
     // is unknown. No deck order, other hands/endings, ballots, tokens, or rollback.
@@ -550,38 +386,6 @@ var ONCE_ENGINE = (() => {
     }
     return { game: 'onceupon', playerNum: player ? actor : 0, name: mine?.name || null, once };
   }
-  function membership(current, changes = {}, ctx = {}) {
-    let s = normalize(current); const rows = list(changes.roster), added = list(changes.added), inactive = new Set(list(changes.inactiveNums).map(Number));
-    if (s.roster.length + added.length > 6 || added.some(p => !Number.isInteger(p.playerNum) || p.playerNum < 1 || s.roster.some(old => old.playerNum === p.playerNum)) || new Set(added.map(p => p.playerNum)).size !== added.length) throw new Error('invalid_roster');
-    const cmd = { id: String(ctx.id || 'membership'), actor: 0, seed: ctx.seed, now: Number(ctx.now) || 0 };
-    for (const p of added) {
-      const pending = !['LOBBY', 'CANCELLED', 'FINISHED'].includes(s.phase) && !inactive.has(p.playerNum);
-      s.roster.push({ playerNum: p.playerNum, name: String(p.name || '').trim().slice(0, 80), active: !inactive.has(p.playerNum), pending, ...(pending ? { pendingTurnId: s.turnId } : {}) });
-      s.hands[p.playerNum] = [];
-    }
-    for (const p of s.roster) {
-      const row = rows.find(r => r.playerNum === p.playerNum); if (row) p.name = String(row.name || '').trim().slice(0, 80);
-      const wasAway = p.active === false; p.active = !inactive.has(p.playerNum);
-      if (!p.active) { p.pending = false; delete p.pendingTurnId; }
-      else if (wasAway && !['LOBBY', 'CANCELLED', 'FINISHED'].includes(s.phase)) { p.pending = true; p.pendingTurnId = s.turnId; }
-    }
-    activatePending(s, cmd, s.phase === 'CHOOSING_FIRST' || s.phase === 'STORYTELLING' && (inactive.has(s.storyteller) || activeRoster(s).length < 2));
-    const available = activeRoster(s).map(p => p.playerNum); s.availablePlayerNums = available;
-    if (s.roster.filter(p => p.active !== false).length >= 2 && !['LOBBY', 'CHOOSING_FIRST', 'FINISHED', 'CANCELLED'].includes(s.phase)) {
-      if (s.vote && (inactive.has(s.vote.subjectPlayer) && s.vote.kind === 'ending' || !s.vote.eligible.some(n => available.includes(n) && !Object.prototype.hasOwnProperty.call(s.vote.votes, n)))) {
-        if (s.vote.eligible.length || s.vote.kind === 'ending' && inactive.has(s.vote.subjectPlayer)) resolveVote(s, cmd, s.vote.kind === 'ending' && inactive.has(s.vote.subjectPlayer) ? 'reject' : null);
-      }
-      if (s.phase === 'PASS_DISCARD' && inactive.has(s.passPlayer) || s.phase === 'STORYTELLING' && inactive.has(s.storyteller)) {
-        const absent = s.phase === 'PASS_DISCARD' ? s.passPlayer : s.storyteller;
-        s.passPlayer = null; closeOpportunities(s); s.storyteller = left(s, absent); s.phase = 'STORYTELLING'; advance(s);
-        log(s, cmd, 'awayPass', name(s, absent) + ' left; their cards were kept and the story passes left.');
-      }
-    }
-    activatePending(s, cmd);
-    if (s.phase === 'LOBBY') s.resolvedHandSize = resolvedHandSize(s);
-    s.revision = (Number(current.revision) || 0) + 1;
-    return s;
-  }
-  return { create, apply, view, membership, list, shuffle };
+  return { create, apply, view, list, shuffle };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = ONCE_ENGINE;

@@ -2,7 +2,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const E = require('../once-upon-a-time-engine.js');
 const D = require('../once-upon-a-time-deck.js');
-const O = require('../once-upon-a-time-openings.js');
 let serial = 0;
 const roster = count => Array.from({ length: count }, (_, i) => ({ playerNum: i + 1, name: 'Person ' + (i + 1) }));
 const create = (count = 4, seed = 731) => E.create({ id: 'once-test', roster: roster(count), seed, now: 1000 });
@@ -25,15 +24,14 @@ function freeze(value) {
 }
 function conservation(s) {
   if (s.phase === 'LOBBY') return;
-  const pool = typeof D.getWorld === 'function' ? D.getWorld(s.world || 'classic') : D;
   const story = [...E.list(s.storyDeck), ...E.list(s.storyDiscard), ...E.list(s.storyHeld), ...Object.values(s.hands || {}).flatMap(E.list)];
-  assert.equal(story.length, pool.storyCards.length, 'every physical Story Card stays in exactly one zone');
+  assert.equal(story.length, D.storyCards.length, 'every physical Story Card stays in exactly one zone');
   assert.equal(new Set(story).size, story.length, 'no duplicate physical Story Card');
-  assert.deepEqual(story.slice().sort(), pool.storyCards.map(c => c.id).sort());
+  assert.deepEqual(story.slice().sort(), D.storyCards.map(c => c.id).sort());
   const endings = [...E.list(s.endingDeck), ...E.list(s.endingDiscard), ...Object.values(s.endings || {}).filter(Boolean), ...(s.endingPlayed ? [s.endingPlayed.cardId] : [])];
-  assert.equal(endings.length, pool.endingCards.length);
+  assert.equal(endings.length, D.endingCards.length);
   assert.equal(new Set(endings).size, endings.length, 'no duplicate physical Ending Card');
-  assert.deepEqual(endings.slice().sort(), pool.endingCards.map(c => c.id).sort());
+  assert.deepEqual(endings.slice().sort(), D.endingCards.map(c => c.id).sort());
 }
 // Fixture helpers move a real physical card rather than inventing duplicates.
 function give(s, playerNum, cardId) {
@@ -66,7 +64,7 @@ test('setup accepts fixed 2–6 seat rosters and rejects malformed or duplicate 
   assert.throws(() => E.create({ roster: roster(2) }), /invalid_setup/);
 });
 
-test('2, 4, and 6 players receive correct private hands/endings and one public opening story, with no starter card', () => {
+test('2, 4, and 6 players receive correct private hands/endings and one public discarded starter', () => {
   for (const count of [2, 4, 6]) {
     const s = dealt(count), handSize = Math.max(5, 11 - count);
     assert.equal(s.phase, 'CHOOSING_FIRST'); assert.equal(s.storyteller, null);
@@ -75,12 +73,10 @@ test('2, 4, and 6 players receive correct private hands/endings and one public o
       assert.equal(E.view(s, p.playerNum, 0).once.hand.length, handSize);
       assert.equal(E.view(s, p.playerNum, 0).once.ending.id, s.endings[p.playerNum]);
     }
-    assert.deepEqual(s.storyDiscard, []); assert.deepEqual(s.history, []); assert.equal(s.starterCard, null);
-    assert.equal(s.storyDeck.length, D.storyCards.length - count * handSize);
+    assert.deepEqual(s.storyDiscard, [s.starterCard]); assert.deepEqual(s.history, []);
+    assert.equal(s.storyDeck.length, D.storyCards.length - count * handSize - 1);
     assert.equal(s.endingDeck.length, D.endingCards.length - count);
-    assert.equal(O.byId[s.opening].world, 'classic');
-    for (const viewer of [0, 1]) assert.deepEqual(E.view(s, viewer, 0).once.opening, { id: s.opening, world: 'classic', en: O.byId[s.opening].en, zh: O.byId[s.opening].zh });
-    assert.equal(E.view(s, 0, 0).once.starterCard, null); conservation(s);
+    assert.equal(E.view(s, 0, 0).once.starterCard.id, s.starterCard); conservation(s);
   }
 });
 
@@ -129,101 +125,6 @@ test('independent shuffle, random first selection and transaction retries are de
   assert.ok(a.roster.some(p => p.playerNum === E.apply(a, first).storyteller));
   assert.deepEqual(E.shuffle([1, 2, 3, 4, 5], 15), E.shuffle([1, 2, 3, 4, 5], 15));
   assert.notDeepEqual(E.shuffle(D.storyCards.map(c => c.id), 1), E.shuffle(D.storyCards.map(c => c.id), 2));
-});
-
-const storyById = Object.fromEntries(D.storyCards.map(card => [card.id, card]));
-const categoryCounts = hand => hand.reduce((counts, id) => {
-  const category = storyById[id].category; counts[category] = (counts[category] || 0) + 1; return counts;
-}, {});
-function trialDeal(count, seed) {
-  const before = create(count, seed);
-  const cmd = { id: 'trial-deal', sessionId: before.sessionId, turnId: before.turnId, type: 'deal', actor: 0, seed: seed * 7919, now: 2000 };
-  return { before, cmd, after: E.apply(before, cmd) };
-}
-function seedNumber(value) {
-  if (typeof value === 'number' && Number.isFinite(value)) return (value >>> 0) || 1;
-  let result = 2166136261;
-  for (const char of String(value == null ? 'once' : value)) result = Math.imul(result ^ char.charCodeAt(0), 16777619);
-  return (result >>> 0) || 1;
-}
-const openingShuffle = (before, cmd) => E.shuffle(D.storyCards.map(card => card.id), seedNumber(cmd.seed) ^ seedNumber('story-deal') ^ seedNumber(before.rngState));
-
-test('soft-balanced opening hands keep original counts, category variety and all physical cards', () => {
-  for (let count = 2; count <= 6; count++) for (let seed = 1; seed <= 120; seed++) {
-    const { after } = trialDeal(count, seed), handSize = 11 - count;
-    for (const seat of after.roster) {
-      const hand = after.hands[seat.playerNum], counts = categoryCounts(hand);
-      assert.equal(hand.length, handSize);
-      assert.ok(Object.keys(counts).length >= (handSize >= 7 ? 4 : 3), 'several narrative categories to use');
-      assert.ok(Math.max(...Object.values(counts)) <= Math.ceil(handSize * 0.4), 'one category never dominates the opening hand');
-    }
-    assert.deepEqual(after.storyDiscard, []); assert.equal(after.starterCard, null);
-    conservation(after);
-  }
-});
-
-test('opening safeguards retain the random remainder, retry determinism and later ordinary draw rules', () => {
-  for (let count = 2; count <= 6; count++) {
-    const { before, cmd, after } = trialDeal(count, 317 + count), frozen = freeze(clone(before));
-    assert.deepEqual(E.apply(frozen, cmd), after, 'transaction replay is the same complete deal');
-    assert.deepEqual(frozen, before, 'no input mutation');
-    assert.equal(E.apply(after, cmd), after, 'acknowledged retry never deals again');
-    const original = openingShuffle(before, cmd), used = new Set(Object.values(after.hands).flat());
-    assert.deepEqual(after.storyDeck, original.filter(id => !used.has(id)), 'remaining shuffled deck is not category-sorted or reshuffled');
-    assert.ok(O.byId[after.opening], 'an opening story replaces the drawn starter card');
-    let next = act(after, 'chooseFirst', 0, { playerNum: 1 });
-    const topCard = next.storyDeck[0], originalHand = clone(next.hands[1]);
-    next = act(next, 'pass', 1);
-    assert.deepEqual(next.hands[1], [...originalHand, topCard], 'later draw uses the real top card without opening safeguards');
-    conservation(next);
-  }
-});
-
-test('soft-balanced hands and Ending identities remain private at deal and reconnect', () => {
-  const { after } = trialDeal(6, 1443);
-  for (const viewer of [0, ...after.roster.map(seat => seat.playerNum)]) {
-    const projection = E.view(wire(after), viewer, 3000).once, text = JSON.stringify(projection);
-    for (const seat of after.roster) if (seat.playerNum !== viewer) {
-      for (const id of after.hands[seat.playerNum]) assert.equal(text.includes('"' + id + '"'), false, 'another player\'s hand is not published');
-      assert.equal(text.includes('"' + after.endings[seat.playerNum] + '"'), false, 'another player\'s Ending is not published');
-    }
-    if (viewer === 0) { assert.equal('hand' in projection, false); assert.equal('ending' in projection, false); }
-    else assert.deepEqual(projection.hand.map(card => card.id), after.hands[viewer]);
-    for (const secret of ['opening-seats', 'storyDeck', 'hands', 'endings', 'rngState']) assert.equal(text.includes('"' + secret + '"'), false);
-  }
-});
-
-test('seeded tables improve category variety without identical quotas, special-card quotas or seat bias', () => {
-  for (let count = 2; count <= 6; count++) {
-    const size = 11 - count, minKinds = size >= 7 ? 4 : 3, cap = Math.ceil(size * 0.4);
-    const patterns = new Set(), specialCounts = new Set();
-    const seatTotals = Array.from({ length: count }, () => Object.fromEntries(D.categories.map(category => [category.id, 0])));
-    let baselineBad = 0, balancedBad = 0, differentTables = 0;
-    for (let seed = 1; seed <= 1000; seed++) {
-      const { before, cmd, after } = trialDeal(count, seed), baseline = openingShuffle(before, cmd);
-      const tablePatterns = new Set();
-      for (let seatIndex = 0; seatIndex < count; seatIndex++) {
-        const plainCounts = categoryCounts(baseline.slice(seatIndex * size, (seatIndex + 1) * size));
-        if (Object.keys(plainCounts).length < minKinds || Math.max(...Object.values(plainCounts)) > cap) baselineBad++;
-        const hand = after.hands[seatIndex + 1], counts = categoryCounts(hand);
-        if (Object.keys(counts).length < minKinds || Math.max(...Object.values(counts)) > cap) balancedBad++;
-        const pattern = D.categories.map(category => counts[category.id] || 0).join(',');
-        patterns.add(pattern); tablePatterns.add(pattern);
-        specialCounts.add(hand.filter(id => storyById[id].isInterrupt).length);
-        for (const [category, total] of Object.entries(counts)) seatTotals[seatIndex][category] += total;
-      }
-      if (tablePatterns.size > 1) differentTables++;
-    }
-    assert.ok(baselineBad > 0, 'ordinary shuffle can deal a restrictive opening hand');
-    assert.equal(balancedBad, 0, 'opening safeguards eliminate the tested restrictive patterns');
-    assert.ok(patterns.size >= 20, 'many different category compositions remain possible');
-    assert.ok(differentTables > 900, 'most tables do not receive identical per-category quotas');
-    assert.ok(specialCounts.has(0) && specialCounts.size >= 4, 'no guaranteed or equal special-card allocation');
-    for (const category of D.categories) {
-      const means = seatTotals.map(totals => totals[category.id] / 1000);
-      assert.ok(Math.max(...means) - Math.min(...means) < 0.25, 'category access has no persistent seat-order advantage: ' + category.id);
-    }
-  }
 });
 
 test('a Storyteller can play several cards in order; category-special cards are ordinary elements when played', () => {
@@ -558,7 +459,7 @@ test('Firebase omission/numeric object arrays and JSON reconnect preserve hands 
 });
 
 test('Story Deck exhaustion reshuffles physical discard, preserves chronological history, and reuses event ids safely', () => {
-  let s = started(2); const initialOpening = s.opening;
+  let s = started(2); const initialStarter = s.starterCard;
   // Long tabletop session: pass, draw, discard, with occasional narrative plays.
   for (let i = 0; i < 180; i++) {
     const actor = s.storyteller;
@@ -566,7 +467,7 @@ test('Story Deck exhaustion reshuffles physical discard, preserves chronological
     if (played) s = act(s, 'play', actor, { cardId: s.hands[actor][0] });
     s = act(s, 'pass', actor); s = act(s, played ? 'keepAll' : 'discard', actor, { cardId: s.hands[actor][0] }); conservation(s);
   }
-  assert.ok(s.history.length > 30); assert.equal(s.opening, initialOpening);
+  assert.ok(s.history.length > 30); assert.equal(s.starterCard, initialStarter);
   assert.equal(new Set(s.history.map(event => event.eventId)).size, s.history.length);
   assert.ok(s.history.every((event, i) => i === 0 || event.at >= s.history[i - 1].at));
 });
@@ -632,18 +533,11 @@ test('finished winner can restart but cannot be cancelled or altered by late gam
 test('browser global builds use the same deck and engine without CommonJS or external dependencies', () => {
   const fs = require('node:fs'), vm = require('node:vm'), path = require('node:path');
   const context = vm.createContext({});
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-modern-future-deck.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-deck.js'), 'utf8'), context);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-openings.js'), 'utf8'), context);
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../once-upon-a-time-engine.js'), 'utf8'), context);
-  assert.equal(typeof context.ONCE_ENGINE.create, 'function'); assert.equal(context.ONCE_DECK.storyCards.length, D.storyCards.length);
+  assert.equal(typeof context.ONCE_ENGINE.create, 'function'); assert.equal(context.ONCE_DECK.storyCards.length, 114);
   const s = context.ONCE_ENGINE.create({ id: 'browser', roster: roster(2), seed: 1 });
   assert.equal(context.ONCE_ENGINE.view(s, 1, 0).game, 'onceupon'); assert.equal(s.phase, 'LOBBY');
-  const modern = context.ONCE_ENGINE.create({ id: 'browser-modern', roster: roster(6), seed: 3, world: 'modern-future', handSize: 3 });
-  const dealtModern = context.ONCE_ENGINE.apply(modern, { id: 'd', type: 'deal', actor: 0, sessionId: modern.sessionId, turnId: modern.turnId, seed: 500 });
-  assert.equal(dealtModern.phase, 'CHOOSING_FIRST'); assert.equal(dealtModern.hands[1].length, 3);
-  assert.ok(D.getWorld('modern-future').endingCards.some(card => card.id === context.ONCE_ENGINE.view(dealtModern, 1).once.ending.id));
-  assert.equal(context.ONCE_ENGINE.view(dealtModern, 1).once.opening.world, 'modern-future');
 });
 
 test('disputing the newest of successive normal interrupts preserves the older accepted event and exact draws', () => {
@@ -743,224 +637,4 @@ test('null object slots and invalid/noneligible ballots do not count as votes or
   const voteId = s.vote.id;
   for (const actor of [3, 5, 6]) s = act(firebaseBallots(s), 'vote', actor, { voteId, choice: 'continue' });
   assert.equal(s.phase, 'STORYTELLING'); assert.equal(s.storyteller, 1); conservation(s);
-});
-
-test('lobby starts classic with Original automatic hand counts and exposes only public settings', () => {
-  for (const count of [2, 3, 4, 5, 6]) {
-    const s = create(count);
-    assert.equal(s.world, 'classic'); assert.equal(s.handSize, null);
-    assert.equal(s.resolvedHandSize, Math.max(5, 11 - count));
-    for (const seat of [0, 1, 99]) {
-      const v = E.view(s, seat).once;
-      assert.equal(v.world, 'classic'); assert.equal(v.handSize, null);
-      assert.equal(v.resolvedHandSize, Math.max(5, 11 - count));
-      assert.equal(v.actions.configure, seat === 0);
-      assert.equal(Object.hasOwn(v, 'storyDeck'), false);
-    }
-  }
-});
-
-test('configure validates the whole settings pair before mutation, rejects bad values and preserves classic defaults', () => {
-  for (const handSize of [3, 4, 5, 6, 7, 8, 9, null]) {
-    let s = act(create(), 'configure', 0, { handSize });
-    assert.equal(s.replies[0].error, ''); assert.equal(s.handSize, handSize);
-    assert.equal(s.resolvedHandSize, handSize == null ? 7 : handSize);
-    s = act(s, 'deal'); assert.equal(s.phase, 'CHOOSING_FIRST');
-    for (const hand of Object.values(s.hands)) assert.equal(hand.length, handSize == null ? 7 : handSize);
-    conservation(s);
-  }
-  for (const bad of [0, 2, 10, 4.5, '5', false, {}, [], undefined]) {
-    const before = act(create(), 'ready', 1, { value: false }), after = act(before, 'configure', 0, { handSize: bad });
-    assert.equal(after.replies[0].error, 'invalid_hand_size');
-    assert.deepEqual(gameplay(after), gameplay(before));
-  }
-  for (const bad of ['unknown', '', 1, {}, null, undefined]) {
-    const before = act(create(), 'ready', 1, { value: false }), after = act(before, 'configure', 0, { world: bad, handSize: 3 });
-    assert.equal(after.replies[0].error, 'invalid_world'); assert.deepEqual(gameplay(after), gameplay(before));
-  }
-  assert.equal(act(create(), 'configure').replies[0].error, 'invalid_settings');
-  assert.throws(() => E.create({ id: 'bad', roster: roster(2), handSize: 10 }), /invalid_hand_size/);
-  assert.throws(() => E.create({ id: 'bad', roster: roster(2), world: 'mixed' }), /invalid_world/);
-});
-
-test('configuration respects authenticated manager, session, turn and LOBBY boundaries with retry-safe receipt', () => {
-  const before = create();
-  assert.equal(act(before, 'configure', 1, { handSize: 3, actor: 1 }).replies[1].error, 'not_available');
-  const invalidActor = command(before, 'configure', 99, { handSize: 3 });
-  assert.equal(E.apply(before, invalidActor), before);
-  assert.equal(E.apply(before, command(before, 'configure', 0, { sessionId: 'old', handSize: 3 })), before);
-  const configure = command(before, 'configure', 0, { handSize: 3 });
-  const after = E.apply(freeze(clone(before)), configure);
-  assert.equal(after.handSize, 3); assert.equal(after.turnId, before.turnId + 1);
-  assert.deepEqual(E.apply(before, configure), after); assert.equal(E.apply(after, configure), after);
-  const stale = act(after, 'configure', 0, { turnId: before.turnId, handSize: 8 });
-  assert.equal(stale.replies[0].error, 'stale_turn'); assert.equal(stale.handSize, 3);
-  const oldDeal = E.apply(after, command(before, 'deal'));
-  assert.equal(oldDeal.replies[0].error, 'stale_turn'); assert.equal(oldDeal.phase, 'LOBBY');
-  let active = act(after, 'deal'); const held = clone(active.hands);
-  active = act(active, 'configure', 0, { handSize: 9 });
-  assert.equal(active.replies[0].error, 'not_available'); assert.deepEqual(active.hands, held);
-  assert.equal(E.view(active, 0).once.actions.configure, false);
-  const shared = E.create({ id: 'shared', roster: roster(3), sharedControls: true });
-  assert.equal(E.view(shared, 2).once.actions.configure, true);
-  assert.equal(E.view(shared, 99).once.actions.configure, false);
-  assert.equal(act(shared, 'configure', 2, { handSize: 4 }).handSize, 4);
-});
-
-test('either world and every manual hand size deal one private Ending and only their independent physical pool', () => {
-  for (const world of ['classic', 'modern-future']) for (const count of [2, 3, 4, 5, 6]) for (const handSize of [3, 4, 5, 6, 7, 8, 9]) {
-    const pool = D.getWorld(world); assert.ok(pool);
-    let s = E.create({ id: world + count + handSize, roster: roster(count), world, handSize, seed: 9871 });
-    s = act(s, 'deal'); assert.equal(s.replies[0].error, '');
-    for (const player of s.roster) {
-      const v = E.view(s, player.playerNum).once;
-      assert.equal(v.hand.length, handSize); assert.equal(v.resolvedHandSize, handSize);
-      assert.ok(pool.endingCards.some(card => card.id === v.ending.id));
-      assert.ok(v.hand.every(card => pool.storyCards.some(candidate => candidate.id === card.id)));
-      const encoded = JSON.stringify(v);
-      for (const other of s.roster.filter(candidate => candidate.playerNum !== player.playerNum)) {
-        for (const id of s.hands[other.playerNum]) assert.equal(encoded.includes(JSON.stringify(id)), false);
-        assert.equal(encoded.includes(JSON.stringify(s.endings[other.playerNum])), false);
-      }
-    }
-    const publicView = E.view(s, 0).once;
-    assert.equal(publicView.hand, undefined); assert.equal(publicView.ending, undefined);
-    conservation(s);
-  }
-});
-
-test('3–9-card opening safeguards allow variable compositions across both worlds without category quotas', () => {
-  for (const world of ['classic', 'modern-future']) for (const handSize of [3, 4, 5, 6, 7, 8, 9]) {
-    const signatures = new Set(), pool = D.getWorld(world), byId = Object.fromEntries(pool.storyCards.map(card => [card.id, card]));
-    for (let seed = 1; seed <= 200; seed++) {
-      const base = E.create({ id: 'variety-' + seed, roster: roster(6), world, handSize, seed });
-      const s = E.apply(base, command(base, 'deal', 0, { seed: seed + 500 }));
-      for (const hand of Object.values(s.hands)) {
-        const counts = {};
-        for (const id of hand) { const category = byId[id].category; counts[category] = (counts[category] || 0) + 1; }
-        assert.equal(hand.length, handSize);
-        assert.ok(Object.keys(counts).length >= Math.min(handSize, handSize >= 7 ? 4 : 3));
-        assert.ok(Math.max(...Object.values(counts)) <= Math.ceil(handSize * 0.4));
-        signatures.add(D.categories.map(category => counts[category.id] || 0).join(','));
-      }
-      conservation(s);
-    }
-    assert.ok(signatures.size > 5, 'soft safeguard must not force one identical category quota');
-  }
-});
-
-test('restart keeps chosen world/hand size but clears all cards, story and votes before a fresh random deal', () => {
-  let s = act(create(6), 'configure', 0, { world: 'modern-future', handSize: 4 });
-  s = act(s, 'deal'); s = act(s, 'chooseFirst', 0, { playerNum: 1 });
-  s = act(s, 'play', 1, { cardId: s.hands[1][0] }); s = act(s, 'challenge', 2);
-  const previous = clone(s), restarted = act(s, 'restart');
-  assert.notEqual(restarted.sessionId, previous.sessionId);
-  assert.equal(restarted.world, 'modern-future'); assert.equal(restarted.handSize, 4);
-  assert.equal(restarted.resolvedHandSize, 4); assert.equal(restarted.phase, 'LOBBY');
-  for (const key of ['storyDeck', 'storyDiscard', 'storyHeld', 'endingDeck', 'endingDiscard', 'history']) assert.deepEqual(restarted[key], []);
-  for (const key of ['hands', 'endings', 'readiness']) assert.deepEqual(restarted[key], {});
-  assert.equal(restarted.vote, null); assert.equal(restarted.endingPlayed, null);
-  assert.equal(E.apply(restarted, command(previous, 'play', 1, { cardId: previous.hands[1][0] })), restarted);
-  const redealt = act(restarted, 'deal'); conservation(redealt);
-  assert.notDeepEqual(redealt.hands, previous.hands);
-  const classic = act(act(redealt, 'restart'), 'configure', 0, { world: 'classic', handSize: null });
-  assert.equal(classic.resolvedHandSize, 5); conservation(act(classic, 'deal'));
-});
-
-test('modern world normal play, interrupts, pass, rejection and Ending verdict retain classic social rules', () => {
-  let s = E.create({ id: 'modern-game', roster: roster(4), world: 'modern-future', handSize: 3, seed: 717 });
-  s = act(s, 'deal'); s = act(s, 'chooseFirst', 0, { playerNum: 1 });
-  const first = s.hands[1][0]; s = act(s, 'play', 1, { cardId: first });
-  assert.equal(E.view(s, 0).once.history[0].card.id, first);
-  const interrupt = s.hands[2][0], oldHand = clone(s.hands[1]);
-  s = act(s, 'interrupt', 2, { cardId: interrupt, mode: 'normal' });
-  assert.equal(s.hands[1].length, oldHand.length + 1);
-  s = act(s, 'dispute', 1, { interruptId: s.interrupt.id }); s = finish(s, 'invalid');
-  assert.equal(s.storyteller, 1); assert.deepEqual(s.hands[1], oldHand); conservation(s);
-  const expectedDraw = s.storyDeck[0]; s = act(s, 'pass', 1);
-  assert.equal(s.hands[1].at(-1), expectedDraw, 'later draw takes unchanged shuffled top card');
-  s = act(s, 'keepAll', 1); assert.equal(s.storyteller, 2); conservation(s);
-  emptyHand(s, 2); const oldEnding = s.endings[2];
-  s = act(s, 'ending', 2); s = finish(s, 'reject');
-  assert.ok(s.endingDiscard.includes(oldEnding)); assert.notEqual(s.endings[2], oldEnding);
-  assert.equal(s.hands[2].length, 1); assert.equal(s.storyteller, 3); conservation(s);
-  emptyHand(s, 3); s = act(s, 'ending', 3); s = finish(s, 'accept');
-  assert.equal(s.phase, 'FINISHED'); assert.equal(s.winner, 3); conservation(s);
-});
-
-test('saved classic sessions with missing setting metadata neither re-deal nor rebalance on view/ordinary operation', () => {
-  const saved = started(6); delete saved.world; delete saved.handSize; delete saved.resolvedHandSize;
-  const hands = clone(saved.hands), endingIds = clone(saved.endings), order = saved.storyDeck.slice();
-  const view = E.view(freeze(clone(saved)), 1).once;
-  assert.equal(view.world, 'classic'); assert.equal(view.handSize, null); assert.equal(view.resolvedHandSize, 5);
-  assert.deepEqual(view.hand.map(card => card.id), hands[1]);
-  const continued = act(saved, 'continueStory', 1);
-  assert.deepEqual(continued.hands, hands); assert.deepEqual(continued.endings, endingIds); assert.deepEqual(continued.storyDeck, order);
-  assert.equal(saved.world, undefined); conservation(continued);
-});
-
-test('the opening story bank is original, bilingual, per world and has stable unique ids', () => {
-  assert.deepEqual(Object.keys(O.worlds).sort(), ['classic', 'halloween', 'modern-future']);
-  assert.equal(O.worlds.classic.length, 40); assert.equal(O.worlds['modern-future'].length, 30); assert.equal(O.worlds.halloween.length, 30);
-  const all = Object.values(O.byId);
-  assert.equal(all.length, 100); assert.equal(new Set(all.map(o => o.en)).size, 100); assert.equal(new Set(all.map(o => o.zh)).size, 100);
-  for (const item of all) {
-    assert.match(item.id, /^once-open-(classic|modern|halloween)-\d{3}$/);
-    const words = item.en.split(/\s+/).length;
-    assert.ok(words >= 20 && words <= 50, item.id + ' stays a short spoken opening');
-    assert.ok(/[.?!"]$/.test(item.en) && /[。？！」]$/.test(item.zh), item.id + ' has complete sentences');
-    assert.ok(/[\u4e00-\u9fff]/.test(item.zh) && !/[\u4e00-\u9fff]/.test(item.en));
-  }
-  for (const item of O.worlds.classic) assert.match(item.en, /^Once upon a time,/);
-  for (const item of O.worlds.halloween) assert.doesNotMatch(item.en, /\b(blood|bloody|kill|killed|dead body|corpse|gore|murder)\b/i, 'Halloween stays light, not gory');
-  assert.equal(O.fallback('same-session', 'halloween'), O.fallback('same-session', 'halloween'));
-  assert.equal(O.fallback('same-session', 'halloween').world, 'halloween');
-  assert.equal(O.forWorld('unknown'), O.worlds.classic);
-});
-
-test('deal uses an opening from the chosen world; managers can redraw it before the first Storyteller only', () => {
-  for (const world of ['classic', 'modern-future', 'halloween']) {
-    let s = E.create({ id: 'open-' + world, roster: roster(4), seed: 11, now: 1, world, handSize: world === 'classic' ? null : 5 });
-    s = act(s, 'deal'); const first = s.opening;
-    assert.equal(O.byId[first].world, world); assert.deepEqual(s.recentOpenings, [first]);
-    assert.equal(E.view(s, 0).once.actions.newOpening, true); assert.equal(E.view(s, 2).once.actions.newOpening, false);
-    const refused = act(s, 'newOpening', 2); assert.equal(refused.replies[2].error, 'not_available'); assert.equal(refused.opening, first);
-    const before = clone(s.hands), turn = s.turnId, cmd = command(s, 'newOpening');
-    const again = E.apply(s, cmd);
-    assert.equal(again.replies[0].error, ''); assert.notEqual(again.opening, first); assert.equal(O.byId[again.opening].world, world);
-    assert.deepEqual(again.hands, before, 'redrawing the opening never touches cards'); assert.equal(again.turnId, turn + 1);
-    assert.deepEqual(E.apply(again, cmd), again, 'retried redraw is not applied twice');
-    assert.deepEqual(E.apply(s, cmd), again, 'transaction replay chooses the same opening');
-    const stale = E.apply(again, { ...command(again, 'chooseFirst', 0, { playerNum: 1 }), turnId: turn });
-    assert.equal(stale.replies[0].error, 'stale_turn', 'a start captured before the redraw is fenced');
-    let started = act(again, 'randomFirst');
-    assert.equal(started.phase, 'STORYTELLING'); assert.equal(started.opening, again.opening);
-    assert.equal(E.view(started, 0).once.actions.newOpening, false);
-    started = act(started, 'newOpening'); assert.equal(started.replies[0].error, 'not_available'); conservation(started);
-  }
-});
-
-test('openings avoid recent ones across Restart until the world pool is used up', () => {
-  let s = create(3); const seen = [];
-  for (let game = 0; game < O.worlds.classic.length; game++) {
-    s = act(s, 'deal'); seen.push(s.opening); s = act(s, 'restart');
-    assert.equal(s.phase, 'LOBBY'); assert.equal(s.opening, null);
-  }
-  assert.equal(new Set(seen).size, O.worlds.classic.length, 'every classic opening before any repeat');
-  s = act(s, 'deal'); assert.ok(O.byId[s.opening]); assert.ok(s.recentOpenings.length <= 60);
-  let r = act(s, 'newOpening'); for (let i = 0; i < 50; i++) r = act(r, 'newOpening');
-  assert.ok(O.byId[r.opening]); assert.equal(r.recentOpenings.length, new Set(r.recentOpenings).size);
-});
-
-test('saved games with the old starter card keep it and start normally without an opening story', () => {
-  let s = dealt(4);
-  // Shape of a game dealt by the previous release: one discarded starter card.
-  s.opening = null; delete s.recentOpenings; s.starterCard = s.storyDeck.shift(); s.storyDiscard.push(s.starterCard);
-  const saved = wire(s), view = E.view(saved, 0).once;
-  assert.equal(view.opening, null); assert.equal(view.starterCard.id, s.starterCard); assert.equal(view.actions.newOpening, false);
-  assert.equal(act(saved, 'newOpening').replies[0].error, 'not_available');
-  const next = act(saved, 'chooseFirst', 0, { playerNum: 2 });
-  assert.equal(next.storyteller, 2); assert.equal(next.starterCard, s.starterCard); conservation(next);
-  const fresh = act(act(next, 'restart'), 'deal');
-  assert.equal(fresh.starterCard, null); assert.ok(O.byId[fresh.opening]); conservation(fresh);
 });

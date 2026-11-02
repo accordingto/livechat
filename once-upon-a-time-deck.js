@@ -1,21 +1,15 @@
 (function (root, factory) {
   'use strict';
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./once-upon-a-time-modern-future-deck.js'), require('./once-upon-a-time-halloween-deck.js'));
-  else if (typeof define === 'function' && define.amd) define(['./once-upon-a-time-modern-future-deck', './once-upon-a-time-halloween-deck'], factory);
-  else root.ONCE_DECK = factory(root.ONCE_MODERN_FUTURE_DECK, root.ONCE_HALLOWEEN_DECK);
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (modernFuture, halloween) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else if (typeof define === 'function' && define.amd) define([], factory);
+  else root.ONCE_DECK = factory();
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
   // Original, hand-authored core deck. A title, its language and its art can change
   // independently of the rules. The final boolean marks a category Interrupt card.
   // Each card has its own meaning-matched painting and a small mobile thumbnail.
   // Text, art and rules remain independently editable; card IDs never change.
-  // Most titles are flexible, familiar story elements rather than a prescribed
-  // character description. A small set of fairy-tale twists keeps the deck varied.
-  // Legacy slugs stay stable for saved games and still use their literal artwork.
-  // Original additions favor broad actions and reusable story hooks; category
-  // totals need not match. IDs, words and artwork remain stable. The legacy
-  // Interrupt pool is retained so an already-running game keeps its old rules.
   const assetRoot = 'assets/once-upon-a-time/';
   const categories = Object.freeze([
     { id: 'character', label: 'Character', color: '#d4af37', iconKey: 'crown' },
@@ -27,97 +21,89 @@
 
   const storyGroups = [
     ['character', [
-      ['candle-keeper', 'Caretaker', true],
-      ['lost-heir', 'Traveler', false],
-      ['hill-giant', 'Giant', false],
-      ['quiet-prince', 'Prince', false],
-      ['river-witch', 'Witch', true],
-      ['young-miller', 'Miller', false],
+      ['candle-keeper', 'Candle Keeper', true],
+      ['lost-heir', 'Lost Heir', false],
+      ['hill-giant', 'Hill Giant', false],
+      ['quiet-prince', 'Quiet Prince', false],
+      ['river-witch', 'River Witch', true],
+      ['young-miller', 'Young Miller', false],
       ['fox', 'Fox', false],
       ['woodcutter', 'Woodcutter', false],
       ['glass-knight', 'Glass Knight', true],
-      ['moon-cat', 'Cat', false],
-      ['royal-cook', 'Cook', false],
-      ['wandering-singer', 'Singer', false],
-      ['old-shepherd', 'Shepherd', false],
+      ['moon-cat', 'Moon Cat', false],
+      ['royal-cook', 'Royal Cook', false],
+      ['wandering-singer', 'Wandering Singer', false],
+      ['old-shepherd', 'Old Shepherd', false],
       ['masked-guest', 'Masked Guest', false],
-      ['forest-child', 'Child', true],
-      ['wise-crow', 'Crow', false],
-      ['tiny-dragon', 'Dragon', false],
-      ['gate-guard', 'Guard', false],
-      ['sea-sister', 'Mermaid', false],
-      ['travelling-judge', 'Judge', false],
+      ['forest-child', 'Forest Child', true],
+      ['wise-crow', 'Wise Crow', false],
+      ['tiny-dragon', 'Tiny Dragon', false],
+      ['gate-guard', 'Gate Guard', false],
+      ['sea-sister', 'Sea Sister', false],
+      ['travelling-judge', 'Travelling Judge', false],
       ['talking-hare', 'Talking Hare', false],
-      ['poor-tailor', 'Tailor', false],
-      ['sleepy-king', 'King', false],
-      ['friend', 'Friend', false],
-      ['thief', 'Thief', false],
-      ['dog', 'Dog', false]
+      ['poor-tailor', 'Poor Tailor', false],
+      ['sleepy-king', 'Sleepy King', false]
     ]],
     ['thing', [
-      ['silver-needle', 'Needle', true],
-      ['empty-crown', 'Crown', false],
-      ['wishing-coin', 'Coin', false],
+      ['silver-needle', 'Silver Needle', true],
+      ['empty-crown', 'Empty Crown', false],
+      ['wishing-coin', 'Wishing Coin', false],
       ['broken-sword', 'Broken Sword', false],
-      ['green-bottle', 'Bottle', true],
-      ['red-ribbon', 'Ribbon', false],
-      ['wooden-flute', 'Flute', false],
-      ['locked-chest', 'Chest', false],
-      ['walking-boots', 'Boots', true],
+      ['green-bottle', 'Green Bottle', true],
+      ['red-ribbon', 'Red Ribbon', false],
+      ['wooden-flute', 'Wooden Flute', false],
+      ['locked-chest', 'Locked Chest', false],
+      ['walking-boots', 'Walking Boots', true],
       ['golden-apple', 'Golden Apple', false],
-      ['old-map', 'Map', false],
-      ['glass-bell', 'Bell', false],
-      ['warm-cloak', 'Cloak', false],
-      ['black-feather', 'Feather', false],
-      ['secret-letter', 'Letter', true],
-      ['stone-ring', 'Ring', false],
+      ['old-map', 'Old Map', false],
+      ['glass-bell', 'Glass Bell', false],
+      ['warm-cloak', 'Warm Cloak', false],
+      ['black-feather', 'Black Feather', false],
+      ['secret-letter', 'Secret Letter', true],
+      ['stone-ring', 'Stone Ring', false],
       ['lantern', 'Lantern', false],
-      ['sleeping-potion', 'Potion', false],
-      ['copper-mirror', 'Mirror', false],
-      ['bread-basket', 'Bread', false],
+      ['sleeping-potion', 'Sleeping Potion', false],
+      ['copper-mirror', 'Copper Mirror', false],
+      ['bread-basket', 'Bread Basket', false],
       ['spinning-wheel', 'Spinning Wheel', false],
-      ['pocket-watch', 'Watch', false],
-      ['pearl', 'Pearl', false],
-      ['key', 'Key', false],
-      ['rope', 'Rope', false],
-      ['book', 'Book', false]
+      ['pocket-watch', 'Pocket Watch', false],
+      ['pearl', 'Pearl', false]
     ]],
     ['place', [
-      ['thorn-garden', 'Garden', true],
-      ['lonely-tower', 'Tower', false],
-      ['deep-well', 'Well', false],
-      ['misty-bridge', 'Bridge', false],
-      ['hidden-valley', 'Valley', true],
-      ['old-mill', 'Mill', false],
-      ['royal-kitchen', 'Kitchen', false],
-      ['snowy-pass', 'Mountain Pass', false],
-      ['moonlit-lake', 'Lake', true],
-      ['empty-village', 'Village', false],
+      ['thorn-garden', 'Thorn Garden', true],
+      ['lonely-tower', 'Lonely Tower', false],
+      ['deep-well', 'Deep Well', false],
+      ['misty-bridge', 'Misty Bridge', false],
+      ['hidden-valley', 'Hidden Valley', true],
+      ['old-mill', 'Old Mill', false],
+      ['royal-kitchen', 'Royal Kitchen', false],
+      ['snowy-pass', 'Snowy Pass', false],
+      ['moonlit-lake', 'Moonlit Lake', true],
+      ['empty-village', 'Empty Village', false],
       ['stone-circle', 'Stone Circle', false],
-      ['secret-tunnel', 'Tunnel', false],
-      ['high-mountain', 'Mountain', false],
-      ['market-square', 'Market', false],
-      ['island-castle', 'Castle', true],
-      ['dark-attic', 'Attic', false],
+      ['secret-tunnel', 'Secret Tunnel', false],
+      ['high-mountain', 'High Mountain', false],
+      ['market-square', 'Market Square', false],
+      ['island-castle', 'Island Castle', true],
+      ['dark-attic', 'Dark Attic', false],
       ['riverbank', 'Riverbank', false],
-      ['wild-meadow', 'Meadow', false],
-      ['seaside-cave', 'Cave', false],
-      ['golden-hall', 'Hall', false],
+      ['wild-meadow', 'Wild Meadow', false],
+      ['seaside-cave', 'Seaside Cave', false],
+      ['golden-hall', 'Golden Hall', false],
       ['crossroads', 'Crossroads', false],
-      ['abandoned-chapel', 'Chapel', false],
-      ['tree-house', 'Tree House', false],
-      ['forest', 'Forest', false],
-      ['river', 'River', false]
+      ['abandoned-chapel', 'Abandoned Chapel', false],
+      ['tree-house', 'Tree House', false]
     ]],
     ['aspect', [
       ['invisible', 'Invisible', true],
-      ['merciful', 'Kind', false],
+      ['merciful', 'Merciful', false],
       ['jealous', 'Jealous', false],
       ['shy', 'Shy', false],
       ['bewitched', 'Bewitched', true],
       ['honest', 'Honest', false],
       ['frozen', 'Frozen', false],
-      ['fearless', 'Brave', false],
+      ['fearless', 'Fearless', false],
       ['forgotten', 'Forgotten', true],
       ['greedy', 'Greedy', false],
       ['silent', 'Silent', false],
@@ -132,67 +118,40 @@
       ['broken', 'Broken', false],
       ['patient', 'Patient', false],
       ['beautiful', 'Beautiful', false],
-      ['hungry', 'Hungry', false],
-      ['happy', 'Happy', false]
+      ['hungry', 'Hungry', false]
     ]],
     ['event', [
-      ['unexpected-guest', 'Arrival', true],
-      ['broken-promise', 'Broken Promise', false],
-      ['secret-meeting', 'Secret Meeting', false],
-      ['brave-choice', 'Choice', false],
-      ['sudden-storm', 'Storm', true],
-      ['wedding', 'Wedding', false],
-      ['gift', 'Gift', false],
-      ['mistake', 'Mistake', false],
-      ['narrow-escape', 'Escape', true],
-      ['long-sleep', 'Sleep', false],
-      ['search', 'Search', false],
-      ['farewell', 'Goodbye', false],
-      ['feast', 'Feast', false],
-      ['warning', 'Warning', false],
-      ['wish-granted', 'Wish Comes True', true],
-      ['lost-path', 'Getting Lost', false],
-      ['change-of-heart', 'Change of Heart', false],
-      ['race', 'Race', false],
-      ['trade', 'Trade', false],
-      ['return', 'Return', false],
-      ['door-opens', 'Door Opens', false],
-      ['hidden-truth', 'Secret Revealed', false],
-      ['rescue', 'Rescue', false],
-      ['chase', 'Chase', false],
-      ['discovery', 'Discovery', false],
-      ['quarrel', 'Quarrel', false],
-      ['laughter', 'Laughter', false],
-      ['repair', 'Repair', false]
+      ['unexpected-guest', 'An Unexpected Guest', true],
+      ['broken-promise', 'A Broken Promise', false],
+      ['secret-meeting', 'A Secret Meeting', false],
+      ['brave-choice', 'A Brave Choice', false],
+      ['sudden-storm', 'A Sudden Storm', true],
+      ['wedding', 'A Wedding', false],
+      ['gift', 'A Gift', false],
+      ['mistake', 'A Mistake', false],
+      ['narrow-escape', 'A Narrow Escape', true],
+      ['long-sleep', 'A Long Sleep', false],
+      ['search', 'A Search', false],
+      ['farewell', 'A Farewell', false],
+      ['feast', 'A Feast', false],
+      ['warning', 'A Warning', false],
+      ['wish-granted', 'A Wish Granted', true],
+      ['lost-path', 'A Lost Path', false],
+      ['change-of-heart', 'A Change of Heart', false],
+      ['race', 'A Race', false],
+      ['trade', 'A Trade', false],
+      ['return', 'A Return', false],
+      ['door-opens', 'A Door Opens', false],
+      ['hidden-truth', 'A Hidden Truth', false]
     ]]
   ];
 
-  // Interrupt mixes are fixed physical-card pools, never a guaranteed quota
-  // in each player's hand. Profile 2 had six per category (30/129). Profile 3
-  // (current new deals) adds one more per category: 35/129 = 27.1%, a little
-  // above the official third-edition core deck (23 of 114 Story cards, 20.2%).
-  const extraInterruptIds = new Set([
-    'once-character-lost-heir', 'once-character-moon-cat',
-    'once-thing-empty-crown', 'once-thing-old-map',
-    'once-place-empty-village', 'once-place-secret-tunnel',
-    'once-aspect-fearless', 'once-aspect-hungry',
-    'once-event-search', 'once-event-return'
-  ]);
-  const profile3InterruptIds = new Set([
-    'once-character-fox', 'once-thing-copper-mirror', 'once-place-seaside-cave',
-    'once-aspect-frozen', 'once-event-hidden-truth'
-  ]);
-  const legacyInterruptIds = Object.freeze(storyGroups.flatMap(([category, rows]) =>
-    rows.filter(([, , isInterrupt]) => isInterrupt).map(([slug]) => 'once-' + category + '-' + slug)));
-  const profile2InterruptIds = Object.freeze(storyGroups.flatMap(([category, rows]) =>
-    rows.filter(([slug, , isInterrupt]) => isInterrupt || extraInterruptIds.has('once-' + category + '-' + slug))
-      .map(([slug]) => 'once-' + category + '-' + slug)));
   const storyCards = Object.freeze(storyGroups.flatMap(([category, rows]) =>
     rows.map(([slug, title, isInterrupt]) => Object.freeze({
       id: 'once-' + category + '-' + slug,
       title,
       category,
-      isInterrupt: isInterrupt || extraInterruptIds.has('once-' + category + '-' + slug) || profile3InterruptIds.has('once-' + category + '-' + slug),
+      isInterrupt,
       artKey: 'story.' + category + '.' + slug,
       imagePath: assetRoot + category + '/' + slug + '-v2.webp',
       thumbnailPath: assetRoot + category + '/' + slug + '-v2-thumb.webp'
@@ -261,15 +220,12 @@
     thumbnailPath: assetRoot + 'ending/' + slug + '-v2-thumb.webp'
   })));
 
-  const classic = Object.freeze({ id: 'classic', title: 'Classic fairy tales', storyCards, endingCards, legacyInterruptIds, profile2InterruptIds });
-  const worlds = Object.freeze([classic, ...(modernFuture?.id === 'modern-future' ? [modernFuture] : []), ...(halloween?.id === 'halloween' ? [halloween] : [])]);
-  const getWorld = id => worlds.find(world => world.id === id) || null;
-  const storyById = Object.freeze(Object.fromEntries(worlds.flatMap(world => world.storyCards.map(card => [card.id, card]))));
-  const endingById = Object.freeze(Object.fromEntries(worlds.flatMap(world => world.endingCards.map(card => [card.id, card]))));
+  const storyById = Object.freeze(Object.fromEntries(storyCards.map(card => [card.id, card])));
+  const endingById = Object.freeze(Object.fromEntries(endingCards.map(card => [card.id, card])));
   const cardBacks = Object.freeze({
     story: assetRoot + 'card-backs/story-back.svg',
     ending: assetRoot + 'card-backs/ending-back.svg'
   });
 
-  return Object.freeze({ storyCards, endingCards, categories, storyById, endingById, cardBacks, worlds, getWorld });
+  return Object.freeze({ storyCards, endingCards, categories, storyById, endingById, cardBacks });
 });

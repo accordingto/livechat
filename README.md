@@ -23,21 +23,10 @@ host is sharing.
 | 🎭 You're In The Scene | 2–6 | Draw a chaotic situation — every player is dealt their own role and hint. No script, just improv |
 | 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
 | 🖼️ Dixit / 妙語說書人 | 3–8 | Give spoken clues for 84 original pictures, submit decoys, secretly vote, and reveal the answer together |
-| 🎉 BLUFF PARTY | 3–9 | One strange topic, one real expert: make up explanations, question each other, and find the truth in one continuous conversation |
-| WORD WOLF | 3–9 | Describe your secret item, then privately vote for the one player holding a different item |
-| WHO KNOWS? | 4–9 | Insider or Werewolf roles with a secret word or number; optional broad starting clue |
-| WORD LIMIT THEATER | 2–9 | Take turns acting a scene with your own word limit; most limits are 3 or 4 words, 1 and 6 are rare |
-| 🎯 雙選賓果 DUAL-PICK BINGO | 4–12 | Two teams secretly nominate a number, play one of five short challenges, and the result decides whose number is called on both boards |
 
 ## How it works
 
-**BLUFF PARTY** uses the existing room/player links, Classic and Halloween topics, private roles, Spotlight, and automatic scoring. Bluffers can open optional story starting points on their own cards and freely ignore them. Its independent executor keeps the game running after the host page closes. See [`bluff-king-mode.md`](bluff-king-mode.md) for modes, knowledge history and the accepted trust boundary. No new environment variables or backend credentials are required.
-
-**WORD WOLF**, **WORD LIMIT THEATER** and **WHO KNOWS?** also reuse the original player links. Their canonical tables run through the players' cards; the host page can close after starting. See [`word-wolf-mode.md`](word-wolf-mode.md), [`word-limit-mode.md`](word-limit-mode.md) and [`who-knows-mode.md`](who-knows-mode.md) for rules and privacy limits. WORD WOLF restores the original 80 pairs, with a dedicated gouache-style illustration for each of the 160 words across all 80 pairs.
-
-**雙選賓果 DUAL-PICK BINGO** reuses the room and player links. The host page (or the host's own card in the same browser) runs the match and writes each card only what that seat may see; see [`bingo-party-mode.md`](bingo-party-mode.md) for rules, the trust boundary and tests.
-
-**Dixit** retains its original Hub entry. Its prominent phase bar tells
+**Dixit** is the final entry in the Hub game menu. Its prominent phase bar tells
 each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card
 before the highest-voted pictures. Designate the host player when opening the
 table; that player's private card handles every game control as well as their
@@ -69,7 +58,7 @@ for everyone to tap Ready. Participants play from their own existing cards.
 `?demo=1` is a clearly labelled synthetic preview only.
 
 - `index.html` is the menu; each game has its own host page.
-- `play.html` is the single player card page shared by the Hub's linked-card games — it
+- `play.html` is the single player card page shared by **the seven games and Let's Talk** — it
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
@@ -228,7 +217,7 @@ node --test tests/*.test.cjs
 
 ## Dixit picture storytelling
 
-Dixit supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
+The final Hub game supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
 
 ## License
 

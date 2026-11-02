@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Your Secret Card (Beta版)</title>
+  <meta name="theme-color" content="#0d0d1a">
+  <script src="i18n.js"></script>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100dvh; padding: 24px;
+    }
+    /* the wrapper had no width of its own, so `width:100%` on the card resolved against
+       shrink-to-fit content — the card ended up a different width in every state */
+    #content { width: 100%; max-width: 420px; display: flex; justify-content: center; }
+    /* every render path sets its own theme-* class below, so this base color
+       is just a safe fallback and never actually shows on screen */
+    .secret-card {
+      background: #13132b;
+      border: 2px solid #94a3b8;
+      border-radius: 26px;
+      padding: 48px 40px;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      text-align: center;
+      max-width: 420px; width: 100%;
+      box-shadow: 0 0 60px rgba(148,163,184,.18);
+      animation: fadeUp .5s ease both;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .secret-card.theme-wordwolf    { border-color: #f59e0b; box-shadow: 0 0 60px rgba(245,158,11,.18); }
+    .secret-card.theme-conquest    { border-color: #22c55e; box-shadow: 0 0 60px rgba(34,197,94,.18); }
+    .secret-card.theme-cardcheck   { border-color: #94a3b8; box-shadow: 0 0 60px rgba(148,163,184,.18); }
+
+    /* 🏰 Dare Conquest: this card is a control panel, not a reveal — it gets tighter
+       spacing and a smaller name pill than the games that show one big secret word,
+       so the buttons sit together instead of drifting apart down a very tall card */
+    .secret-card.theme-conquest {
+      padding: 22px 20px 16px; gap: 14px; border-radius: 22px;
+    }
+    /* skills and the roll button belong together — tighter inside, normal gap outside */
+    .conq-actions { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+    /* always-on turn marker — the loudest thing on the card after the action buttons,
+       tinted with the current player's own board colour so "who" reads at a glance */
+    .conq-turnbar {
+      display: flex; align-items: baseline; justify-content: center; gap: 9px;
+      width: 100%; border: 2px solid; border-radius: 14px;
+      padding: 13px 16px;
+    }
+    .conq-turnbar.is-me { animation: turnPulse 1.8s ease-in-out infinite; }
+    @keyframes turnPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+    .conq-turnbar .ct-token { font-size: 1.3rem; line-height: 1; align-self: center; }
+    .conq-turnbar .ct-name {
+      font-size: 1.3rem; font-weight: 900; letter-spacing: .5px; line-height: 1.15;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .conq-turnbar .ct-suffix {
+      font-size: .92rem; font-weight: 800; opacity: .75; white-space: nowrap;
+    }
+    .conq-status {
+      font-size: .84rem; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: #666;
+    }
+    .conq-chip {
+      background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: #22c55e;
+      font-size: .8rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      padding: 4px 14px; border-radius: 20px;
+    }
+    .conq-chip.is-truth { background: rgba(234,179,8,.14); border-color: rgba(234,179,8,.35); color: #eab308; }
+    .conq-meta {
+      width: 100%; display: flex; justify-content: center; gap: 16px;
+      border-top: 1px solid #1e1e42; padding-top: 11px; margin-top: 0;
+      font-size: .82rem; font-weight: 800; color: #555;
+    }
+    /* High/Low Roll on the card: same red-border + yellow-text armed look as the host screen,
+       and the same "stays visible showing (0)" behaviour once the charges run out */
+    /* stacked, not side by side — full-width rows are easier to hit and leave room for
+       the label and the charge count to breathe */
+    .conq-skill-row { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .conq-skill {
+      width: 100%; background: #1a1a38; border: 2px solid #35335e; color: #999;
+      border-radius: 12px; padding: 12px 10px;
+      font-size: .85rem; font-weight: 800; font-family: inherit; white-space: nowrap;
+      cursor: pointer; transition: background .2s, border-color .2s, color .2s, transform .1s;
+    }
+    .conq-skill:active:not(:disabled) { transform: scale(.97); }
+    .conq-skill:disabled { opacity: .4; cursor: not-allowed; }
+    .conq-skill.armed { border-color: #ef4444; color: #eab308; opacity: 1; }
+
+    /* the countdown, mirrored from the host — same green → orange → red as the big screen */
+    .conq-timer {
+      width: 62px; height: 62px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid #22c55e; color: #22c55e;
+      font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      transition: border-color .3s, color .3s;
+    }
+    .conq-timer.low { border-color: #f59e0b; color: #f59e0b; }
+    .conq-timer.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+    @keyframes timerPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+    /* the challenge text, shown only to the player who has to perform it */
+    .conq-prompt {
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 14px;
+      padding: 16px 14px;
+      font-size: 1.08rem; font-weight: 800; color: #fff; line-height: 1.45;
+      overflow-wrap: break-word;
+    }
+    .conq-vote-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .conq-vote {
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
+      border-radius: 14px; padding: 15px; font-size: .98rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s;
+    }
+    .conq-vote:active { transform: scale(.98); }
+    .conq-vote.yes.picked { border-color: #22c55e; background: rgba(34,197,94,.16); color: #22c55e; }
+    .conq-vote.no.picked  { border-color: #ef4444; background: rgba(239,68,68,.16); color: #ef4444; }
+    .conq-wait { font-size: 1.5rem; color: #333; line-height: 1; padding: 6px 0; }
+    /* the roll button on the card fires the die on the host's shared screen */
+    .conq-roll {
+      width: 100%; background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 14px; padding: 16px; font-size: 1.08rem; font-weight: 900; font-family: inherit;
+      box-shadow: 0 6px 18px rgba(34,197,94,.25);
+      cursor: pointer; transition: background .2s, opacity .2s, transform .1s;
+    }
+    .conq-roll:disabled { box-shadow: none; }
+    .conq-roll:active:not(:disabled) { transform: scale(.98); }
+    .conq-roll:disabled { opacity: .35; cursor: not-allowed; }
+    /* Truth or Dare, called from the card — mirrors the host screen's two big buttons */
+    .conq-td-row { display: flex; gap: 10px; width: 100%; }
+    .conq-td {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #ccc;
+      border-radius: 14px; padding: 14px 10px;
+      font-size: .95rem; font-weight: 900; letter-spacing: 1px; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, color .2s, background .2s, transform .1s;
+    }
+    .conq-td .conq-td-emoji { font-size: 1.7rem; letter-spacing: 0; }
+    .conq-td:active:not(:disabled) { transform: scale(.96); }
+    .conq-td:disabled { opacity: .35; cursor: not-allowed; }
+    .conq-td.truth { background: #eab308; border-color: #eab308; color: #2b1f00; box-shadow: 0 6px 18px rgba(234,179,8,.22); }
+    .conq-td.dare { background: #ef4444; border-color: #ef4444; color: #2b0808; box-shadow: 0 6px 18px rgba(239,68,68,.22); }
+    .conq-td:disabled { box-shadow: none; }
+    @media (hover: hover) and (pointer: fine) {
+      .conq-vote.yes:hover { border-color: #22c55e; }
+      .conq-vote.no:hover  { border-color: #ef4444; }
+    }
+
+    /* Secret Rule: the rule itself is a sentence, not a single word, so it gets
+       its own left-aligned block plus a dimmer example line underneath */
+    .rule-text {
+      font-size: 1.45rem; font-weight: 800; color: #fff; line-height: 1.35;
+      max-width: 100%; overflow-wrap: break-word;
+    }
+    .rule-example {
+      font-size: .95rem; color: #7dd3c0; line-height: 1.5;
+      background: #0d0d1a; border-radius: 12px; padding: 12px 16px; width: 100%;
+    }
+
+    /* 🗳️ Secret Rule guessing: one dropdown per other player, filled from the
+       host's shortlist — a native <select> beats a wall of buttons on a phone */
+    .guess-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; text-align: left; }
+    .guess-row:last-child { margin-bottom: 0; }
+    .guess-name { font-size: .9rem; font-weight: 800; color: #ddd; }
+    .guess-select {
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 12px;
+      color: #ddd; font-family: inherit; font-size: .88rem; font-weight: 600;
+      padding: 11px 34px 11px 12px; /* room on the right so long rules never run under the arrow */
+      text-overflow: ellipsis; -webkit-appearance: none; appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #14b8a6 50%), linear-gradient(135deg, #14b8a6 50%, transparent 50%);
+      background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+      background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+      transition: border-color .2s;
+    }
+    .guess-select:focus { outline: none; border-color: #14b8a6; }
+    .guess-select.answered { border-color: #14b8a6; color: #2dd4bf; }
+
+    /* one name badge for every game: a colour-dot + the name, in that player's own
+       colour, over a dark base with a soft glow of the same colour. Same size and shape
+       everywhere — only the hue changes, which is what tells you the card is yours. */
+    .name-banner {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 1.3rem; font-weight: 900; line-height: 1.25; letter-spacing: .5px;
+      border: 2px solid; border-radius: 999px; padding: 8px 22px 8px 16px;
+      max-width: 100%; overflow-wrap: break-word;
+    }
+    /* the dot sits on the filled chip now, so it reads as a hole punched in the colour
+       rather than a glowing bead floating on dark */
+    .name-banner::before {
+      content: ''; flex-shrink: 0;
+      width: 11px; height: 11px; border-radius: 50%;
+      background: currentColor;
+      opacity: .55;
+    }
+
+    .card-emoji { font-size: 6rem; line-height: 1; }
+    .card-word  {
+      font-weight: 800; color: #fff; line-height: 1.15;
+      max-width: 100%; overflow-wrap: break-word;
+    }
+    .secret-hint {
+      font-size: .85rem; color: #555;
+      border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
+      width: 100%;
+    }
+    .error-msg { color: #666; font-size: 1rem; text-align: center; line-height: 1.7; }
+
+    /* 🗳️ vote section on the Word Wolf card */
+    .vote-section {
+      width: 100%;
+      border-top: 1px solid #1e1e42; padding-top: 18px; margin-top: 4px;
+    }
+    .vote-title {
+      font-size: .86rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+      color: #666; margin-bottom: 10px;
+    }
+    .vote-list { display: flex; flex-direction: column; gap: 8px; }
+    .vote-btn {
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
+      border-radius: 12px; padding: 12px; font-size: .95rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, background .2s;
+    }
+    .vote-btn:hover { border-color: #f59e0b; }
+    .vote-btn.voted { border-color: #f59e0b; background: rgba(245,158,11,.15); color: #f59e0b; }
+
+    /* ── the four "answer from your phone" games: Pick a Side, Sophie's Choice,
+       You're In The Scene, Persuade Together. Same card shell, one accent each. ── */
+    .secret-card.theme-hottake  { border-color: #ff7043; box-shadow: 0 0 60px rgba(255,112,67,.18); }
+    .secret-card.theme-sophies  { border-color: #a78bfa; box-shadow: 0 0 60px rgba(167,139,250,.18); }
+    .secret-card.theme-scene    { border-color: #ec4899; box-shadow: 0 0 60px rgba(236,72,153,.18); }
+    .secret-card.theme-persuade { border-color: #06b6d4; box-shadow: 0 0 60px rgba(6,182,212,.18); }
+    .secret-card.theme-hottake, .secret-card.theme-sophies,
+    .secret-card.theme-scene, .secret-card.theme-persuade { padding: 28px 24px 24px; gap: 16px; }
+
+    .pick-chip {
+      font-size: .8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+      border: 1px solid; border-radius: 20px; padding: 4px 14px;
+    }
+    /* the prompt is the one thing a player may need to re-read while everyone talks */
+    .pick-text {
+      width: 100%; font-size: 1.05rem; font-weight: 700; color: #fff; line-height: 1.5;
+      overflow-wrap: break-word;
+    }
+    .pick-sub { font-size: .85rem; color: #888; line-height: 1.5; }
+    .pick-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .pick-btn {
+      display: flex; align-items: center; gap: 12px; text-align: left;
+      background: #0d0d1a; border: 2px solid #1e1e42; color: #ddd;
+      border-radius: 14px; padding: 14px; font-size: .95rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: border-color .2s, background .2s, color .2s, transform .1s;
+    }
+    .pick-btn:active { transform: scale(.98); }
+    .pick-btn .pb-key {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: #1e1e42; color: #999; font-size: .8rem; font-weight: 900;
+    }
+    .pick-btn .pb-label { line-height: 1.35; font-weight: 700; }
+    .pick-btn.picked { border-color: currentColor; }
+    /* `color: inherit` picks up the button's own accent — `currentColor` on .pb-key
+       would resolve against its own colour and turn the letter invisible */
+    .pick-btn.picked .pb-key { background: color-mix(in srgb, currentColor 28%, transparent); color: inherit; }
+
+    /* 🙊 Say It Without Saying It: the clue giver's ✅/❌ verdict — filled solid so they
+       read as real buttons instead of list rows with coloured text on a dark background */
+    .pick-btn.verdict-right { background: #22c55e; border-color: #22c55e; color: #06230f; }
+    .pick-btn.verdict-right .pb-key { background: rgba(6,35,15,.22); color: inherit; }
+    .pick-btn.verdict-wrong { background: #ef4444; border-color: #ef4444; color: #2b0505; }
+    .pick-btn.verdict-wrong .pb-key { background: rgba(43,5,5,.22); color: inherit; }
+
+    /* 🙊 Say It Without Saying It: the clue giver's word, and the banned list everyone gets */
+    .secret-card.theme-taboo { border-color: #6366f1; box-shadow: 0 0 60px rgba(99,102,241,.18); padding: 28px 24px 24px; gap: 16px; }
+    .taboo-target {
+      width: 100%; background: #0d0d1a; border: 2px solid #6366f1; border-radius: 16px;
+      padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .taboo-target .tt-emoji { font-size: 2.6rem; line-height: 1; }
+    .taboo-target .tt-word {
+      font-size: 1.9rem; font-weight: 900; color: #fff; line-height: 1.2;
+      overflow-wrap: break-word; max-width: 100%;
+    }
+    .taboo-banned { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+    .taboo-banned .tb-label {
+      font-size: .82rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #ef4444;
+    }
+    .taboo-banned .tb-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
+    .taboo-banned .tb-word {
+      background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.45); color: #fca5a5;
+      border-radius: 10px; padding: 7px 13px; font-size: .95rem; font-weight: 800;
+    }
+    /* the buzzer: the biggest thing on a guesser's card, made to be hit fast */
+    .taboo-buzz {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: #22c55e; border: 2px solid #22c55e; color: #06230f;
+      border-radius: 16px; padding: 20px 14px;
+      font-size: 1.15rem; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(34,197,94,.28);
+      transition: transform .1s, opacity .2s;
+    }
+    .taboo-buzz .pb-key { font-size: 1.5rem; }
+    .taboo-buzz:active:not(:disabled) { transform: scale(.97); }
+    .taboo-buzz:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .taboo-foul {
+      width: 100%; background: #ef4444; border: 2px solid #ef4444; color: #2b0505;
+      border-radius: 12px; padding: 12px; font-size: .85rem; font-weight: 800; font-family: inherit;
+      cursor: pointer; box-shadow: 0 4px 14px rgba(239,68,68,.28);
+      transition: transform .1s, opacity .2s;
+    }
+    .taboo-foul:active:not(:disabled) { transform: scale(.98); }
+    .taboo-foul:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+    /* the countdown, mirrored from the host — same green → orange → red everywhere */
+    .taboo-timer {
+      width: 74px; height: 74px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 4px solid #6366f1; color: #a5b4fc;
+      font-size: 1.75rem; font-weight: 900; font-variant-numeric: tabular-nums;
+      transition: border-color .3s, color .3s;
+    }
+    .taboo-timer.low { border-color: #f59e0b; color: #f59e0b; }
+    .taboo-timer.critical { border-color: #ef4444; color: #ef4444; animation: timerPulse .8s ease-in-out infinite; }
+
+    /* an open Taboo! call — the host decides whether it stands */
+    .taboo-called {
+      width: 100%; background: rgba(239,68,68,.12); border: 2px solid #ef4444; color: #ef4444;
+      border-radius: 14px; padding: 13px; font-size: .98rem; font-weight: 900;
+      animation: buzzIn .3s ease both;
+    }
+    .taboo-called.mine { animation: buzzIn .3s ease both, buzzPulse 1.6s ease-in-out infinite .3s; }
+    .taboo-called .tc-sub {
+      display: block; margin-top: 4px; font-size: .84rem; font-weight: 700; color: #9a6a6a;
+    }
+    /* who is currently guessing, on the giver's card and on the buzzer's own card */
+    .taboo-buzzed {
+      width: 100%; background: rgba(34,197,94,.12); border: 2px solid #22c55e; color: #22c55e;
+      border-radius: 14px; padding: 14px; font-size: 1.05rem; font-weight: 900;
+      animation: buzzIn .3s ease both;
+    }
+    .taboo-buzzed.mine { animation: buzzIn .3s ease both, buzzPulse 1.6s ease-in-out infinite .3s; }
+    /* locked out of buzzing this cycle — dim and neutral, not the "go" green of the buzzer */
+    .taboo-waiting {
+      width: 100%; background: rgba(148,163,184,.08); border: 2px solid #3a3a5c; color: #888;
+      border-radius: 14px; padding: 14px; font-size: 1.05rem; font-weight: 900;
+      animation: buzzIn .3s ease both;
+    }
+    @keyframes buzzIn { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: scale(1); } }
+    @keyframes buzzPulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+
+    /* ⚖️ Kangaroo Court: role tint matches the host screen's role chips */
+    .secret-card.theme-kangaroo { padding: 28px 24px 24px; gap: 16px; }
+    /* the witness's own persona + evidence — the only card that actually spells
+       out what to improvise, since everyone else can already see it was called
+       out on the host's shared screen */
+    .witness-box {
+      width: 100%; background: #0d0d1a; border: 2px solid #eab308; border-radius: 14px;
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .witness-box .wb-name { font-size: 1.15rem; font-weight: 900; color: #fde68a; }
+    .witness-box .wb-evidence { font-size: .85rem; color: #ccc; line-height: 1.5; }
+
+    /* a dealt role (You're In The Scene) or side (Persuade Together) */
+    .role-box {
+      width: 100%; background: #0d0d1a; border: 2px solid #1e1e42; border-radius: 16px;
+      padding: 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .role-box .rb-key {
+      font-size: .82rem; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase;
+    }
+    .role-box .rb-name { font-size: 1.5rem; font-weight: 900; color: #fff; line-height: 1.2; }
+    .role-box .rb-hint { font-size: .92rem; color: #bbb; line-height: 1.55; }
+  </style>
+</head>
+<body>
+
+  <p class="beta-label">⚖️ Kangaroo Court (Beta版)</p>
+  <div id="content">⏳</div>
+
+  <script src="game-data.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script>
+    I18N.registerDict('play', {
+      titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
+      titleNamed: { zh: '{name} 的祕密卡片', en: "{name}'s Secret Card" },
+      whoIsWolf: { zh: '🗳️ 誰是臥底？', en: '🗳️ Who is the Wolf?' },
+      playerFallback: { zh: '玩家 {n}', en: 'Player {n}' },
+      rolling: { zh: '🎲 擲骰中…', en: '🎲 Rolling…' },
+      rollToTake: { zh: '擲骰奪取 {name} 的土地', en: "Roll to take {name}'s land" },
+      rollToDefend: { zh: '擲骰保衛你的土地', en: 'Roll to defend your land' },
+      vsLine: { zh: '{a} 對決 {b}', en: '{a} vs {b}' },
+      truthOrDareQ: { zh: '真心話還是大冒險？', en: 'Truth or Dare?' },
+      pickingTD: { zh: '正在選擇真心話或大冒險…', en: 'picking Truth or Dare…' },
+      truthLabel: { zh: 'TRUTH', en: 'TRUTH' },
+      dareLabel: { zh: 'DARE', en: 'DARE' },
+      honestBtn: { zh: '✅ 誠實回答！', en: '✅ Honest!' },
+      passBtn: { zh: '❌ 跳過！', en: '❌ Pass!' },
+      diditBtn: { zh: '✅ 完成了！', en: '✅ Did It!' },
+      failedBtn: { zh: '❌ 失敗了！', en: '❌ Failed!' },
+      lowRoll: { zh: '低點數', en: 'Low Roll' },
+      highRoll: { zh: '高點數', en: 'High Roll' },
+      rollDice: { zh: '🎲 擲骰子', en: '🎲 Roll the Dice' },
+      yourTurn: { zh: '輪到你了', en: 'YOUR TURN' },
+      turnSuffix: { zh: ' 的回合', en: "'s turn" },
+      tileWord: { zh: '塊地', en: 'tile' },
+      tilesWord: { zh: '塊地', en: 'tiles' },
+      point: { zh: '分', en: 'point' },
+      points: { zh: '分', en: 'points' },
+      hotTakeChip: { zh: '🔥 大膽發言', en: '🔥 Hot Take' },
+      agreeLabel: { zh: '同意', en: 'Agree' },
+      itDependsLabel: { zh: '要看情況', en: 'It Depends' },
+      disagreeLabel: { zh: '不同意', en: 'Disagree' },
+      pickChangeAnytime: { zh: '隨時都可以改變答案。', en: 'You can change your mind any time.' },
+      hottakePrompt: { zh: '選一邊——然後大聲說出理由！', en: 'Pick a side — then say why out loud!' },
+      somethingElse: { zh: '其他 — 我自己的答案', en: 'Something else — my own answer' },
+      sophiesChooseThen: { zh: '選好之後，跟大家說明理由。', en: 'Choose, then tell everyone why.' },
+      sceneFallbackTitle: { zh: '這個場景', en: 'The Scene' },
+      youPlay: { zh: '🎪 你飾演 {letter}', en: '🎪 You play {letter}' },
+      stayInCharacterScene: { zh: '融入角色 — 沒有劇本，全靠即興發揮！', en: 'Stay in character — no script, just improv!' },
+      youAreJudge: { zh: '👨‍⚖️ 你是裁判', en: '👨‍⚖️ You are the Judge' },
+      persuaderTeam: { zh: '👥 說服團隊', en: '👥 Persuader Team' },
+      yourRole: { zh: '你的身分', en: 'Your role' },
+      yourTeamPlays: { zh: '你的團隊角色是', en: 'Your team plays' },
+      hearThemOut: { zh: '聽完他們的說法，再做出判決。', en: 'Hear them out, then give your verdict.' },
+      workTogether: { zh: '同心協力 — 說服裁判！', en: 'Work together — win the judge over!' },
+      convincedBtn: { zh: '✅ 你說服我了！', en: '✅ You convinced me!' },
+      notConvincedBtn: { zh: '❌ 沒有被說服', en: '❌ Not convinced' },
+      forbiddenWordsLabel: { zh: '🚫 禁字', en: '🚫 Forbidden words' },
+      gotItYou: { zh: '✅ 你猜對了 — +1！', en: '✅ You got it — +1!' },
+      gotItOther: { zh: '✅ {who} 猜對了', en: '✅ {who} got it' },
+      goodCatch: { zh: '🚨 抓得好 — +3！', en: '🚨 Good catch — +3!' },
+      caughtYou: { zh: '🚨 說了禁字被抓到 — −2', en: '🚨 Caught using a forbidden word — −2' },
+      caughtOther: { zh: '🚨 {who} 抓到禁字', en: '🚨 {who} caught a forbidden word' },
+      timeUp: { zh: '⏰ 時間到 — 不計分', en: "⏰ Time's up — no points" },
+      roundOverNoPoints: { zh: '⏭️ 這輪結束 — 不計分', en: '⏭️ Round over — no points' },
+      roundOverChip: { zh: '這輪結束', en: 'Round over' },
+      waitingNextWord: { zh: '等待下一個題目…', en: 'Waiting for the next word…' },
+      calledTaboo: { zh: '🚨 {name} 喊了 Taboo！', en: '🚨 {name} called Taboo!' },
+      waitingHostCall: { zh: '等待主持人裁決…', en: "Waiting for the host's call…" },
+      clueGiverChip: { zh: '🎤 你是描述者', en: "🎤 You're the clue giver" },
+      buzzedIn: { zh: '🙋 {name} 搶答了', en: '🙋 {name} buzzed in' },
+      correctBtn: { zh: '✅ 答對了！雙方各 +1', en: '✅ Correct! +1 each' },
+      notItKeepGoing: { zh: '❌ 不對 — 繼續', en: '❌ Not it — keep going' },
+      keepGoingHint: { zh: '繼續形容 — 有人搶答時按鈕就會出現。', en: 'Keep going — the buttons appear when someone buzzes in.' },
+      noForbiddenThisRound: { zh: '這輪沒有禁字 — 隨便怎麼形容都可以！', en: 'No forbidden words this round — describe it any way you like!' },
+      refereeChip: { zh: '👀 你是裁判', en: "👀 You're the referee" },
+      youCalledTaboo: { zh: '🚨 你喊了 Taboo！', en: '🚨 You called Taboo!' },
+      tabooFoulBtn: { zh: '🚨 Taboo！他說了禁字', en: '🚨 Taboo! They said a forbidden word' },
+      listenForForbidden: { zh: '仔細聽有沒有人說出禁字 — 這輪你不用搶答。', en: 'Listen for a forbidden word — you sit this round out, so no buzzer for you.' },
+      youBuzzed: { zh: '🙋 你搶答了 — 大聲說出你的答案！', en: '🙋 You buzzed — say your guess out loud!' },
+      willTap: { zh: '{giver} 會按 ✅ 或 ❌。', en: '{giver} will tap ✅ or ❌.' },
+      queuePos: { zh: '⏳ 你排在第 {n} 位', en: "⏳ You're #{n} in the queue" },
+      guessingFirst: { zh: '{name} 正在搶答。', en: '{name} is guessing first.' },
+      notItHangTight: { zh: '❌ 不對 — 先等一下', en: '❌ Not it — hang tight' },
+      buzzAgainLater: { zh: '等其他人都搶答過一次後，你就能再搶答。', en: 'You can buzz again once everyone else has had a turn.' },
+      buzzInBtn: { zh: '🙋 搶答！', en: '🙋 Buzz in!' },
+      guessingBuzzToLine: { zh: '{name} 正在搶答 — 按下搶答排隊。', en: '{name} is guessing — buzz to get in line.' },
+      knowItHint: { zh: '知道答案嗎？按下搶答鈕，然後大聲說出來。', en: 'Know it? Hit the buzzer, then say it out loud.' },
+      clueGiverIsChip: { zh: '🕵️ {name} 是描述者', en: '🕵️ {name} is the clue giver' },
+      buzzedSayIt: { zh: '已搶答 — 說出答案！', en: 'Buzzed — say it!' },
+      waitingNextCase: { zh: '⏳ 等待下一個案件…', en: '⏳ Waiting for the next case…' },
+      witnessRole: { zh: '🕵️ 你是證人！', en: "🕵️ You're the Witness!" },
+      judgeRole: { zh: '🧑‍⚖️ 你是法官', en: '🧑‍⚖️ You are the Judge' },
+      defendantRole: { zh: '🙇 你是被告', en: '🙇 You are the Defendant' },
+      prosecutorRole: { zh: '⚔️ 你是檢方', en: '⚔️ You are the Prosecutor' },
+      defenseRole: { zh: '🛡️ 你是辯方律師', en: '🛡️ You are the Defense Attorney' },
+      juryRole: { zh: '👥 你是陪審團成員', en: '👥 You are on the Jury' },
+      notGuiltyVerdict: { zh: '✅ 無罪', en: '✅ NOT GUILTY' },
+      guiltyVerdict: { zh: '🚨 有罪', en: '🚨 GUILTY' },
+      deliverRuling: { zh: '🧑‍⚖️ 宣讀你的判決！', en: '🧑‍⚖️ Deliver your ruling!' },
+      deliveringVerdict: { zh: '👀 {name} 正在宣讀判決…', en: '👀 {name} is delivering the verdict…' },
+      flippedNotGuilty: { zh: '你翻票成無罪', en: 'You flipped to Not Guilty' },
+      flippedGuilty: { zh: '你翻票成有罪', en: 'You flipped to Guilty' },
+      juryVotingOnce: { zh: '🤫 陪審團正在投票 — 請稍候…', en: '🤫 The jury is voting — hang tight…' },
+      juryVotingFinal: { zh: '🤫 陪審團正在做最後一次投票 — 請稍候…', en: '🤫 The jury is voting one last time — hang tight…' },
+      prevoteSecret: { zh: '這是祕密投票 — 判決公布前沒有人看得到。', en: 'This is secret — nobody sees it until the verdict.' },
+      finalVoteChance: { zh: '最後機會 — 這場審判有改變你的想法嗎？', en: 'Last chance — did the trial change your mind?' },
+      guiltyBtn: { zh: '有罪', en: 'Guilty' },
+      notGuiltyBtn: { zh: '無罪', en: 'Not Guilty' },
+      improviseAnswers: { zh: '融入角色 — 即興回答問題！', en: 'Stay in character — improvise your answers!' },
+      questionWitness: { zh: '❓ 詢問你的證人！', en: '❓ Question your witness!' },
+      onTheStand: { zh: '{name} 正在出庭作證。', en: '{name} is on the stand.' },
+      testifying: { zh: '👀 {name} 正在作證…', en: '👀 {name} is testifying…' },
+      floorYoursCase: { zh: '🎤 換你發言 — 提出你的論點！', en: '🎤 The floor is yours — make your case!' },
+      speakingProsecutor: { zh: '⚔️ {name} 正在發言…', en: '⚔️ {name} is speaking…' },
+      floorYoursDefend: { zh: '🎤 換你發言 — 為你的當事人辯護！', en: '🎤 The floor is yours — defend your client!' },
+      speakingDefense: { zh: '🛡️ {name} 正在發言…', en: '🛡️ {name} is speaking…' },
+      answerEveryQ: { zh: '🎯 誠實回答每個問題 — 不准閃躲！', en: '🎯 Answer every question — no dodging!' },
+      askQuestion: { zh: '❓ 詢問 {name} 一個問題！', en: '❓ Ask {name} a question!' },
+      watchingCross: { zh: '👀 正在旁觀交叉詰問…', en: '👀 Watching the cross-examination…' },
+      waitingGeneric: { zh: '⏳ 等待中…', en: '⏳ Waiting…' },
+      tellHostSee: { zh: '告訴主持人你看到什麼！', en: 'Tell the host what you see!' },
+      keepSecret: { zh: '🤫 保密，不要說出來！', en: '🤫 Keep it secret!' },
+      waitingRoles: { zh: '⏳ 等待主持人發放角色...', en: '⏳ Waiting for the host to hand out the roles...' },
+      waitingStartGame: { zh: '⏳ 等待主持人開始遊戲...', en: '⏳ Waiting for the host to start a game...' },
+      notSetUp: { zh: '⚙️ 這個遊戲還沒設定完成。<br>請主持人完成 Firebase 設定。', en: "⚙️ This game isn't fully set up yet.<br>Ask your host to finish the Firebase setup." },
+      invalidLink: { zh: '😵 這個卡片連結無效。<br>請向主持人索取新的連結。', en: '😵 This card link is not valid.<br>Please ask your host for the link again.' },
+      waitingDeal: { zh: '⏳ 等待主持人發牌...', en: '⏳ Waiting for the host to deal this round...' },
+      connectError: { zh: '⚠️ 無法連線 — 請檢查你的網路連線。', en: '⚠️ Could not connect — check your internet connection.' },
+    });
+    const pt = (key, vars) => {
+      let s = I18N.t('play', key);
+      if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+      return s;
+    };
+
+    const params  = new URLSearchParams(location.search);
+    const session = params.get('s');
+    const token   = params.get('p'); // this player's private random token, not a guessable number
+    const urlName = (params.get('n') || '').trim(); // name the host put in the link
+    const el = document.getElementById('content');
+
+    /* "Jessie's Secret Card" instead of "Your Secret Card" — the host sends five of these
+       out, so the tab title (and anything that reads it) should say whose card it is.
+       The name in the link is used right away; Firebase overrides it once it answers. */
+    function setCardTitle(name) {
+      const who = String(name || '').trim();
+      document.title = (who ? pt('titleNamed', { name: who }) : pt('titleDefault')) + ' (Beta版)';
+    }
+    setCardTitle(urlName);
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    }
+
+    /* one vivid gradient per player number — the same player always sees the
+       same color all night, so their card is instantly recognizable as theirs */
+    /* One palette for every game, in Dare Conquest's board order — player 1 is red,
+       2 blue, 3 green and so on — so a player keeps the same colour whichever game the
+       host switches to, and it always matches their piece on the Dare Conquest board.
+       Dare Conquest itself only has 6 pieces, so slots 7-8 (lime, pink) exist purely
+       for games that allow more players, like Kangaroo Court's 8-person rooms. */
+    const NAME_COLORS = [
+      '#ef4444', // 1 red
+      '#4f9eff', // 2 blue
+      '#22c55e', // 3 green
+      '#f59e0b', // 4 yellow
+      '#a78bfa', // 5 purple
+      '#06b6d4', // 6 cyan
+      '#84cc16', // 7 lime
+      '#ec4899', // 8 pink
+    ];
+
+    /* the name chip, identical in every game: the player's own colour fills it, with
+       dark text on top — every colour in the palette clears 5:1 against #0b0b18, which
+       a coloured-text-on-dark chip could not promise for all eight. */
+    function nameBanner(data) {
+      const label = esc(data.name || urlName || pt('playerFallback', { n: data.playerNum || '?' }));
+      const hex = data.myHex || NAME_COLORS[((data.playerNum || 1) - 1) % NAME_COLORS.length];
+      const style = `color:#0b0b18;border-color:${hex};background:${hex};`
+        + `box-shadow:0 0 26px ${hex}55`;
+      return `<span class="name-banner" style="${style}">${label}</span>`;
+    }
+
+    /* longer phrases (e.g. "Night Market Seller") get a smaller font so they
+       still fit in 1-2 lines instead of overflowing or wrapping to 3+ lines */
+    function wordFontSize(text) {
+      const len = String(text).length;
+      if (len <= 10) return '2.6rem';
+      if (len <= 16) return '2.1rem';
+      if (len <= 22) return '1.7rem';
+      return '1.4rem';
+    }
+
+    function wordSpan(text) {
+      return `<span class="card-word" style="font-size:${wordFontSize(text)}">${esc(text)}</span>`;
+    }
+
+    /* Forbidden Words shows 3 words stacked in one row each — smaller tiers than
+       the single-word card since an emoji shares the row with the text */
+    /* 🗳️ Word Wolf voting: each player writes a "vote" field onto their OWN node
+       (allowed by the same per-token rule already used for reads) — the host
+       tallies by reading each known token individually, never a shared list */
+    function submitVote(votedForPlayerNum) {
+      if (!db || !session || !token) return;
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}`).update({ vote: votedForPlayerNum });
+    }
+
+    function voteSectionHTML(data) {
+      const roster = (latestRoster || []).filter(p => p.playerNum !== data.playerNum);
+      if (!roster.length) return '';
+      const buttons = roster.map(p => {
+        const voted = data.vote === p.playerNum;
+        const name = esc(p.name || pt('playerFallback', { n: p.playerNum }));
+        return `<button class="vote-btn${voted ? ' voted' : ''}" onclick="submitVote(${p.playerNum})">${voted ? '✅ ' : ''}${name}</button>`;
+      }).join('');
+      return `
+        <div class="vote-section">
+          <div class="vote-title">${pt('whoIsWolf')}</div>
+          <div class="vote-list">${buttons}</div>
+        </div>`;
+    }
+
+    /* 🏰 Dare Conquest: the audience votes on whether the current player pulled the
+       challenge off. The vote carries the challenge's id, so when the host moves on the
+       old vote simply stops matching instead of having to be cleaned up. */
+    function submitConquestVote(choice) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'voting' || !c.id) return;
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/conquestVote`).set({ id: c.id, choice });
+    }
+
+    /* rolling from the card: the host screen owns the dice, this just asks it to roll.
+       The host ignores the request unless it really is this player's turn. */
+    function requestRoll(btn) {
+      if (!db || !session || !token) return;
+      if (btn) { btn.disabled = true; btn.textContent = pt('rolling'); }
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/rollRequest`)
+        .set({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7) });
+    }
+
+    /* arming (or cancelling) High/Low Roll from the card — the host owns the charge count,
+       this only asks it to toggle, exactly like pressing the button on the shared screen */
+    function requestSkill(kind, btn) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'idle' || !c.canRoll) return;
+      if (btn) btn.disabled = true;
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/skillRequest`)
+        .set({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), kind });
+    }
+
+    /* the steal roll-off, rolled from the card. Which side you are is decided by the host
+       from your player number, so the side we send is only a hint it re-checks. */
+    function requestDiceOff(side, btn) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'diceoff' || !c.diceoffId) return;
+      if (btn) { btn.disabled = true; btn.textContent = pt('rolling'); }
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/diceoffRequest`)
+        .set({ id: c.diceoffId + ':' + Date.now().toString(36), side });
+    }
+
+    /* the Truth-or-Dare call, sent from the card instead of shouted across the room —
+       the host still only accepts it from whoever's turn it actually is */
+    function requestChoice(mode, btn) {
+      if (!db || !session || !token) return;
+      const c = latestData && latestData.conquest;
+      if (!c || c.state !== 'choice' || !c.choiceId) return;
+      const row = btn && btn.closest('.conq-td-row');
+      if (row) row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/choiceRequest`)
+        .set({ id: c.choiceId, mode });
+    }
+
+    /* Dare Conquest cards stay light on text: a turn marker in the current player's board
+       colour, the buttons this player can press right now, and their own standing.
+       Deliberately NOT the question itself — that is big on the host's shared screen, and
+       reprinting it here just gives everyone a reason to read their phone. */
+    /* the host publishes the countdown only when it changes state, so the card runs its
+       own one-second tick from whatever number it was handed. `seq` changes on every
+       host-side change, which is how the card knows to re-sync instead of keeping its
+       own drifting count. */
+    const cardTimer = { seq: null, left: 0, total: 0, iv: null };
+
+    function stopCardTimer() {
+      if (cardTimer.iv) { clearInterval(cardTimer.iv); cardTimer.iv = null; }
+    }
+
+    function paintCardTimer() {
+      const el = document.getElementById('conq-timer');
+      if (!el) return;
+      el.textContent = cardTimer.left;
+      el.classList.toggle('low', cardTimer.left <= Math.ceil(cardTimer.total * 0.5));
+      el.classList.toggle('critical', cardTimer.left <= Math.ceil(cardTimer.total * 0.25));
+    }
+
+    function tickCardTimer() {
+      cardTimer.left = Math.max(0, cardTimer.left - 1);
+      if (cardTimer.left <= 0) stopCardTimer();
+      paintCardTimer();
+    }
+
+    /* the countdown runs on every card while a challenge is live */
+    function syncCardTimer(data, mine) {
+      const t = mine ? data.conquestTimer : null;
+      if (!t || !t.total) { stopCardTimer(); cardTimer.seq = null; cardTimer.total = 0; return false; }
+      if (t.seq !== cardTimer.seq) {
+        cardTimer.seq = t.seq;
+        cardTimer.left = t.remaining;
+        cardTimer.total = t.total;
+        stopCardTimer();
+        if (t.state === 'running') cardTimer.iv = setInterval(tickCardTimer, 1000);
+      }
+      return true;
+    }
+
+    function conquestCardHTML(data) {
+      const c = data.conquest || {};
+      const myTurn = c.turn && c.turn === data.playerNum;
+      if (!(c.state === 'voting' && c.id)) syncCardTimer(data, false);
+      const who = esc(c.player || 'Someone');
+      let hint = '';
+      let body = '<p class="conq-wait">⏳</p>';
+
+      if (c.state === 'diceoff') {
+        const side = c.attacker === data.playerNum ? 'attacker'
+                   : c.owner === data.playerNum ? 'owner' : null;
+        const live = side === 'attacker' ? c.canRollAttacker : c.canRollOwner;
+        hint = side === 'attacker' ? pt('rollToTake', { name: esc(c.ownerName || '') })
+             : side === 'owner' ? pt('rollToDefend')
+             : pt('vsLine', { a: esc(c.attackerName || ''), b: esc(c.ownerName || '') });
+        if (side) {
+          body = `<button class="conq-roll" onclick="requestDiceOff('${side}', this)"${live ? '' : ' disabled'}>🎲 Roll</button>`;
+        }
+      } else if (c.state === 'choice') {
+        hint = myTurn ? pt('truthOrDareQ') : pt('pickingTD');
+        if (myTurn) body = `
+          <div class="conq-td-row">
+            <button class="conq-td truth" onclick="requestChoice('truth', this)"><span class="conq-td-emoji">😇</span>${pt('truthLabel')}</button>
+            <button class="conq-td dare" onclick="requestChoice('dare', this)"><span class="conq-td-emoji">😈</span>${pt('dareLabel')}</button>
+          </div>`;
+      } else if (c.state === 'voting' && c.id) {
+        // the one taking the challenge reads it instead of voting — they can't judge
+        // themselves, and this is the one moment the prompt text belongs on a phone
+        // everyone watches the same clock — the challenger below their prompt, the
+        // voters above their buttons
+        const timing = syncCardTimer(data, true);
+        const clock = timing ? `<div class="conq-timer" id="conq-timer">${cardTimer.left}</div>` : '';
+        if (myTurn) {
+          body = `
+            <div class="conq-prompt">${esc(c.text || '')}</div>
+            ${clock}`;
+        } else {
+          const mine = data.conquestVote && data.conquestVote.id === c.id ? data.conquestVote.choice : null;
+          body = `
+            ${clock}
+            <div class="conq-vote-row">
+              <button class="conq-vote yes${mine === 'yes' ? ' picked' : ''}" onclick="submitConquestVote('yes')">${c.isTruth ? pt('honestBtn') : pt('diditBtn')}</button>
+              <button class="conq-vote no${mine === 'no' ? ' picked' : ''}" onclick="submitConquestVote('no')">${c.isTruth ? pt('passBtn') : pt('failedBtn')}</button>
+            </div>`;
+        }
+      } else if (myTurn) {
+        // the two range skills sit above the roll, same order and wording as the host screen
+        const skill = (kind, icon, label, left) => {
+          const armed = c.armed === kind;
+          const off = !c.canRoll || (!armed && left <= 0);
+          return `<button class="conq-skill${armed ? ' armed' : ''}" onclick="requestSkill('${kind}', this)"${off ? ' disabled' : ''}>${icon} ${label} (${left})</button>`;
+        };
+        body = `
+          <div class="conq-actions">
+            <div class="conq-skill-row">
+              ${skill('low', '🔻', pt('lowRoll'), c.lowLeft || 0)}
+              ${skill('high', '🎯', pt('highRoll'), c.highLeft || 0)}
+            </div>
+            <button class="conq-roll" onclick="requestRoll(this)"${c.canRoll ? '' : ' disabled'}>${pt('rollDice')}</button>
+          </div>`;
+      }
+
+      // the turn marker is always on the card, in whatever state — it's the one thing
+      // players kept having to ask out loud
+      const hex = esc(c.turnHex || '#22c55e');
+      const turnBar = c.turn ? `
+        <div class="conq-turnbar${myTurn ? ' is-me' : ''}" style="border-color:${hex};background:linear-gradient(${hex}26,${hex}26),#0b0b18;box-shadow:0 0 22px ${hex}33">
+          <span class="ct-token">${esc(c.turnToken || '🎲')}</span>
+          <span class="ct-name" style="color:${hex}">${myTurn ? pt('yourTurn') : who}</span>
+          ${myTurn ? '' : `<span class="ct-suffix" style="color:${hex}">${pt('turnSuffix')}</span>`}
+        </div>` : '';
+      const hintLine = hint ? `<span class="conq-status">${hint}</span>` : '';
+      // the category is a two-word label, not the prompt — enough to follow along by ear
+      const chip = c.state === 'voting' && c.cat
+        ? `<span class="conq-chip${c.isTruth ? ' is-truth' : ''}">${esc(c.cat)}</span>` : '';
+      // round and tiles are published at the top level of the node, not inside `conquest`
+      const meta = data.round
+        ? `<div class="conq-meta"><span>🚩 ${data.tiles || 0} ${data.tiles === 1 ? pt('tileWord') : pt('tilesWord')}</span><span>${I18N.lang === 'zh' ? `第 ${data.round} 回合` : `Round ${data.round}`}</span></div>` : '';
+
+      return `
+        <div class="secret-card theme-conquest">
+          ${nameBanner(data)}
+          ${turnBar}
+          ${hintLine}
+          ${chip}
+          ${body}
+          ${meta}
+        </div>`;
+    }
+
+    /* 🔥 Pick a Side / 🤔 Sophie's Choice: one tap picks a side. The vote carries the
+       round's ballot id, so when the host draws again the old vote simply stops
+       matching — nothing to clean up. */
+    function submitPick(choice) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.voteId;
+      if (!id) return;
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/vote`).set({ id, choice });
+    }
+
+    function myPick(data) {
+      return data.vote && data.voteId && data.vote.id === data.voteId ? data.vote.choice : null;
+    }
+
+    function pickButton(choice, key, label, picked, hex) {
+      const style = picked === choice ? ` style="color:${hex};background:${hex}1f"` : '';
+      return `<button class="pick-btn${picked === choice ? ' picked' : ''}"${style} onclick="submitPick('${choice}')">
+          <span class="pb-key">${key}</span><span class="pb-label">${label}</span>
+        </button>`;
+    }
+
+    /* 🤝 Persuade Together: only the judge gets a verdict button */
+    function submitVerdict(choice) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.voteId;
+      if (!id) return;
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/vote`).set({ id, choice });
+    }
+
+    /* 🙊 Say It Without Saying It: everything happens on the cards — the host screen only keeps
+       score. Guessers buzz, and the clue giver (the only one holding the word) says
+       whether the guess was right. */
+    function tabooSend(payload) {
+      if (!db || !session || !token) return;
+      const id = latestData && latestData.voteId;
+      if (!id) return;
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/vote`).set(Object.assign({ id }, payload));
+    }
+
+    function tabooBuzz(btn) {
+      if (btn) { btn.disabled = true; btn.querySelector('.pb-label').textContent = pt('buzzedSayIt'); }
+      tabooSend({ choice: 'buzz', t: Date.now() });
+    }
+
+    /* Taboo! is a claim the host rules on, not an instant end to the round */
+    function tabooCall(btn) {
+      if (btn) btn.disabled = true;
+      tabooSend({ choice: 'taboo', t: Date.now() });
+    }
+
+    /* the clue giver's verdict names the buzzer it answers, so a late tap can't land
+       on whoever buzzed next */
+    function tabooVerdict(choice, buzzer, btn) {
+      const row = btn && btn.closest('.pick-row');
+      if (row) row.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      tabooSend({ choice, buzzer });
+    }
+
+    /* the host publishes the clock only when it changes state, so each card runs its
+       own one-second tick from the number it was handed — `seq` tells it to re-sync */
+    const tabooTimer = { seq: null, left: 0, total: 0, iv: null };
+
+    function stopTabooTimer() {
+      if (tabooTimer.iv) { clearInterval(tabooTimer.iv); tabooTimer.iv = null; }
+    }
+
+    function paintTabooTimer() {
+      const el = document.getElementById('taboo-timer');
+      if (!el) return;
+      el.textContent = tabooTimer.left;
+      const frac = tabooTimer.total ? tabooTimer.left / tabooTimer.total : 1;
+      el.classList.toggle('low', frac <= .5 && frac > .25);
+      el.classList.toggle('critical', frac <= .25);
+    }
+
+    function tickTabooTimer() {
+      tabooTimer.left = Math.max(0, tabooTimer.left - 1);
+      if (tabooTimer.left <= 0) stopTabooTimer();
+      paintTabooTimer();
+    }
+
+    function syncTabooTimer(t) {
+      if (!t || !t.total) { stopTabooTimer(); tabooTimer.seq = null; return false; }
+      if (t.seq !== tabooTimer.seq) {
+        tabooTimer.seq = t.seq;
+        tabooTimer.left = t.remaining;
+        tabooTimer.total = t.total;
+        stopTabooTimer();
+        if (t.state === 'running') tabooTimer.iv = setInterval(tickTabooTimer, 1000);
+      }
+      return true;
+    }
+
+    function tabooCardHTML(data) {
+      // the host can switch the banned words off entirely — then no card shows them
+      // and there is nothing to call Taboo! on
+      const banned = (data.forbidden || []).map(w => `<span class="tb-word">${esc(w)}</span>`).join('');
+      const bannedBlock = banned ? `
+          <div class="taboo-banned">
+            <span class="tb-label">${pt('forbiddenWordsLabel')}</span>
+            <div class="tb-list">${banned}</div>
+          </div>` : '';
+      const score = `<span class="pick-sub">🏆 ${data.score || 0} ${data.score === 1 ? pt('point') : pt('points')}</span>`;
+      const chip = (text, hex) => `<span class="pick-chip" style="color:${hex};border-color:${hex}55;background:${hex}1a">${text}</span>`;
+      const shell = inner => `<div class="secret-card theme-taboo">${nameBanner(data)}${inner}${score}</div>`;
+      // the clock is on every card while a word is in play
+      const ticking = data.state === 'playing' && syncTabooTimer(data.timer);
+      const clock = ticking ? `<div class="taboo-timer" id="taboo-timer">${tabooTimer.left}</div>` : '';
+      if (!ticking) stopTabooTimer();
+
+      if (data.state === 'done') {
+        const r = data.result || {};
+        const line = r.type === 'got'
+          ? (r.youWon ? pt('gotItYou') : pt('gotItOther', { who: esc(r.who || 'Someone') }))
+          : r.type === 'foul'
+          ? (r.youWon ? pt('goodCatch') : data.isGiver ? pt('caughtYou') : pt('caughtOther', { who: esc(r.who || 'The referee') }))
+          : r.type === 'time' ? pt('timeUp')
+          : pt('roundOverNoPoints');
+        return shell(`
+          ${chip(pt('roundOverChip'), '#6366f1')}
+          <span class="pick-text">${line}</span>
+          <div class="taboo-target">
+            <span class="tt-emoji">${data.emoji || '🙊'}</span>
+            <span class="tt-word">${esc(data.target || '')}</span>
+          </div>`);
+      }
+
+      if (data.state !== 'playing') {
+        return shell(`
+          ${chip('🙊 Say It Without Saying It', '#6366f1')}
+          <span class="pick-sub">${pt('waitingNextWord')}</span>
+          <p class="conq-wait">⏳</p>`);
+      }
+
+      // a Taboo! call is open — everyone sees it while the host rules
+      const callBanner = data.tabooBy
+        ? `<div class="taboo-called">${pt('calledTaboo', { name: esc(data.tabooBy) })}<span class="tc-sub">${pt('waitingHostCall')}</span></div>`
+        : '';
+
+      if (data.isGiver) {
+        // the giver holds the word, so the giver is the one who can judge a guess.
+        // this sits high on the card — right under the clock, above the word — because
+        // it is what the giver has to act on the instant it appears
+        const verdict = data.buzzer ? `
+            <div class="taboo-buzzed">${pt('buzzedIn', { name: esc(data.buzzerName || '') })}</div>
+            <div class="pick-row">
+              <button class="pick-btn verdict-right" onclick="tabooVerdict('right', ${data.buzzer}, this)">
+                <span class="pb-key">✅</span><span class="pb-label">${pt('correctBtn')}</span>
+              </button>
+              <button class="pick-btn verdict-wrong" onclick="tabooVerdict('wrong', ${data.buzzer}, this)">
+                <span class="pb-key">❌</span><span class="pb-label">${pt('notItKeepGoing')}</span>
+              </button>
+            </div>`
+          : '';
+        // with nobody buzzed in there is nothing to act on, so the reminder stays at the foot
+        const idleHint = data.buzzer
+          ? ''
+          : `<span class="pick-sub">${pt('keepGoingHint')}</span>`;
+        return shell(`
+          ${chip(pt('clueGiverChip'), '#6366f1')}
+          ${clock}
+          ${verdict}
+          <div class="taboo-target">
+            <span class="tt-emoji">${data.emoji || '🙊'}</span>
+            <span class="tt-word">${esc(data.target || '')}</span>
+          </div>
+          ${bannedBlock}
+          ${data.forbiddenOn === false ? `<span class="pick-sub">${pt('noForbiddenThisRound')}</span>` : ''}
+          ${callBanner}
+          ${idleHint}`);
+      }
+
+      const mine = data.buzzer === data.playerNum;
+      const waiting = data.queued && !mine;
+      let buzzArea;
+      if (mine) {
+        buzzArea = `
+          <div class="taboo-buzzed mine">${pt('youBuzzed')}</div>
+          <span class="pick-sub">${pt('willTap', { giver: esc(data.giverName || 'The clue giver') })}</span>`;
+      } else if (waiting) {
+        buzzArea = `
+          <div class="taboo-buzzed">${pt('queuePos', { n: data.queued })}</div>
+          <span class="pick-sub">${pt('guessingFirst', { name: esc(data.buzzerName || 'Someone') })}</span>`;
+      } else if (data.rejected) {
+        // guessed wrong this cycle — locked out until everyone else in the
+        // rotation has also had a turn, so no buzzer to tap here
+        buzzArea = `
+          <div class="taboo-waiting">${pt('notItHangTight')}</div>
+          <span class="pick-sub">${pt('buzzAgainLater')}</span>`;
+      } else {
+        buzzArea = `
+          <button class="taboo-buzz" onclick="tabooBuzz(this)">
+            <span class="pb-key">🙋</span><span class="pb-label">${pt('buzzInBtn')}</span>
+          </button>
+          <span class="pick-sub">${data.buzzerName ? pt('guessingBuzzToLine', { name: esc(data.buzzerName) }) : pt('knowItHint')}</span>`;
+      }
+      // only the referee holds the banned list, so only the referee can call Taboo!
+      const tabooBtn = !data.isRef || data.forbiddenOn === false ? ''
+        : data.iCalledTaboo
+        ? `<div class="taboo-called mine">${pt('youCalledTaboo')}<span class="tc-sub">${pt('waitingHostCall')}</span></div>`
+        : `<button class="taboo-foul" onclick="tabooCall(this)"${data.tabooBy ? ' disabled' : ''}>${pt('tabooFoulBtn')}</button>`;
+      if (data.isRef) {
+        // the banned list and the button that acts on it belong next to each other —
+        // the standing reminder sits under both rather than splitting them apart
+        return shell(`
+          ${chip(pt('refereeChip'), '#f59e0b')}
+          ${clock}
+          ${bannedBlock}
+          ${data.iCalledTaboo ? '' : callBanner}
+          ${tabooBtn}
+          <span class="pick-sub">${pt('listenForForbidden')}</span>`);
+      }
+      return shell(`
+        ${chip(pt('clueGiverIsChip', { name: esc(data.giverName || 'Someone') }), '#6366f1')}
+        ${clock}
+        ${bannedBlock}
+        ${callBanner}
+        ${buzzArea}`);
+    }
+
+    /* ⚖️ Kangaroo Court: the jury's vote (twice a case — a secret pre-vote, then a
+       final vote after arguments) is the only thing a card writes back. Two distinct
+       fields, not one shared "vote" field like the other games use, because both
+       values have to survive to Reveal at the same time to compute who flipped. */
+    function submitKcVote(field, id, choice) {
+      if (!db || !session || !token || !id) return;
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}/${field}`).set({ id, choice });
+    }
+
+    function kangarooCardHTML(data) {
+      if (!data.case) {
+        return `<div class="secret-card theme-kangaroo">${nameBanner(data)}<span class="pick-sub">${pt('waitingNextCase')}</span></div>`;
+      }
+      const role = data.role;
+      // a juror called to the stand gets the gold "witness" treatment on top of
+      // whatever their base role (always jury) would otherwise show
+      const roleHex = data.isWitness ? '#eab308' : ({ judge: '#8b5cf6', defendant: '#ef4444', prosecutor: '#f97316', defense: '#3b82f6', jury: '#a78bfa' }[role] || '#e94560');
+      const roleLabel = data.isWitness ? pt('witnessRole') : ({ judge: pt('judgeRole'), defendant: pt('defendantRole'), prosecutor: pt('prosecutorRole'), defense: pt('defenseRole'), jury: pt('juryRole') }[role] || '');
+      const chip = `<span class="pick-chip" style="color:${roleHex};border-color:${roleHex}55;background:${roleHex}1a">${roleLabel}</span>`;
+      const shell = inner => `<div class="secret-card theme-kangaroo" style="border-color:${roleHex};box-shadow:0 0 60px ${roleHex}2e">${nameBanner(data)}${chip}${inner}</div>`;
+
+      // the verdict, once revealed, stays on screen through the Judge's Ruling
+      // ceremony too (which now comes right after it) — it doesn't disappear just
+      // because the flow moved on; judgment only swaps in the ceremonial sub-line
+      if ((data.phase === 'reveal' || data.phase === 'judgment') && data.result) {
+        const r = data.result;
+        const verdictLine = r.verdict === 'notguilty' ? pt('notGuiltyVerdict') : pt('guiltyVerdict');
+        if (data.phase === 'judgment') {
+          const judgeLine = role === 'judge'
+            ? `<span class="pick-sub">${pt('deliverRuling')}</span>`
+            : `<span class="pick-sub">${pt('deliveringVerdict', { name: esc(data.judgeName || 'The Judge') })}</span>`;
+          return shell(`<span class="pick-text">${verdictLine}</span>${judgeLine}`);
+        }
+        const flipLine = r.flip === 'toNotGuilty' ? `<span class="pick-sub">${pt('flippedNotGuilty')}</span>`
+                        : r.flip === 'toGuilty' ? `<span class="pick-sub">${pt('flippedGuilty')}</span>` : '';
+        return shell(`<span class="pick-text">${verdictLine}</span>${flipLine}`);
+      }
+
+      if (data.phase === 'prevote' || data.phase === 'finalvote') {
+        if (role !== 'jury') {
+          return shell(`<span class="pick-sub">${data.phase === 'finalvote' ? pt('juryVotingFinal') : pt('juryVotingOnce')}</span>`);
+        }
+        const field = data.phase === 'prevote' ? 'kcPrevote' : 'kcFinalvote';
+        const id = data.phase === 'prevote' ? data.prevoteId : data.finalVoteId;
+        const mine = data[field] && id && data[field].id === id ? data[field].choice : null;
+        return shell(`
+          <span class="pick-sub">${data.phase === 'prevote' ? pt('prevoteSecret') : pt('finalVoteChance')}</span>
+          <div class="pick-row">
+            <button class="pick-btn${mine === 'guilty' ? ' picked' : ''}"${mine === 'guilty' ? ' style="color:#ef4444;background:#ef44441f"' : ''} onclick="submitKcVote('${field}','${id}','guilty')">
+              <span class="pb-key">🚨</span><span class="pb-label">${pt('guiltyBtn')}</span>
+            </button>
+            <button class="pick-btn${mine === 'notguilty' ? ' picked' : ''}"${mine === 'notguilty' ? ' style="color:#22c55e;background:#22c55e1f"' : ''} onclick="submitKcVote('${field}','${id}','notguilty')">
+              <span class="pb-key">✅</span><span class="pb-label">${pt('notGuiltyBtn')}</span>
+            </button>
+          </div>`);
+      }
+
+      if (data.phase === 'prosecution-witness' || data.phase === 'defense-witness') {
+        const callingRole = data.phase === 'prosecution-witness' ? 'prosecutor' : 'defense';
+        if (data.isWitness && data.witnessCard) {
+          return shell(`
+            <div class="witness-box">
+              <span class="wb-name">${esc(data.witnessCard.emoji)} ${esc(data.witnessCard.name)}</span>
+              <span class="wb-evidence">${esc(data.witnessCard.evidence)}</span>
+            </div>
+            <span class="pick-sub">${pt('improviseAnswers')}</span>`);
+        }
+        if (role === callingRole) {
+          return shell(`<span class="pick-text">${pt('questionWitness')}</span><span class="pick-sub">${pt('onTheStand', { name: esc(data.witnessJurorName || 'Someone') })}</span>`);
+        }
+        return shell(`<span class="pick-sub">${pt('testifying', { name: esc(data.witnessJurorName || 'Someone') })}</span>`);
+      }
+      if (data.phase === 'prosecution') {
+        if (role === 'prosecutor') return shell(`<span class="pick-text">${pt('floorYoursCase')}</span>`);
+        return shell(`<span class="pick-sub">${pt('speakingProsecutor', { name: esc(data.prosecutorName || 'The Prosecutor') })}</span>`);
+      }
+      if (data.phase === 'defense') {
+        if (role === 'defense') return shell(`<span class="pick-text">${pt('floorYoursDefend')}</span>`);
+        return shell(`<span class="pick-sub">${pt('speakingDefense', { name: esc(data.defenseName || 'The Defense') })}</span>`);
+      }
+      if (data.phase === 'cross') {
+        if (role === 'defendant') return shell(`<span class="pick-text">${pt('answerEveryQ')}</span>`);
+        if (role === 'prosecutor' || role === 'defense') return shell(`<span class="pick-text">${pt('askQuestion', { name: esc(data.defendantName || 'the defendant') })}</span>`);
+        return shell(`<span class="pick-sub">${pt('watchingCross')}</span>`);
+      }
+      return shell(`<span class="pick-sub">${pt('waitingGeneric')}</span>`);
+    }
+
+    /* one shared link per player works for every game — this page just renders
+       whichever game's data is currently sitting at rooms/{session}/players/{token} */
+    function showCard(data) {
+      setCardTitle(data.name || urlName);
+      if (data.game === 'conquest') { el.innerHTML = conquestCardHTML(data); return; }
+      if (data.game === 'cardcheck') {
+        el.innerHTML = `
+          <div class="secret-card theme-cardcheck">
+            ${nameBanner(data)}
+            <span class="card-emoji">${esc(data.emoji || '🔍')}</span>
+            ${wordSpan(data.word || '')}
+            <span class="secret-hint">${pt('tellHostSee')}</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'wordwolf') {
+        el.innerHTML = `
+          <div class="secret-card theme-wordwolf">
+            ${nameBanner(data)}
+            <span class="card-emoji">${data.emoji}</span>
+            ${wordSpan(data.word)}
+            <span class="secret-hint">${pt('keepSecret')}</span>
+            ${voteSectionHTML(data)}
+          </div>`;
+        return;
+      }
+      if (data.game === 'hottake') {
+        const picked = myPick(data);
+        el.innerHTML = `
+          <div class="secret-card theme-hottake">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:#ff7043;border-color:#ff704355;background:rgba(255,112,67,.1)">${pt('hotTakeChip')}</span>
+            <span class="pick-text">${esc(data.text || '')}</span>
+            <div class="pick-row">
+              ${pickButton('agree', '👍', pt('agreeLabel'), picked, '#4caf50')}
+              ${pickButton('middle', '🤷', pt('itDependsLabel'), picked, '#f59e0b')}
+              ${pickButton('disagree', '👎', pt('disagreeLabel'), picked, '#f44336')}
+            </div>
+            <span class="pick-sub">${picked ? pt('pickChangeAnytime') : pt('hottakePrompt')}</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'sophies') {
+        const picked = myPick(data);
+        el.innerHTML = `
+          <div class="secret-card theme-sophies">
+            ${nameBanner(data)}
+            <!-- the scenario stays on the host's shared screen; printing it here again
+                 only sends everyone's eyes down to their phone -->
+            <div class="pick-row">
+              ${pickButton('a', 'A', esc(data.a || ''), picked, '#22c55e')}
+              ${pickButton('b', 'B', esc(data.b || ''), picked, '#f59e0b')}
+              ${pickButton('c', 'C', pt('somethingElse'), picked, '#a78bfa')}
+            </div>
+            <span class="pick-sub">${picked ? pt('pickChangeAnytime') : pt('sophiesChooseThen')}</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'scene') {
+        const r = data.role;
+        if (!r) { showError('waitingRoles'); return; }
+        el.innerHTML = `
+          <div class="secret-card theme-scene">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:#ec4899;border-color:#ec489955;background:rgba(236,72,153,.1)">🎭 ${esc(data.title || pt('sceneFallbackTitle'))}</span>
+            <span class="pick-text">${esc(data.situation || '')}</span>
+            <div class="role-box" style="border-color:#ec489966">
+              <span class="rb-key" style="color:#ec4899">${pt('youPlay', { letter: esc(r.letter || '') })}</span>
+              <span class="rb-name">${esc(r.label || '')}</span>
+              <span class="rb-hint">${esc(r.hint || '')}</span>
+            </div>
+            <span class="pick-sub">${pt('stayInCharacterScene')}</span>
+          </div>`;
+        return;
+      }
+      if (data.game === 'persuade') {
+        const judge = !!data.isJudge;
+        const hex = judge ? '#f59e0b' : '#06b6d4';
+        const picked = myPick(data);
+        const verdict = judge ? `
+            <div class="pick-row">
+              <button class="pick-btn${picked === 'yes' ? ' picked' : ''}"${picked === 'yes' ? ' style="color:#22c55e;background:#22c55e1f"' : ''} onclick="submitVerdict('yes')">
+                <span class="pb-key">✅</span><span class="pb-label">${pt('convincedBtn')}</span>
+              </button>
+              <button class="pick-btn${picked === 'no' ? ' picked' : ''}"${picked === 'no' ? ' style="color:#ef4444;background:#ef44441f"' : ''} onclick="submitVerdict('no')">
+                <span class="pb-key">❌</span><span class="pb-label">${pt('notConvincedBtn')}</span>
+              </button>
+            </div>` : '';
+        el.innerHTML = `
+          <div class="secret-card theme-persuade" style="border-color:${hex};box-shadow:0 0 60px ${hex}2e">
+            ${nameBanner(data)}
+            <span class="pick-chip" style="color:${hex};border-color:${hex}55;background:${hex}1a">${judge ? pt('youAreJudge') : pt('persuaderTeam')}</span>
+            <div class="role-box" style="border-color:${hex}66">
+              <span class="rb-key" style="color:${hex}">${judge ? pt('yourRole') : pt('yourTeamPlays')}</span>
+              <span class="rb-name">${esc(judge ? (data.judge || 'The Judge') : (data.team || ''))}</span>
+            </div>
+            <span class="pick-text">${esc(data.situation || '')}</span>
+            ${judge ? `<span class="pick-sub">${pt('hearThemOut')}</span>${verdict}`
+                    : `<span class="pick-sub">${pt('workTogether')}</span>`}
+          </div>`;
+        return;
+      }
+      // paint after the markup lands so the clock gets its colour on the first frame,
+      // not only on the next tick
+      if (data.game === 'taboo') { el.innerHTML = tabooCardHTML(data); paintTabooTimer(); return; }
+      if (data.game === 'kangaroo') { el.innerHTML = kangarooCardHTML(data); return; }
+      showError('waitingStartGame');
+    }
+
+    let lastErrorKey = null;
+    function showError(key) {
+      lastErrorKey = key;
+      el.innerHTML = `<div class="error-msg">${pt(key)}</div>`;
+    }
+
+    const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+    let db = null;
+    let latestData = null;
+    let latestRoster = null; // Word Wolf's non-secret {playerNum,name} list, for the vote buttons
+
+    function tryRenderCard() {
+      if (!latestData) return;
+      showCard(latestData);
+    }
+    I18N.onChange(() => {
+      if (latestData) { setCardTitle(latestData.name || urlName); tryRenderCard(); }
+      else if (lastErrorKey) { showError(lastErrorKey); }
+    });
+
+    if (!firebaseReady) {
+      showError('notSetUp');
+    } else if (!session || !token) {
+      showError('invalidLink');
+    } else {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+      db.ref(`rooms/kangaroo-beta-${session}/players/${token}`).on('value', snap => {
+        const data = snap.val();
+        if (!data) { showError('waitingDeal'); return; }
+        latestData = data;
+        tryRenderCard();
+      }, () => {
+        showError('connectError');
+      });
+      db.ref(`rooms/kangaroo-beta-${session}/roster`).on('value', snap => {
+        latestRoster = snap.val() || [];
+        tryRenderCard();
+      });
+    }
+  </script>
+
+</body>
+</html>

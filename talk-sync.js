@@ -42,7 +42,6 @@ var TALK_SYNC = (() => {
       this.ref.on('value', this.valueHandler, () => this.status('error'));
       this.connectedRef.on('value', this.connectedHandler);
       this.timer = setInterval(() => this.renew(), 4000);
-      this.clockTimer = setInterval(() => this.tickClock(), 1000);
     }
     async renew() {
       if (!this.connected || this.stopped || this.renewing) return;
@@ -51,7 +50,6 @@ var TALK_SYNC = (() => {
       try {
         const result = await this.ref.transaction(doc => {
           doc = doc || {};
-          if (doc.executor?.v === 1) return;
           if (doc.owner && doc.owner !== this.client && doc.leaseUntil > now) return;
           return Object.assign({}, doc, { owner: this.client, leaseUntil: now + 14000 });
         }, undefined, false);
@@ -68,7 +66,6 @@ var TALK_SYNC = (() => {
       if (!this.connected || this.stopped) throw new Error('offline');
       const now = this.now();
       const result = await this.ref.transaction(doc => {
-        if (doc?.executor?.v === 1) return;
         if (!doc || doc.owner !== this.client || doc.leaseUntil <= now) return;
         const next = fn(doc.state || null);
         if (!next || next === doc.state) return;
@@ -77,40 +74,15 @@ var TALK_SYNC = (() => {
       if (!result.committed) throw new Error('not_available');
       return result.snapshot.val().state;
     }
-    start({ topic, mode, seconds, showStarters, gameMode, crazySeconds, crazyMinSeconds, crazyMaxSeconds, conversationMode, crazySource, gameSeconds, crazyTaskSeconds, crazyMaxActive, crazyPlayStyle, crazyRotationSeconds, hostPlayerNum }) {
+    start({ topic, mode, seconds, showStarters }) {
       return this.enqueue(async () => {
         await this.outgoing;
-        const superseded = this.suspended === true;
-        const previouslySeen = new Set(this.seenCards);
         const id = uid(); this.initialSession = id; this.suspended = false; this.seenCards.clear();
-        const now = this.now();
         try {
-          return await this.change(current => TALK_ENGINE.create({ id, topic, mode, seconds, showStarters, gameMode, crazySeconds, crazyMinSeconds, crazyMaxSeconds, conversationMode, crazySource, gameSeconds, crazyTaskSeconds, crazyMaxActive, crazyPlayStyle, crazyRotationSeconds, hostPlayerNum, now,
-            ...TALK_ENGINE.resetCarry(current, now, { superseded }),
+          return await this.change(() => TALK_ENGINE.create({ id, topic, mode, seconds, showStarters, now: this.now(),
             roster: Array.from({ length: this.room.count }, (_, i) => ({ playerNum: i + 1, name: this.room.name(i) })) }));
-        } catch (e) { this.initialSession = null; this.suspended = superseded; this.seenCards = previouslySeen; throw e; }
+        } catch (e) { this.initialSession = null; throw e; }
       });
-    }
-    tickCrazy() { return this.tickClock(); }
-    async tickClock() {
-      const state = this.doc?.state;
-      if (!state || !this.connected || !this.own || this.stopped || this.suspended || this.clockTicking
-          || !TALK_ENGINE.timerDue(state, this.now())) return false;
-      this.clockTicking = true;
-      // Capture random/time inputs outside the transaction: a retry cannot
-      // redraw a mission or change its expiry or the whole-round deadline.
-      const command = { id: uid(), type: 'clockTick', actor: 0, sessionId: state.sessionId,
-        now: this.now(), seed: crypto.getRandomValues(new Uint32Array(1))[0] };
-      try {
-        return await this.enqueue(async () => {
-          if (!this.connected || !this.own || this.stopped || this.suspended) return false;
-          await this.change(current => TALK_ENGINE.apply(current, command));
-          return true;
-        });
-      } catch (e) {
-        if (!['offline', 'not_available'].includes(e.message)) this.status('error');
-        return false;
-      } finally { this.clockTicking = false; }
     }
     command(type, extra = {}) {
       const state = this.doc?.state;
@@ -181,7 +153,7 @@ var TALK_SYNC = (() => {
       }).catch(() => this.status('error'));
     }
     close() {
-      this.stopped = true; clearInterval(this.timer); clearInterval(this.clockTimer);
+      this.stopped = true; clearInterval(this.timer);
       this.offsetRef.off('value', this.offsetHandler); this.connectedRef.off('value', this.connectedHandler);
       this.ref.off('value', this.valueHandler);
       // An old tab must never remove a newer tab's lease.

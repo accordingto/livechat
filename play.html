@@ -7,19 +7,9 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css?v=talk-vnext-9">
-  <link rel="stylesheet" href="once-upon-a-time.css?v=once-opening-1">
-  <link rel="stylesheet" href="dixit.css?v=dixit-expansion-1"><link rel="stylesheet" href="life-story.css?v=life-story-3">
-  <link rel="stylesheet" href="cut.css?v=cut-15">
-  <link rel="stylesheet" href="open-mic.css?v=om-cards-1">
-  <link rel="stylesheet" href="bomb-relay.css?v=br-halloween-1">
-  <link rel="stylesheet" href="sketch-relay.css?v=relay-3">
-  <link rel="stylesheet" href="who-knows.css?v=wk-5">
-  <link rel="stylesheet" href="card-table.css?v=ct-2">
-  <link rel="stylesheet" href="word-limit-theater.css?v=wl-7">
-  <link rel="stylesheet" href="word-wolf.css?v=ww-art-2">
-  <link rel="stylesheet" href="room-survey.css?v=rs-3">
-  <link rel="stylesheet" href="bingo-party.css?v=bp-2">
+  <link rel="stylesheet" href="talk.css">
+  <link rel="stylesheet" href="once-upon-a-time.css?v=once-v2-switch-2">
+  <link rel="stylesheet" href="dixit.css?v=dixit-8">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -29,16 +19,10 @@
     /* the wrapper had no width of its own, so `width:100%` on the card resolved against
        shrink-to-fit content — the card ended up a different width in every state */
     #content { width: 100%; max-width: 420px; display: flex; justify-content: center; }
-    body.open-mic-card-page { padding: 72px 16px 24px; justify-content: flex-start; }
-    body.open-mic-card-page #content { display: block; max-width: 1280px; }
     body.chat-wolf-card { padding: 8px; justify-content: flex-start; }
     body.chat-wolf-card #content { max-width: 760px; }
     body.chat-wolf-card #i18n-toggle { display: none; }
     .chat-wolf-frame { width: 100%; height: calc(100dvh - 24px); border: 0; border-radius: 16px; }
-    body.bluff-king-card { padding: 0; justify-content: flex-start; }
-    body.bluff-king-card #content { max-width: 1440px; }
-    body.bluff-king-card #i18n-toggle, body.bluff-king-card .name-banner { display: none; }
-    .bluff-king-frame { width: 100%; height: 100dvh; border: 0; }
     /* The language pill floats over the top-right corner here — this page has no top
        row to dock into, and a row of its own cost more height than the control is
        worth. It has no --accent either, so name one, or the lit side falls back to
@@ -402,7 +386,7 @@
     .pick-btn.verdict-wrong { background: #ef4444; border-color: #ef4444; color: #2b0505; }
     .pick-btn.verdict-wrong .pb-key { background: rgba(43,5,5,.22); color: inherit; }
 
-    /* 🔢 room.js?v=membership-1's button check: three big equal buttons in a row rather than the
+    /* 🔢 room.js's button check: three big equal buttons in a row rather than the
        stacked .pick-row list at first (three single digits read fine side by
        side) — then the numbers became two digits (see sendButtonCheck()'s own
        comment: a single digit is too easy to guess or copy off a neighbor
@@ -881,7 +865,6 @@
     .crack-team-total .ctt-score { font-size: 1.3rem; font-weight: 900; color: #fff; }
     .crack-team-total .ctt-sep { font-size: 1rem; font-weight: 700; color: #60a5fa; opacity: .6; }
   </style>
-<link rel="stylesheet" href="hub-membership.css?v=membership-1">
 </head>
 <body>
 
@@ -892,54 +875,16 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="talk-topics.js?v=talk-group-1"></script>
-  <script src="talk-crazy.js?v=talk-vnext-9"></script>
-  <script src="talk-vnext.js?v=talk-vnext-9"></script>
-  <script src="talk-ui.js?v=talk-vnext-9"></script>
+  <script src="talk-ui.js"></script>
   <script src="chat-wolf-cards.js"></script>
-  <script src="bluff-king-cards.js?v=2"></script>
-  <script src="cut-ui.js?v=cut-15"></script>
-  <script src="bomb-relay-deck.js?v=br-pacing-3-1"></script>
-  <script src="bomb-relay-timing.js?v=br-pacing-3-1"></script>
-  <script src="bomb-relay-audio.js?v=br-sound-4"></script>
-  <script src="bomb-relay-art.js?v=br-halloween-1"></script>
-  <script src="bomb-relay-visuals.js?v=br-halloween-1"></script>
-  <script src="bomb-relay-ui.js?v=br-halloween-1"></script>
-  <script src="sketch-relay-art.js?v=relay-3"></script>
-  <script src="sketch-relay-ui.js?v=relay-3"></script>
-  <script src="who-knows-words.js?v=wk-5"></script>
-  <script src="who-knows-engine.js?v=wk-5"></script>
-  <script src="who-knows-sync.js?v=wk-5"></script>
-  <script src="who-knows-ui.js?v=wk-5"></script>
-  <script src="card-table.js?v=ct-2"></script>
-  <script src="card-table-ui.js?v=ct-2"></script>
-  <script src="word-limit-content.js?v=wl-7"></script>
-  <script src="word-limit-engine.js?v=wl-7"></script>
-  <script src="word-limit-ui.js?v=wl-7"></script>
-  <script src="word-wolf-content.js?v=ww-art-2"></script>
-  <script src="word-wolf-art.js?v=ww-art-2"></script>
-  <script src="word-wolf-engine.js?v=ww-art-2"></script>
-  <script src="word-wolf-ui.js?v=ww-art-2"></script>
-  <script src="room-survey-content.js?v=rs-3"></script>
-  <script src="room-survey-engine.js?v=rs-3"></script>
-  <script src="room-survey-ui.js?v=rs-3"></script>
-  <script src="bingo-party-sync.js?v=bp-1"></script>
-  <script src="bingo-party-ui.js?v=bp-2"></script>
-  <script src="open-mic-content.js?v=next-1"></script>
-  <script src="open-mic-discovery.js?v=om-2"></script>
-  <script src="open-mic-ui.js?v=om-cards-1"></script>
-  <script src="once-upon-a-time-modern-future-deck.js?v=once-interrupt-3"></script>
-  <script src="once-upon-a-time-halloween-deck.js?v=once-interrupt-3"></script>
-  <script src="once-upon-a-time-deck.js?v=once-interrupt-3"></script>
-  <script src="once-upon-a-time-openings.js?v=once-opening-1"></script>
-  <script src="once-upon-a-time-ui.js?v=once-opening-1"></script>
-  <script src="dixit-deck.js?v=dixit-expansion-1"></script>
-  <script src="life-story-ui.js?v=life-story-3"></script><script src="dixit-ui.js?v=life-story-2"></script>
-  <script src="life-story-engine.js?v=life-story-2"></script><script src="dixit-engine.js?v=life-story-1"></script>
-  <script src="talk-sync.js?v=talk-vnext-9"></script>
-  <script src="dixit-sync.js?v=life-story-2"></script>
-  <script src="hub-executor.js?v=cut-15"></script><script>HUB_EXECUTOR.install();</script>
-  <script src="dixit-card-host.js?v=life-story-1"></script>
+  <script src="once-upon-a-time-deck.js?v=once-v2-switch-2"></script>
+  <script src="once-upon-a-time-ui.js?v=once-v2-switch-2"></script>
+  <script src="dixit-deck.js?v=dixit-8"></script>
+  <script src="dixit-ui.js?v=dixit-8"></script>
+  <script src="dixit-engine.js?v=dixit-8"></script>
+  <script src="talk-sync.js"></script>
+  <script src="dixit-sync.js?v=dixit-8"></script>
+  <script src="dixit-card-host.js?v=dixit-8"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -1126,7 +1071,7 @@
       waitingGeneric: { zh: '⏳ 等待中…', en: '⏳ Waiting…' },
       cardCheckEyebrow: { zh: '🔍 核對卡片', en: '🔍 Card Check' },
       tellHostSee: { zh: '告訴主持人你看到什麼！', en: 'Tell the host what you see!' },
-      // room.js?v=membership-1's second check — three numbers, shuffled into a different order
+      // room.js's second check — three numbers, shuffled into a different order
       // on every card, so the host can call one out loud and confirm every
       // phone is actually receiving taps, not just displaying a card.
       buttonCheckEyebrow: { zh: '🔢 按鈕測試', en: '🔢 Button Check' },
@@ -1544,7 +1489,7 @@
       return data.vote && data.voteId && data.vote.id === data.voteId ? data.vote.choice : null;
     }
 
-    /* 🔢 room.js?v=membership-1's button check: writes to its own field (checkPress), not `vote` —
+    /* 🔢 room.js's button check: writes to its own field (checkPress), not `vote` —
        this card isn't part of any real game round, so there's no vote/voteId to
        collide with, and keeping it separate means a future game on this same
        token can't accidentally see a stale press. Quotes data.id the same way a
@@ -2063,10 +2008,8 @@
        so it survives re-renders in a plain module-level flag instead, and every
        toggle here re-invokes showCard(latestData) rather than waiting on Firebase. */
     let tabooAwaySelfConfirm = false;
-    function tabooAskAway() { tabooAwaySelfConfirm = true; if (latestData) showCard(latestData);
-      HUB_EXECUTOR.observe(latestData, token); }
-    function tabooCancelAway() { tabooAwaySelfConfirm = false; if (latestData) showCard(latestData);
-      HUB_EXECUTOR.observe(latestData, token); }
+    function tabooAskAway() { tabooAwaySelfConfirm = true; if (latestData) showCard(latestData); }
+    function tabooCancelAway() { tabooAwaySelfConfirm = false; if (latestData) showCard(latestData); }
     // no round id to quote — going away isn't tied to any particular round, and the
     // host applies it (toggleAway()) the moment it arrives, any time, round or no round
     function tabooRequestAway(btn) {
@@ -2496,17 +2439,9 @@
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
     let talkCard = null;
-    let cutCard = null;
-    let bombCard = null;
-    let relayCard = null;
-    let wkCard = null;
-    let wkTable = null;
-    let openMicCard = null;
-    let openMicTimer = null;
     let onceCard = null;
     let dixitCard = null;
     let dixitHostBridge = null;
-    let bluffCardFrame = null;
     let wolfCardFrame = null;
     // A private instruction can only ask its own same-origin frame to become
     // visible. Never pass role, sender, instruction text or card data upstream.
@@ -2517,381 +2452,14 @@
       window.scrollTo({top:0,behavior:'instant'});
     });
     let talkConnected = true;
-    window.addEventListener('message', event => {
-      if (!bluffCardFrame || event.origin !== location.origin || event.source !== bluffCardFrame.contentWindow ||
-          event.data?.type !== 'bluff-king-size' || !Number.isFinite(event.data.height)) return;
-      bluffCardFrame.style.height = Math.max(500, Math.min(16000, event.data.height)) + 'px';
-    });
     let talkClockOffset = 0;
-    // WHO KNOWS?: this card subscribes to the game's table and runs it with
-    // everyone else's cards, so no host page has to stay open.
-    function followWkTable(pointer) {
-      const playerNum = Number(pointer.playerNum);
-      if (!wkTable || wkTable.token !== pointer.wk.table || wkTable.actor !== playerNum) {
-        if (wkTable) wkTable.close();
-        if (wkCard) { wkCard.destroy(); wkCard = null; }
-        wkTable = new WHO_KNOWS_SYNC.Table({ db, code: session, token: pointer.wk.table, actor: playerNum,
-          onChange: paintWkTable, onPresence: paintWkTable, onStatus: () => wkCard?.paint() });
-        wkTable.setVisible(!document.hidden);
-        wkTable.connect();
-      }
-      paintWkTable();
-    }
-    function paintWkTable() {
-      if (!wkTable || latestData?.game !== 'whoknows' || latestData.wk?.version !== 2) return;
-      const view = wkTable.view();
-      if (!view) {
-        if (!wkCard) el.innerHTML = `<div class="secret-card wk-card"><p class="wk-soft">${WHO_KNOWS_UI.esc(WHO_KNOWS_UI.t(wkTable.loaded ? 'tableEmpty' : 'connecting'))}</p></div>`;
-        return;
-      }
-      if (!wkCard) wkCard = new WHO_KNOWS_UI.Card(el, {
-        nameBanner, table: true,
-        now: () => wkTable ? wkTable.now() : Date.now() + talkClockOffset,
-        connected: () => talkConnected,
-        send: command => wkTable ? wkTable.command(command.type, command) : Promise.reject(new Error('offline')),
-      });
-      wkCard.update(view);
-    }
-    // Read-only, for the browser checks: what this seat currently sees.
-    window.WHO_KNOWS_CARD = { view: () => wkTable?.view() || null };
-    // WORD LIMIT THEATER and ROOM SURVEY run on the same kind of card table as
-    // WHO KNOWS?: this link holds only a pointer, and this card follows the
-    // table and runs it together with everyone else's cards.
-    const CT_GAMES = {
-      wordlimit: { key: 'wl', page: 'wl-card-page', title: 'WORD LIMIT THEATER', ui: () => WORD_LIMIT_UI },
-      wordwolf: { key: 'ww', page: 'ww-card-page', title: 'WORD WOLF', ui: () => WORD_WOLF_UI },
-      roomsurvey: { key: 'rs', page: 'rs-card-page', title: 'ROOM SURVEY', ui: () => ROOM_SURVEY_UI },
-    };
-    let ctCard = null, ctTable = null, ctGame = null;
-    function closeCt() {
-      if (ctCard) { ctCard.destroy(); ctCard = null; }
-      if (ctTable) { ctTable.close(); ctTable = null; }
-      ctGame = null;
-    }
-    function paintCtTable() {
-      const spec = CT_GAMES[ctGame];
-      if (!ctTable || !spec || latestData?.game !== ctGame) return;
-      const view = ctTable.view();
-      if (!view) {
-        if (!ctCard) el.innerHTML = `<div class="secret-card ct-card ${spec.key}-card"><p class="ct-soft">${CARD_TABLE_UI.esc(spec.ui().t(ctTable.loaded ? 'tableEmpty' : 'connecting'))}</p></div>`;
-        return;
-      }
-      if (!ctCard) ctCard = new (spec.ui().Card)(el, {
-        nameBanner,
-        now: () => ctTable ? ctTable.now() : Date.now() + talkClockOffset,
-        connected: () => talkConnected,
-        send: command => ctTable ? ctTable.command(command.type, command) : Promise.reject(new Error('offline')),
-      });
-      ctCard.update(view);
-    }
-    // Returns true when this link shows one of these games (and renders it);
-    // otherwise it tears its card down so another game can take the element.
-    function renderCtCard(data) {
-      const spec = CT_GAMES[data?.game];
-      const table = spec && data[spec.key]?.version === 1 && /^[a-f0-9]{32}$/.test(data[spec.key].table || '') ? data[spec.key].table : null;
-      document.body.classList.toggle('ct-card-page', !!table);
-      for (const other of Object.values(CT_GAMES)) document.body.classList.toggle(other.page, !!table && other === spec);
-      if (!table) { closeCt(); return false; }
-      document.title = `${data.name || urlName || 'Player'} · ${spec.title}`;
-      document.body.classList.remove('wk-card-page', 'sketch-relay-card-page', 'bomb-card-page', 'open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
-      if (wkCard) { wkCard.destroy(); wkCard = null; }
-      if (wkTable) { wkTable.close(); wkTable = null; }
-      if (relayCard) { relayCard.destroy(); relayCard = null; }
-      if (bombCard) { bombCard.destroy(); bombCard = null; }
-      if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
-      if (cutCard) { cutCard.destroy(); cutCard = null; }
-      if (talkCard) { talkCard.destroy(); talkCard = null; }
-      if (onceCard) { onceCard.destroy(); onceCard = null; }
-      if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-      if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-      if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-      const playerNum = Number(data.playerNum);
-      if (!ctTable || ctGame !== data.game || ctTable.token !== table || ctTable.actor !== playerNum) {
-        closeCt();
-        ctGame = data.game;
-        ctTable = new (spec.ui().SYNC.Table)({ db, code: session, token: table, actor: playerNum,
-          onChange: paintCtTable, onPresence: paintCtTable, onStatus: () => ctCard?.paint() });
-        ctTable.setVisible(!document.hidden);
-        ctTable.connect();
-      }
-      paintCtTable();
-      return true;
-    }
-    // Read-only, for the browser checks: what this seat currently sees.
-    window.CARD_TABLE_CARD = { view: () => ctTable?.view() || null, game: () => ctGame };
-    // 雙選賓果 (DUAL-PICK BINGO): this link reads only its own projection and
-    // writes requests into its own node. The host seat's card, opened in the
-    // browser that owns the Hub room, can also run the trusted authority; its
-    // engine and card bank are loaded only then, never on other cards.
-    let bpCard = null, bpSeat = null, bpBridge = null;
-    function closeBingo() {
-      if (bpCard) { bpCard.destroy(); bpCard = null; }
-      bpSeat = null;
-      if (bpBridge) { bpBridge.close(); bpBridge = null; }
-      document.body.classList.remove('bp-card-page');
-    }
-    function loadBingoScripts(files) {
-      return files.reduce((ready, file) => ready.then(() => new Promise((resolve, reject) => {
-        if (document.querySelector(`script[data-bp="${file}"]`)) return resolve();
-        const script = document.createElement('script');
-        script.src = file; script.dataset.bp = file; script.onload = resolve; script.onerror = reject;
-        document.head.appendChild(script);
-      })), Promise.resolve());
-    }
-    function bingoBridge(view) {
-      if (view?.me?.host !== true) { if (bpBridge) { bpBridge.close(); bpBridge = null; } return; }
-      if (bpBridge) return;
-      const saved = BINGO_SYNC.savedRoom(session);
-      const mine = BINGO_SYNC.seatsFrom(saved).some(seat => seat.playerNum === view.me.playerNum && seat.token === token);
-      if (!mine || !BINGO_SYNC.controlToken(session, localStorage, false)) return;
-      const bridge = bpBridge = { closed: false, authority: null, close() { this.closed = true; this.authority?.close(); } };
-      loadBingoScripts(['bingo-party-content.js?v=bp-1', 'bingo-party-engine.js?v=bp-2']).then(() => {
-        if (bridge.closed) return;
-        bridge.authority = new BINGO_SYNC.Authority({ db, code: session, label: 'card' });
-        bridge.authority.connect();
-      }).catch(() => {});
-    }
-    function renderBingoCard(data) {
-      const isBingo = data?.game === 'bingoparty' && data.bp?.version === 1;
-      if (!isBingo) { if (bpCard || bpSeat || bpBridge) closeBingo(); return false; }
-      document.body.classList.add('bp-card-page');
-      document.body.classList.remove('ct-card-page', 'wl-card-page', 'rs-card-page', 'ww-card-page', 'wk-card-page', 'sketch-relay-card-page', 'bomb-card-page', 'open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
-      closeCt();
-      if (wkCard) { wkCard.destroy(); wkCard = null; }
-      if (wkTable) { wkTable.close(); wkTable = null; }
-      if (relayCard) { relayCard.destroy(); relayCard = null; }
-      if (bombCard) { bombCard.destroy(); bombCard = null; }
-      if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
-      if (cutCard) { cutCard.destroy(); cutCard = null; }
-      if (talkCard) { talkCard.destroy(); talkCard = null; }
-      if (onceCard) { onceCard.destroy(); onceCard = null; }
-      if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-      if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-      if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-      document.title = `${data.name || urlName || 'Player'} · DOUBLE TAKE`;
-      if (!bpSeat) bpSeat = new BINGO_SYNC.Seat({ db, code: session, token });
-      const view = bpSeat.update(data);
-      if (!bpCard) bpCard = new BINGO_UI.Card(el, {
-        banner: () => nameBanner(latestData || data),
-        send: (type, extra) => bpSeat ? bpSeat.send(type, extra) : Promise.resolve({ error: 'offline' }),
-        now: () => Date.now() + talkClockOffset,
-        connected: () => talkConnected,
-      });
-      bpCard.setLive(data.bp.live);
-      bpCard.update(view);
-      bingoBridge(view);
-      return true;
-    }
-    // Read-only, for the browser checks: what this seat currently sees.
-    window.BINGO_CARD = { view: () => bpSeat?.view || null, bridge: () => !!bpBridge?.authority };
     function showCard(data) {
-      // 雙選賓果 renders (and tears down) before every other game's card.
-      if (renderBingoCard(data)) return;
       renderCard(data);
       fitCardWords();
     }
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
-      if (renderCtCard(data)) return;
-      // WHO KNOWS? keeps one stable card (and its typed question) across updates.
-      // Version 2 points this link at the game's table, which the cards run
-      // themselves; version 1 is a view from a host page that hasn't reloaded.
-      const isWk = data.game === 'whoknows' && (data.wk?.version === 1 || (data.wk?.version === 2 && /^[a-f0-9]{32}$/.test(data.wk.table || '')));
-      document.body.classList.toggle('wk-card-page', isWk);
-      if (wkCard && !isWk) { wkCard.destroy(); wkCard = null; }
-      if (wkTable && !(isWk && data.wk.version === 2)) { wkTable.close(); wkTable = null; }
-      if (isWk) {
-        document.title = `${data.name || urlName || 'Player'} · WHO KNOWS?`;
-        document.body.classList.remove('sketch-relay-card-page', 'bomb-card-page', 'open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
-        if (relayCard) { relayCard.destroy(); relayCard = null; }
-        if (bombCard) { bombCard.destroy(); bombCard = null; }
-        if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
-        if (cutCard) { cutCard.destroy(); cutCard = null; }
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (onceCard) { onceCard.destroy(); onceCard = null; }
-        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-        if (data.wk.version === 2) { followWkTable(data); return; }
-        if (wkCard?.table) { wkCard.destroy(); wkCard = null; }
-        if (!wkCard) wkCard = new WHO_KNOWS_UI.Card(el, {
-          nameBanner,
-          now: () => Date.now() + talkClockOffset,
-          connected: () => talkConnected,
-          // One request per card, fenced to the stage it was drawn for.
-          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'whoknows' || current.wk?.sessionId !== command.sessionId || current.wk?.stage !== command.stage) return;
-            return Object.assign({}, current, { wkAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
-        });
-        wkCard.update(data);
-        return;
-      }
-      // Sketch Relay keeps its drawing pad alive across updates, so it must be
-      // torn down here before any other game takes over this element.
-      const isRelay = data.game === 'sketchrelay' && data.relay?.version === 1;
-      document.body.classList.toggle('sketch-relay-card-page', isRelay);
-      if (relayCard && !isRelay) { relayCard.destroy(); relayCard = null; }
-      if (isRelay) {
-        document.title = `${data.name || urlName || 'Player'} · Sketch Relay`;
-        document.body.classList.remove('open-mic-card-page', 'bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page', 'bomb-card-page');
-        if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
-        if (cutCard) { cutCard.destroy(); cutCard = null; }
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (onceCard) { onceCard.destroy(); onceCard = null; }
-        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-        if (bombCard) { bombCard.destroy(); bombCard = null; }
-        if (!relayCard) relayCard = new SKETCH_RELAY_UI.Card(el, {
-          nameBanner,
-          now: () => Date.now() + talkClockOffset,
-          connected: () => talkConnected,
-          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'sketchrelay' || current.relay?.sessionId !== command.sessionId) return;
-            if (['draft', 'submit', 'ready', 'swapWord'].includes(command.type) && current.relay.turnId !== command.turnId) return;
-            const oldAction = current.relayAction;
-            const acknowledged = [current.relay.reply, ...Object.values(current.relay.receipts || {})];
-            // A second tab using the same player link must wait for the first
-            // request's receipt, even while the host is temporarily offline.
-            if (oldAction?.id && oldAction.id !== command.id && !acknowledged.some(r => r?.id === oldAction.id)) return;
-            return Object.assign({}, current, { relayAction: command });
-          }, undefined, false).then(result => {
-            if (result.committed) return;
-            const current = result.snapshot.val();
-            const sameTurn = !['draft', 'submit', 'ready', 'swapWord'].includes(command.type) || current?.relay?.turnId === command.turnId;
-            throw new Error(current?.game === 'sketchrelay' && current.relay?.sessionId === command.sessionId && sameTurn ? 'action_busy' : 'stale_turn');
-          }),
-        });
-        relayCard.update(data);
-        return;
-      }
-      const isBomb = data.game === 'bombrelay' && data.bomb?.version === 1;
-      document.body.classList.toggle('bomb-card-page', isBomb);
-      if (bombCard && !isBomb) { bombCard.destroy(); bombCard = null; }
-      if (isBomb) {
-        document.title = `${data.name || urlName || 'Player'} · BOMB RELAY`;
-        document.body.classList.remove('bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page', 'open-mic-card-page');
-        if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
-        if (cutCard) { cutCard.destroy(); cutCard = null; }
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (onceCard) { onceCard.destroy(); onceCard = null; }
-        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-        if (!bombCard) bombCard = new BOMB_RELAY_UI.Card(el, {
-          nameBanner,
-          now: () => Date.now() + talkClockOffset,
-          connected: () => talkConnected,
-          // One pending action per card, fenced to the turn it was drawn for.
-          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'bombrelay' || current.bomb?.sessionId !== command.sessionId || current.bomb?.turnId !== command.turnId) return;
-            return Object.assign({}, current, { bombAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
-        });
-        bombCard.update(data);
-        return;
-      }
-      const isOpenMic = data.game === 'openmic' && data.openmic?.version === 1;
-      document.body.classList.toggle('open-mic-card-page', isOpenMic);
-      if (openMicCard && !isOpenMic) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
-      if (isOpenMic) {
-        document.title = `${data.name || urlName || 'Player'} · OPEN MIC RESCUE`;
-        document.body.classList.remove('bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page', 'cut-card-page');
-        if (cutCard) { cutCard.destroy(); cutCard = null; }
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (onceCard) { onceCard.destroy(); onceCard = null; }
-        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-        if (!openMicCard) {
-          openMicCard = new OPEN_MIC_UI.Game(el, {
-            actor: Number(data.playerNum),
-            now: () => Date.now() + talkClockOffset,
-            canControl: () => talkConnected && latestData?.game === 'openmic' && (latestData.openmic?.sharedControls === true || latestData.openmic?.hostLiveUntil > Date.now() + talkClockOffset),
-            send: async (type, extra = {}) => {
-              const currentView = latestData?.openmic;
-              if (!currentView || !talkConnected) throw new Error('offline');
-              const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-              const command = { ...extra, id, type, sessionId: currentView.sessionId, turnId: currentView.turnId };
-              const ref = db.ref(`rooms/${session}/players/${token}`);
-              const result = await ref.transaction(current => {
-                if (current?.game !== 'openmic' || current.openmic?.sessionId !== command.sessionId || current.openmic?.turnId !== command.turnId) return;
-                return Object.assign({}, current, { openmicAction: command });
-              }, undefined, false);
-              if (!result.committed) throw new Error('stale_turn');
-              await new Promise((resolve, reject) => {
-                const finish = error => { clearTimeout(timeout); ref.off('value', handler); error ? reject(new Error(error)) : resolve(); };
-                const handler = snapshot => {
-                  const value = snapshot.val();
-                  if (value?.game !== 'openmic' || value.openmic?.sessionId !== command.sessionId) { finish('stale_turn'); return; }
-                  if (value.openmic?.reply?.id === id) finish(value.openmic.reply.error);
-                };
-                const timeout = setTimeout(() => finish('offline'), 12000);
-                ref.on('value', handler, () => finish('offline'));
-              });
-            },
-          });
-          openMicTimer = setInterval(() => openMicCard?.paint(), 250);
-        }
-        openMicCard.update(data);
-        return;
-      }
-      const isCut = data.game === 'cut' && data.cut?.version === 1;
-      document.body.classList.toggle('cut-card-page', isCut);
-      if (cutCard && !isCut) { cutCard.destroy(); cutCard = null; }
-      if (isCut) {
-        document.title = `${data.name || urlName || 'Player'} · CUT!`;
-        document.body.classList.remove('bluff-king-card', 'chat-wolf-card', 'once-card-page', 'dixit-card-page');
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (onceCard) { onceCard.destroy(); onceCard = null; }
-        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-        if (!cutCard) cutCard = new CUT_UI.Card(el, {
-          nameBanner,
-          now: () => Date.now() + talkClockOffset,
-          connected: () => talkConnected,
-          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'cut' || current.cut?.sessionId !== command.sessionId || current.cut?.turnId !== command.turnId) return;
-            return Object.assign({}, current, { cutAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
-        });
-        cutCard.update(data);
-        return;
-      }
-      const bluffURL = data.game === 'bluffking' ? BLUFF_CARDS.frameURL(data.bluff, location.href) : null;
-      const isBluff = !!bluffURL;
-      document.body.classList.toggle('bluff-king-card', isBluff);
-      if (bluffCardFrame && !isBluff) { bluffCardFrame.remove(); bluffCardFrame = null; }
-      if (isBluff) {
-        document.title = `${data.name || urlName || 'Player'} · BLUFF PARTY`;
-        document.body.classList.remove('chat-wolf-card', 'once-card-page', 'dixit-card-page');
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (onceCard) { onceCard.destroy(); onceCard = null; }
-        if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-        if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        const frameURL = new URL(bluffURL);
-        frameURL.searchParams.set('name', data.name || urlName || '');
-        if (!bluffCardFrame || bluffCardFrame.src !== frameURL.href) {
-          bluffCardFrame = document.createElement('iframe');
-          bluffCardFrame.className = 'bluff-king-frame';
-          bluffCardFrame.title = 'BLUFF PARTY player card';
-          bluffCardFrame.referrerPolicy = 'no-referrer';
-          bluffCardFrame.src = frameURL.href;
-          el.replaceChildren(bluffCardFrame);
-        }
-        return;
-      }
       const isDixit = data.game === 'dixit' && data.dixit?.version === 1;
       document.body.classList.toggle('dixit-card-page', isDixit);
       if (dixitCard && !isDixit) { dixitCard.destroy(); dixitCard = null; }
@@ -2953,22 +2521,13 @@
       if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
       if (data.game === 'letstalk' && data.talk && data.talk.version === 1) {
         if (!talkCard) talkCard = new TALK_PLAYER.Card(el, {
-          nameBanner, identity: { room: session, token, verified: true },
-          sendTechnical: async command => {
-            const current = (await db.ref(`rooms/${session}/players/${token}`).once('value')).val();
-            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId || !current.hubExecutor?.capsule) throw new Error('not_available');
-            const result = await HUB_EXECUTOR.request({ operation: 'execute', capsule: current.hubExecutor.capsule, token, command });
-            if (!result.technical?.rendered) throw new Error('stale_prompt');
-          },
+          nameBanner,
           now: () => Date.now() + talkClockOffset,
           connected: () => talkConnected,
           send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId) return;
-            if (TALK_UI.crazyAction(command.type)) {
-              if (current.talk.gameMode !== 'crazy' || current.talk.crazy?.prompt?.id !== command.promptId || current.talk.crazy.prompt.status !== 'pending') return;
-            } else if (!command.type.startsWith('crazy') && current.talk.turnId !== command.turnId) return;
+            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId || current.talk.turnId !== command.turnId) return;
             return Object.assign({}, current, { talkAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error(TALK_UI.crazyAction(command.type) ? 'stale_prompt' : 'stale_turn'); }),
+          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
         });
         talkCard.update(data);
         return;
@@ -3168,28 +2727,12 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
-      if (relayCard) { relayCard.destroy(); relayCard = null; }
-      document.body.classList.remove('sketch-relay-card-page');
-      if (openMicCard) { openMicCard.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; }
-      document.body.classList.remove('open-mic-card-page');
-      if (cutCard) { cutCard.destroy(); cutCard = null; }
-      document.body.classList.remove('cut-card-page');
-      if (bombCard) { bombCard.destroy(); bombCard = null; }
-      document.body.classList.remove('bomb-card-page');
-      if (wkCard) { wkCard.destroy(); wkCard = null; }
-      if (wkTable) { wkTable.close(); wkTable = null; }
-      document.body.classList.remove('wk-card-page');
-      closeCt();
-      document.body.classList.remove('ct-card-page', 'wl-card-page', 'rs-card-page', 'ww-card-page');
       if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
       if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
       if (onceCard) { onceCard.destroy(); onceCard = null; }
       if (talkCard) { talkCard.destroy(); talkCard = null; }
       if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-      if (bluffCardFrame) { bluffCardFrame.remove(); bluffCardFrame = null; }
-      document.body.classList.remove('bluff-king-card');
       document.body.classList.remove('chat-wolf-card');
-      closeBingo();
       document.body.classList.remove('once-card-page');
       document.body.classList.remove('dixit-card-page');
       lastErrorKey = key;
@@ -3202,14 +2745,13 @@
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     let db = null;
     let latestData = null;
-    document.addEventListener('visibilitychange', () => { dixitHostBridge?.setActive(!document.hidden); wkTable?.setVisible(!document.hidden); ctTable?.setVisible(!document.hidden); });
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; cutCard?.destroy(); cutCard = null; bombCard?.destroy(); bombCard = null; relayCard?.destroy(); relayCard = null; wkCard?.destroy(); wkCard = null; wkTable?.close(); wkTable = null; closeCt(); openMicCard?.destroy(); openMicCard = null; clearInterval(openMicTimer); openMicTimer = null; closeBingo(); });
-    window.addEventListener('pageshow', () => { if (['bingoparty', 'dixit', 'cut', 'openmic', 'bombrelay', 'sketchrelay', 'whoknows', 'wordlimit', 'roomsurvey', 'wordwolf'].includes(latestData?.game)) tryRenderCard(); });
+    document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
+    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; });
+    window.addEventListener('pageshow', () => { if (latestData?.game === 'dixit') tryRenderCard(); });
 
     function tryRenderCard() {
       if (!latestData) return;
       showCard(latestData);
-      HUB_EXECUTOR.observe(latestData, token);
     }
     I18N.onChange(() => {
       if (latestData) { setCardTitle(latestData.name || urlName); tryRenderCard(); }
@@ -3223,11 +2765,11 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); if (cutCard) cutCard.paint(); if (bombCard) bombCard.paint(); if (relayCard) relayCard.paint(); if (wkCard) wkCard.paint(); if (ctCard) ctCard.paint(); if (bpCard) bpCard.paint(); });
+      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); });
       db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();
-        if (!data) { latestData = null; showError('waitingDeal'); return; }
+        if (!data) { showError('waitingDeal'); return; }
         latestData = data;
         tryRenderCard();
       }, () => {
@@ -3255,7 +2797,7 @@
         cardWasHidden = false;
         db.ref(`rooms/${session}/players/${token}`).once('value').then(snap => {
           const data = snap.val();
-          if (!data) { latestData = null; showError('waitingDeal'); return; }
+          if (!data) { showError('waitingDeal'); return; }
           latestData = data;
           tryRenderCard();
         }).catch(() => {});
