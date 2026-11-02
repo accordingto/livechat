@@ -20,9 +20,8 @@
 // All games share one "rooms" key so the SAME room code and SAME player links
 // keep working no matter which game the host switches to.
 //
-// "roster" is openly readable/writable. Chat Wolf v2 uses it for a join public
-// key and encrypted join requests only; never place plaintext card tokens or
-// selected secret tasks here. Older games may still use it for public names.
+// "roster" is openly readable/writable and no current game uses it; never
+// place card tokens or secrets there.
 //   {
 //     "rules": {
 //       "rooms": {
@@ -38,16 +37,10 @@
 //             ".write": true
 //           }
 //         }
-//       },
-//       "chatWolfRooms": {
-//         ".read": false,
-//         ".write": false
 //       }
 //     }
 //   }
-// Chat Wolf v2 uses the same rules under rooms/chatwolf-{CODE}. Its host browser
-// is trusted and must stay open. The old chatWolfRooms path is unused and stays
-// denied. No Firebase Admin credential belongs in this public file.
+// No Firebase Admin credential belongs in this public file.
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDojGHsk2N6EssSWrmEbfeN3abZ7lQt9wY",

@@ -1,10 +1,6 @@
 # 安全檢查清單
 
 所有遊戲現在都是純前端靜態網站，沿用既有 Firebase bearer 路徑規則。
-**聊天狼人 v2** 使用 `rooms/chatwolf-{CODE}`，主持完整狀態存於只有主持裝置
-知道的隨機 token 路徑；每位玩家另有自己的投影與操作路徑。這些路徑不可列舉，
-但知道 token 即可讀寫。因此必須信任主持人及保管好裝置重連資料。
-房主介面不顯示別人的秘密，不等於開發工具也無法讀取。見 `chat-wolf-mode.md`。
 
 Firebase 專案：`livechat-92f66`（新加坡區）
 Console：https://console.firebase.google.com/project/livechat-92f66
@@ -49,10 +45,6 @@ https://console.firebase.google.com/project/livechat-92f66/database/livechat-92f
         },
         "roster": { ".read": true, ".write": true }
       }
-    },
-    "chatWolfRooms": {
-      ".read": false,
-      ".write": false
     }
   }
 }
@@ -65,11 +57,6 @@ Firebase 不允許讀取「權限規則在下層」的節點，所以這樣寫�
 無法列出房間裡有誰、也讀不到別人的牌。玩家 token 是 `crypto.getRandomValues()` 產的 80 bits 隨機值
 （見 `room.js` 的 `generateToken()`），猜不出來。
 
-聊天狼人不使用 `chatWolfRooms`，該路徑繼續維持拒絕存取。不需改 Rules、
-建立服務帳號或設定 Vercel 環境變數。新房間的 `roster` 只放 RSA-OAEP 公鑰和
-加密加入請求；玩家 token 不得明文放進該公共節點。主持控制 token 不出現在
-邀請連結或玩家投影。這些措施避免一般玩家直接取得其他牌卡，但不能抵抗
-惡意房主、已外洩的 token，或有人刻意竄改公共加入節點；它延續舊版誠信玩法。
 
 > ⚠️ Firebase 建立資料庫時如果選 "test mode"，預設規則是全開、30 天後失效。
 > 千萬不要停在那個狀態。

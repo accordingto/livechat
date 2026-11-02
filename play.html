@@ -7,9 +7,6 @@
   <meta name="theme-color" content="#0d0d1a">
   <script src="i18n.js"></script>
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="talk.css">
-  <link rel="stylesheet" href="once-upon-a-time.css?v=once-v2-switch-2">
-  <link rel="stylesheet" href="dixit.css?v=dixit-8">
   <style>
     body {
       display: flex; flex-direction: column;
@@ -19,10 +16,6 @@
     /* the wrapper had no width of its own, so `width:100%` on the card resolved against
        shrink-to-fit content — the card ended up a different width in every state */
     #content { width: 100%; max-width: 420px; display: flex; justify-content: center; }
-    body.chat-wolf-card { padding: 8px; justify-content: flex-start; }
-    body.chat-wolf-card #content { max-width: 760px; }
-    body.chat-wolf-card #i18n-toggle { display: none; }
-    .chat-wolf-frame { width: 100%; height: calc(100dvh - 24px); border: 0; border-radius: 16px; }
     /* The language pill floats over the top-right corner here — this page has no top
        row to dock into, and a row of its own cost more height than the control is
        worth. It has no --accent either, so name one, or the lit side falls back to
@@ -875,16 +868,6 @@
   <script src="firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="talk-ui.js"></script>
-  <script src="chat-wolf-cards.js"></script>
-  <script src="once-upon-a-time-deck.js?v=once-v2-switch-2"></script>
-  <script src="once-upon-a-time-ui.js?v=once-v2-switch-2"></script>
-  <script src="dixit-deck.js?v=dixit-8"></script>
-  <script src="dixit-ui.js?v=dixit-8"></script>
-  <script src="dixit-engine.js?v=dixit-8"></script>
-  <script src="talk-sync.js"></script>
-  <script src="dixit-sync.js?v=dixit-8"></script>
-  <script src="dixit-card-host.js?v=dixit-8"></script>
   <script>
     I18N.registerDict('play', {
       titleDefault: { zh: '你的祕密卡片', en: 'Your Secret Card' },
@@ -2438,21 +2421,6 @@
 
     /* one shared link per player works for every game — this page just renders
        whichever game's data is currently sitting at rooms/{session}/players/{token} */
-    let talkCard = null;
-    let onceCard = null;
-    let dixitCard = null;
-    let dixitHostBridge = null;
-    let wolfCardFrame = null;
-    // A private instruction can only ask its own same-origin frame to become
-    // visible. Never pass role, sender, instruction text or card data upstream.
-    window.addEventListener('message', event => {
-      if (!wolfCardFrame || event.origin !== location.origin || event.source !== wolfCardFrame.contentWindow ||
-          event.data?.type !== 'chat-wolf-direction-notice') return;
-      wolfCardFrame.scrollIntoView({block:'start',behavior:'instant'});
-      window.scrollTo({top:0,behavior:'instant'});
-    });
-    let talkConnected = true;
-    let talkClockOffset = 0;
     function showCard(data) {
       renderCard(data);
       fitCardWords();
@@ -2460,79 +2428,6 @@
 
     function renderCard(data) {
       setCardTitle(data.name || urlName);
-      const isDixit = data.game === 'dixit' && data.dixit?.version === 1;
-      document.body.classList.toggle('dixit-card-page', isDixit);
-      if (dixitCard && !isDixit) { dixitCard.destroy(); dixitCard = null; }
-      if (!isDixit && dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-      if (isDixit) {
-        document.body.classList.remove('chat-wolf-card', 'once-card-page');
-        if (onceCard) { onceCard.destroy(); onceCard = null; }
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        if (!dixitCard) dixitCard = new DIXIT_UI.Card(el, {
-          now: () => Date.now() + talkClockOffset,
-          connected: () => talkConnected,
-          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'dixit' || current.dixit?.sessionId !== command.sessionId || current.dixit?.turnId !== command.turnId) return;
-            return Object.assign({}, current, { dixitAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
-        });
-        dixitCard.update(data);
-        if (!dixitHostBridge) dixitHostBridge = new DIXIT_CARD_HOST.Bridge({ roomCode: session, playerToken: token, db,
-          onStatus: () => dixitCard?.paint() });
-        dixitHostBridge.update(data);
-        return;
-      }
-      const isOnce = data.game === 'onceupon' && data.once?.version === 1;
-      document.body.classList.toggle('once-card-page', isOnce);
-      if (onceCard && !isOnce) { onceCard.destroy(); onceCard = null; }
-      if (isOnce) {
-        document.body.classList.remove('chat-wolf-card');
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-        if (!onceCard) onceCard = new ONCE_UI.Card(el, {
-          now: () => Date.now() + talkClockOffset,
-          connected: () => talkConnected,
-          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'onceupon' || current.once?.sessionId !== command.sessionId) return;
-            // Votes share a ballot, not a local turn timestamp. All other
-            // commands must still refer to the story point the player saw.
-            if (command.type === 'vote' ? current.once.vote?.id !== command.voteId : current.once.turnId !== command.turnId) return;
-            return Object.assign({}, current, { onceAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
-        });
-        onceCard.update(data);
-        return;
-      }
-      const wolfURL = data.game === 'chatwolf' ? CHAT_WOLF_CARDS.frameURL(data.chatWolf, location.href) : null;
-      document.body.classList.toggle('chat-wolf-card', !!wolfURL);
-      if (wolfURL) {
-        if (talkCard) { talkCard.destroy(); talkCard = null; }
-        if (!wolfCardFrame || wolfCardFrame.src !== wolfURL) {
-          wolfCardFrame = document.createElement('iframe');
-          wolfCardFrame.className = 'chat-wolf-frame';
-          wolfCardFrame.title = 'Chat Wolf player card';
-          wolfCardFrame.referrerPolicy = 'no-referrer';
-          wolfCardFrame.src = wolfURL;
-          el.replaceChildren(wolfCardFrame);
-        }
-        return;
-      }
-      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-      if (data.game === 'letstalk' && data.talk && data.talk.version === 1) {
-        if (!talkCard) talkCard = new TALK_PLAYER.Card(el, {
-          nameBanner,
-          now: () => Date.now() + talkClockOffset,
-          connected: () => talkConnected,
-          send: command => db.ref(`rooms/${session}/players/${token}`).transaction(current => {
-            if (current?.game !== 'letstalk' || current.talk?.sessionId !== command.sessionId || current.talk.turnId !== command.turnId) return;
-            return Object.assign({}, current, { talkAction: command });
-          }, undefined, false).then(result => { if (!result.committed) throw new Error('stale_turn'); }),
-        });
-        talkCard.update(data);
-        return;
-      }
-      if (talkCard) { talkCard.destroy(); talkCard = null; }
       if (data.game === 'conquest') { el.innerHTML = conquestCardHTML(data); return; }
       if (data.game === 'cardcheck') {
         el.innerHTML = `
@@ -2727,14 +2622,6 @@
     let lastErrorKey = null;
     let lastErrorData = null;
     function showError(key, data) {
-      if (dixitHostBridge) { dixitHostBridge.close(); dixitHostBridge = null; }
-      if (dixitCard) { dixitCard.destroy(); dixitCard = null; }
-      if (onceCard) { onceCard.destroy(); onceCard = null; }
-      if (talkCard) { talkCard.destroy(); talkCard = null; }
-      if (wolfCardFrame) { wolfCardFrame.remove(); wolfCardFrame = null; }
-      document.body.classList.remove('chat-wolf-card');
-      document.body.classList.remove('once-card-page');
-      document.body.classList.remove('dixit-card-page');
       lastErrorKey = key;
       lastErrorData = data || null;
       el.innerHTML = WAITING_KEYS.has(key)
@@ -2745,10 +2632,6 @@
     const firebaseReady = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
     let db = null;
     let latestData = null;
-    document.addEventListener('visibilitychange', () => dixitHostBridge?.setActive(!document.hidden));
-    window.addEventListener('pagehide', () => { dixitHostBridge?.close(); dixitHostBridge = null; });
-    window.addEventListener('pageshow', () => { if (latestData?.game === 'dixit') tryRenderCard(); });
-
     function tryRenderCard() {
       if (!latestData) return;
       showCard(latestData);
@@ -2765,8 +2648,6 @@
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      db.ref('.info/connected').on('value', snap => { talkConnected = snap.val() === true; if (talkCard) talkCard.paint(); if (onceCard) onceCard.paint(); if (dixitCard) dixitCard.paint(); });
-      db.ref('.info/serverTimeOffset').on('value', snap => { talkClockOffset = Number(snap.val()) || 0; });
       db.ref(`rooms/${session}/players/${token}`).on('value', snap => {
         const data = snap.val();
         if (!data) { showError('waitingDeal'); return; }

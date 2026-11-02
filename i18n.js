@@ -155,7 +155,7 @@
     wrap.innerHTML =
       '<button type="button" data-lang="zh" title="切換成繁體中文">中文</button>' +
       '<button type="button" data-lang="en" title="Switch to English">EN</button>';
-    /* Dock into whatever this page uses as its top row: the game pages and Let's Talk
+    /* Dock into whatever this page uses as its top row: the game pages
        have .topbar, the hub has .hero, and any other page can offer a slot by marking
        an element [data-i18n-dock] (the player card does). All of them come BEFORE
        .header, which is what keeps the pill reachable while guide.js has the rest of

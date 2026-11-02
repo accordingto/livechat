@@ -12,8 +12,6 @@ host is sharing.
 
 | Game | Players | Description |
 |------|---------|-------------|
-| 💬 Let's Talk | 2–9 | A conversation mode: think first, optionally share a written thought, then take one main turn each round with spoken follow-up requests |
-| 🐺 聊天狼人 | 3–12 (6–8 recommended) | Six guided conversation rounds with a hidden Wolf team, two shared missions, scheduled identifications, and no elimination |
 | ⚖️ Kangaroo Court | 4–9 | One player stands trial on a ridiculous charge. Prosecutor and defense make their case, the jury secretly votes twice — before and after |
 | 🏰 Dare Conquest | 2–6 | Roll the dice, move around the board, and pull off a silly dare — confess, sing, joke, roast — to claim the land, or steal it from a rival |
 | 🙊 Say It Without Saying It | 2–6 | One player describes a secret word without saying the forbidden words, one referees, and everyone else hits the buzzer to guess |
@@ -21,89 +19,18 @@ host is sharing.
 | 🤔 Sophie's Choice | 2+ | A morally impossible situation with two extreme choices — pick one and defend it, or take option C and argue your own |
 | 🤝 Persuade Together! | 3+ | One player is dealt the judge, everyone else teams up to convince them |
 | 🎭 You're In The Scene | 2–6 | Draw a chaotic situation — every player is dealt their own role and hint. No script, just improv |
-| 📖 Once Upon a Time | 2–6 | Tell one fairy tale together, play Story Cards, interrupt to take over, and finish with your private Ending |
-| 🖼️ Dixit / 妙語說書人 | 3–8 | Give spoken clues for 84 original pictures, submit decoys, secretly vote, and reveal the answer together |
 
 ## How it works
 
-**Dixit** is the final entry in the Hub game menu. Its prominent phase bar tells
-each player what to do, and a shared 3–2–1 reveal presents the Storyteller's card
-before the highest-voted pictures. Designate the host player when opening the
-table; that player's private card handles every game control as well as their
-own hand and vote. A host card in the browser that owns the saved Hub room also
-runs synchronization while hidden whenever the browser permits execution, so
-the shared table may be hidden or closed. A visible host page can immediately
-take over a hidden executor. Reopening the HOST card in a new tab in the same
-trusted browser recovers immediately, including when closing the old tab could
-not finish releasing its lease. If the browser suspends every host page or the
-device sleeps, queued actions resume when a host page wakes.
-Host cards on another device use the open shared table for synchronization.
-Revealed pictures identify their owners above the artwork; no enlargement
-buttons or repeated Storyteller label cover the cards. Both reveal headings show
-their vote counts. Round points stay beside the pictures on the left until the
-host continues; phones show them below the pictures. Players and scores appear
-below the cards, expanded by default. Private-hand identity and duplicate spoken
-clue labels are omitted so the pictures start higher on the page.
-The host chooses a winning score from 5–100 before dealing (default 30).
-To switch into Dixit or Once Upon a Time from another game, open its host page
-and click **Open this table**. The existing player links switch to the new lobby;
-the previous game does not need an End button.
-See [`dixit-mode.md`](dixit-mode.md) for rules, original artwork, privacy, and validation.
-
-**Once Upon a Time** reuses the
-original room and private player links. See [`once-upon-a-time-mode.md`](once-upon-a-time-mode.md)
-for its rules, deck/art counts, trusted-host limits, launch steps and verification.
-The host keeps its shared table open and can deal immediately without waiting
-for everyone to tap Ready. Participants play from their own existing cards.
-`?demo=1` is a clearly labelled synthetic preview only.
-
 - `index.html` is the menu; each game has its own host page.
-- `play.html` is the single player card page shared by **the seven games and Let's Talk** — it
+- `play.html` is the single player card page shared by **every game** — it
   switches layout from the `game` field in the room data.
 - One room code and one set of player links work across every game, so the host
   can switch games without re-sending anything.
-- **聊天狼人 is intentionally separate from the legacy card links.** Players join
-  its lobby by room code and keep an opaque reconnect token on their own device.
-  Like the other games, it uses the existing Firebase and trusts the host browser.
 - `CLAUDE.md` is the architecture log (written in Chinese): what every screen
   does and, more usefully, why each decision was made. Read it before changing
   anything shared — `room.js`, `play.html`, `index.html`, `game-data.js`,
   `i18n.js`, `shared.css` are relied on across the site.
-
-### Let's Talk — first trial
-
-Choose **Let's Talk** after the usual room setup; existing player links update
-automatically. The host opens a topic and keeps that page open. Participants
-use their own cards to signal readiness, request an oral question, invite the
-question, and pass their main turn. Voice stays in your existing chat app.
-
-Try [`lets-talk.html?demo=1`](https://livechat-two-alpha.vercel.app/lets-talk.html?demo=1)
-on one phone without a room. Choose a topic, then switch the demo viewpoint
-between the shared screen and four participants. This simulation does not
-connect player cards and resets on reload.
-
-Rules, synchronization design, limits, and verification steps are documented
-in [`talk-mode.md`](talk-mode.md). Topics use plain English; interface controls
-follow the site's Chinese / English switch. There are no scores, reaction
-totals, required story lengths, or AI evaluations.
-
-Choose from **48 topics across 8 categories**, with 4 follow-ups each (**240
-questions** in total), or write your own topic. Search in Chinese or English,
-preview a discussion path, and adapt a library topic. Custom drafts are saved
-in the current browser. During a conversation, the host can choose a deeper
-question or write one on the spot; it updates everyone's page while keeping
-the current speaker, round, and spoken question requests.
-
-A random question is ready at the top when the page opens. Draw another,
-choose manually, or browse full questions and their follow-ups at the bottom.
-Picking a question only changes the preview until you open it for everyone.
-Prominent host controls can end a turn or return from a question if someone
-leaves. The speaker's card shows a gold **Your turn!** banner and an **I'm done** button.
-
-Each built-in topic includes an explanation of what the question means, its key
-terms, and a way to begin answering. The host can turn **Show question explanations
-(trial)** on or off for everyone's cards without interrupting a turn. Custom
-topics can include their own explanation (up to 600 characters).
 
 ## Firebase
 
@@ -115,26 +42,11 @@ real project's values already in it, so this is a swap, not a fill-in-the-blank
 
 Without Firebase configured:
 
-- **Let's Talk** needs Firebase for real rooms. Its single-device demo works
-  without a database connection.
 - **Button is locked** — Kangaroo Court and Say It Without Saying It refuse to
   deal at all (the jury's votes and the clue giver's word have nowhere private
   to go).
 - **Still fully playable** — the rest. They only lose the on-phone voting and
   buzzer interactions; the host screen carries the whole game.
-- **聊天狼人** needs the same existing Firebase configuration and an open host page.
-
-### Chat Wolf host mode (2026-09-27)
-
-The separate Admin API has been removed. `chat-wolf-sync.js` uses the existing
-Firebase REST API and bearer paths under `rooms/chatwolf-{CODE}`. No additional
-credentials, paid service, or Rules changes are needed on the current site.
-The host must keep the page open. Its normal villager interface hides other
-roles and tasks, but the host browser necessarily receives the full game state.
-This is an honesty-based host model, not protection against a host inspecting
-developer tools. See [`chat-wolf-mode.md`](chat-wolf-mode.md) for persistence,
-reconnect behavior, and the exact privacy boundary.
-
 ## Running your own copy
 
 Fork it or clone it. All games are buildless static pages. Three things need
@@ -180,7 +92,7 @@ the `localhost` on your laptop, so with only a local server you can drive all
 every host screen perfectly and never once see a player card — half of each
 game (buzzers, votes, the jury, Truth or Dare calls) lives on that page.
 
-All games, including Chat Wolf, can use a static HTTPS host:
+All games can use a static HTTPS host:
 
 - **Vercel** — what the live site runs on
 - GitHub Pages, Netlify, or another static HTTPS host also works with the Firebase configuration.
@@ -192,8 +104,7 @@ as step 1's database rules are in place — see `SECURITY.md`.
 ## Features
 
 - Screen-share friendly: large text, high contrast, clean layout
-- Game prompts live in `game-data.js`; Let's Talk's topics live in
-  `talk-topics.js`. The host can override the former from a Google Sheet whose
+- Game prompts live in `game-data.js`. The host can override them from a Google Sheet whose
   tabs are named after the games. `prompt-sheet-template.xlsx` mirrors that
   sheet, and `tools/` keeps the two in step: `build-sheet-template.py` writes
   the workbook from `game-data.js`, and `sheet-to-game-data.py` folds an edited
@@ -214,10 +125,6 @@ Rule and transport regression tests require only Node.js:
 ```sh
 node --test tests/*.test.cjs
 ```
-
-## Dixit picture storytelling
-
-The final Hub game supports 3–8 players, spoken clues without a text field, 84 original varied picture cards, secret submissions and votes, automatic current base-game scoring, and replay. Large cards stay central on desktop and phones, without separate enlargement controls. Revealed card owners appear above each picture. It uses the same player links as the other games. The public host table never renders private hands. `dixit-card-host.js` lets the designated host's private card run the trusted-host executor using credentials already saved in that browser; keep the shared table open/awake when the host card uses another browser or device. Artwork is versioned to preserve active games. See [dixit-mode.md](dixit-mode.md) for rules, source links, recovery behavior, and verification limits. Local previews: `npm run dev:dixit`; rule/transport/UI checks: `npm run test:dixit`.
 
 ## License
 
