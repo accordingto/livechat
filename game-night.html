@@ -26,273 +26,215 @@
 
 <style>
   :root {
-    --night: #160f33;
-    --night-2: #21184a;
-    --night-3: #2c2160;
-    --pink: #ff4d8d;
-    --yellow: #ffd23f;
-    --cyan: #3ee6d0;
-    --violet: #a78bfa;
-    --cream: #fff7e8;
-    --muted: #c9c0ec;
-    --ink: #1a1033;
-    --radius: 22px;
-    --nav-h: 60px;
+    --night: #160f33; --night-2: #21184a; --night-3: #2c2160;
+    --pink: #ff4d8d; --yellow: #ffd23f; --cyan: #3ee6d0; --violet: #a78bfa;
+    --cream: #fff7e8; --muted: #c9c0ec; --ink: #1a1033;
+    --radius: 20px; --nav-h: 58px;
+    /* one unit that respects both width and height, so a section fits one screen */
+    --u: min(1vw, 1.6vh);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 8px); }
-  body {
-    font-family: 'Outfit', 'Noto Sans TC', system-ui, sans-serif;
-    background: var(--night); color: var(--cream); line-height: 1.55; overflow-x: hidden;
-  }
-  /* English leads; Chinese follows, quieter */
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Outfit', 'Noto Sans TC', system-ui, sans-serif; background: var(--night); color: var(--cream); line-height: 1.45; overflow-x: hidden; }
   .zh { display: block; font-family: 'Noto Sans TC', 'Outfit', sans-serif; color: var(--muted); font-weight: 500; }
   a { color: inherit; }
 
-  /* ---------- background ---------- */
-  .sky {
-    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  .sky { position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
       radial-gradient(1200px 600px at 85% -10%, rgba(255,77,141,.28), transparent 60%),
       radial-gradient(900px 600px at -10% 20%, rgba(62,230,208,.16), transparent 60%),
-      radial-gradient(900px 700px at 50% 110%, rgba(167,139,250,.25), transparent 60%),
-      var(--night);
-  }
+      radial-gradient(900px 700px at 50% 110%, rgba(167,139,250,.25), transparent 60%), var(--night); }
   .sky svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-  .wrap { width: min(1080px, 100% - 32px); margin: 0 auto; }
-
-  /* ---------- top navigation (frosted glass) ---------- */
-  .topnav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: var(--nav-h);
-    background: rgba(22,15,51,.55);
-    -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
-    border-bottom: 1px solid rgba(255,255,255,.08);
-    transition: background .3s, box-shadow .3s;
-  }
+  /* ---------- nav ---------- */
+  .topnav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: var(--nav-h);
+    background: rgba(22,15,51,.55); -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
+    border-bottom: 1px solid rgba(255,255,255,.08); transition: background .3s, box-shadow .3s; }
   .topnav.scrolled { background: rgba(22,15,51,.82); box-shadow: 0 8px 30px rgba(0,0,0,.25); }
-  .topnav .in { height: 100%; display: flex; align-items: center; gap: 14px; width: min(1180px, 100% - 24px); margin: 0 auto; }
+  .topnav .in { height: 100%; display: flex; align-items: center; gap: 12px; width: min(1180px, 100% - 24px); margin: 0 auto; }
   .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; font-family: 'Bungee', sans-serif; font-size: 1rem; white-space: nowrap; flex: none; }
-  .brand .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, var(--pink), var(--violet)); font-size: 1rem; }
-  .navlinks { display: flex; gap: 4px; margin-left: auto; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .brand .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, var(--pink), var(--violet)); }
+  .navlinks { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; scrollbar-width: none; min-width: 0; }
   .navlinks::-webkit-scrollbar { display: none; }
-  .navlinks a {
-    text-decoration: none; padding: 7px 13px; border-radius: 999px; white-space: nowrap;
-    font-size: .92rem; font-weight: 600; color: var(--muted); transition: color .2s, background .2s;
-    display: flex; flex-direction: column; align-items: center; line-height: 1.15;
-  }
-  .navlinks a small { font-family: 'Noto Sans TC', sans-serif; font-size: .66rem; font-weight: 500; opacity: .75; }
+  .navlinks a { text-decoration: none; padding: 6px 12px; border-radius: 999px; white-space: nowrap; font-size: .9rem; font-weight: 600; color: var(--muted);
+    transition: color .2s, background .2s; display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+  .navlinks a small { font-family: 'Noto Sans TC', sans-serif; font-size: .64rem; font-weight: 500; opacity: .75; }
   .navlinks a:hover { color: var(--cream); background: rgba(255,255,255,.07); }
   .navlinks a.active { color: var(--ink); background: var(--cream); }
-  .navlinks a.active small { opacity: .7; }
-  .navcta {
-    text-decoration: none; white-space: nowrap; font-weight: 800; font-size: .88rem; flex: none;
-    background: var(--pink); color: #fff; padding: 9px 16px; border-radius: 999px; box-shadow: 0 6px 18px rgba(255,77,141,.4);
-  }
+  .navcta { text-decoration: none; white-space: nowrap; font-weight: 800; font-size: .86rem; flex: none; background: var(--pink); color: #fff; padding: 8px 15px; border-radius: 999px; box-shadow: 0 6px 18px rgba(255,77,141,.4); }
   .progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; transform-origin: left; transform: scaleX(0); background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); }
 
-  /* ---------- scenes: Apple-style scroll transitions ---------- */
-  .scene { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: calc(var(--nav-h) + 40px) 0 60px; position: relative; }
-  .scene > .stage { width: min(1080px, 100% - 32px); margin: 0 auto; will-change: transform, opacity; transform-origin: 50% 40%; }
-
-  /* staggered children inside a scene */
-  .rv { opacity: 0; transform: translateY(34px) scale(.98); filter: blur(6px);
-        transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1), filter .9s; transition-delay: calc(var(--i, 0) * 110ms); }
+  /* ---------- scenes: one screen each ---------- */
+  .scene { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: calc(var(--nav-h) + 12px) 0 18px; }
+  .scene > .stage { width: min(1080px, 100% - 32px); margin: 0 auto; will-change: transform, opacity; transform-origin: 50% 45%; }
+  .rv { opacity: 0; transform: translateY(28px) scale(.98); filter: blur(6px);
+        transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1), filter .8s; transition-delay: calc(var(--i, 0) * 100ms); }
   .rv.in { opacity: 1; transform: none; filter: none; }
 
+  .sec-head { text-align: center; margin-bottom: calc(var(--u) * 2.6); }
+  .sec-tag { display: inline-block; font-family: 'Bungee', sans-serif; font-size: .78rem; letter-spacing: .08em; color: var(--ink); background: var(--yellow); padding: 4px 12px; border-radius: 8px; transform: rotate(-2deg); }
+  .sec-tag.rv { transform: rotate(-2deg) translateY(28px); } .sec-tag.rv.in { transform: rotate(-2deg); }
+  .sec-head h2 { margin-top: 10px; font-weight: 900; font-size: clamp(1.7rem, calc(var(--u) * 5), 3rem); line-height: 1.05; letter-spacing: -.01em; }
+  .sec-head .zh { font-size: clamp(1rem, calc(var(--u) * 2.1), 1.25rem); font-weight: 700; margin-top: 6px; }
+
   /* ---------- hero ---------- */
-  .hero { text-align: center; }
-  .hero .stage { transform-origin: 50% 30%; }
-  .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
-    padding: 7px 16px; border-radius: 999px; font-weight: 600; font-size: .95rem;
-  }
-  .eyebrow .zh { display: inline; font-size: .85rem; }
-  .eyebrow .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 4px rgba(62,230,208,.25); animation: blink 1.6s infinite; }
+  .hero .stage { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: center; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; font-weight: 600; font-size: .9rem; }
+  .eyebrow .zh { display: inline; font-size: .8rem; }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 4px rgba(62,230,208,.25); animation: blink 1.6s infinite; }
   @keyframes blink { 50% { opacity: .35; } }
-
-  .title-en {
-    margin-top: 22px; font-family: 'Bungee', 'Outfit', sans-serif; font-weight: 400;
-    font-size: clamp(2.4rem, 9.5vw, 6.2rem); line-height: 1.02; letter-spacing: .01em;
-  }
-  .title-en .a { color: var(--yellow); display: block; }
-  .title-en .b { color: var(--pink); display: block; }
-  .title-zh {
-    margin-top: 14px; font-family: 'Noto Sans TC', sans-serif; font-weight: 900;
-    font-size: clamp(1.25rem, 4vw, 2.1rem); letter-spacing: .08em;
-    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero-sub { margin: 18px auto 0; max-width: 640px; font-size: 1.15rem; }
-  .hero-sub .zh { font-size: 1rem; margin-top: 6px; }
-
-  .hero-art { margin: 26px auto 0; width: min(540px, 100%); }
-  .hero-art svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .title-en { margin-top: calc(var(--u) * 1.8); font-family: 'Bungee', sans-serif; font-weight: 400; font-size: clamp(2.3rem, calc(var(--u) * 7.2), 5rem); line-height: 1; }
+  .title-en .a { color: var(--yellow); display: block; } .title-en .b { color: var(--pink); display: block; }
+  .title-zh { margin-top: 10px; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.2rem, calc(var(--u) * 3), 1.9rem); letter-spacing: .08em;
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero-sub { margin-top: calc(var(--u) * 1.8); font-size: clamp(1rem, calc(var(--u) * 2), 1.2rem); max-width: 520px; }
+  .hero-sub .zh { font-size: .92em; margin-top: 4px; }
+  .hero-art svg { width: 100%; height: auto; max-height: 62vh; display: block; overflow: visible; }
   .float { animation: float 5s ease-in-out infinite; transform-origin: center; }
   .float.d2 { animation-delay: -1.7s; } .float.d3 { animation-delay: -3.2s; }
   @keyframes float { 50% { transform: translateY(-10px) rotate(-1deg); } }
 
-  .scroll-hint { margin-top: 26px; font-size: .85rem; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .scroll-hint i { width: 22px; height: 36px; border: 2px solid rgba(255,255,255,.4); border-radius: 12px; position: relative; }
-  .scroll-hint i::after { content: ''; position: absolute; left: 50%; top: 7px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: var(--cream); animation: wheel 1.6s infinite; }
-  @keyframes wheel { 0% { opacity: 0; transform: translateY(-3px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(10px); } }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: calc(var(--u) * 2.4); }
+  .btn { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; padding: 12px 22px; border-radius: 999px; font-weight: 800; font-size: 1rem; line-height: 1.15; transition: transform .15s, box-shadow .15s; }
+  .btn:active { transform: scale(.97); }
+  .btn small { display: block; font-family: 'Noto Sans TC', sans-serif; font-weight: 600; font-size: .74rem; opacity: .85; }
+  .btn-main { background: var(--pink); color: #fff; box-shadow: 0 10px 28px rgba(255,77,141,.45); }
+  .btn-main:hover { transform: translateY(-2px); }
+  .btn-ghost { background: rgba(255,255,255,.08); color: var(--cream); border: 1.5px solid rgba(255,255,255,.3); }
 
-  /* ---------- ticket ---------- */
-  .ticket {
-    position: relative; margin: 0 auto; width: min(780px, 100%);
-    display: grid; grid-template-columns: repeat(3, 1fr);
+  /* ---------- date ---------- */
+  #when .stage { text-align: center; }
+  .ticket { position: relative; margin: 0 auto; width: min(820px, 100%); display: grid; grid-template-columns: repeat(3, 1fr);
     background: linear-gradient(135deg, #fff7e8, #ffe9c2); color: var(--ink); border-radius: var(--radius);
-    box-shadow: 0 18px 50px rgba(0,0,0,.35), 0 0 0 4px rgba(255,210,63,.35);
-  }
+    box-shadow: 0 18px 50px rgba(0,0,0,.35), 0 0 0 4px rgba(255,210,63,.35); }
   .ticket::before, .ticket::after { content: ''; position: absolute; top: 50%; width: 26px; height: 26px; border-radius: 50%; background: var(--night); transform: translateY(-50%); }
   .ticket::before { left: -13px; } .ticket::after { right: -13px; }
-  .tk { padding: 22px 14px; text-align: center; }
+  .tk { padding: calc(var(--u) * 3) 12px; }
   .tk + .tk { border-left: 2px dashed rgba(26,16,51,.2); }
-  .tk .lab { font-size: .8rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #7a4a00; }
-  .tk .lab span { font-family: 'Noto Sans TC', sans-serif; letter-spacing: .05em; font-weight: 700; }
-  .tk .big { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: clamp(1.3rem, 4vw, 1.8rem); line-height: 1.2; margin-top: 4px; }
+  .tk .ico { font-size: clamp(1.6rem, calc(var(--u) * 4), 2.4rem); line-height: 1; }
+  .tk .big { font-weight: 900; font-size: clamp(1.25rem, calc(var(--u) * 3.6), 2.2rem); line-height: 1.15; margin-top: 6px; }
   .tk .small { font-family: 'Noto Sans TC', sans-serif; font-size: .92rem; color: #4b3a63; font-weight: 700; }
+  #when .cta-row { justify-content: center; }
 
-  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 26px; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
-    padding: 14px 24px; border-radius: 999px; font-weight: 800; font-size: 1.05rem; line-height: 1.15;
-    transition: transform .15s, box-shadow .15s;
-  }
-  .btn:active { transform: scale(.97); }
-  .btn small { display: block; font-family: 'Noto Sans TC', sans-serif; font-weight: 600; font-size: .78rem; opacity: .85; }
-  .btn-main { background: var(--pink); color: #fff; box-shadow: 0 10px 28px rgba(255,77,141,.45); }
-  .btn-main:hover { box-shadow: 0 14px 34px rgba(255,77,141,.6); transform: translateY(-2px); }
-  .btn-ghost { background: rgba(255,255,255,.08); color: var(--cream); border: 1.5px solid rgba(255,255,255,.3); }
-  .btn-ghost:hover { background: rgba(255,255,255,.14); }
-
-  /* ---------- section heads ---------- */
-  .sec-head { text-align: center; margin-bottom: 34px; }
-  .sec-tag { display: inline-block; font-family: 'Bungee', sans-serif; font-size: .85rem; letter-spacing: .08em; color: var(--ink); background: var(--yellow); padding: 5px 14px; border-radius: 8px; transform: rotate(-2deg); }
-  .sec-tag.rv { transform: rotate(-2deg) translateY(34px); }
-  .sec-tag.rv.in { transform: rotate(-2deg); }
-  .sec-head h2 { margin-top: 14px; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.08; letter-spacing: -.01em; }
-  .sec-head .zh { font-size: clamp(1.05rem, 3vw, 1.35rem); font-weight: 700; margin-top: 8px; letter-spacing: 0; }
-
-  /* ---------- word-by-word statement ---------- */
-  .statement { height: 220vh; position: relative; }
+  /* ---------- statement ---------- */
+  .statement { height: 200vh; position: relative; }
   .statement .pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--nav-h) 16px 0; }
-  .statement p.big { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: clamp(2.2rem, 8.5vw, 5.6rem); line-height: 1.08; letter-spacing: -.02em; max-width: 1000px; }
+  .statement p.big { font-weight: 900; font-size: clamp(2.2rem, calc(var(--u) * 8), 5.4rem); line-height: 1.06; letter-spacing: -.02em; max-width: 1000px; }
   .statement .w { opacity: .14; transition: opacity .25s, color .25s; }
-  .statement .w.on { opacity: 1; }
-  .statement .w.hot.on { color: var(--pink); }
-  .statement .w.cool.on { color: var(--cyan); }
-  .statement .zh { margin-top: 22px; font-size: clamp(1.1rem, 3.4vw, 1.6rem); font-weight: 700; opacity: 0; transform: translateY(14px); transition: opacity .5s, transform .5s; }
+  .statement .w.on { opacity: 1; } .statement .w.hot.on { color: var(--pink); } .statement .w.cool.on { color: var(--cyan); }
+  .statement .zh { margin-top: 18px; font-size: clamp(1.1rem, calc(var(--u) * 2.8), 1.6rem); font-weight: 700; opacity: 0; transform: translateY(14px); transition: opacity .5s, transform .5s; }
   .statement .zh.on { opacity: 1; transform: none; }
 
-  /* ---------- what is it ---------- */
-  .intro { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
-  .intro p { font-size: 1.15rem; }
-  .intro p + p { margin-top: 16px; }
-  .intro .zh { font-size: 1rem; margin-top: 4px; }
-  .bubble-quote { margin-top: 22px; background: var(--night-3); border-radius: 18px; padding: 16px 18px; position: relative; border: 1.5px solid rgba(167,139,250,.4); }
-  .bubble-quote::after { content: ''; position: absolute; left: 30px; bottom: -12px; border: 12px solid transparent; border-top-color: var(--night-3); border-bottom: 0; }
-  .bubble-quote b { color: var(--yellow); }
-
-  .secret-card { position: relative; background: #fff; color: var(--ink); border-radius: 26px; padding: 28px 24px 24px; box-shadow: 0 24px 60px rgba(0,0,0,.45); transform: rotate(2deg); border: 6px solid var(--yellow); }
-  .secret-card.rv { transform: rotate(2deg) translateY(34px) scale(.98); }
-  .secret-card.rv.in { transform: rotate(2deg); }
-  .secret-card .corner { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--pink); color: #fff; font-family: 'Bungee', sans-serif; font-size: .8rem; padding: 6px 14px; border-radius: 999px; white-space: nowrap; }
-  .secret-card .emo { font-size: 4rem; text-align: center; line-height: 1.1; }
-  .secret-card .word { font-family: 'Bungee', sans-serif; font-size: clamp(2rem, 6vw, 2.6rem); text-align: center; }
-  .secret-card .word-zh { text-align: center; font-weight: 700; color: #6b5a86; margin-top: -4px; font-family: 'Noto Sans TC', sans-serif; }
-  .secret-card .forb-lab { margin-top: 16px; text-align: center; font-weight: 800; color: #d6235f; font-size: .95rem; }
-  .pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
-  .pill { background: #ffe1ec; color: #b0124d; border: 1.5px solid #ff9ec0; padding: 5px 13px; border-radius: 999px; font-weight: 700; font-size: .95rem; text-decoration: line-through; text-decoration-thickness: 2px; }
-  .secret-card .note { margin-top: 16px; text-align: center; font-size: .92rem; color: #5b4a75; font-weight: 600; }
-  .secret-card .note span { display: block; font-family: 'Noto Sans TC', sans-serif; font-weight: 500; }
+  /* ---------- game ---------- */
+  .intro { display: grid; grid-template-columns: 1fr .8fr; gap: 36px; align-items: center; }
+  .intro .lead { font-size: clamp(1.15rem, calc(var(--u) * 2.6), 1.6rem); font-weight: 700; line-height: 1.3; }
+  .intro .lead .zh { font-size: .72em; margin-top: 6px; }
+  .intro .lead + .lead { margin-top: calc(var(--u) * 2.4); }
+  .hl-pink { color: var(--pink); } .hl-yellow { color: var(--yellow); }
+  .secret-card { position: relative; background: #fff; color: var(--ink); border-radius: 24px; padding: 24px 20px 18px; box-shadow: 0 24px 60px rgba(0,0,0,.45); transform: rotate(2deg); border: 6px solid var(--yellow); text-align: center; }
+  .secret-card.rv { transform: rotate(2deg) translateY(28px); } .secret-card.rv.in { transform: rotate(2deg); }
+  .secret-card .corner { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: var(--pink); color: #fff; font-family: 'Bungee', sans-serif; font-size: .74rem; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+  .secret-card .emo { font-size: clamp(2.4rem, calc(var(--u) * 6), 3.4rem); line-height: 1.1; }
+  .secret-card .word { font-family: 'Bungee', sans-serif; font-size: clamp(1.7rem, calc(var(--u) * 4.4), 2.4rem); }
+  .secret-card .forb-lab { margin-top: 10px; font-weight: 800; color: #d6235f; font-size: .9rem; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+  .pill { background: #ffe1ec; color: #b0124d; border: 1.5px solid #ff9ec0; padding: 3px 11px; border-radius: 999px; font-weight: 700; font-size: .9rem; text-decoration: line-through; text-decoration-thickness: 2px; }
 
   /* ---------- roles ---------- */
-  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .role { background: linear-gradient(180deg, var(--night-3), var(--night-2)); border-radius: var(--radius); padding: 26px 22px; border: 1.5px solid rgba(255,255,255,.1); position: relative; overflow: hidden; }
+  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .role { background: linear-gradient(180deg, var(--night-3), var(--night-2)); border-radius: var(--radius); padding: calc(var(--u) * 2.8) 20px; border: 1.5px solid rgba(255,255,255,.1); position: relative; overflow: hidden; text-align: center; }
   .role::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
-  .role .ic { width: 84px; height: 84px; }
-  .role h3 { margin-top: 12px; font-family: 'Outfit', sans-serif; font-size: 1.55rem; font-weight: 900; color: var(--c); line-height: 1.15; }
-  .role h3 .zh { display: inline; font-size: 1rem; font-weight: 700; margin-left: 8px; color: var(--muted); }
-  .role p { margin-top: 8px; font-size: 1.02rem; }
-  .role p .zh { font-size: .95rem; margin-top: 3px; }
+  .role .ic { width: clamp(56px, calc(var(--u) * 10), 92px); height: auto; }
+  .role h3 { margin-top: 8px; font-size: clamp(1.3rem, calc(var(--u) * 3), 1.7rem); font-weight: 900; color: var(--c); line-height: 1.1; }
+  .role h3 .zh { font-size: .62em; font-weight: 700; margin-top: 2px; }
+  .role p { margin-top: 10px; font-size: 1.02rem; font-weight: 600; }
+  .role p .zh { font-size: .92em; margin-top: 2px; }
 
-  /* ---------- steps ---------- */
-  .steps { display: grid; gap: 16px; }
-  .step { display: grid; grid-template-columns: 76px 1fr 150px; gap: 20px; align-items: center; background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: 18px 22px; }
-  .step .num { width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; font-family: 'Bungee', sans-serif; font-size: 1.8rem; color: var(--ink); background: var(--c); transform: rotate(-4deg); box-shadow: 0 8px 20px rgba(0,0,0,.3); }
-  .step h3 { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.35rem; line-height: 1.2; }
-  .step h3 .zh { font-size: 1rem; font-weight: 700; margin-top: 2px; }
-  .step p { margin-top: 6px; }
-  .step p .zh { font-size: .95rem; margin-top: 2px; }
-  .phone { width: 130px; justify-self: end; background: #0b0820; border-radius: 22px; padding: 10px 8px; border: 3px solid #3a2f73; box-shadow: 0 10px 24px rgba(0,0,0,.4); }
-  .phone .scr { background: #160f33; border-radius: 14px; padding: 10px 8px; text-align: center; border: 2px solid var(--c); min-height: 130px; display: flex; flex-direction: column; gap: 6px; justify-content: center; align-items: center; }
-  .phone .chip { font-size: .62rem; font-weight: 800; color: var(--ink); background: var(--c); border-radius: 999px; padding: 2px 8px; }
-  .phone .t { font-size: .8rem; font-weight: 800; line-height: 1.2; }
-  .phone .pbtn { width: 100%; font-size: .7rem; font-weight: 800; color: var(--ink); background: var(--c); border-radius: 10px; padding: 6px 4px; }
-  .phone .pbtn.red { background: #ef4444; color: #fff; }
-  .phone .pbtn.green { background: #22c55e; }
-  .phone .mini-pills { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
-  .phone .mini-pills span { font-size: .55rem; background: #ffe1ec; color: #b0124d; border-radius: 999px; padding: 1px 5px; font-weight: 700; }
+  /* ---------- steps: one row ---------- */
+  .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .step { background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: calc(var(--u) * 2.4) 14px; text-align: center; position: relative; }
+  .step .num { width: 46px; height: 46px; margin: 0 auto; border-radius: 14px; display: grid; place-items: center; font-family: 'Bungee', sans-serif; font-size: 1.35rem; color: var(--ink); background: var(--c); transform: rotate(-4deg); }
+  .step .e { font-size: clamp(1.9rem, calc(var(--u) * 5), 2.8rem); margin-top: calc(var(--u) * 1.4); line-height: 1; }
+  .step h3 { margin-top: calc(var(--u) * 1.2); font-weight: 900; font-size: 1.12rem; line-height: 1.15; }
+  .step h3 .zh { font-size: .82em; font-weight: 700; margin-top: 2px; }
+  .step p { margin-top: 6px; font-size: .92rem; color: var(--cream); opacity: .9; }
+  .step p .zh { font-size: .95em; margin-top: 1px; }
 
   /* ---------- scoring ---------- */
-  .scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .score { text-align: center; border-radius: var(--radius); padding: 28px 18px; background: var(--bg); color: var(--ink); box-shadow: 0 16px 36px rgba(0,0,0,.3); }
-  .score .pts { font-family: 'Bungee', sans-serif; font-size: 2.7rem; line-height: 1; }
-  .score h3 { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.4rem; margin-top: 12px; }
-  .score h3 .zh { color: rgba(26,16,51,.7); font-size: 1rem; font-weight: 700; }
-  .score p { margin-top: 8px; font-size: 1rem; font-weight: 600; }
-  .score p .zh { color: rgba(26,16,51,.72); font-weight: 500; font-size: .95rem; }
+  .scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .score { text-align: center; border-radius: var(--radius); padding: calc(var(--u) * 3.4) 16px; background: var(--bg); color: var(--ink); box-shadow: 0 16px 36px rgba(0,0,0,.3); }
+  .score .pts { font-family: 'Bungee', sans-serif; font-size: clamp(2rem, calc(var(--u) * 5.6), 3.2rem); line-height: 1; }
+  .score h3 { font-weight: 900; font-size: clamp(1.2rem, calc(var(--u) * 2.6), 1.5rem); margin-top: 10px; }
+  .score h3 .zh { color: rgba(26,16,51,.7); font-size: .72em; font-weight: 700; }
+  .score p { margin-top: 8px; font-weight: 700; }
+  .score p .zh { color: rgba(26,16,51,.72); font-weight: 500; font-size: .92em; }
 
-  /* ---------- checklist ---------- */
-  .checks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .check { background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: 20px; padding: 24px 16px; text-align: center; }
-  .check .e { font-size: 2.4rem; }
-  .check b { display: block; margin-top: 6px; font-size: 1.12rem; font-weight: 800; }
-  .check .zh { font-size: .92rem; margin-top: 2px; }
-
-  /* ---------- final ---------- */
-  .final { text-align: center; border-radius: 32px; padding: 52px 22px; background: linear-gradient(135deg, #ff4d8d, #a855f7 55%, #3ee6d0); box-shadow: 0 24px 60px rgba(255,77,141,.3); }
-  .final h2 { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: clamp(1.8rem, 6.5vw, 3.4rem); line-height: 1.1; text-shadow: 0 4px 0 rgba(0,0,0,.15); }
-  .final .zh-big { font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.2rem, 4vw, 1.8rem); margin-top: 10px; }
-  .final .when { margin-top: 16px; font-weight: 800; font-size: 1.15rem; }
-  .final .when .zh { color: #fff; opacity: .9; font-size: 1rem; }
+  /* ---------- join ---------- */
+  .final { text-align: center; border-radius: 30px; padding: calc(var(--u) * 4.4) 22px; background: linear-gradient(135deg, #ff4d8d, #a855f7 55%, #3ee6d0); box-shadow: 0 24px 60px rgba(255,77,141,.3); }
+  .final h2 { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: clamp(1.7rem, calc(var(--u) * 5.4), 3.2rem); line-height: 1.08; text-shadow: 0 4px 0 rgba(0,0,0,.15); }
+  .final .zh-big { font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.15rem, calc(var(--u) * 3), 1.7rem); margin-top: 8px; }
+  .final .when { margin-top: 12px; font-weight: 800; font-size: 1.1rem; }
+  .final .cta-row { justify-content: center; margin-top: calc(var(--u) * 2.4); }
   .final .btn-main { background: var(--yellow); color: var(--ink); box-shadow: 0 10px 28px rgba(0,0,0,.25); }
-  .final .note { margin-top: 18px; font-weight: 700; }
+  .final .note { margin-top: 12px; font-weight: 700; font-size: .95rem; }
   .final .note .zh { color: #fff; opacity: .9; font-weight: 500; }
+  .needs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: calc(var(--u) * 2.6); }
+  .need { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: .95rem; }
+  .need .zh { display: inline; font-size: .85em; }
+  .needs-lab { text-align: center; margin-top: calc(var(--u) * 3); font-family: 'Bungee', sans-serif; font-size: .8rem; letter-spacing: .08em; color: var(--yellow); }
 
-  footer { text-align: center; padding: 28px 0 44px; color: var(--muted); font-size: .9rem; }
+  footer { text-align: center; padding: 18px 0 34px; color: var(--muted); font-size: .85rem; }
 
-  @media (max-width: 860px) {
-    .intro { grid-template-columns: 1fr; }
-    .secret-card { max-width: 420px; margin: 10px auto 0; width: 100%; }
-    .roles, .scores { grid-template-columns: 1fr; }
-    .checks { grid-template-columns: repeat(2, 1fr); }
-    .step { grid-template-columns: 60px 1fr; }
-    .step .phone { grid-column: 1 / -1; justify-self: center; width: 170px; }
-    .step .num { width: 54px; height: 54px; font-size: 1.5rem; }
-    .navlinks a small { display: none; }
-    .brand .txt { display: none; }
+  /* ---------- tablet / phone ---------- */
+  @media (max-width: 760px) {
+    .steps { grid-template-columns: repeat(3, 1fr); }
+    .steps .step:nth-child(4) { grid-column: 1 / span 1; }
   }
-  @media (max-width: 520px) {
-    :root { --nav-h: 54px; }
+  @media (max-width: 860px) {
+    :root { --u: 1.2vw; }
+    .hero .stage { grid-template-columns: 1fr; text-align: center; gap: 10px; }
+    .hero .cta-row { justify-content: center; }
+    .hero-sub { margin-left: auto; margin-right: auto; }
+    .hero-art { width: min(440px, 100%); margin: 0 auto; }
+    .intro { grid-template-columns: 1fr; gap: 26px; text-align: center; }
+    .secret-card { max-width: 380px; margin: 0 auto; width: 100%; }
+    .navlinks a small, .brand .txt { display: none; }
+  }
+  @media (max-width: 620px) {
+    :root { --nav-h: 54px; --u: 1.9vw; }
     .navlinks a { padding: 6px 10px; font-size: .84rem; }
     .navcta { display: none; }
+    .scene { min-height: auto; padding: calc(var(--nav-h) + 26px) 0 30px; }
+    .hero { min-height: 100svh; }
+    .hero-art { width: min(300px, 80%); }
+    .title-en { margin-top: 12px; }
+    .roles, .scores { grid-template-columns: 1fr; gap: 12px; }
+    .role { display: grid; grid-template-columns: 64px 1fr; gap: 14px; text-align: left; align-items: center; padding: 16px; }
+    .role .ic { width: 60px; grid-row: span 2; }
+    .role h3 { margin-top: 0; } .role p { margin-top: 0; }
+    .steps { grid-template-columns: 1fr; gap: 10px; }
+    .steps .step:nth-child(4) { grid-column: auto; }
+    .step { display: grid; grid-template-columns: 40px 34px 1fr; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; }
+    .step .num { width: 38px; height: 38px; font-size: 1.1rem; }
+    .step p { margin-top: 2px; }
+    .step .e { margin: 0; font-size: 1.7rem; }
+    .step h3 { margin: 0; }
+    .score { display: grid; grid-template-columns: 110px 1fr; align-items: center; text-align: left; gap: 12px; padding: 16px; }
+    .score .pts { font-size: 1.8rem; text-align: center; }
+    .score h3 { margin: 0; }
     .ticket { grid-template-columns: 1fr; }
+    .tk { display: grid; grid-template-columns: 44px 1fr; align-items: center; text-align: left; gap: 10px; padding: 14px 18px; }
+    .tk .ico { grid-row: span 2; text-align: center; }
+    .tk .big { margin: 0; }
     .tk + .tk { border-left: 0; border-top: 2px dashed rgba(26,16,51,.2); }
     .ticket::before, .ticket::after { top: 33.3%; }
     .btn { width: 100%; justify-content: center; }
-    .scene { min-height: auto; padding: calc(var(--nav-h) + 34px) 0 46px; }
-    .hero { min-height: 100svh; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .float, .eyebrow .dot, .scroll-hint i::after { animation: none; }
+    .float, .eyebrow .dot { animation: none; }
     .rv, .rv.in { opacity: 1; transform: none; filter: none; transition: none; }
-    .secret-card.rv { transform: rotate(2deg); }
-    .sec-tag.rv { transform: rotate(-2deg); }
-    .statement { height: auto; }
-    .statement .pin { position: static; height: auto; padding: 80px 16px; }
+    .secret-card.rv { transform: rotate(2deg); } .sec-tag.rv { transform: rotate(-2deg); }
+    .statement { height: auto; } .statement .pin { position: static; height: auto; padding: 80px 16px; }
     .statement .w, .statement .zh { opacity: 1; transform: none; }
   }
 </style>
@@ -300,27 +242,22 @@
 <body>
 
 <div class="sky" aria-hidden="true">
-  <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
-    <g fill="#fff">
-      <circle cx="80" cy="120" r="1.6" opacity=".7"/><circle cx="210" cy="60" r="1.2" opacity=".5"/>
-      <circle cx="330" cy="180" r="1.8" opacity=".6"/><circle cx="470" cy="90" r="1.1" opacity=".5"/>
-      <circle cx="620" cy="160" r="1.5" opacity=".7"/><circle cx="760" cy="70" r="1.3" opacity=".6"/>
-      <circle cx="900" cy="200" r="1.7" opacity=".6"/><circle cx="140" cy="420" r="1.2" opacity=".4"/>
-      <circle cx="860" cy="480" r="1.4" opacity=".5"/><circle cx="60" cy="760" r="1.6" opacity=".5"/>
-      <circle cx="940" cy="820" r="1.2" opacity=".5"/><circle cx="520" cy="940" r="1.5" opacity=".4"/>
-    </g>
-  </svg>
+  <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><g fill="#fff">
+    <circle cx="80" cy="120" r="1.6" opacity=".7"/><circle cx="210" cy="60" r="1.2" opacity=".5"/><circle cx="330" cy="180" r="1.8" opacity=".6"/>
+    <circle cx="470" cy="90" r="1.1" opacity=".5"/><circle cx="620" cy="160" r="1.5" opacity=".7"/><circle cx="760" cy="70" r="1.3" opacity=".6"/>
+    <circle cx="900" cy="200" r="1.7" opacity=".6"/><circle cx="140" cy="420" r="1.2" opacity=".4"/><circle cx="860" cy="480" r="1.4" opacity=".5"/>
+    <circle cx="60" cy="760" r="1.6" opacity=".5"/><circle cx="940" cy="820" r="1.2" opacity=".5"/><circle cx="520" cy="940" r="1.5" opacity=".4"/>
+  </g></svg>
 </div>
 
-<!-- ================= TOP NAV ================= -->
 <nav class="topnav" id="topnav" aria-label="Page sections 頁面導覽">
   <div class="in">
     <a class="brand" href="#top"><span class="logo">🙊</span><span class="txt">Game Night</span></a>
     <div class="navlinks" id="navlinks">
       <a href="#when">Date<small>日期</small></a>
-      <a href="#game">The Game<small>遊戲介紹</small></a>
+      <a href="#game">The Game<small>遊戲</small></a>
       <a href="#roles">Roles<small>角色</small></a>
-      <a href="#how">How to Play<small>怎麼玩</small></a>
+      <a href="#how">How to Play<small>玩法</small></a>
       <a href="#score">Scoring<small>計分</small></a>
       <a href="#join">Join<small>參加</small></a>
     </div>
@@ -329,20 +266,21 @@
   <div class="progress" id="progress"></div>
 </nav>
 
-<!-- ================= HERO ================= -->
+<!-- HERO -->
 <header class="scene hero" id="top">
-  <div class="stage wrap">
-    <span class="eyebrow rv in"><span class="dot"></span>Online voice party · <span class="zh">線上語音派對</span></span>
-
-    <h1 class="title-en rv in" style="--i:1"><span class="a">Random Event!</span><span class="b">Game Night!</span></h1>
-    <div class="title-zh rv in" style="--i:2">隨機事件！遊戲之夜！</div>
-
-    <p class="hero-sub rv in" style="--i:3">
-      Thursday night, Nov 12 — join us for <b>🙊 Say It Without Saying It</b>. Describe the secret word, but never say the forbidden ones!
-      <span class="zh">11/12 週四晚上，一起來玩——說出祕密單字，但絕對不能說出禁字！</span>
-    </p>
-
-    <div class="hero-art rv in" style="--i:4" aria-hidden="true">
+  <div class="stage">
+    <div>
+      <span class="eyebrow rv in"><span class="dot"></span>Online voice party · <span class="zh">線上語音派對</span></span>
+      <h1 class="title-en rv in" style="--i:1"><span class="a">Random Event!</span><span class="b">Game Night!</span></h1>
+      <div class="title-zh rv in" style="--i:2">隨機事件！遊戲之夜！</div>
+      <p class="hero-sub rv in" style="--i:3">Thu, Nov 12 · 9 PM — play <b>Say It Without Saying It</b> together!
+        <span class="zh">11/12（四）晚上 9 點，一起玩「說出來但不能說」！</span></p>
+      <div class="cta-row rv in" style="--i:4">
+        <a class="btn btn-main" href="#join">🎉 <span>I'm in!<small>我要參加</small></span></a>
+        <a class="btn btn-ghost" href="#game">👇 <span>What is it?<small>這是什麼？</small></span></a>
+      </div>
+    </div>
+    <div class="hero-art rv in" style="--i:3" aria-hidden="true">
       <svg viewBox="0 0 560 330">
         <defs>
           <linearGradient id="cardG" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#ffe9c2"/></linearGradient>
@@ -365,20 +303,18 @@
           <g fill="#ffd23f"><rect x="88" y="150" width="8" height="8" rx="1.5"/><rect x="100" y="150" width="8" height="8" rx="1.5"/><rect x="112" y="150" width="8" height="8" rx="1.5"/><rect x="124" y="150" width="8" height="8" rx="1.5"/><rect x="136" y="150" width="8" height="8" rx="1.5"/><rect x="148" y="150" width="8" height="8" rx="1.5"/></g>
           <circle cx="172" cy="154" r="7" fill="#ffd23f"/><rect x="168" y="158" width="8" height="18" rx="3" fill="#ffd23f"/>
         </g>
-        <g class="float d2">
-          <g transform="rotate(6 330 170)">
-            <rect x="250" y="60" width="160" height="220" rx="20" fill="url(#cardG)" stroke="#ffd23f" stroke-width="6"/>
-            <text x="330" y="140" text-anchor="middle" font-size="58">🍍</text>
-            <text x="330" y="182" text-anchor="middle" font-family="Bungee, sans-serif" font-size="22" fill="#1a1033">PINEAPPLE</text>
-            <g font-family="Outfit, sans-serif" font-weight="700" font-size="12" fill="#b0124d">
-              <rect x="268" y="200" width="56" height="20" rx="10" fill="#ffe1ec"/><text x="296" y="214" text-anchor="middle">Yellow</text>
-              <rect x="332" y="200" width="60" height="20" rx="10" fill="#ffe1ec"/><text x="362" y="214" text-anchor="middle">Spiky</text>
-              <rect x="276" y="228" width="50" height="20" rx="10" fill="#ffe1ec"/><text x="301" y="242" text-anchor="middle">Sweet</text>
-              <rect x="334" y="228" width="50" height="20" rx="10" fill="#ffe1ec"/><text x="359" y="242" text-anchor="middle">Juice</text>
-            </g>
-            <line x1="262" y1="252" x2="400" y2="196" stroke="#ff4d8d" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+        <g class="float d2"><g transform="rotate(6 330 170)">
+          <rect x="250" y="60" width="160" height="220" rx="20" fill="url(#cardG)" stroke="#ffd23f" stroke-width="6"/>
+          <text x="330" y="140" text-anchor="middle" font-size="58">🍍</text>
+          <text x="330" y="182" text-anchor="middle" font-family="Bungee, sans-serif" font-size="22" fill="#1a1033">PINEAPPLE</text>
+          <g font-family="Outfit, sans-serif" font-weight="700" font-size="12" fill="#b0124d">
+            <rect x="268" y="200" width="56" height="20" rx="10" fill="#ffe1ec"/><text x="296" y="214" text-anchor="middle">Yellow</text>
+            <rect x="332" y="200" width="60" height="20" rx="10" fill="#ffe1ec"/><text x="362" y="214" text-anchor="middle">Spiky</text>
+            <rect x="276" y="228" width="50" height="20" rx="10" fill="#ffe1ec"/><text x="301" y="242" text-anchor="middle">Sweet</text>
+            <rect x="334" y="228" width="50" height="20" rx="10" fill="#ffe1ec"/><text x="359" y="242" text-anchor="middle">Juice</text>
           </g>
-        </g>
+          <line x1="262" y1="252" x2="400" y2="196" stroke="#ff4d8d" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+        </g></g>
         <g class="float d3">
           <circle cx="490" cy="96" r="34" fill="#ffd23f"/><circle cx="504" cy="86" r="32" fill="#160f33"/>
           <ellipse cx="482" cy="250" rx="58" ry="16" fill="#0b0820" opacity=".5"/>
@@ -390,104 +326,88 @@
         </g>
       </svg>
     </div>
-
-    <div class="scroll-hint rv in" style="--i:5"><i></i>Scroll · 往下滑</div>
   </div>
 </header>
 
 <main>
 
-<!-- ================= WHEN (ticket) ================= -->
+<!-- DATE -->
 <section class="scene" id="when">
-  <div class="stage wrap">
+  <div class="stage">
     <div class="sec-head">
       <span class="sec-tag rv">SAVE THE DATE</span>
-      <h2 class="rv" style="--i:1">One night. One word. No slips.<span class="zh">一個晚上、一個單字、一個都不能說溜嘴。</span></h2>
+      <h2 class="rv" style="--i:1">One night. One word. No slips.<span class="zh">一個晚上、一個單字、不能說溜嘴</span></h2>
     </div>
     <div class="ticket rv" style="--i:2" role="group" aria-label="Event details 活動資訊">
-      <div class="tk"><div class="lab">Date · <span>日期</span></div><div class="big">Thu, Nov 12</div><div class="small">11/12（四）</div></div>
-      <div class="tk"><div class="lab">Time · <span>時間</span></div><div class="big">9:00 PM</div><div class="small">晚上 9:00（台灣時間 GMT+8）</div></div>
-      <div class="tk"><div class="lab">Where · <span>地點</span></div><div class="big">Online · voice</div><div class="small">線上語音</div></div>
+      <div class="tk"><div class="ico">🗓️</div><div><div class="big">Thu, Nov 12</div><div class="small">11/12（四）</div></div></div>
+      <div class="tk"><div class="ico">🕘</div><div><div class="big">9:00 PM</div><div class="small">晚上 9 點（GMT+8）</div></div></div>
+      <div class="tk"><div class="ico">🎧</div><div><div class="big">Online · Voice</div><div class="small">線上語音</div></div></div>
     </div>
     <div class="cta-row rv" style="--i:3">
-      <a class="btn btn-main" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Random+Event!+Game+Night!+%E9%9A%A8%E6%A9%9F%E4%BA%8B%E4%BB%B6%EF%BC%81%E9%81%8A%E6%88%B2%E4%B9%8B%E5%A4%9C%EF%BC%81&amp;dates=20261112T130000Z/20261112T150000Z&amp;details=Say+It+Without+Saying+It+%E2%80%94+online+voice+party+game&amp;location=Online" target="_blank" rel="noopener">
-        📅 <span>Add to calendar<small>加到行事曆</small></span>
-      </a>
-      <a class="btn btn-ghost" href="#how">👇 <span>How to play<small>看怎麼玩</small></span></a>
+      <a class="btn btn-main" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Random+Event!+Game+Night!+%E9%9A%A8%E6%A9%9F%E4%BA%8B%E4%BB%B6%EF%BC%81%E9%81%8A%E6%88%B2%E4%B9%8B%E5%A4%9C%EF%BC%81&amp;dates=20261112T130000Z/20261112T150000Z&amp;details=Say+It+Without+Saying+It+%E2%80%94+online+voice+party+game&amp;location=Online" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
     </div>
   </div>
 </section>
 
-<!-- ================= STATEMENT (words light up while scrolling) ================= -->
+<!-- STATEMENT -->
 <section class="statement" id="statement" aria-label="Describe it. Don't say it. Make them guess.">
-  <div class="pin">
-    <div>
-      <p class="big" id="statement-text"><span class="w">Describe</span> <span class="w">it.</span> <span class="w hot">Don't</span> <span class="w hot">say</span> <span class="w hot">it.</span> <span class="w cool">Make</span> <span class="w cool">them</span> <span class="w cool">guess.</span></p>
-      <p class="zh" id="statement-zh">描述它，但別說出它——讓大家猜出來！</p>
-    </div>
-  </div>
+  <div class="pin"><div>
+    <p class="big" id="statement-text"><span class="w">Describe</span> <span class="w">it.</span> <span class="w hot">Don't</span> <span class="w hot">say</span> <span class="w hot">it.</span> <span class="w cool">Make</span> <span class="w cool">them</span> <span class="w cool">guess.</span></p>
+    <p class="zh" id="statement-zh">描述它，但別說出它——讓大家猜！</p>
+  </div></div>
 </section>
 
-<!-- ================= THE GAME ================= -->
+<!-- GAME -->
 <section class="scene" id="game">
-  <div class="stage wrap">
+  <div class="stage">
     <div class="sec-head">
       <span class="sec-tag rv">THE GAME</span>
       <h2 class="rv" style="--i:1">What's the game?<span class="zh">這是什麼遊戲？</span></h2>
     </div>
     <div class="intro">
       <div>
-        <p class="rv" style="--i:2">One player gets a <b>secret word card</b> and describes it in English so others can guess — but every <b style="color:var(--pink)">forbidden word</b> on the card is off-limits!
-          <span class="zh">一個人拿到一張祕密單字卡，用英文讓大家猜出這個字——但卡片上的禁字一個都不能說！</span></p>
-        <p class="rv" style="--i:3">No camera, no app download — just open your own private link on your phone. Simple English is all you need, and the struggle is half the fun. 😂
-          <span class="zh">不用開鏡頭、不用下載 App，用自己的手機打開專屬連結就能玩。英文不用很好，越卡越好笑！</span></p>
-        <div class="bubble-quote rv" style="--i:4">
-          "It's a fruit… hard on the outside… it wears a <b>crown</b>— oops, can't say crown!"
-          <span class="zh">「它是一種水果……外面硬硬的……頭上戴著一頂皇冠——啊！不能說皇冠！」</span>
-        </div>
+        <p class="lead rv" style="--i:2">Describe the secret word in English — but <span class="hl-pink">never say the forbidden words</span>.
+          <span class="zh">用英文描述祕密單字，但不能說出卡上的禁字。</span></p>
+        <p class="lead rv" style="--i:3">No camera. No app. <span class="hl-yellow">Just your phone</span> and simple English.
+          <span class="zh">不用鏡頭、不用 App，一支手機加簡單英文就能玩。</span></p>
       </div>
       <div class="secret-card rv" style="--i:3" aria-label="Sample secret card 祕密卡片範例">
         <span class="corner">SECRET CARD · 祕密卡片</span>
         <div class="emo">🍍</div>
         <div class="word">Pineapple</div>
-        <div class="word-zh">鳳梨</div>
-        <div class="forb-lab">🚫 Forbidden words · 禁字</div>
+        <div class="forb-lab">🚫 Don't say · 禁字</div>
         <div class="pills"><span class="pill">Spiky</span><span class="pill">Yellow</span><span class="pill">Tropical</span><span class="pill">Sweet</span><span class="pill">Crown</span><span class="pill">Juice</span></div>
-        <div class="note">Only the clue giver and the referee can see this card<span>只有描述者和裁判看得到這張卡</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= ROLES ================= -->
+<!-- ROLES -->
 <section class="scene" id="roles">
-  <div class="stage wrap">
+  <div class="stage">
     <div class="sec-head">
       <span class="sec-tag rv">ROLES</span>
-      <h2 class="rv" style="--i:1">Three roles every round<span class="zh">每一輪三種角色</span></h2>
+      <h2 class="rv" style="--i:1">Three roles every round<span class="zh">每輪三種角色</span></h2>
     </div>
     <div class="roles">
       <div class="role rv" style="--c: var(--cyan); --i:2">
         <svg class="ic" viewBox="0 0 84 84" aria-hidden="true">
-          <circle cx="42" cy="42" r="40" fill="#3ee6d0" opacity=".16"/>
-          <rect x="32" y="14" width="20" height="34" rx="10" fill="#3ee6d0"/>
+          <circle cx="42" cy="42" r="40" fill="#3ee6d0" opacity=".16"/><rect x="32" y="14" width="20" height="34" rx="10" fill="#3ee6d0"/>
           <g stroke="#160f33" stroke-width="2" opacity=".5"><line x1="35" y1="24" x2="49" y2="24"/><line x1="35" y1="30" x2="49" y2="30"/><line x1="35" y1="36" x2="49" y2="36"/></g>
           <path d="M24 42 a18 18 0 0 0 36 0" fill="none" stroke="#3ee6d0" stroke-width="4" stroke-linecap="round"/>
-          <line x1="42" y1="60" x2="42" y2="70" stroke="#3ee6d0" stroke-width="4" stroke-linecap="round"/>
-          <line x1="32" y1="70" x2="52" y2="70" stroke="#3ee6d0" stroke-width="4" stroke-linecap="round"/>
+          <line x1="42" y1="60" x2="42" y2="70" stroke="#3ee6d0" stroke-width="4" stroke-linecap="round"/><line x1="32" y1="70" x2="52" y2="70" stroke="#3ee6d0" stroke-width="4" stroke-linecap="round"/>
         </svg>
         <h3>Clue giver<span class="zh">描述者</span></h3>
-        <p>Sees the secret word and describes it in English — avoiding every forbidden word.<span class="zh">看著祕密單字，用英文描述它，避開所有禁字。</span></p>
+        <p>Describes the word.<span class="zh">負責描述單字</span></p>
       </div>
       <div class="role rv" style="--c: var(--yellow); --i:3">
         <svg class="ic" viewBox="0 0 84 84" aria-hidden="true">
-          <circle cx="42" cy="42" r="40" fill="#ffd23f" opacity=".16"/>
-          <path d="M10 42 C22 22 62 22 74 42 C62 62 22 62 10 42z" fill="#ffd23f"/>
+          <circle cx="42" cy="42" r="40" fill="#ffd23f" opacity=".16"/><path d="M10 42 C22 22 62 22 74 42 C62 62 22 62 10 42z" fill="#ffd23f"/>
           <circle cx="42" cy="42" r="12" fill="#160f33"/><circle cx="46" cy="38" r="4" fill="#fff"/>
           <path d="M60 14 l4 -8 M68 20 l8 -4" stroke="#ff4d8d" stroke-width="4" stroke-linecap="round"/>
         </svg>
         <h3>Referee<span class="zh">裁判</span></h3>
-        <p>Also sees the forbidden words. The moment the clue giver says one, hit <b>🚨 Taboo!</b><span class="zh">也看得到禁字。描述者一說出禁字，馬上按 Taboo! 抓包！</span></p>
+        <p>Hears a forbidden word? <b>🚨 Taboo!</b><span class="zh">聽到禁字就抓包</span></p>
       </div>
       <div class="role rv" style="--c: var(--pink); --i:4">
         <svg class="ic" viewBox="0 0 84 84" aria-hidden="true">
@@ -497,105 +417,70 @@
           <path d="M22 18 l-6 -8 M34 12 v-8 M46 14 l4 -8" stroke="#ffd23f" stroke-width="4" stroke-linecap="round"/>
         </svg>
         <h3>Guessers<span class="zh">猜題者</span></h3>
-        <p>Can't see the word — just listen. Got it? Hit <b>🙋 Buzz in</b> and shout your answer!<span class="zh">看不到題目，只靠耳朵聽。想到答案就按搶答，大聲說出來！</span></p>
+        <p>Listen, buzz in, guess!<span class="zh">聽描述、搶答猜字</span></p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= HOW ================= -->
+<!-- HOW -->
 <section class="scene" id="how">
-  <div class="stage wrap">
+  <div class="stage">
     <div class="sec-head">
       <span class="sec-tag rv">HOW TO PLAY</span>
-      <h2 class="rv" style="--i:1">How to play — 5 steps<span class="zh">怎麼玩？5 個步驟</span></h2>
+      <h2 class="rv" style="--i:1">Five easy steps<span class="zh">五個簡單步驟</span></h2>
     </div>
     <div class="steps">
-      <div class="step rv" style="--c: var(--cyan); --i:2">
-        <div class="num">1</div>
-        <div><h3>Open your private link<span class="zh">打開你的專屬連結</span></h3>
-          <p>You'll get a personal link before we start. Open it on your phone and keep it open.<span class="zh">活動前會傳給你一個連結，用手機打開、整場留著就好。</span></p></div>
-        <div class="phone" aria-hidden="true"><div class="scr"><span class="chip">YOU</span><div class="t">🎴 Your Secret Card</div><div class="t" style="font-weight:600;color:var(--muted)">⏳ Waiting…</div></div></div>
-      </div>
-      <div class="step rv" style="--c: var(--yellow); --i:3">
-        <div class="num">2</div>
-        <div><h3>Roles are dealt at random<span class="zh">系統隨機分配角色</span></h3>
-          <p>Every round has a new clue giver and referee — everyone gets a turn.<span class="zh">每一輪換人當描述者和裁判，大家輪流，很公平。</span></p></div>
-        <div class="phone" aria-hidden="true"><div class="scr"><span class="chip">REFEREE</span><div class="t">👀 You're the referee</div><div class="mini-pills"><span>Spiky</span><span>Crown</span><span>Sweet</span></div></div></div>
-      </div>
-      <div class="step rv" style="--c: var(--pink); --i:4">
-        <div class="num">3</div>
-        <div><h3>The clue giver describes<span class="zh">描述者開始形容</span></h3>
-          <p>Tap "Show my word" and the timer starts. Describe it in English — no forbidden words, and never the word itself.<span class="zh">按下「看題目」計時開始！用英文描述，不能說禁字，也不能說單字本身。</span></p></div>
-        <div class="phone" aria-hidden="true"><div class="scr"><span class="chip">CLUE GIVER</span><div class="t">🍍 PINEAPPLE</div><div class="mini-pills"><span>Spiky</span><span>Yellow</span><span>Crown</span></div></div></div>
-      </div>
-      <div class="step rv" style="--c: #22c55e; --i:5">
-        <div class="num">4</div>
-        <div><h3>Buzz in and guess!<span class="zh">想到就搶答！</span></h3>
-          <p>Hit the buzzer and say your answer out loud. The clue giver decides if it's right — a wrong guess keeps the round going.<span class="zh">按下搶答鈕、大聲說出答案。描述者判斷對不對，猜錯就繼續。</span></p></div>
-        <div class="phone" aria-hidden="true"><div class="scr"><span class="chip">GUESSER</span><div class="pbtn green">🙋 Buzz in!</div><div class="t" style="font-size:.7rem;color:var(--muted)">⏱️ 0:47</div></div></div>
-      </div>
-      <div class="step rv" style="--c: var(--violet); --i:6">
-        <div class="num">5</div>
-        <div><h3>Catch a taboo, next round<span class="zh">抓禁字、換下一位</span></h3>
-          <p>The referee calls Taboo! on a slip. Correct answer or time's up — the next player takes over automatically.<span class="zh">裁判抓到禁字就按 Taboo!；答對或時間到，自動換下一個人。</span></p></div>
-        <div class="phone" aria-hidden="true"><div class="scr"><span class="chip">REFEREE</span><div class="pbtn red">🚨 Taboo!</div><div class="t" style="font-size:.7rem">They said “Crown”!</div></div></div>
-      </div>
+      <div class="step rv" style="--c: var(--cyan); --i:2"><div class="num">1</div><div class="e">📱</div>
+        <div><h3>Open your link<span class="zh">打開專屬連結</span></h3><p>On your phone<span class="zh">用手機打開</span></p></div></div>
+      <div class="step rv" style="--c: var(--yellow); --i:3"><div class="num">2</div><div class="e">🎲</div>
+        <div><h3>Get a role<span class="zh">抽到角色</span></h3><p>New roles each round<span class="zh">每輪重新分配</span></p></div></div>
+      <div class="step rv" style="--c: var(--pink); --i:4"><div class="num">3</div><div class="e">🗣️</div>
+        <div><h3>Describe<span class="zh">開始描述</span></h3><p>Beat the timer<span class="zh">在時間內描述</span></p></div></div>
+      <div class="step rv" style="--c: #22c55e; --i:5"><div class="num">4</div><div class="e">🙋</div>
+        <div><h3>Buzz in<span class="zh">搶答</span></h3><p>Shout your guess<span class="zh">大聲說出答案</span></p></div></div>
+      <div class="step rv" style="--c: var(--violet); --i:6"><div class="num">5</div><div class="e">🔁</div>
+        <div><h3>Next round<span class="zh">換下一位</span></h3><p>Everyone gets a turn<span class="zh">大家輪流上場</span></p></div></div>
     </div>
   </div>
 </section>
 
-<!-- ================= SCORING ================= -->
+<!-- SCORING -->
 <section class="scene" id="score">
-  <div class="stage wrap">
+  <div class="stage">
     <div class="sec-head">
       <span class="sec-tag rv">SCORING</span>
-      <h2 class="rv" style="--i:1">How to score<span class="zh">怎麼得分？</span></h2>
+      <h2 class="rv" style="--i:1">How to score<span class="zh">怎麼得分</span></h2>
     </div>
     <div class="scores">
-      <div class="score rv" style="--bg: var(--cyan); --i:2">
-        <div class="pts">+1 +1</div>
-        <h3>Correct guess<span class="zh">猜對了！</span></h3>
-        <p>The guesser and the clue giver both get 1 point<span class="zh">猜對的人和描述者各得 1 分</span></p>
-      </div>
-      <div class="score rv" style="--bg: var(--yellow); --i:3">
-        <div class="pts">+2 / −1</div>
-        <h3>Taboo caught<span class="zh">抓到禁字！</span></h3>
-        <p>Referee +2, the clue giver who slipped −1<span class="zh">裁判 +2，說了禁字的描述者 −1</span></p>
-      </div>
-      <div class="score rv" style="--bg: var(--pink); --i:4">
-        <div class="pts">×2</div>
-        <h3>Catch-up bonus<span class="zh">落後加分</span></h3>
-        <p>Falling behind? Your points double — anyone can come back!<span class="zh">分數落後的人，這輪得分加倍，隨時能逆轉！</span></p>
-      </div>
-    </div>
-
-    <div class="sec-head" style="margin-top:64px">
-      <span class="sec-tag rv">BRING THIS</span>
-      <h2 class="rv" style="--i:1">All you need<span class="zh">你只需要</span></h2>
-    </div>
-    <div class="checks">
-      <div class="check rv" style="--i:2"><div class="e">📱</div><b>Your phone</b><span class="zh">一支手機</span></div>
-      <div class="check rv" style="--i:3"><div class="e">🎧</div><b>Voice chat &amp; a mic</b><span class="zh">能說話的語音</span></div>
-      <div class="check rv" style="--i:4"><div class="e">🙈</div><b>No camera needed</b><span class="zh">不用開鏡頭</span></div>
-      <div class="check rv" style="--i:5"><div class="e">😆</div><b>A brave, playful mood</b><span class="zh">敢開口的心</span></div>
+      <div class="score rv" style="--bg: var(--cyan); --i:2"><div class="pts">+1 +1</div>
+        <div><h3>Correct!<span class="zh">猜對了</span></h3><p>Guesser &amp; clue giver<span class="zh">猜的人與描述者各 +1</span></p></div></div>
+      <div class="score rv" style="--bg: var(--yellow); --i:3"><div class="pts">+2 −1</div>
+        <div><h3>Taboo!<span class="zh">抓到禁字</span></h3><p>Referee +2, clue giver −1<span class="zh">裁判 +2、描述者 −1</span></p></div></div>
+      <div class="score rv" style="--bg: var(--pink); --i:4"><div class="pts">×2</div>
+        <div><h3>Comeback<span class="zh">落後加分</span></h3><p>Behind? Points double<span class="zh">落後時得分加倍</span></p></div></div>
     </div>
   </div>
 </section>
 
-<!-- ================= JOIN ================= -->
+<!-- JOIN -->
 <section class="scene" id="join">
-  <div class="stage wrap">
+  <div class="stage">
     <div class="final rv">
-      <h2>See you Thursday night!</h2>
+      <h2>See you Thursday!</h2>
       <div class="zh-big">週四晚上，不見不散！</div>
-      <div class="when">🗓️ Thu, Nov 12 · 9:00 PM (GMT+8)<span class="zh">11/12（四）晚上 9:00</span></div>
+      <div class="when">🗓️ Thu, Nov 12 · 9 PM <span style="opacity:.85">· 11/12（四）晚上 9 點</span></div>
       <div class="cta-row">
-        <a class="btn btn-main" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Random+Event!+Game+Night!+%E9%9A%A8%E6%A9%9F%E4%BA%8B%E4%BB%B6%EF%BC%81%E9%81%8A%E6%88%B2%E4%B9%8B%E5%A4%9C%EF%BC%81&amp;dates=20261112T130000Z/20261112T150000Z&amp;details=Say+It+Without+Saying+It+%E2%80%94+online+voice+party+game&amp;location=Online" target="_blank" rel="noopener">
-          📅 <span>Add to calendar<small>加到行事曆</small></span>
-        </a>
+        <a class="btn btn-main" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Random+Event!+Game+Night!+%E9%9A%A8%E6%A9%9F%E4%BA%8B%E4%BB%B6%EF%BC%81%E9%81%8A%E6%88%B2%E4%B9%8B%E5%A4%9C%EF%BC%81&amp;dates=20261112T130000Z/20261112T150000Z&amp;details=Say+It+Without+Saying+It+%E2%80%94+online+voice+party+game&amp;location=Online" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
       </div>
-      <p class="note">Your game link will be posted in the group before we start<span class="zh">遊戲連結會在活動開始前傳到群組</span></p>
+      <p class="note">Game link coming in the group before we start<span class="zh">遊戲連結會在開始前傳到群組</span></p>
+    </div>
+    <div class="needs-lab rv" style="--i:1">ALL YOU NEED · 你只需要</div>
+    <div class="needs">
+      <span class="need rv" style="--i:2">📱 Phone <span class="zh">手機</span></span>
+      <span class="need rv" style="--i:3">🎧 Mic <span class="zh">麥克風</span></span>
+      <span class="need rv" style="--i:4">🙈 No camera <span class="zh">免開鏡頭</span></span>
+      <span class="need rv" style="--i:5">😆 Good vibes <span class="zh">好心情</span></span>
     </div>
   </div>
 </section>
@@ -619,49 +504,38 @@
   const stmtZh = document.getElementById('statement-zh');
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
-  // Staggered reveal for each block as it enters the screen.
   const rvs = document.querySelectorAll('.rv');
   if (reduce || !('IntersectionObserver' in window)) rvs.forEach(e => e.classList.add('in'));
   else {
     const io = new IntersectionObserver(es => es.forEach(en => {
       if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
-    }), { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+    }), { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
     rvs.forEach(e => { if (!e.classList.contains('in')) io.observe(e); });
   }
 
   let ticking = false, activeIdx = -2;
   function frame() {
     ticking = false;
-    const vh = window.innerHeight;
-    const y = window.scrollY;
+    const vh = window.innerHeight, y = window.scrollY;
     const max = document.documentElement.scrollHeight - vh;
     bar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0) + ')';
     nav.classList.toggle('scrolled', y > 10);
 
-    // Apple-style scene transitions: each scene eases up and in as it arrives,
-    // then shrinks and dims as you scroll past it.
-    if (!reduce) {
-      scenes.forEach((s, i) => {
-        const r = s.getBoundingClientRect();
-        const enter = clamp((vh - r.top) / (vh * 0.55), 0, 1);
-        const leave = clamp(1 - r.bottom / (vh * 0.55), 0, 1);
-        const e = 1 - Math.pow(1 - enter, 3);
-        const scale = 0.94 + 0.06 * e - 0.08 * leave;
-        const op = (0.25 + 0.75 * e) * (1 - 0.9 * leave);
-        const ty = (1 - e) * 40 - leave * 40;
-        stages[i].style.transform = 'translate3d(0,' + ty.toFixed(1) + 'px,0) scale(' + scale.toFixed(4) + ')';
-        stages[i].style.opacity = op.toFixed(3);
-      });
-    }
+    // Apple-style scene transitions: ease in on arrival, shrink and dim on the way out.
+    if (!reduce) scenes.forEach((s, i) => {
+      const r = s.getBoundingClientRect();
+      const e = 1 - Math.pow(1 - clamp((vh - r.top) / (vh * 0.55), 0, 1), 3);
+      const leave = clamp(1 - r.bottom / (vh * 0.5), 0, 1);
+      stages[i].style.transform = 'translate3d(0,' + ((1 - e) * 40 - leave * 40).toFixed(1) + 'px,0) scale(' + (0.94 + 0.06 * e - 0.08 * leave).toFixed(4) + ')';
+      stages[i].style.opacity = ((0.25 + 0.75 * e) * (1 - 0.9 * leave)).toFixed(3);
+    });
 
-    // Statement: words light up one by one while it is pinned.
     const r = stmt.getBoundingClientRect();
     const p = reduce ? 1 : clamp(-r.top / Math.max(1, r.height - vh), 0, 1);
     const lit = Math.round(p * (words.length + 1.5));
     words.forEach((w, i) => w.classList.toggle('on', i < lit));
     stmtZh.classList.toggle('on', lit > words.length);
 
-    // Highlight the nav link for the section in view, and keep it visible in the bar.
     let idx = -1;
     targets.forEach((t, i) => { if (t && t.getBoundingClientRect().top <= vh * 0.4) idx = i; });
     if (idx !== activeIdx) {
