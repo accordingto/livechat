@@ -214,8 +214,14 @@
     .navcta { display: none; }
     .scene { min-height: auto; padding: calc(var(--nav-h) + 26px) 0 30px; }
     .hero { min-height: 100svh; }
-    .hero-art { width: min(300px, 80%); }
-    .title-en { margin-top: 12px; }
+    .hero .stage { display: flex; flex-direction: column; gap: 4px; }
+    .hero-art { order: -1; width: min(280px, 74%); margin-bottom: 6px; }
+    .hero-art svg { max-height: 30vh; }
+    .title-en { margin-top: 12px; font-size: calc((100vw - 32px) / 10.2); white-space: nowrap; }
+    .title-zh { font-size: 1.15rem; margin-top: 6px; }
+    .hero-sub { font-size: 1rem; margin-top: 12px; }
+    .hero .cta-row { flex-wrap: nowrap; margin-top: 16px; }
+    .hero .cta-row .btn { width: auto; flex: 1 1 0; padding: 11px 10px; font-size: .95rem; gap: 6px; }
     .roles, .scores { grid-template-columns: 1fr; gap: 12px; }
     .checks { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .role { display: grid; grid-template-columns: 64px 1fr; gap: 14px; text-align: left; align-items: center; padding: 16px; }
