@@ -178,10 +178,14 @@
   .final .btn-main { background: var(--yellow); color: var(--ink); box-shadow: 0 10px 28px rgba(0,0,0,.25); }
   .final .note { margin-top: 12px; font-weight: 700; font-size: .95rem; }
   .final .note .zh { color: #fff; opacity: .9; font-weight: 500; }
-  .needs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: calc(var(--u) * 2.6); }
-  .need { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: .95rem; }
-  .need .zh { display: inline; font-size: .85em; }
-  .needs-lab { text-align: center; margin-top: calc(var(--u) * 3); font-family: 'Bungee', sans-serif; font-size: .8rem; letter-spacing: .08em; color: var(--yellow); }
+  .checks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .check { position: relative; overflow: hidden; text-align: center; background: linear-gradient(180deg, var(--night-3), var(--night-2)); border: 1.5px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: calc(var(--u) * 3.6) 14px; }
+  .check::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
+  .check .e { width: clamp(64px, calc(var(--u) * 11), 104px); height: clamp(64px, calc(var(--u) * 11), 104px); margin: 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: clamp(2rem, calc(var(--u) * 5.4), 3.2rem); background: color-mix(in srgb, var(--c) 18%, transparent); }
+  .check b { display: block; margin-top: calc(var(--u) * 1.8); font-size: clamp(1.15rem, calc(var(--u) * 2.6), 1.5rem); font-weight: 900; color: var(--c); }
+  .check .zh { font-size: 1rem; font-weight: 700; margin-top: 2px; }
+  .checks-note { text-align: center; margin-top: calc(var(--u) * 3); font-size: clamp(1rem, calc(var(--u) * 2.2), 1.25rem); font-weight: 700; }
+  .checks-note .zh { font-size: .9em; margin-top: 4px; }
 
   footer { text-align: center; padding: 18px 0 34px; color: var(--muted); font-size: .85rem; }
 
@@ -209,6 +213,7 @@
     .hero-art { width: min(300px, 80%); }
     .title-en { margin-top: 12px; }
     .roles, .scores { grid-template-columns: 1fr; gap: 12px; }
+    .checks { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .role { display: grid; grid-template-columns: 64px 1fr; gap: 14px; text-align: left; align-items: center; padding: 16px; }
     .role .ic { width: 60px; grid-row: span 2; }
     .role h3 { margin-top: 0; } .role p { margin-top: 0; }
@@ -254,11 +259,13 @@
   <div class="in">
     <a class="brand" href="#top"><span class="logo">🙊</span><span class="txt">Game Night</span></a>
     <div class="navlinks" id="navlinks">
+      <a href="#top" class="home">🏠 Home<small>首頁</small></a>
       <a href="#when">Date<small>日期</small></a>
       <a href="#game">The Game<small>遊戲</small></a>
       <a href="#roles">Roles<small>角色</small></a>
       <a href="#how">How to Play<small>玩法</small></a>
       <a href="#score">Scoring<small>計分</small></a>
+      <a href="#need">Bring<small>準備</small></a>
       <a href="#join">Join<small>參加</small></a>
     </div>
     <a class="navcta" href="#join">Save the date</a>
@@ -463,6 +470,23 @@
   </div>
 </section>
 
+<!-- ALL YOU NEED -->
+<section class="scene" id="need">
+  <div class="stage">
+    <div class="sec-head">
+      <span class="sec-tag rv">BRING THIS</span>
+      <h2 class="rv" style="--i:1">All you need<span class="zh">你只需要</span></h2>
+    </div>
+    <div class="checks">
+      <div class="check rv" style="--c: var(--cyan); --i:2"><div class="e">📱</div><b>Your phone</b><span class="zh">一支手機</span></div>
+      <div class="check rv" style="--c: var(--yellow); --i:3"><div class="e">🎧</div><b>A mic</b><span class="zh">麥克風</span></div>
+      <div class="check rv" style="--c: var(--pink); --i:4"><div class="e">🙈</div><b>No camera</b><span class="zh">免開鏡頭</span></div>
+      <div class="check rv" style="--c: var(--violet); --i:5"><div class="e">😆</div><b>Good vibes</b><span class="zh">好心情</span></div>
+    </div>
+    <p class="checks-note rv" style="--i:6">Simple English is enough — mistakes make it funnier!<span class="zh">簡單英文就夠了，說錯反而更好笑！</span></p>
+  </div>
+</section>
+
 <!-- JOIN -->
 <section class="scene" id="join">
   <div class="stage">
@@ -474,13 +498,6 @@
         <a class="btn btn-main" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Random+Event!+Game+Night!+%E9%9A%A8%E6%A9%9F%E4%BA%8B%E4%BB%B6%EF%BC%81%E9%81%8A%E6%88%B2%E4%B9%8B%E5%A4%9C%EF%BC%81&amp;dates=20261112T130000Z/20261112T150000Z&amp;details=Say+It+Without+Saying+It+%E2%80%94+online+voice+party+game&amp;location=Online" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
       </div>
       <p class="note">Game link coming in the group before we start<span class="zh">遊戲連結會在開始前傳到群組</span></p>
-    </div>
-    <div class="needs-lab rv" style="--i:1">ALL YOU NEED · 你只需要</div>
-    <div class="needs">
-      <span class="need rv" style="--i:2">📱 Phone <span class="zh">手機</span></span>
-      <span class="need rv" style="--i:3">🎧 Mic <span class="zh">麥克風</span></span>
-      <span class="need rv" style="--i:4">🙈 No camera <span class="zh">免開鏡頭</span></span>
-      <span class="need rv" style="--i:5">😆 Good vibes <span class="zh">好心情</span></span>
     </div>
   </div>
 </section>
