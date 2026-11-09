@@ -6,7 +6,7 @@
 <title>Random Event! Game Night! 隨機事件！遊戲之夜！</title>
 <meta name="description" content="Thu, Nov 12 · 9 PM (GMT+8) — an online voice party: Say It Without Saying It. Describe the secret word, but never say the forbidden ones! 11/12（四）晚上 9:00 線上語音派對。">
 
-<!-- LINE / Facebook / link previews -->
+<!-- Link previews (LINE, Facebook…). The image is assets/game-night/og.png, 1200×630. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Random Event! Game Night!">
 <meta property="og:title" content="Random Event! Game Night! 隨機事件！遊戲之夜！">
@@ -25,19 +25,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans+TC:wght@500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 
 <style>
+  /* =========================================================
+     1. Tokens & base
+     ========================================================= */
   :root {
     --night: #160f33; --night-2: #21184a; --night-3: #2c2160;
-    --pink: #ff4d8d; --yellow: #ffd23f; --cyan: #3ee6d0; --violet: #a78bfa;
+    --pink: #ff4d8d; --yellow: #ffd23f; --cyan: #3ee6d0; --violet: #a78bfa; --green: #22c55e;
     --cream: #fff7e8; --muted: #c9c0ec; --ink: #1a1033;
-    --radius: 20px; --nav-h: 58px;
-    /* one unit that respects both width and height, so a section fits one screen */
+    --radius: 20px; --nav-h: 58px; --gutter: 16px;
+    /* One sizing unit bound by width AND height, so each section fits one screen. */
     --u: min(1vw, 1.6vh);
+    --ease: cubic-bezier(.2,.7,.2,1);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body { font-family: 'Outfit', 'Noto Sans TC', system-ui, sans-serif; background: var(--night); color: var(--cream); line-height: 1.45; overflow-x: hidden; }
-  .zh { display: block; font-family: 'Noto Sans TC', 'Outfit', sans-serif; color: var(--muted); font-weight: 500; }
   a { color: inherit; }
+  /* English leads; Chinese follows, quieter. */
+  .zh { display: block; font-family: 'Noto Sans TC', 'Outfit', sans-serif; color: var(--muted); font-weight: 500; }
 
   .sky { position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
@@ -46,210 +51,248 @@
       radial-gradient(900px 700px at 50% 110%, rgba(167,139,250,.25), transparent 60%), var(--night); }
   .sky svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-  /* ---------- nav ---------- */
-  .topnav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: var(--nav-h);
+  /* =========================================================
+     2. Top navigation
+     ========================================================= */
+  .topnav { position: fixed; inset: 0 0 auto 0; z-index: 50; height: var(--nav-h);
     background: rgba(22,15,51,.55); -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px);
     border-bottom: 1px solid rgba(255,255,255,.08); transition: background .3s, box-shadow .3s; }
   .topnav.scrolled { background: rgba(22,15,51,.82); box-shadow: 0 8px 30px rgba(0,0,0,.25); }
   .topnav .in { height: 100%; display: flex; align-items: center; gap: 12px; width: min(1180px, 100% - 24px); margin: 0 auto; }
-  .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; font-family: 'Bungee', sans-serif; font-size: 1rem; white-space: nowrap; flex: none; }
+  .brand { display: flex; align-items: center; gap: 8px; flex: none; text-decoration: none; font-family: 'Bungee', sans-serif; white-space: nowrap; }
   .brand .logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: linear-gradient(135deg, var(--pink), var(--violet)); }
-  .navlinks { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .navlinks { display: flex; gap: 2px; margin-left: auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .navlinks::-webkit-scrollbar { display: none; }
-  .navlinks a { text-decoration: none; padding: 6px 12px; border-radius: 999px; white-space: nowrap; font-size: .9rem; font-weight: 600; color: var(--muted);
-    transition: color .2s, background .2s; display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+  .navlinks a { display: flex; flex-direction: column; align-items: center; padding: 6px 12px; border-radius: 999px; text-decoration: none; white-space: nowrap;
+    font-size: .9rem; font-weight: 600; line-height: 1.15; color: var(--muted); transition: color .2s, background .2s; }
   .navlinks a small { font-family: 'Noto Sans TC', sans-serif; font-size: .64rem; font-weight: 500; opacity: .75; }
   .navlinks a:hover { color: var(--cream); background: rgba(255,255,255,.07); }
   .navlinks a.active { color: var(--ink); background: var(--cream); }
-  .navcta { text-decoration: none; white-space: nowrap; font-weight: 800; font-size: .86rem; flex: none; background: var(--pink); color: #fff; padding: 8px 15px; border-radius: 999px; box-shadow: 0 6px 18px rgba(255,77,141,.4); }
-  .progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; transform-origin: left; transform: scaleX(0); background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); }
+  .navcta { flex: none; text-decoration: none; white-space: nowrap; font-weight: 800; font-size: .86rem; color: #fff; background: var(--pink);
+    padding: 8px 15px; border-radius: 999px; box-shadow: 0 6px 18px rgba(255,77,141,.4); }
+  .progress { position: absolute; left: 0; bottom: -1px; width: 100%; height: 2px; transform-origin: left; transform: scaleX(0);
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); }
 
-  /* ---------- scenes: one screen each ---------- */
+  /* =========================================================
+     3. Scenes, reveal motion, shared parts
+     ========================================================= */
   .scene { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: calc(var(--nav-h) + 12px) 0 18px; }
-  .scene > .stage { width: min(1080px, 100% - 32px); margin: 0 auto; will-change: transform, opacity; transform-origin: 50% 45%; }
-  .rv { opacity: 0; transform: translateY(28px) scale(.98); filter: blur(6px);
-        transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1), filter .8s; transition-delay: calc(var(--i, 0) * 100ms); }
-  .rv.in { opacity: 1; transform: none; filter: none; }
+  .stage { width: min(1080px, 100% - var(--gutter) * 2); margin: 0 auto; will-change: transform, opacity; transform-origin: 50% 45%; }
+  .center { text-align: center; }
+
+  /* Staggered entrance; --rot keeps tilted pieces tilted while they animate. */
+  .rv { opacity: 0; filter: blur(6px); transform: rotate(var(--rot, 0deg)) translateY(28px) scale(.98);
+    transition: opacity .8s var(--ease), transform .8s var(--ease), filter .8s; transition-delay: calc(var(--i, 0) * 100ms); }
+  .rv.in { opacity: 1; filter: none; transform: rotate(var(--rot, 0deg)); }
 
   .sec-head { text-align: center; margin-bottom: calc(var(--u) * 2.6); }
-  .sec-tag { display: inline-block; font-family: 'Bungee', sans-serif; font-size: .78rem; letter-spacing: .08em; color: var(--ink); background: var(--yellow); padding: 4px 12px; border-radius: 8px; transform: rotate(-2deg); }
-  .sec-tag.rv { transform: rotate(-2deg) translateY(28px); } .sec-tag.rv.in { transform: rotate(-2deg); }
+  .sec-tag { --rot: -2deg; display: inline-block; transform: rotate(var(--rot)); font-family: 'Bungee', sans-serif; font-size: .78rem; letter-spacing: .08em;
+    color: var(--ink); background: var(--yellow); padding: 4px 12px; border-radius: 8px; }
   .sec-head h2 { margin-top: 10px; font-weight: 900; font-size: clamp(1.7rem, calc(var(--u) * 5), 3rem); line-height: 1.05; letter-spacing: -.01em; }
-  .sec-head .zh { font-size: clamp(1rem, calc(var(--u) * 2.1), 1.25rem); font-weight: 700; margin-top: 6px; }
+  .sec-head .zh { margin-top: 6px; font-weight: 700; font-size: clamp(1rem, calc(var(--u) * 2.1), 1.25rem); }
 
-  /* ---------- hero ---------- */
-  .hero .stage { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: center; }
-  .eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); padding: 6px 14px; border-radius: 999px; font-weight: 600; font-size: .9rem; }
-  .eyebrow .zh { display: inline; font-size: .8rem; }
-  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 4px rgba(62,230,208,.25); animation: blink 1.6s infinite; }
-  @keyframes blink { 50% { opacity: .35; } }
-  .title-en { margin-top: calc(var(--u) * 1.8); font-family: 'Bungee', sans-serif; font-weight: 400; font-size: clamp(2.3rem, calc(var(--u) * 7.2), 5rem); line-height: 1; }
-  .title-en .a { color: var(--yellow); display: block; } .title-en .b { color: var(--pink); display: block; }
-  .title-zh { margin-top: 10px; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.2rem, calc(var(--u) * 3), 1.9rem); letter-spacing: .08em;
-    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .hero-sub { margin-top: calc(var(--u) * 1.8); font-size: clamp(1rem, calc(var(--u) * 2), 1.2rem); max-width: 520px; }
-  .hero-sub .zh { font-size: .92em; margin-top: 4px; }
-  .hero-art svg { width: 100%; height: auto; max-height: 62vh; display: block; overflow: visible; }
-  .float { animation: float 5s ease-in-out infinite; transform-origin: center; }
-  .float.d2 { animation-delay: -1.7s; } .float.d3 { animation-delay: -3.2s; }
-  @keyframes float { 50% { transform: translateY(-10px) rotate(-1deg); } }
+  /* Dark card with a coloured top bar (roles, checklist). Colour comes from --c. */
+  .tile { position: relative; overflow: hidden; text-align: center; border-radius: var(--radius); border: 1.5px solid rgba(255,255,255,.1);
+    background: linear-gradient(180deg, var(--night-3), var(--night-2)); }
+  .tile::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
 
   .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: calc(var(--u) * 2.4); }
-  .btn { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; padding: 12px 22px; border-radius: 999px; font-weight: 800; font-size: 1rem; line-height: 1.15; transition: transform .15s, box-shadow .15s; }
+  .center .cta-row, .final .cta-row { justify-content: center; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px; text-decoration: none;
+    font-weight: 800; font-size: 1rem; line-height: 1.15; transition: transform .15s, box-shadow .15s; }
   .btn:active { transform: scale(.97); }
   .btn small { display: block; font-family: 'Noto Sans TC', sans-serif; font-weight: 600; font-size: .74rem; opacity: .85; }
   .btn-main { background: var(--pink); color: #fff; box-shadow: 0 10px 28px rgba(255,77,141,.45); }
   .btn-main:hover { transform: translateY(-2px); }
   .btn-ghost { background: rgba(255,255,255,.08); color: var(--cream); border: 1.5px solid rgba(255,255,255,.3); }
 
-  /* ---------- date ---------- */
-  #when .stage { text-align: center; }
-  .ticket { position: relative; margin: 0 auto; width: min(820px, 100%); display: grid; grid-template-columns: repeat(3, 1fr);
-    background: linear-gradient(135deg, #fff7e8, #ffe9c2); color: var(--ink); border-radius: var(--radius);
+  .float { animation: float 5s ease-in-out infinite; transform-origin: center; }
+  .float.d2 { animation-delay: -1.7s; } .float.d3 { animation-delay: -3.2s; }
+  @keyframes float { 50% { transform: translateY(-10px) rotate(-1deg); } }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  /* =========================================================
+     4. Sections
+     ========================================================= */
+  /* --- Hero --- */
+  .hero .stage { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: center; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-weight: 600; font-size: .9rem;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); }
+  .eyebrow .zh { display: inline; font-size: .8rem; }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 4px rgba(62,230,208,.25); animation: blink 1.6s infinite; }
+  .title-en { margin-top: calc(var(--u) * 1.8); font-family: 'Bungee', sans-serif; font-weight: 400; font-size: clamp(2.3rem, calc(var(--u) * 7.2), 5rem); line-height: 1; }
+  .title-en span { display: block; }
+  .title-en .a { color: var(--yellow); } .title-en .b { color: var(--pink); }
+  .title-zh { margin-top: 10px; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.2rem, calc(var(--u) * 3), 1.9rem); letter-spacing: .08em;
+    background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero-sub { margin-top: calc(var(--u) * 1.8); max-width: 520px; font-size: clamp(1rem, calc(var(--u) * 2), 1.2rem); }
+  .hero-sub .zh { margin-top: 4px; font-size: .92em; }
+  .hero-art svg { display: block; width: 100%; height: auto; max-height: 62vh; overflow: visible; }
+
+  /* --- Date (ticket) --- */
+  .ticket { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); width: min(820px, 100%); margin: 0 auto;
+    color: var(--ink); background: linear-gradient(135deg, #fff7e8, #ffe9c2); border-radius: var(--radius);
     box-shadow: 0 18px 50px rgba(0,0,0,.35), 0 0 0 4px rgba(255,210,63,.35); }
   .ticket::before, .ticket::after { content: ''; position: absolute; top: 50%; width: 26px; height: 26px; border-radius: 50%; background: var(--night); transform: translateY(-50%); }
   .ticket::before { left: -13px; } .ticket::after { right: -13px; }
   .tk { padding: calc(var(--u) * 3) 12px; }
   .tk + .tk { border-left: 2px dashed rgba(26,16,51,.2); }
   .tk .ico { font-size: clamp(1.6rem, calc(var(--u) * 4), 2.4rem); line-height: 1; }
-  .tk .big { font-weight: 900; font-size: clamp(1.25rem, calc(var(--u) * 3.6), 2.2rem); line-height: 1.15; margin-top: 6px; }
-  .tk .small { font-family: 'Noto Sans TC', sans-serif; font-size: .92rem; color: #4b3a63; font-weight: 700; }
-  #when .cta-row { justify-content: center; }
+  .tk .big { margin-top: 6px; font-weight: 900; font-size: clamp(1.25rem, calc(var(--u) * 3.6), 2.2rem); line-height: 1.15; }
+  .tk .small { font-family: 'Noto Sans TC', sans-serif; font-size: .92rem; font-weight: 700; color: #4b3a63; }
 
-  /* ---------- statement ---------- */
-  .statement { height: 200vh; position: relative; }
-  .statement .pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--nav-h) 16px 0; }
-  .statement p.big { font-weight: 900; font-size: clamp(2.2rem, calc(var(--u) * 8), 5.4rem); line-height: 1.06; letter-spacing: -.02em; max-width: 1000px; }
+  /* --- All you need --- */
+  .checks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .check { padding: calc(var(--u) * 3.6) 14px; }
+  .check .e { --s: clamp(64px, calc(var(--u) * 11), 104px); width: var(--s); height: var(--s); margin: 0 auto; border-radius: 50%; display: grid; place-items: center;
+    font-size: clamp(2rem, calc(var(--u) * 5.4), 3.2rem); background: color-mix(in srgb, var(--c) 18%, transparent); }
+  .check b { display: block; margin-top: calc(var(--u) * 1.8); font-weight: 900; font-size: clamp(1.15rem, calc(var(--u) * 2.6), 1.5rem); color: var(--c); }
+  .check .zh { margin-top: 2px; font-size: 1rem; font-weight: 700; }
+  .checks-note { margin-top: calc(var(--u) * 3); text-align: center; font-weight: 700; font-size: clamp(1rem, calc(var(--u) * 2.2), 1.25rem); }
+  .checks-note .zh { margin-top: 4px; font-size: .9em; }
+
+  /* --- Statement (pinned, words light up while scrolling) --- */
+  .statement { position: relative; height: 200vh; }
+  .statement .pin { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--nav-h) var(--gutter) 0; }
+  .statement .big { max-width: 1000px; font-weight: 900; font-size: clamp(2.2rem, calc(var(--u) * 8), 5.4rem); line-height: 1.06; letter-spacing: -.02em; }
   .statement .w { opacity: .14; transition: opacity .25s, color .25s; }
-  .statement .w.on { opacity: 1; } .statement .w.hot.on { color: var(--pink); } .statement .w.cool.on { color: var(--cyan); }
-  .statement .zh { margin-top: 18px; font-size: clamp(1.1rem, calc(var(--u) * 2.8), 1.6rem); font-weight: 700; opacity: 0; transform: translateY(14px); transition: opacity .5s, transform .5s; }
+  .statement .w.on { opacity: 1; }
+  .statement .w.hot.on { color: var(--pink); }
+  .statement .w.cool.on { color: var(--cyan); }
+  .statement .zh { margin-top: 18px; font-weight: 700; font-size: clamp(1.1rem, calc(var(--u) * 2.8), 1.6rem); opacity: 0; transform: translateY(14px); transition: opacity .5s, transform .5s; }
   .statement .zh.on { opacity: 1; transform: none; }
 
-  /* ---------- game ---------- */
+  /* --- The game --- */
   .intro { display: grid; grid-template-columns: 1fr .8fr; gap: 36px; align-items: center; }
-  .intro .lead { font-size: clamp(1.15rem, calc(var(--u) * 2.6), 1.6rem); font-weight: 700; line-height: 1.3; }
-  .intro .lead .zh { font-size: .72em; margin-top: 6px; }
-  .intro .lead + .lead { margin-top: calc(var(--u) * 2.4); }
-  .bubble-quote { margin-top: calc(var(--u) * 3); background: var(--night-3); border-radius: 18px; padding: 16px 18px; position: relative; border: 1.5px solid rgba(167,139,250,.4); font-size: clamp(1rem, calc(var(--u) * 2.1), 1.2rem); font-weight: 600; text-align: left; }
-  .bubble-quote::after { content: ''; position: absolute; left: 30px; bottom: -12px; border: 12px solid transparent; border-top-color: var(--night-3); border-bottom: 0; }
-  .bubble-quote b { color: var(--yellow); }
-  .bubble-quote .zh { font-size: .9em; margin-top: 6px; }
-  .hl-pink { color: var(--pink); } .hl-yellow { color: var(--yellow); }
-  .secret-card { position: relative; background: #fff; color: var(--ink); border-radius: 24px; padding: 24px 20px 18px; box-shadow: 0 24px 60px rgba(0,0,0,.45); transform: rotate(2deg); border: 6px solid var(--yellow); text-align: center; }
-  .secret-card.rv { transform: rotate(2deg) translateY(28px); } .secret-card.rv.in { transform: rotate(2deg); }
-  .secret-card .corner { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: var(--pink); color: #fff; font-family: 'Bungee', sans-serif; font-size: .74rem; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+  .lead { font-weight: 700; font-size: clamp(1.15rem, calc(var(--u) * 2.6), 1.6rem); line-height: 1.3; }
+  .lead .zh { margin-top: 6px; font-size: .72em; }
+  .hl { color: var(--pink); }
+  .quote { position: relative; margin-top: calc(var(--u) * 3); padding: 16px 18px; text-align: left; font-weight: 600; font-size: clamp(1rem, calc(var(--u) * 2.1), 1.2rem);
+    background: var(--night-3); border: 1.5px solid rgba(167,139,250,.4); border-radius: 18px; }
+  .quote::after { content: ''; position: absolute; left: 30px; bottom: -12px; border: 12px solid transparent; border-top-color: var(--night-3); border-bottom: 0; }
+  .quote b { color: var(--yellow); }
+  .quote .zh { margin-top: 6px; font-size: .9em; }
+  .secret-card { --rot: 2deg; position: relative; padding: 24px 20px 18px; text-align: center; color: var(--ink); background: #fff;
+    border: 6px solid var(--yellow); border-radius: 24px; box-shadow: 0 24px 60px rgba(0,0,0,.45); transform: rotate(var(--rot)); }
+  .secret-card .corner { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); padding: 5px 12px; border-radius: 999px; white-space: nowrap;
+    font-family: 'Bungee', sans-serif; font-size: .74rem; color: #fff; background: var(--pink); }
   .secret-card .emo { font-size: clamp(2.4rem, calc(var(--u) * 6), 3.4rem); line-height: 1.1; }
   .secret-card .word { font-family: 'Bungee', sans-serif; font-size: clamp(1.7rem, calc(var(--u) * 4.4), 2.4rem); }
-  .secret-card .forb-lab { margin-top: 10px; font-weight: 800; color: #d6235f; font-size: .9rem; }
-  .pills { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
-  .pill { background: #ffe1ec; color: #b0124d; border: 1.5px solid #ff9ec0; padding: 3px 11px; border-radius: 999px; font-weight: 700; font-size: .9rem; text-decoration: line-through; text-decoration-thickness: 2px; }
+  .secret-card .forb { margin-top: 10px; font-weight: 800; font-size: .9rem; color: #d6235f; }
+  .pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
+  .pill { padding: 3px 11px; border-radius: 999px; font-weight: 700; font-size: .9rem; color: #b0124d; background: #ffe1ec; border: 1.5px solid #ff9ec0;
+    text-decoration: line-through; text-decoration-thickness: 2px; }
 
-  /* ---------- roles ---------- */
+  /* --- Roles --- */
   .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .role { background: linear-gradient(180deg, var(--night-3), var(--night-2)); border-radius: var(--radius); padding: calc(var(--u) * 2.8) 20px; border: 1.5px solid rgba(255,255,255,.1); position: relative; overflow: hidden; text-align: center; }
-  .role::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
+  .role { padding: calc(var(--u) * 2.8) 20px; }
   .role .ic { width: clamp(56px, calc(var(--u) * 10), 92px); height: auto; }
-  .role h3 { margin-top: 8px; font-size: clamp(1.3rem, calc(var(--u) * 3), 1.7rem); font-weight: 900; color: var(--c); line-height: 1.1; }
-  .role h3 .zh { font-size: .62em; font-weight: 700; margin-top: 2px; }
-  .role p { margin-top: 10px; font-size: 1.02rem; font-weight: 600; }
-  .role p .zh { font-size: .92em; margin-top: 2px; }
+  .role h3 { margin-top: 8px; font-weight: 900; font-size: clamp(1.3rem, calc(var(--u) * 3), 1.7rem); line-height: 1.1; color: var(--c); }
+  .role h3 .zh { margin-top: 2px; font-size: .62em; font-weight: 700; }
+  .role p { margin-top: 10px; font-weight: 600; font-size: 1.02rem; }
+  .role p .zh { margin-top: 2px; font-size: .92em; }
 
-  /* ---------- steps: one row ---------- */
+  /* --- How to play --- */
   .steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
-  .step { background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: calc(var(--u) * 2.4) 14px; text-align: center; position: relative; }
-  .step .num { width: 46px; height: 46px; margin: 0 auto; border-radius: 14px; display: grid; place-items: center; font-family: 'Bungee', sans-serif; font-size: 1.35rem; color: var(--ink); background: var(--c); transform: rotate(-4deg); }
-  .step .e { font-size: clamp(1.9rem, calc(var(--u) * 5), 2.8rem); margin-top: calc(var(--u) * 1.4); line-height: 1; }
+  .step { padding: calc(var(--u) * 2.4) 14px; text-align: center; border-radius: var(--radius); background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1); }
+  .step .num { --rot: -4deg; width: 46px; height: 46px; margin: 0 auto; display: grid; place-items: center; border-radius: 14px; transform: rotate(var(--rot));
+    font-family: 'Bungee', sans-serif; font-size: 1.35rem; color: var(--ink); background: var(--c); }
+  .step .e { margin-top: calc(var(--u) * 1.4); font-size: clamp(1.9rem, calc(var(--u) * 5), 2.8rem); line-height: 1; }
   .step h3 { margin-top: calc(var(--u) * 1.2); font-weight: 900; font-size: 1.12rem; line-height: 1.15; }
-  .step h3 .zh { font-size: .82em; font-weight: 700; margin-top: 2px; }
-  .step p { margin-top: 6px; font-size: .92rem; color: var(--cream); opacity: .9; }
-  .step p .zh { font-size: .95em; margin-top: 1px; }
+  .step h3 .zh { margin-top: 2px; font-size: .82em; font-weight: 700; }
+  .step p { margin-top: 6px; font-size: .92rem; opacity: .9; }
+  .step p .zh { margin-top: 1px; font-size: .95em; }
 
-  /* ---------- scoring ---------- */
+  /* --- Scoring --- */
   .scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-  .score { text-align: center; border-radius: var(--radius); padding: calc(var(--u) * 3.4) 16px; background: var(--bg); color: var(--ink); box-shadow: 0 16px 36px rgba(0,0,0,.3); }
+  .score { padding: calc(var(--u) * 3.4) 16px; text-align: center; color: var(--ink); background: var(--c); border-radius: var(--radius); box-shadow: 0 16px 36px rgba(0,0,0,.3); }
   .score .pts { font-family: 'Bungee', sans-serif; font-size: clamp(2rem, calc(var(--u) * 5.6), 3.2rem); line-height: 1; }
-  .score h3 { font-weight: 900; font-size: clamp(1.2rem, calc(var(--u) * 2.6), 1.5rem); margin-top: 10px; }
-  .score h3 .zh { color: rgba(26,16,51,.7); font-size: .72em; font-weight: 700; }
+  .score h3 { margin-top: 10px; font-weight: 900; font-size: clamp(1.2rem, calc(var(--u) * 2.6), 1.5rem); }
+  .score .zh { color: rgba(26,16,51,.72); }
+  .score h3 .zh { font-size: .72em; font-weight: 700; }
   .score p { margin-top: 8px; font-weight: 700; }
-  .score p .zh { color: rgba(26,16,51,.72); font-weight: 500; font-size: .92em; }
+  .score p .zh { font-weight: 500; font-size: .92em; }
 
-  /* ---------- join ---------- */
-  .final { text-align: center; border-radius: 30px; padding: calc(var(--u) * 4.4) 22px; background: linear-gradient(135deg, #ff4d8d, #a855f7 55%, #3ee6d0); box-shadow: 0 24px 60px rgba(255,77,141,.3); }
+  /* --- Join --- */
+  .final { padding: calc(var(--u) * 4.4) 22px; text-align: center; border-radius: 30px;
+    background: linear-gradient(135deg, #ff4d8d, #a855f7 55%, #3ee6d0); box-shadow: 0 24px 60px rgba(255,77,141,.3); }
   .final h2 { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: clamp(1.7rem, calc(var(--u) * 5.4), 3.2rem); line-height: 1.08; text-shadow: 0 4px 0 rgba(0,0,0,.15); }
-  .final .zh-big { font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.15rem, calc(var(--u) * 3), 1.7rem); margin-top: 8px; }
+  .final .zh-big { margin-top: 8px; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.15rem, calc(var(--u) * 3), 1.7rem); }
   .final .when { margin-top: 12px; font-weight: 800; font-size: 1.1rem; }
-  .final .cta-row { justify-content: center; margin-top: calc(var(--u) * 2.4); }
-  .final .btn-main { background: var(--yellow); color: var(--ink); box-shadow: 0 10px 28px rgba(0,0,0,.25); }
+  .final .when .soft { opacity: .85; }
+  .final .btn-main { color: var(--ink); background: var(--yellow); box-shadow: 0 10px 28px rgba(0,0,0,.25); }
   .final .note { margin-top: 12px; font-weight: 700; font-size: .95rem; }
-  .final .note .zh { color: #fff; opacity: .9; font-weight: 500; }
-  .checks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-  .check { position: relative; overflow: hidden; text-align: center; background: linear-gradient(180deg, var(--night-3), var(--night-2)); border: 1.5px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: calc(var(--u) * 3.6) 14px; }
-  .check::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
-  .check .e { width: clamp(64px, calc(var(--u) * 11), 104px); height: clamp(64px, calc(var(--u) * 11), 104px); margin: 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: clamp(2rem, calc(var(--u) * 5.4), 3.2rem); background: color-mix(in srgb, var(--c) 18%, transparent); }
-  .check b { display: block; margin-top: calc(var(--u) * 1.8); font-size: clamp(1.15rem, calc(var(--u) * 2.6), 1.5rem); font-weight: 900; color: var(--c); }
-  .check .zh { font-size: 1rem; font-weight: 700; margin-top: 2px; }
-  .checks-note { text-align: center; margin-top: calc(var(--u) * 3); font-size: clamp(1rem, calc(var(--u) * 2.2), 1.25rem); font-weight: 700; }
-  .checks-note .zh { font-size: .9em; margin-top: 4px; }
+  .final .note .zh { color: #fff; opacity: .9; }
 
-  footer { text-align: center; padding: 18px 0 34px; color: var(--muted); font-size: .85rem; }
+  footer { padding: 18px 0 34px; text-align: center; font-size: .85rem; color: var(--muted); }
 
-  /* ---------- tablet / phone ---------- */
-  @media (max-width: 760px) {
-    .steps { grid-template-columns: repeat(3, 1fr); }
-    .steps .step:nth-child(4) { grid-column: 1 / span 1; }
-  }
+  /* =========================================================
+     5. Tablet & phone
+     ========================================================= */
   @media (max-width: 860px) {
     :root { --u: 1.2vw; }
-    .hero .stage { grid-template-columns: 1fr; text-align: center; gap: 10px; }
+    .navlinks a small, .brand .txt { display: none; }
+    .hero .stage { grid-template-columns: 1fr; gap: 10px; text-align: center; }
     .hero .cta-row { justify-content: center; }
-    .hero-sub { margin-left: auto; margin-right: auto; }
+    .hero-sub { margin-inline: auto; }
     .hero-art { width: min(440px, 100%); margin: 0 auto; }
     .intro { grid-template-columns: 1fr; gap: 26px; text-align: center; }
-    .secret-card { max-width: 380px; margin: 0 auto; width: 100%; }
-    .navlinks a small, .brand .txt { display: none; }
+    .secret-card { width: 100%; max-width: 380px; margin: 0 auto; }
+  }
+  @media (max-width: 760px) {
+    .steps { grid-template-columns: repeat(3, 1fr); }
+    .steps .step:nth-child(4) { grid-column: 1; }
   }
   @media (max-width: 620px) {
     :root { --nav-h: 54px; --u: 1.9vw; }
     .navlinks a { padding: 6px 10px; font-size: .84rem; }
     .navcta { display: none; }
     .scene { min-height: auto; padding: calc(var(--nav-h) + 26px) 0 30px; }
+
+    /* Buttons fill the row; two buttons share it side by side. */
+    .cta-row { flex-wrap: nowrap; }
+    .cta-row .btn { flex: 1 1 0; justify-content: center; }
+
     .hero { min-height: 100svh; }
     .hero .stage { display: flex; flex-direction: column; gap: 4px; }
     .hero-art { order: -1; width: min(280px, 74%); margin-bottom: 6px; }
     .hero-art svg { max-height: 30vh; }
-    .title-en { margin-top: 12px; font-size: calc((100vw - 32px) / 10.2); white-space: nowrap; }
-    .title-zh { font-size: 1.15rem; margin-top: 6px; }
-    .hero-sub { font-size: 1rem; margin-top: 12px; }
-    .hero .cta-row { flex-wrap: nowrap; margin-top: 16px; }
-    .hero .cta-row .btn { width: auto; flex: 1 1 0; padding: 11px 10px; font-size: .95rem; gap: 6px; }
-    .roles, .scores { grid-template-columns: 1fr; gap: 12px; }
-    .checks { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .role { display: grid; grid-template-columns: 64px 1fr; gap: 14px; text-align: left; align-items: center; padding: 16px; }
-    .role .ic { width: 60px; grid-row: span 2; }
-    .role h3 { margin-top: 0; } .role p { margin-top: 0; }
-    .steps { grid-template-columns: 1fr; gap: 10px; }
-    .steps .step:nth-child(4) { grid-column: auto; }
-    .step { display: grid; grid-template-columns: 40px 34px 1fr; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; }
-    .step .num { width: 38px; height: 38px; font-size: 1.1rem; }
-    .step p { margin-top: 2px; }
-    .step .e { margin: 0; font-size: 1.7rem; }
-    .step h3 { margin: 0; }
-    .score { display: grid; grid-template-columns: 110px 1fr; align-items: center; text-align: left; gap: 12px; padding: 16px; }
-    .score .pts { font-size: 1.8rem; text-align: center; }
-    .score h3 { margin: 0; }
+    .title-en { margin-top: 12px; font-size: calc((100vw - var(--gutter) * 2) / 10.2); white-space: nowrap; }
+    .title-zh { margin-top: 6px; font-size: 1.15rem; }
+    .hero-sub { margin-top: 12px; font-size: 1rem; }
+    .hero .cta-row { margin-top: 16px; }
+    .hero .btn { padding: 11px 10px; font-size: .95rem; gap: 6px; }
+
     .ticket { grid-template-columns: 1fr; }
-    .tk { display: grid; grid-template-columns: 44px 1fr; align-items: center; text-align: left; gap: 10px; padding: 14px 18px; }
+    .ticket::before, .ticket::after { top: 33.3%; }
+    .tk { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; padding: 14px 18px; text-align: left; }
     .tk .ico { grid-row: span 2; text-align: center; }
     .tk .big { margin: 0; }
     .tk + .tk { border-left: 0; border-top: 2px dashed rgba(26,16,51,.2); }
-    .ticket::before, .ticket::after { top: 33.3%; }
-    .btn { width: 100%; justify-content: center; }
+
+    .checks { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .roles, .scores { grid-template-columns: 1fr; gap: 12px; }
+    .role { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 14px; padding: 16px; text-align: left; }
+    .role .ic { width: 60px; grid-row: span 2; }
+    .role h3, .role p { margin: 0; }
+
+    .steps { grid-template-columns: 1fr; gap: 10px; }
+    .steps .step:nth-child(4) { grid-column: auto; }
+    .step { display: grid; grid-template-columns: 40px 34px 1fr; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; }
+    .step .num { width: 38px; height: 38px; font-size: 1.1rem; }
+    .step .e, .step h3 { margin: 0; }
+    .step .e { font-size: 1.7rem; }
+    .step p { margin-top: 2px; }
+
+    .score { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 12px; padding: 16px; text-align: left; }
+    .score .pts { font-size: 1.8rem; text-align: center; }
+    .score h3 { margin: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
     .float, .eyebrow .dot { animation: none; }
-    .rv, .rv.in { opacity: 1; transform: none; filter: none; transition: none; }
-    .secret-card.rv { transform: rotate(2deg); } .sec-tag.rv { transform: rotate(-2deg); }
-    .statement { height: auto; } .statement .pin { position: static; height: auto; padding: 80px 16px; }
+    .rv { opacity: 1; filter: none; transform: rotate(var(--rot, 0deg)); transition: none; }
+    .statement { height: auto; }
+    .statement .pin { position: static; height: auto; padding: 80px var(--gutter); }
     .statement .w, .statement .zh { opacity: 1; transform: none; }
   }
 </style>
@@ -283,7 +326,7 @@
   <div class="progress" id="progress"></div>
 </nav>
 
-<!-- HERO -->
+<!-- ============ HERO ============ -->
 <header class="scene hero" id="top">
   <div class="stage">
     <div>
@@ -303,6 +346,7 @@
           <linearGradient id="cardG" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#ffe9c2"/></linearGradient>
           <linearGradient id="bubG" x1="0" x2="1"><stop offset="0" stop-color="#3ee6d0"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
         </defs>
+        <!-- confetti -->
         <g opacity=".95">
           <rect x="40" y="40" width="14" height="6" rx="3" fill="#ffd23f" transform="rotate(-25 47 43)"/>
           <rect x="500" y="30" width="14" height="6" rx="3" fill="#3ee6d0" transform="rotate(30 507 33)"/>
@@ -312,6 +356,7 @@
           <path d="M150 20 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z" fill="#ffd23f"/>
           <path d="M430 110 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3z" fill="#fff"/>
         </g>
+        <!-- zipped-mouth speech bubble -->
         <g class="float">
           <path d="M30 70 h170 a26 26 0 0 1 26 26 v76 a26 26 0 0 1 -26 26 h-96 l-34 30 6 -30 h-20 a26 26 0 0 1 -26 -26 v-76 a26 26 0 0 1 26 -26z" fill="url(#bubG)"/>
           <circle cx="90" cy="118" r="10" fill="#1a1033"/><circle cx="166" cy="118" r="10" fill="#1a1033"/>
@@ -320,6 +365,7 @@
           <g fill="#ffd23f"><rect x="88" y="150" width="8" height="8" rx="1.5"/><rect x="100" y="150" width="8" height="8" rx="1.5"/><rect x="112" y="150" width="8" height="8" rx="1.5"/><rect x="124" y="150" width="8" height="8" rx="1.5"/><rect x="136" y="150" width="8" height="8" rx="1.5"/><rect x="148" y="150" width="8" height="8" rx="1.5"/></g>
           <circle cx="172" cy="154" r="7" fill="#ffd23f"/><rect x="168" y="158" width="8" height="18" rx="3" fill="#ffd23f"/>
         </g>
+        <!-- secret card -->
         <g class="float d2"><g transform="rotate(6 330 170)">
           <rect x="250" y="60" width="160" height="220" rx="20" fill="url(#cardG)" stroke="#ffd23f" stroke-width="6"/>
           <text x="330" y="140" text-anchor="middle" font-size="58">🍍</text>
@@ -328,10 +374,11 @@
             <rect x="268" y="200" width="56" height="20" rx="10" fill="#ffe1ec"/><text x="296" y="214" text-anchor="middle">Yellow</text>
             <rect x="332" y="200" width="60" height="20" rx="10" fill="#ffe1ec"/><text x="362" y="214" text-anchor="middle">Spiky</text>
             <rect x="276" y="228" width="50" height="20" rx="10" fill="#ffe1ec"/><text x="301" y="242" text-anchor="middle">Sweet</text>
-            <rect x="334" y="228" width="50" height="20" rx="10" fill="#ffe1ec"/><text x="359" y="242" text-anchor="middle">Juice</text>
+            <rect x="334" y="228" width="50" height="20" rx="10" fill="#ffe1ec"/><text x="359" y="242" text-anchor="middle">Crown</text>
           </g>
           <line x1="262" y1="252" x2="400" y2="196" stroke="#ff4d8d" stroke-width="5" stroke-linecap="round" opacity=".85"/>
         </g></g>
+        <!-- moon + buzzer -->
         <g class="float d3">
           <circle cx="490" cy="96" r="34" fill="#ffd23f"/><circle cx="504" cy="86" r="32" fill="#160f33"/>
           <ellipse cx="482" cy="250" rx="58" ry="16" fill="#0b0820" opacity=".5"/>
@@ -348,9 +395,9 @@
 
 <main>
 
-<!-- DATE -->
+<!-- ============ DATE ============ -->
 <section class="scene" id="when">
-  <div class="stage">
+  <div class="stage center">
     <div class="sec-head">
       <span class="sec-tag rv">SAVE THE DATE</span>
       <h2 class="rv" style="--i:1">One night. One word. No slips.<span class="zh">一個晚上、一個單字、不能說溜嘴</span></h2>
@@ -361,12 +408,12 @@
       <div class="tk"><div class="ico">🎧</div><div><div class="big">Online · Voice</div><div class="small">線上語音</div></div></div>
     </div>
     <div class="cta-row rv" style="--i:3">
-      <a class="btn btn-main" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Random+Event!+Game+Night!+%E9%9A%A8%E6%A9%9F%E4%BA%8B%E4%BB%B6%EF%BC%81%E9%81%8A%E6%88%B2%E4%B9%8B%E5%A4%9C%EF%BC%81&amp;dates=20261112T130000Z/20261112T150000Z&amp;details=Say+It+Without+Saying+It+%E2%80%94+online+voice+party+game&amp;location=Online" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
+      <a class="btn btn-main" data-calendar href="#when" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
     </div>
   </div>
 </section>
 
-<!-- ALL YOU NEED -->
+<!-- ============ ALL YOU NEED ============ -->
 <section class="scene" id="need">
   <div class="stage">
     <div class="sec-head">
@@ -374,16 +421,16 @@
       <h2 class="rv" style="--i:1">All you need<span class="zh">你只需要</span></h2>
     </div>
     <div class="checks">
-      <div class="check rv" style="--c: var(--cyan); --i:2"><div class="e">📱</div><b>Your phone</b><span class="zh">一支手機</span></div>
-      <div class="check rv" style="--c: var(--yellow); --i:3"><div class="e">🎤</div><b>Open mic</b><span class="zh">打開麥克風</span></div>
-      <div class="check rv" style="--c: var(--pink); --i:4"><div class="e">🙈</div><b>No camera</b><span class="zh">免開鏡頭</span></div>
-      <div class="check rv" style="--c: var(--violet); --i:5"><div class="e">😆</div><b>Good vibes</b><span class="zh">好心情</span></div>
+      <div class="tile check rv" style="--c: var(--cyan); --i:2"><div class="e">📱</div><b>Your phone</b><span class="zh">一支手機</span></div>
+      <div class="tile check rv" style="--c: var(--yellow); --i:3"><div class="e">🎤</div><b>Open mic</b><span class="zh">打開麥克風</span></div>
+      <div class="tile check rv" style="--c: var(--pink); --i:4"><div class="e">🙈</div><b>No camera</b><span class="zh">免開鏡頭</span></div>
+      <div class="tile check rv" style="--c: var(--violet); --i:5"><div class="e">😆</div><b>Good vibes</b><span class="zh">好心情</span></div>
     </div>
     <p class="checks-note rv" style="--i:6">Simple English is enough — mistakes make it funnier!<span class="zh">簡單英文就夠了，說錯反而更好笑！</span></p>
   </div>
 </section>
 
-<!-- STATEMENT -->
+<!-- ============ STATEMENT ============ -->
 <section class="statement" id="statement" aria-label="Describe it. Don't say it. Make them guess.">
   <div class="pin"><div>
     <p class="big" id="statement-text"><span class="w">Describe</span> <span class="w">it.</span> <span class="w hot">Don't</span> <span class="w hot">say</span> <span class="w hot">it.</span> <span class="w cool">Make</span> <span class="w cool">them</span> <span class="w cool">guess.</span></p>
@@ -391,7 +438,7 @@
   </div></div>
 </section>
 
-<!-- GAME -->
+<!-- ============ THE GAME ============ -->
 <section class="scene" id="game">
   <div class="stage">
     <div class="sec-head">
@@ -400,23 +447,23 @@
     </div>
     <div class="intro">
       <div>
-        <p class="lead rv" style="--i:2">Describe the secret word in English — but <span class="hl-pink">never say the forbidden words</span>.
+        <p class="lead rv" style="--i:2">Describe the secret word in English — but <span class="hl">never say the forbidden words</span>.
           <span class="zh">用英文描述祕密單字，但不能說出卡上的禁字。</span></p>
-        <div class="bubble-quote rv" style="--i:3">"It's a fruit… hard on the outside… it wears a <b>crown</b>— oops, can't say crown!"
+        <div class="quote rv" style="--i:3">"It's a fruit… hard on the outside… it wears a <b>crown</b>— oops, can't say crown!"
           <span class="zh">「它是一種水果……外面硬硬的……頭上戴著<b>皇冠</b>——啊！不能說皇冠！」</span></div>
       </div>
       <div class="secret-card rv" style="--i:3" aria-label="Sample secret card 祕密卡片範例">
         <span class="corner">SECRET CARD · 祕密卡片</span>
         <div class="emo">🍍</div>
         <div class="word">Pineapple</div>
-        <div class="forb-lab">🚫 Don't say · 禁字</div>
+        <div class="forb">🚫 Don't say · 禁字</div>
         <div class="pills"><span class="pill">Spiky</span><span class="pill">Yellow</span><span class="pill">Sweet</span><span class="pill">Crown</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ROLES -->
+<!-- ============ ROLES ============ -->
 <section class="scene" id="roles">
   <div class="stage">
     <div class="sec-head">
@@ -424,7 +471,7 @@
       <h2 class="rv" style="--i:1">Three roles every round<span class="zh">每輪三種角色</span></h2>
     </div>
     <div class="roles">
-      <div class="role rv" style="--c: var(--cyan); --i:2">
+      <div class="tile role rv" style="--c: var(--cyan); --i:2">
         <svg class="ic" viewBox="0 0 84 84" aria-hidden="true">
           <circle cx="42" cy="42" r="40" fill="#3ee6d0" opacity=".16"/><rect x="32" y="14" width="20" height="34" rx="10" fill="#3ee6d0"/>
           <g stroke="#160f33" stroke-width="2" opacity=".5"><line x1="35" y1="24" x2="49" y2="24"/><line x1="35" y1="30" x2="49" y2="30"/><line x1="35" y1="36" x2="49" y2="36"/></g>
@@ -434,7 +481,7 @@
         <h3>Clue giver<span class="zh">描述者</span></h3>
         <p>Describes the word.<span class="zh">負責描述單字</span></p>
       </div>
-      <div class="role rv" style="--c: var(--yellow); --i:3">
+      <div class="tile role rv" style="--c: var(--yellow); --i:3">
         <svg class="ic" viewBox="0 0 84 84" aria-hidden="true">
           <circle cx="42" cy="42" r="40" fill="#ffd23f" opacity=".16"/><path d="M10 42 C22 22 62 22 74 42 C62 62 22 62 10 42z" fill="#ffd23f"/>
           <circle cx="42" cy="42" r="12" fill="#160f33"/><circle cx="46" cy="38" r="4" fill="#fff"/>
@@ -443,7 +490,7 @@
         <h3>Referee<span class="zh">裁判</span></h3>
         <p>Hears a forbidden word? <b>🚨 Taboo!</b><span class="zh">聽到禁字就抓包</span></p>
       </div>
-      <div class="role rv" style="--c: var(--pink); --i:4">
+      <div class="tile role rv" style="--c: var(--pink); --i:4">
         <svg class="ic" viewBox="0 0 84 84" aria-hidden="true">
           <circle cx="42" cy="42" r="40" fill="#ff4d8d" opacity=".16"/>
           <path d="M30 70 V38 a6 6 0 0 1 12 0 V30 a6 6 0 0 1 12 0 v6 a6 6 0 0 1 12 0 v18 c0 12 -8 18 -18 18 h-6 c-8 0 -12 -4 -12 -2z" fill="#ff4d8d"/>
@@ -457,7 +504,7 @@
   </div>
 </section>
 
-<!-- HOW -->
+<!-- ============ HOW TO PLAY ============ -->
 <section class="scene" id="how">
   <div class="stage">
     <div class="sec-head">
@@ -471,7 +518,7 @@
         <div><h3>Get a role<span class="zh">抽到角色</span></h3><p>New roles each round<span class="zh">每輪重新分配</span></p></div></div>
       <div class="step rv" style="--c: var(--pink); --i:4"><div class="num">3</div><div class="e">🗣️</div>
         <div><h3>Describe<span class="zh">開始描述</span></h3><p>Beat the timer<span class="zh">在時間內描述</span></p></div></div>
-      <div class="step rv" style="--c: #22c55e; --i:5"><div class="num">4</div><div class="e">🙋</div>
+      <div class="step rv" style="--c: var(--green); --i:5"><div class="num">4</div><div class="e">🙋</div>
         <div><h3>Buzz in<span class="zh">搶答</span></h3><p>Shout your guess<span class="zh">大聲說出答案</span></p></div></div>
       <div class="step rv" style="--c: var(--violet); --i:6"><div class="num">5</div><div class="e">🔁</div>
         <div><h3>Next round<span class="zh">換下一位</span></h3><p>Everyone gets a turn<span class="zh">大家輪流上場</span></p></div></div>
@@ -479,7 +526,7 @@
   </div>
 </section>
 
-<!-- SCORING -->
+<!-- ============ SCORING ============ -->
 <section class="scene" id="score">
   <div class="stage">
     <div class="sec-head">
@@ -487,25 +534,25 @@
       <h2 class="rv" style="--i:1">How to score<span class="zh">怎麼得分</span></h2>
     </div>
     <div class="scores">
-      <div class="score rv" style="--bg: var(--cyan); --i:2"><div class="pts">+1 +1</div>
+      <div class="score rv" style="--c: var(--cyan); --i:2"><div class="pts">+1 +1</div>
         <div><h3>Correct!<span class="zh">猜對了</span></h3><p>Guesser &amp; clue giver<span class="zh">猜的人與描述者各 +1</span></p></div></div>
-      <div class="score rv" style="--bg: var(--yellow); --i:3"><div class="pts">+2 −1</div>
+      <div class="score rv" style="--c: var(--yellow); --i:3"><div class="pts">+2 −1</div>
         <div><h3>Taboo!<span class="zh">抓到禁字</span></h3><p>Referee +2, clue giver −1<span class="zh">裁判 +2、描述者 −1</span></p></div></div>
-      <div class="score rv" style="--bg: var(--pink); --i:4"><div class="pts">×2</div>
+      <div class="score rv" style="--c: var(--pink); --i:4"><div class="pts">×2</div>
         <div><h3>Comeback<span class="zh">落後加分</span></h3><p>Behind? Points double<span class="zh">落後時得分加倍</span></p></div></div>
     </div>
   </div>
 </section>
 
-<!-- JOIN -->
+<!-- ============ JOIN ============ -->
 <section class="scene" id="join">
   <div class="stage">
     <div class="final rv">
       <h2>See you Thursday!</h2>
       <div class="zh-big">週四晚上，不見不散！</div>
-      <div class="when">🗓️ Thu, Nov 12 · 9 PM <span style="opacity:.85">· 11/12（四）晚上 9 點</span></div>
+      <div class="when">🗓️ Thu, Nov 12 · 9 PM <span class="soft">· 11/12（四）晚上 9 點</span></div>
       <div class="cta-row">
-        <a class="btn btn-main" href="https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Random+Event!+Game+Night!+%E9%9A%A8%E6%A9%9F%E4%BA%8B%E4%BB%B6%EF%BC%81%E9%81%8A%E6%88%B2%E4%B9%8B%E5%A4%9C%EF%BC%81&amp;dates=20261112T130000Z/20261112T150000Z&amp;details=Say+It+Without+Saying+It+%E2%80%94+online+voice+party+game&amp;location=Online" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
+        <a class="btn btn-main" data-calendar href="#when" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
       </div>
       <p class="note">Game link coming in the group before we start<span class="zh">遊戲連結會在開始前傳到群組</span></p>
     </div>
@@ -518,65 +565,92 @@
 
 <script>
 (function () {
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const nav = document.getElementById('topnav');
-  const bar = document.getElementById('progress');
-  const navBox = document.getElementById('navlinks');
-  const scenes = Array.from(document.querySelectorAll('.scene'));
-  const stages = scenes.map(s => s.querySelector('.stage'));
-  const links = Array.from(navBox.querySelectorAll('a'));
-  const targets = links.map(a => document.querySelector(a.getAttribute('href')));
-  const words = Array.from(document.querySelectorAll('#statement-text .w'));
-  const stmt = document.getElementById('statement');
-  const stmtZh = document.getElementById('statement-zh');
-  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  /* ---- Event details: the one place to change date or time ---- */
+  const EVENT = {
+    title: 'Random Event! Game Night! 隨機事件！遊戲之夜！',
+    details: 'Say It Without Saying It — online voice party game',
+    startUTC: '20261112T130000Z',   // Thu Nov 12, 9:00 PM GMT+8
+    endUTC: '20261112T150000Z',     // 11:00 PM GMT+8
+    location: 'Online',
+  };
+  const calendarURL = 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+    action: 'TEMPLATE', text: EVENT.title, dates: EVENT.startUTC + '/' + EVENT.endUTC,
+    details: EVENT.details, location: EVENT.location,
+  });
+  document.querySelectorAll('[data-calendar]').forEach(a => { a.href = calendarURL; });
 
-  const rvs = document.querySelectorAll('.rv');
-  if (reduce || !('IntersectionObserver' in window)) rvs.forEach(e => e.classList.add('in'));
-  else {
-    const io = new IntersectionObserver(es => es.forEach(en => {
+  /* ---- Elements ---- */
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = id => document.getElementById(id);
+  const nav = $('topnav'), bar = $('progress'), navBox = $('navlinks');
+  const scenes = [...document.querySelectorAll('.scene')];
+  const stages = scenes.map(s => s.querySelector('.stage'));
+  const links = [...navBox.querySelectorAll('a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href')));
+  const stmt = $('statement'), stmtZh = $('statement-zh');
+  const words = [...$('statement-text').querySelectorAll('.w')];
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  /* ---- Staggered reveal as blocks enter the screen ---- */
+  const reveals = document.querySelectorAll('.rv:not(.in)');
+  if (reduce || !('IntersectionObserver' in window)) {
+    reveals.forEach(el => el.classList.add('in'));
+  } else {
+    const io = new IntersectionObserver(entries => entries.forEach(en => {
       if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
     }), { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
-    rvs.forEach(e => { if (!e.classList.contains('in')) io.observe(e); });
+    reveals.forEach(el => io.observe(el));
   }
 
-  let ticking = false, activeIdx = -2;
-  function frame() {
-    ticking = false;
-    const vh = window.innerHeight, y = window.scrollY;
-    const max = document.documentElement.scrollHeight - vh;
-    bar.style.transform = 'scaleX(' + (max > 0 ? y / max : 0) + ')';
-    nav.classList.toggle('scrolled', y > 10);
-
-    // Apple-style scene transitions: ease in on arrival, shrink and dim on the way out.
-    if (!reduce) scenes.forEach((s, i) => {
+  /* ---- Scroll-driven effects ---- */
+  // Apple-style scene transition: ease in on arrival, shrink and dim on the way out.
+  function updateScenes(vh) {
+    scenes.forEach((s, i) => {
       const r = s.getBoundingClientRect();
-      const e = 1 - Math.pow(1 - clamp((vh - r.top) / (vh * 0.55), 0, 1), 3);
+      const enter = 1 - Math.pow(1 - clamp((vh - r.top) / (vh * 0.55), 0, 1), 3);
       const leave = clamp(1 - r.bottom / (vh * 0.5), 0, 1);
-      stages[i].style.transform = 'translate3d(0,' + ((1 - e) * 40 - leave * 40).toFixed(1) + 'px,0) scale(' + (0.94 + 0.06 * e - 0.08 * leave).toFixed(4) + ')';
-      stages[i].style.opacity = ((0.25 + 0.75 * e) * (1 - 0.9 * leave)).toFixed(3);
+      const y = (1 - enter) * 40 - leave * 40;
+      const scale = 0.94 + 0.06 * enter - 0.08 * leave;
+      stages[i].style.transform = `translate3d(0,${y.toFixed(1)}px,0) scale(${scale.toFixed(4)})`;
+      stages[i].style.opacity = ((0.25 + 0.75 * enter) * (1 - 0.9 * leave)).toFixed(3);
     });
-
+  }
+  // Statement words light up one by one while the section is pinned.
+  function updateStatement(vh) {
     const r = stmt.getBoundingClientRect();
     const p = reduce ? 1 : clamp(-r.top / Math.max(1, r.height - vh), 0, 1);
     const lit = Math.round(p * (words.length + 1.5));
     words.forEach((w, i) => w.classList.toggle('on', i < lit));
     stmtZh.classList.toggle('on', lit > words.length);
-
+  }
+  // Highlight the nav link for the section in view, and keep it visible in the bar.
+  let activeIdx = -2;
+  function updateNav(vh) {
     let idx = -1;
     targets.forEach((t, i) => { if (t && t.getBoundingClientRect().top <= vh * 0.4) idx = i; });
-    if (idx !== activeIdx) {
-      activeIdx = idx;
-      links.forEach((a, i) => a.classList.toggle('active', i === idx));
-      if (idx >= 0 && navBox.scrollWidth > navBox.clientWidth) {
-        const a = links[idx];
-        navBox.scrollTo({ left: a.offsetLeft - navBox.offsetLeft - (navBox.clientWidth - a.offsetWidth) / 2, behavior: 'smooth' });
-      }
+    if (idx === activeIdx) return;
+    activeIdx = idx;
+    links.forEach((a, i) => a.classList.toggle('active', i === idx));
+    if (idx >= 0 && navBox.scrollWidth > navBox.clientWidth) {
+      const a = links[idx];
+      navBox.scrollTo({ left: a.offsetLeft - navBox.offsetLeft - (navBox.clientWidth - a.offsetWidth) / 2, behavior: 'smooth' });
     }
   }
+
+  let ticking = false;
+  function frame() {
+    ticking = false;
+    const vh = innerHeight, y = scrollY;
+    const max = document.documentElement.scrollHeight - vh;
+    bar.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+    nav.classList.toggle('scrolled', y > 10);
+    if (!reduce) updateScenes(vh);
+    updateStatement(vh);
+    updateNav(vh);
+  }
   function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
   frame();
 })();
 </script>
