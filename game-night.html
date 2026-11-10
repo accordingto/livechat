@@ -4,19 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Random Event! Game Night! 隨機事件！遊戲之夜！</title>
-<meta name="description" content="An online voice party: Say It Without Saying It. Describe the secret word, but never say the forbidden ones! 線上語音派對：說出來但不能說。">
+<meta name="description" content="Wed, Nov 11 · 9:30–10:30 PM (GMT+8) — an online voice party: Say It Without Saying It. Describe the secret word, but never say the forbidden ones! 11/11（三）晚上 9:30–10:30 線上語音派對。">
 
 <!-- Link previews (LINE, Facebook…). The image is assets/game-night/og.png, 1200×630. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Random Event! Game Night!">
 <meta property="og:title" content="Random Event! Game Night! 隨機事件！遊戲之夜！">
-<meta property="og:description" content="🙊 Say It Without Saying It — an online voice party: describe the secret word, never say the forbidden ones! 線上語音派對，一起來玩！">
-<meta property="og:image" content="https://livechat-two-alpha.vercel.app/assets/game-night/og.png?v=3">
+<meta property="og:description" content="🗓️ Wed, Nov 11 · 9:30 PM — online voice party 🙊 Say It Without Saying It: describe the secret word, never say the forbidden ones! 11/11（三）晚上 9:30 線上語音派對">
+<meta property="og:image" content="https://livechat-two-alpha.vercel.app/assets/game-night/og.png?v=4">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://livechat-two-alpha.vercel.app/game-night.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://livechat-two-alpha.vercel.app/assets/game-night/og.png?v=3">
+<meta name="twitter:image" content="https://livechat-two-alpha.vercel.app/assets/game-night/og.png?v=4">
 <meta name="theme-color" content="#160f33">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
@@ -78,6 +78,7 @@
      ========================================================= */
   .scene { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: calc(var(--nav-h) + 12px) 0 18px; }
   .stage { width: min(1080px, 100% - var(--gutter) * 2); margin: 0 auto; will-change: transform, opacity; transform-origin: 50% 45%; }
+  .center { text-align: center; }
 
   /* Staggered entrance; --rot keeps tilted pieces tilted while they animate. */
   .rv { opacity: 0; filter: blur(6px); transform: rotate(var(--rot, 0deg)) translateY(28px) scale(.98);
@@ -96,6 +97,7 @@
   .tile::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
 
   .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: calc(var(--u) * 2.4); }
+  .center .cta-row, .final .cta-row { justify-content: center; }
   .btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px; text-decoration: none;
     font-weight: 800; font-size: 1rem; line-height: 1.15; transition: transform .15s, box-shadow .15s; }
   .btn:active { transform: scale(.97); }
@@ -126,6 +128,18 @@
   .hero-sub { margin-top: calc(var(--u) * 1.8); max-width: 520px; font-size: clamp(1rem, calc(var(--u) * 2), 1.2rem); }
   .hero-sub .zh { margin-top: 4px; font-size: .92em; }
   .hero-art svg { display: block; width: 100%; height: auto; max-height: 62vh; overflow: visible; }
+
+  /* --- Date (ticket) --- */
+  .ticket { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); width: min(820px, 100%); margin: 0 auto;
+    color: var(--ink); background: linear-gradient(135deg, #fff7e8, #ffe9c2); border-radius: var(--radius);
+    box-shadow: 0 18px 50px rgba(0,0,0,.35), 0 0 0 4px rgba(255,210,63,.35); }
+  .ticket::before, .ticket::after { content: ''; position: absolute; top: 50%; width: 26px; height: 26px; border-radius: 50%; background: var(--night); transform: translateY(-50%); }
+  .ticket::before { left: -13px; } .ticket::after { right: -13px; }
+  .tk { padding: calc(var(--u) * 3) 12px; }
+  .tk + .tk { border-left: 2px dashed rgba(26,16,51,.2); }
+  .tk .ico { font-size: clamp(1.6rem, calc(var(--u) * 4), 2.4rem); line-height: 1; }
+  .tk .big { margin-top: 6px; font-weight: 900; font-size: clamp(1.25rem, calc(var(--u) * 3.6), 2.2rem); line-height: 1.15; }
+  .tk .small { font-family: 'Noto Sans TC', sans-serif; font-size: .92rem; font-weight: 700; color: #4b3a63; }
 
   /* --- All you need --- */
   .checks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
@@ -204,6 +218,9 @@
     background: linear-gradient(135deg, #ff4d8d, #a855f7 55%, #3ee6d0); box-shadow: 0 24px 60px rgba(255,77,141,.3); }
   .final h2 { font-family: 'Bungee', sans-serif; font-weight: 400; font-size: clamp(1.7rem, calc(var(--u) * 5.4), 3.2rem); line-height: 1.08; text-shadow: 0 4px 0 rgba(0,0,0,.15); }
   .final .zh-big { margin-top: 8px; font-family: 'Noto Sans TC', sans-serif; font-weight: 900; font-size: clamp(1.15rem, calc(var(--u) * 3), 1.7rem); }
+  .final .when { margin-top: 12px; font-weight: 800; font-size: 1.1rem; }
+  .final .when .soft { display: block; margin-top: 2px; font-size: .9em; opacity: .85; }
+  .final .btn-main { color: var(--ink); background: var(--yellow); box-shadow: 0 10px 28px rgba(0,0,0,.25); }
   .final .note { margin-top: 12px; font-weight: 700; font-size: .95rem; }
   .final .note .zh { color: #fff; opacity: .9; }
 
@@ -245,6 +262,13 @@
     .hero-sub { margin-top: 12px; font-size: 1rem; }
     .hero .cta-row { margin-top: 16px; }
     .hero .btn { padding: 11px 10px; font-size: .95rem; gap: 6px; }
+
+    .ticket { grid-template-columns: 1fr; }
+    .ticket::before, .ticket::after { top: 33.3%; }
+    .tk { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; padding: 14px 18px; text-align: left; }
+    .tk .ico { grid-row: span 2; text-align: center; }
+    .tk .big { margin: 0; }
+    .tk + .tk { border-left: 0; border-top: 2px dashed rgba(26,16,51,.2); }
 
     .checks { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .roles, .scores { grid-template-columns: 1fr; gap: 12px; }
@@ -289,6 +313,7 @@
     <a class="brand" href="#top"><span class="logo">🙊</span><span class="txt">Game Night</span></a>
     <div class="navlinks" id="navlinks">
       <a href="#top">Home<small>首頁</small></a>
+      <a href="#when">Date<small>日期</small></a>
       <a href="#need">Bring<small>準備</small></a>
       <a href="#game">The Game<small>遊戲</small></a>
       <a href="#roles">Roles<small>角色</small></a>
@@ -296,7 +321,7 @@
       <a href="#score">Scoring<small>計分</small></a>
       <a href="#join">Join<small>參加</small></a>
     </div>
-    <a class="navcta" href="#join">I'm in!</a>
+    <a class="navcta" href="#join">Save the date</a>
   </div>
   <div class="progress" id="progress"></div>
 </nav>
@@ -308,8 +333,8 @@
       <span class="eyebrow rv in"><span class="dot"></span>Online voice party · <span class="zh">線上語音派對</span></span>
       <h1 class="title-en rv in" style="--i:1"><span class="a">Random Event!</span><span class="b">Game Night!</span></h1>
       <div class="title-zh rv in" style="--i:2">隨機事件！遊戲之夜！</div>
-      <p class="hero-sub rv in" style="--i:3">Come play <b>Say It Without Saying It</b> together!
-        <span class="zh">一起來玩「說出來但不能說」！</span></p>
+      <p class="hero-sub rv in" style="--i:3">Wed, Nov 11 · 9:30 PM — play <b>Say It Without Saying It</b> together!
+        <span class="zh">11/11（三）晚上 9:30，一起玩「說出來但不能說」！</span></p>
       <div class="cta-row rv in" style="--i:4">
         <a class="btn btn-main" href="#join">🎉 <span>I'm in!<small>我要參加</small></span></a>
         <a class="btn btn-ghost" href="#game">👇 <span>What is it?<small>這是什麼？</small></span></a>
@@ -369,6 +394,24 @@
 </header>
 
 <main>
+
+<!-- ============ DATE ============ -->
+<section class="scene" id="when">
+  <div class="stage center">
+    <div class="sec-head">
+      <span class="sec-tag rv">SAVE THE DATE</span>
+      <h2 class="rv" style="--i:1">One night. One word. No slips.<span class="zh">一個晚上、一個單字、不能說溜嘴</span></h2>
+    </div>
+    <div class="ticket rv" style="--i:2" role="group" aria-label="Event details 活動資訊">
+      <div class="tk"><div class="ico">🗓️</div><div><div class="big">Wed, Nov 11</div><div class="small">11/11（三）</div></div></div>
+      <div class="tk"><div class="ico">🕘</div><div><div class="big">9:30 PM</div><div class="small">晚上 9:30–10:30（GMT+8）</div></div></div>
+      <div class="tk"><div class="ico">🎧</div><div><div class="big">Online · Voice</div><div class="small">線上語音</div></div></div>
+    </div>
+    <div class="cta-row rv" style="--i:3">
+      <a class="btn btn-main" data-calendar href="#when" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
+    </div>
+  </div>
+</section>
 
 <!-- ============ ALL YOU NEED ============ -->
 <section class="scene" id="need">
@@ -505,8 +548,12 @@
 <section class="scene" id="join">
   <div class="stage">
     <div class="final rv">
-      <h2>See you there!</h2>
-      <div class="zh-big">到時候見，不見不散！</div>
+      <h2>See you Wednesday!</h2>
+      <div class="zh-big">週三晚上，不見不散！</div>
+      <div class="when">🗓️ Wed, Nov 11 · 9:30–10:30 PM <span class="soft">11/11（三）晚上 9:30–10:30</span></div>
+      <div class="cta-row">
+        <a class="btn btn-main" data-calendar href="#when" target="_blank" rel="noopener">📅 <span>Add to calendar<small>加到行事曆</small></span></a>
+      </div>
       <p class="note">Game link coming in the group before we start<span class="zh">遊戲連結會在開始前傳到群組</span></p>
     </div>
   </div>
@@ -518,6 +565,20 @@
 
 <script>
 (function () {
+  /* ---- Event details: the one place to change date or time ---- */
+  const EVENT = {
+    title: 'Random Event! Game Night! 隨機事件！遊戲之夜！',
+    details: 'Say It Without Saying It — online voice party game',
+    startUTC: '20261111T133000Z',   // Wed Nov 11, 9:30 PM GMT+8
+    endUTC: '20261111T143000Z',     // 10:30 PM GMT+8
+    location: 'Online',
+  };
+  const calendarURL = 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+    action: 'TEMPLATE', text: EVENT.title, dates: EVENT.startUTC + '/' + EVENT.endUTC,
+    details: EVENT.details, location: EVENT.location,
+  });
+  document.querySelectorAll('[data-calendar]').forEach(a => { a.href = calendarURL; });
+
   /* ---- Elements ---- */
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const $ = id => document.getElementById(id);
