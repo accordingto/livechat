@@ -2645,6 +2645,13 @@
       showError('notSetUp');
     } else if (!session || !token) {
       showError('invalidLink');
+    } else if (typeof firebase === 'undefined') {
+      // The Firebase SDK comes from gstatic.com; a network that blocks it (or a
+      // phone that timed out loading it) leaves `firebase` undefined. Without this
+      // branch the next line throws and the card sits on its loading screen with
+      // no explanation — the host pages (room.js, dare-conquest.html) already guard
+      // the same way.
+      showError('connectError');
     } else {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
